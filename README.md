@@ -187,15 +187,27 @@ Below are zero-shot and five-shot accuracies from the models that we evaluate in
 
 
 ## How to Evaluate on VMLU
-You can just follow our code
+
+1. Copy `.env.example` to `.env` and fill in credentials:
 ```bash
-cd code_benchmark;
-GPTKEY='<YOUR GPT KEY>' python test_gpt.py
+# Linux / macOS / Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+Copy-Item .env.example .env
 ```
+
+2. Run evaluation with Ollama / OpenAI-compatible endpoint:
+```bash
+cd code_benchmark
+python test_ollama.py --folder "./vmlu" --workers 4
+```
+
+> **Note on Legacy Scripts**: Previous evaluation scripts (`test_gpt.py`, `test_prompt.py`) have been moved to `code_benchmark/legacy/`. See `code_benchmark/legacy/README.md` for legacy usage instructions.
 
 
 ## How to submit
-You need to first prepare a UTF-8 encoded CSV file with the following format, please refer to submission_example.csv for details.
+You need to first prepare a UTF-8 encoded CSV file with the following format, please refer to example_submission.csv for details.
 
 ```
 ## key within each subject is the "id" field from the dataset
