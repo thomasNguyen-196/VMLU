@@ -1,0 +1,26 @@
+# Secret-bearing environment files. Keep templates readable.
+/.env
+/.env.*
+!/.env.example
+!/.env.template
+!/.env.sample
+
+# Large benchmark data & dataset folders
+vmlu/**
+/vmlu_v*/**
+/data/**
+/datasets/**
+
+# Benchmark outputs, logs, and evaluation dumps
+/logs/**
+/code_benchmark/all_res/**
+/code_benchmark/logs/**
+/code_benchmark/submission.csv
+/leaderboard.json
+
+# Python & Notebook cache/artifacts
+/__pycache__/**
+*.pyc
+*.pyo
+.ipynb_checkpoints/**
+.pytest_cache/**
