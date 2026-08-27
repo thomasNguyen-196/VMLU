@@ -1,37 +1,42 @@
-# Nghiên cứu: Đánh giá Năng lực & Hiệu quả Triển khai của các Mô hình Ngôn ngữ Nhỏ (≤8B) cho Tiếng Việt
-**Title**: *Small Open-Weight Language Models for Vietnamese: A Capability–Efficiency Benchmark*
+# Small Open-Weight Language Models for Vietnamese: A Capability–Efficiency Benchmark
+
+**Research Proposal**
 
 ---
 
-## 1. Đặt vấn đề & Câu hỏi nghiên cứu (Research Question)
+## 1. Problem Statement & Research Question
 
-Thay vì chỉ xây dựng một bảng xếp hạng (leaderboard) thông thường xem mô hình nào đạt điểm cao nhất, nghiên cứu này tập trung vào bài toán đánh giá toàn diện về tính khả thi thực tế và sự đánh đổi giữa **Chất lượng (Quality)** và **Hiệu quả triển khai (Efficiency)** của các mô hình mã nguồn mở cỡ nhỏ (≤8B) trên tiếng Việt.
+Instead of producing another ordinary leaderboard that simply ranks which model scores highest, this study focuses on a comprehensive evaluation of real-world feasibility and the **Quality**–**Efficiency** trade-off of small open-weight models (≤8B) on Vietnamese.
 
-### Câu hỏi nghiên cứu trọng tâm (Core RQ)
+### Core Research Question
+
 > **"How effective are small open-weight LLMs (≤8B) for Vietnamese language understanding, reasoning, cultural knowledge, and agentic tasks under realistic compute constraints?"**
 
-### Đóng góp cốt lõi
+### Core Contribution
+
 $$\boxed{\text{Vietnam-specific capability} + \text{Dialect robustness} + \text{Tokenization efficiency} + \text{Inference cost}}$$
 
-Nghiên cứu này cũng đóng vai trò là **Stage 0 (Baseline & Gap Analysis)**: xác lập rõ ràng các điểm nghẽn và hạn chế của các mô hình nhỏ hiện tại trước khi tiến hành tối ưu hóa tokenizer hoặc tiếp tục pretraining mô hình tiếng Việt chuyên biệt.
+This study also serves as **Stage 0 (Baseline & Gap Analysis)**: it precisely establishes where current small open-weight models fail before proceeding to tokenizer optimization or continued pretraining of a Vietnamese-specialized model.
 
 ---
 
-## 2. Danh mục Mô hình Đánh giá (Model Matrix)
+## 2. Evaluation Model Matrix
 
-### 2.1. Phân nhóm mô hình
+### 2.1. Model Groups
 
-| Nhóm | Mô hình | Mục tiêu & Lý do lựa chọn |
+| Group | Models | Rationale |
 | :--- | :--- | :--- |
-| **Qwen scaling** | Qwen3 (0.6B, 1.7B, 4B, 8B) | Nghiên cứu scaling có kiểm soát cùng họ mô hình; hỗ trợ đa ngôn ngữ (100+ ngôn ngữ). |
-| **Google** | Gemma-3 (1B, 4B) | Đại diện đa ngôn ngữ mạnh; kiểm chứng bước nhảy năng lực giữa 1B và 4B. |
-| **Meta** | Llama-3.2 (1B, 3B) | Baseline phổ biến cho các mô hình kích thước nhỏ / edge. |
-| **Microsoft** | Phi-4-mini (3.8B) | Baseline suy luận logic mạnh (200K vocab), không chính thức hỗ trợ tiếng Việt -> Đo lường cross-lingual transfer. |
-| **Mistral** | Ministral-3 (3B, 8B) | Mô hình thế hệ mới tối ưu cho môi trường edge. |
-| **Vietnamese / SEA Adapted** | BloomVN (0.5B, 8B), SeaLLM-7B, Vistral-7B | Nhóm đối chứng được tinh chỉnh / pretrained chuyên sâu cho tiếng Việt & Đông Nam Á. |
+| **Qwen scaling** | Qwen3 (0.6B, 1.7B, 4B, 8B) | Controlled scaling study within the same model family; supports 100+ languages. |
+| **Google** | Gemma-3 (1B, 4B) | Strong multilingual alternative; verify the capability jump between 1B and 4B. |
+| **Meta** | Llama-3.2 (1B, 3B) | Widely used small / edge baseline. |
+| **Microsoft** | Phi-4-mini (3.8B) | Strong reasoning baseline (200K vocabulary); does not officially list Vietnamese -> measures cross-lingual transfer. |
+| **Mistral** | Ministral-3 (3B, 8B) | Modern edge-oriented models. |
+| **Vietnamese / SEA Adapted** | BloomVN (0.5B, 8B), SeaLLM-7B, Vistral-7B | Control group specialized / continued-pretrained for Vietnamese & Southeast Asia. |
 
-### 2.2. Tập thử nghiệm tối thiểu (Minimal 10-Model Experiment)
-Tối ưu hóa để có thể chạy kiểm nghiệm toàn diện trên cấu hình phần cứng khả thi (1 GPU phân khúc RTX 5090 / A100):
+### 2.2. Minimal 10-Model Experiment
+
+Optimized to run systematically on a feasible single-GPU setup (e.g., RTX 5090 / A100 class):
+
 1. **Qwen3-0.6B**
 2. **Qwen3-1.7B**
 3. **Qwen3-4B**
@@ -45,75 +50,84 @@ Tối ưu hóa để có thể chạy kiểm nghiệm toàn diện trên cấu h
 
 ---
 
-## 3. Các Tầng Benchmark (Evaluation Layers)
+## 3. Evaluation Layers (Benchmarks)
 
-| Tầng | Benchmark | Mục đích đo lường |
+| Layer | Benchmark | What It Measures |
 | :--- | :--- | :--- |
-| **Core** | **VMLU** | Năng lực hiểu biết kiến thức đa ngành (58 môn học) & suy luận logic tiếng Việt. |
-| **Vietnam-specific** | **V-Bench** | Văn hóa bản địa, y tế, kiến thức đặc thù Việt Nam, an toàn & tác vụ agentic (function calling). |
-| **Linguistic Robustness** | **VialectBench** | Độ bền vững của mô hình trước các phương ngữ, biến thể vùng miền tiếng Việt. |
-| **General NLU** | **ViGLUE** | Khả năng đọc hiểu và xử lý ngôn ngữ tự nhiên tổng quát. |
-| **Intrinsic (Tùy chọn)** | **ViWiki / PPL** | Perplexity trên văn bản tiếng Việt chuẩn (đo lường mô hình hóa ngôn ngữ gốc). |
+| **Core** | **VMLU** | Multidisciplinary knowledge (58 subjects) & Vietnamese reasoning. |
+| **Vietnam-specific** | **V-Bench** | Indigenous culture, medicine, Vietnam-specific knowledge, safety & agentic tasks (function calling). |
+| **Linguistic Robustness** | **VialectBench** | Model robustness to Vietnamese dialects & regional variants. |
+| **General NLU** | **ViGLUE** | General reading comprehension & natural language understanding. |
+| **Intrinsic (Optional)** | **ViWiki / PPL** | Perplexity on standard Vietnamese text (raw language modeling). |
 
 ---
 
-## 4. Chi tiết 4 Câu hỏi Nghiên cứu (Research Questions)
+## 4. Detailed Research Questions
 
-### RQ1: Năng lực mở rộng theo kích thước (Capability Scaling)
+### RQ1: Capability Scaling
+
 $$\text{Vietnamese capability} = f(\text{model size})$$
-- Kiểm chứng trên chuỗi kích thước Qwen3: $0.6\text{B} \rightarrow 1.7\text{B} \rightarrow 4\text{B} \rightarrow 8\text{B}$.
-- Xác định mức độ tăng trưởng có đơn điệu (monotonic) hay không và điểm bắt đầu xuất hiện quy luật lợi suất giảm dần (diminishing returns).
 
-### RQ2: Ảnh hưởng của kiến trúc trong cùng phân khúc 3–4B (Architecture / Family Effect)
-So sánh có kiểm soát số lượng tham số (parameter count):
+- Verified across the Qwen3 size series: $0.6\text{B} \rightarrow 1.7\text{B} \rightarrow 4\text{B} \rightarrow 8\text{B}$.
+- Determine whether gains are approximately monotonic and where diminishing returns begin.
+
+### RQ2: Architecture / Model-Family Effect at ~3–4B
+
+Controlled comparison of parameter count:
+
 $$\text{Qwen3-4B} \quad \text{vs} \quad \text{Gemma-3-4B} \quad \text{vs} \quad \text{Phi-4-mini-3.8B} \quad \text{vs} \quad \text{Llama-3.2-3B} \quad \text{vs} \quad \text{Ministral-3-3B}$$
 
-### RQ3: Mô hình đa ngôn ngữ tổng quát vs Mô hình chuyên biệt tiếng Việt
+### RQ3: Generic Multilingual vs. Vietnamese-Adapted Models
+
 $$\text{Generic Multilingual (Qwen / Gemma / Llama)} \quad \longleftrightarrow \quad \text{Vietnamese/SEA Adapted (BloomVN / SeaLLM / Vistral)}$$
-- Làm rõ liệu các mô hình nền tảng đa ngôn ngữ thế hệ mới có vượt qua hoặc thu hẹp khoảng cách với các mô hình được tiếp tục tiền huấn luyện riêng cho tiếng Việt hay không.
 
-### RQ4: Chất lượng so với Chi phí Triển khai (Quality vs. Deployment Cost)
-Đánh giá song song giữa Chất lượng $Q$ và Chi phí $C$:
+- Determine whether new-generation multilingual foundation models have closed or reversed the gap against models explicitly continued-pretrained for Vietnamese.
+
+### RQ4: Quality vs. Deployment Cost
+
+Evaluate Quality $Q$ alongside Cost $C$:
+
 $$Q = \{\text{VMLU, V-Bench, VialectBench, ViGLUE}\}$$
-$$C = \{\text{Parameters, Peak VRAM, TTFT (Time to First Token), Tokens/sec, Latency, Output Tokens}\}$$
+$$C = \{\text{Parameters, Peak VRAM, TTFT (Time to First Token), Tokens/sec, Total Latency, Output Tokens}\}$$
 
-Xây dựng đường biên Pareto (Pareto Frontier) minh họa mối quan hệ giữa **Vietnamese Accuracy** và **GPU Memory / Latency**.
-
----
-
-## 5. Đánh giá Hiệu quả Tokenizer (Tokenizer Efficiency)
-
-Đo lường chi phí biểu diễn ngôn ngữ tiếng Việt của từng tokenizer:
-- **Tỉ lệ Token / Từ**: $F = \frac{N_{\text{tokens}}}{N_{\text{words}}}$
-- Số lượng tokens trên 1,000 ký tự tiếng Việt.
-- Số ký tự trung bình trên mỗi token (characters / token).
-- Tỉ lệ nén tiếng Việt so với tiếng Anh (Vietnamese vs English tokenization ratio).
+- Plot **Pareto frontiers** illustrating the relationship between **Vietnamese Accuracy** and **GPU Memory / Latency** rather than inventing a weighted "efficiency score."
 
 ---
 
-## 6. Chế độ Đánh giá (Evaluation Regimes)
+## 5. Tokenizer Efficiency Evaluation
 
-1. **Regime A — Năng lực Thuần (Capability Baseline)**:
+Measure the cost of representing Vietnamese text for each tokenizer:
+
+- **Tokens / Word ratio**: $F = \frac{N_{\text{tokens}}}{N_{\text{words}}}$
+- Tokens per 1,000 Vietnamese characters.
+- Average characters per token.
+- Vietnamese vs. English tokenization ratio (prompt token count comparison).
+
+---
+
+## 6. Evaluation Regimes
+
+1. **Regime A — Capability Baseline**:
    - Precision: BF16 / FP16.
-   - Zero-shot / Few-shot chuẩn hóa theo benchmark.
-   - Sử dụng Official Chat Template của mô hình.
-   - Không lượng tử hóa (no quantization).
+   - Zero-shot (or few-shot standardized per benchmark).
+   - Official model chat template.
+   - No quantization.
 
-2. **Regime B — Triển khai Thực tế / Edge Deployment**:
-   - Lượng tử hóa: INT4 / AWQ / GGUF.
+2. **Regime B — Edge Deployment**:
+   - Quantization: INT4 / AWQ / GGUF.
    - Batch size = 1.
-   - Cùng một serving engine (vLLM / SGLang / Ollama) và thống nhất cấu hình phần cứng.
+   - Same serving engine (vLLM / SGLang / Ollama) and consistent hardware configuration.
 
-3. **Regime C — Giới hạn Ngân sách Suy luận (Reasoning Budget)**:
-   - Đối với các mô hình suy luận (thinking models như Qwen3):
-     - So sánh `non-thinking` vs `thinking`.
-     - Kiểm soát ngân sách reasoning token cố định: **128 / 512 / 2048 tokens**.
+3. **Regime C — Reasoning Budget**:
+   - For reasoning (thinking) models such as Qwen3:
+     - Compare `non-thinking` vs. `thinking`.
+     - Fixed reasoning token budget: **128 / 512 / 2048 tokens**.
 
 ---
 
-## 7. Kế hoạch Thực hiện (Action Plan)
+## 7. Action Plan
 
-1. **Giai đoạn 1**: Chuẩn hóa pipeline benchmark (VMLU, V-Bench, VialectBench) và công cụ đo lường tokenization / inference profiling.
-2. **Giai đoạn 2**: Chạy đánh giá Regime A & Tokenizer analysis trên 10 mô hình cốt lõi.
-3. **Giai đoạn 3**: Chạy đánh giá Regime B (Edge/INT4) và Regime C (Reasoning budget).
-4. **Giai đoạn 4**: Tổng hợp dữ liệu, vẽ Pareto frontiers, phân tích kết quả và tổng kết tài liệu báo cáo nghiên cứu.
+1. **Phase 1**: Standardize the benchmark pipeline (VMLU, V-Bench, VialectBench, ViGLUE) and tooling for tokenization / inference profiling.
+2. **Phase 2**: Run Regime A evaluation & tokenizer analysis on the 10 core models.
+3. **Phase 3**: Run Regime B (Edge / INT4) and Regime C (reasoning budget) evaluations.
+4. **Phase 4**: Aggregate data, draw Pareto frontiers, analyze results, and write the research report.
