@@ -4,130 +4,226 @@
 
 ---
 
-## 1. Problem Statement & Research Question
+A strong research question would be:
 
-Instead of producing another ordinary leaderboard that simply ranks which model scores highest, this study focuses on a comprehensive evaluation of real-world feasibility and the **Quality**–**Efficiency** trade-off of small open-weight models (≤8B) on Vietnamese.
+> How effective are small open-weight LLMs (≤8B) for Vietnamese language understanding, reasoning, cultural knowledge, and agentic tasks under realistic compute constraints?
 
-### Core Research Question
+This is more interesting than just “which model scores highest,” because you can study the quality–efficiency trade-off.
 
-> **"How effective are small open-weight LLMs (≤8B) for Vietnamese language understanding, reasoning, cultural knowledge, and agentic tasks under realistic compute constraints?"**
+The timing is also reasonable. The public VMLU leaderboard contains older small baselines such as Qwen2.5-7B, Phi-3-small, BloomVN-0.5B, DeepSeek-R1-Distill-Qwen-1.5B and several Vietnamese-adapted 7–8B models, but I do not find Qwen3-4B, Gemma-3-4B, Phi-4-mini, or Ministral-3-3B there.
 
-### Core Contribution
+I would use this model set:
 
-$$\boxed{\text{Vietnam-specific capability} + \text{Dialect robustness} + \text{Tokenization efficiency} + \text{Inference cost}}$$
+| Group          | Models                                          | Why                                |
+| -------------- | ----------------------------------------------- | ---------------------------------- |
+| Qwen scaling   | Qwen3-0.6B, 1.7B, 4B, 8B                        | Best controlled scaling experiment |
+| Google         | Gemma-3-1B, 4B                                  | Strong multilingual alternative    |
+| Meta           | Llama-3.2-1B, 3B                                | Widely used small baseline         |
+| Microsoft      | Phi-4-mini 3.8B                                 | Strong reasoning control           |
+| Mistral        | Ministral-3-3B, 8B                              | Modern edge-oriented models        |
+| Vietnamese/SEA | BloomVN-0.5B, BloomVN-8B, SeaLLM-7B, Vistral-7B | Language-adapted controls          |
 
-This study also serves as **Stage 0 (Baseline & Gap Analysis)**: it precisely establishes where current small open-weight models fail before proceeding to tokenizer optimization or continued pretraining of a Vietnamese-specialized model.
+Qwen3 is particularly useful because you get a clean size series from 0.6B → 1.7B → 4B → 8B under essentially the same model family. Qwen3 explicitly supports 100+ languages/dialects.
 
----
+Gemma 3 gives another useful scaling family. Its published multilingual benchmarks already show a substantial jump between 1B and 4B, which makes the Vietnamese-specific comparison interesting.
 
-## 2. Evaluation Model Matrix
+Phi-4-mini is an especially interesting negative/control case. It is a 3.8B model with a 200K-token vocabulary and strong general reasoning, but Microsoft does not list Vietnamese among its officially supported languages. If it nevertheless performs well on Vietnamese benchmarks, that tells you something important about cross-lingual transfer versus explicitly Vietnamese-oriented pretraining.
 
-### 2.1. Model Groups
+For benchmarks, I would not run everything from the previous list. Use four main layers:
 
-| Group | Models | Rationale |
-| :--- | :--- | :--- |
-| **Qwen scaling** | Qwen3 (0.6B, 1.7B, 4B, 8B) | Controlled scaling study within the same model family; supports 100+ languages. |
-| **Google** | Gemma-3 (1B, 4B) | Strong multilingual alternative; verify the capability jump between 1B and 4B. |
-| **Meta** | Llama-3.2 (1B, 3B) | Widely used small / edge baseline. |
-| **Microsoft** | Phi-4-mini (3.8B) | Strong reasoning baseline (200K vocabulary); does not officially list Vietnamese -> measures cross-lingual transfer. |
-| **Mistral** | Ministral-3 (3B, 8B) | Modern edge-oriented models. |
-| **Vietnamese / SEA Adapted** | BloomVN (0.5B, 8B), SeaLLM-7B, Vistral-7B | Control group specialized / continued-pretrained for Vietnamese & Southeast Asia. |
+| Layer                 | Benchmark    | What it answers                                           |
+| --------------------- | ------------ | --------------------------------------------------------- |
+| Core                  | VMLU         | Vietnamese knowledge + reasoning                          |
+| Vietnam-specific      | V-Bench      | culture, medicine, Vietnamese knowledge, agentic/tool use |
+| Linguistic robustness | VialectBench | dialect robustness                                        |
+| General NLU           | ViGLUE       | Vietnamese language understanding                         |
+| Optional intrinsic    | ViWiki/PPL   | raw Vietnamese language modeling                          |
 
-### 2.2. Minimal 10-Model Experiment
+VMLU is the cleanest primary benchmark. It spans 58 subjects and the broader suite covers knowledge, reading comprehension, reasoning and dialogue.
 
-Optimized to run systematically on a feasible single-GPU setup (e.g., RTX 5090 / A100 class):
+V-Bench adds something VMLU does not: explicitly Vietnam-centric culture, regional knowledge, health, safety-related content and agentic behavior. The current public release has more than 40,000 questions/tasks; its public scoring currently supports multiple-choice and function-call agentic tasks, while Safety is not currently included in the public score.
 
-1. **Qwen3-0.6B**
-2. **Qwen3-1.7B**
-3. **Qwen3-4B**
-4. **Qwen3-8B**
-5. **Gemma-3-1B**
-6. **Gemma-3-4B**
-7. **Llama-3.2-1B**
-8. **Llama-3.2-3B**
-9. **Phi-4-mini-3.8B**
-10. **BloomVN-8B**
+I would organize the study around four RQs.
 
----
+### RQ1 — Capability scaling
 
-## 3. Evaluation Layers (Benchmarks)
+$$
+\text{Vietnamese capability} = f(\text{model size})
+$$
 
-| Layer | Benchmark | What It Measures |
-| :--- | :--- | :--- |
-| **Core** | **VMLU** | Multidisciplinary knowledge (58 subjects) & Vietnamese reasoning. |
-| **Vietnam-specific** | **V-Bench** | Indigenous culture, medicine, Vietnam-specific knowledge, safety & agentic tasks (function calling). |
-| **Linguistic Robustness** | **VialectBench** | Model robustness to Vietnamese dialects & regional variants. |
-| **General NLU** | **ViGLUE** | General reading comprehension & natural language understanding. |
-| **Intrinsic (Optional)** | **ViWiki / PPL** | Perplexity on standard Vietnamese text (raw language modeling). |
+For Qwen3:
 
----
+```text
+0.6B → 1.7B → 4B → 8B
+```
 
-## 4. Detailed Research Questions
+Measure whether gains are approximately monotonic, and where diminishing returns start.
 
-### RQ1: Capability Scaling
+### RQ2 — Architecture/model-family effect
 
-$$\text{Vietnamese capability} = f(\text{model size})$$
+```text
+~3–4B class
 
-- Verified across the Qwen3 size series: $0.6\text{B} \rightarrow 1.7\text{B} \rightarrow 4\text{B} \rightarrow 8\text{B}$.
-- Determine whether gains are approximately monotonic and where diminishing returns begin.
+Qwen3-4B
+Gemma-3-4B
+Phi-4-mini-3.8B
+Llama-3.2-3B
+Ministral-3-3B
+```
 
-### RQ2: Architecture / Model-Family Effect at ~3–4B
+This is probably the most informative comparison because parameter count is approximately controlled.
 
-Controlled comparison of parameter count:
+### RQ3 — General multilingual versus Vietnamese-adapted models
 
-$$\text{Qwen3-4B} \quad \text{vs} \quad \text{Gemma-3-4B} \quad \text{vs} \quad \text{Phi-4-mini-3.8B} \quad \text{vs} \quad \text{Llama-3.2-3B} \quad \text{vs} \quad \text{Ministral-3-3B}$$
+```text
+Generic multilingual
+    Qwen / Gemma / Llama
+             ↓
+       versus
+             ↓
+Vietnamese/SEA adapted
+    BloomVN / SeaLLM / Vistral
+```
 
-### RQ3: Generic Multilingual vs. Vietnamese-Adapted Models
+The important question is whether explicit Vietnamese adaptation still beats newer general multilingual LLMs.
 
-$$\text{Generic Multilingual (Qwen / Gemma / Llama)} \quad \longleftrightarrow \quad \text{Vietnamese/SEA Adapted (BloomVN / SeaLLM / Vistral)}$$
+VMLU already illustrates why this is interesting. For example, its public leaderboard reports roughly 57.5 for Qwen2.5-7B-Instruct, 56.6 for BloomVN-8B-chat, 53.3 for SeaLLM-7B-v2.5 and 50.1 for Vistral-7B-Chat. New multilingual foundation models may have closed or reversed the specialized-model advantage.
 
-- Determine whether new-generation multilingual foundation models have closed or reversed the gap against models explicitly continued-pretrained for Vietnamese.
+### RQ4 — Quality versus deployment cost
 
-### RQ4: Quality vs. Deployment Cost
+Do not define “effective” using accuracy alone. Measure:
 
-Evaluate Quality $Q$ alongside Cost $C$:
+$$
+Q = \text{benchmark performance}
+$$
 
-$$Q = \{\text{VMLU, V-Bench, VialectBench, ViGLUE}\}$$
-$$C = \{\text{Parameters, Peak VRAM, TTFT (Time to First Token), Tokens/sec, Total Latency, Output Tokens}\}$$
+against
 
-- Plot **Pareto frontiers** illustrating the relationship between **Vietnamese Accuracy** and **GPU Memory / Latency** rather than inventing a weighted "efficiency score."
+$$
+C = \{\text{parameters, VRAM, latency, energy, tokens generated}\}.
+$$
 
----
+For every model record at minimum:
 
-## 5. Tokenizer Efficiency Evaluation
+```text
+VMLU accuracy
+V-Bench score
+VialectBench accuracy/F1
+ViGLUE aggregate
 
-Measure the cost of representing Vietnamese text for each tokenizer:
+Parameters
+Peak VRAM
+TTFT
+tokens/sec
+total latency/question
+input tokens/question
+output tokens/question
+```
 
-- **Tokens / Word ratio**: $F = \frac{N_{\text{tokens}}}{N_{\text{words}}}$
-- Tokens per 1,000 Vietnamese characters.
-- Average characters per token.
-- Vietnamese vs. English tokenization ratio (prompt token count comparison).
+Then plot Pareto frontiers such as:
 
----
+```text
+              Vietnamese accuracy ↑
+                          ● 8B
+                     ● 4B
+                 ● 3B
+           ● 1.7B
 
-## 6. Evaluation Regimes
+                    → GPU memory
+```
 
-1. **Regime A — Capability Baseline**:
-   - Precision: BF16 / FP16.
-   - Zero-shot (or few-shot standardized per benchmark).
-   - Official model chat template.
-   - No quantization.
+This is much more defensible than inventing a weighted “efficiency score.”
 
-2. **Regime B — Edge Deployment**:
-   - Quantization: INT4 / AWQ / GGUF.
-   - Batch size = 1.
-   - Same serving engine (vLLM / SGLang / Ollama) and consistent hardware configuration.
+There is another dimension I strongly recommend adding: tokenizer efficiency. For Vietnamese, measure:
 
-3. **Regime C — Reasoning Budget**:
-   - For reasoning (thinking) models such as Qwen3:
-     - Compare `non-thinking` vs. `thinking`.
-     - Fixed reasoning token budget: **128 / 512 / 2048 tokens**.
+$$
+F=\frac{N_{\text{tokens}}}{N_{\text{words}}}
+$$
 
----
+plus:
 
-## 7. Action Plan
+- tokens / 1,000 Vietnamese characters;
+- characters / token;
+- prompt token count;
+- Vietnamese versus English tokenization ratio.
 
-1. **Phase 1**: Standardize the benchmark pipeline (VMLU, V-Bench, VialectBench, ViGLUE) and tooling for tokenization / inference profiling.
-2. **Phase 2**: Run Regime A evaluation & tokenizer analysis on the 10 core models.
-3. **Phase 3**: Run Regime B (Edge / INT4) and Regime C (reasoning budget) evaluations.
-4. **Phase 4**: Aggregate data, draw Pareto frontiers, analyze results, and write the research report.
+This can explain why two models with similar parameter counts have different inference cost on Vietnamese.
+
+For reasoning models such as Qwen3, you need two separate conditions:
+
+```text
+Qwen3-4B non-thinking
+Qwen3-4B thinking
+```
+
+But thinking mode must have a fixed reasoning budget. Otherwise comparisons become misleading: a 4B model generating 5,000 reasoning tokens is not operating under the same compute budget as a 4B model generating 50 tokens. Qwen itself documents distinct thinking/non-thinking modes and recommends different generation settings.
+
+I would therefore report three evaluation regimes:
+
+```text
+Regime A — Capability
+BF16
+zero-shot
+official chat template
+fixed max output
+no quantization
+
+Regime B — Edge deployment
+INT4
+batch = 1
+same GPU
+same serving engine
+same benchmark
+
+Regime C — Reasoning budget
+128 / 512 / 2048 reasoning tokens
+```
+
+This creates a much stronger paper:
+
+> “Small Open-Weight Language Models for Vietnamese: A Capability–Efficiency Benchmark”
+
+rather than merely:
+
+> “Evaluation of Small LLMs on VMLU.”
+
+There is an additional issue worth exploiting. The Qwen3 technical report already reports Vietnamese-specific results on MLogiQA, INCLUDE, MT-AIME24 and PolyMath, and shows a very strong size effect—for example Qwen3-0.6B, 1.7B, 4B and 8B improve substantially as scale increases. So merely showing that “larger Qwen3 performs better in Vietnamese” is not novel.
+
+The stronger contribution is therefore:
+
+$$
+\boxed{
+\text{Vietnam-specific capability}
++
+\text{dialect robustness}
++
+\text{tokenization}
++
+\text{inference efficiency}
+}
+$$
+
+under controlled sub-8B deployment.
+
+My preferred minimal experiment would be only 10 models:
+
+```text
+Qwen3-0.6B
+Qwen3-1.7B
+Qwen3-4B
+Qwen3-8B
+
+Gemma-3-1B
+Gemma-3-4B
+
+Llama-3.2-1B
+Llama-3.2-3B
+
+Phi-4-mini-3.8B
+
+BloomVN-8B
+```
+
+This is large enough for a meaningful study but small enough to run systematically on one RTX 5090-class GPU.
+
+If the ultimate goal is your earlier idea of developing a Vietnamese tokenizer/open-weight model, this experiment is actually the correct Stage 0: it establishes exactly where current small open-weight models fail before modifying tokenizer or continued pretraining.
