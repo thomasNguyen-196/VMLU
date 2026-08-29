@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.venv/
 .ipynb_checkpoints
 vmlu_v2
 vmlu/
@@ -16,4 +17,10 @@ all_res/
 !.env.example
 !.env.template
 !.env.sample
+
+# VMLU dataset folders (kept in vmlu_datasets.zip on remote)
+vmlu_dialog_v1/
+vmlu_drop_v1/
+vmlu_mqa_v1.5/
+vmlu_squad_v1/
 
