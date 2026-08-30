@@ -1,0 +1,24 @@
+schema: spec-driven
+
+# Project context — shown to AI when creating artifacts.
+context: |
+  Research repo: small open-weight LLMs (<=8B) for Vietnamese (see PROPOSAL.md).
+  Tech stack: Python 3.12 (uv-managed .venv, no pip), openai SDK against any
+  OpenAI-compatible endpoint (Ollama), pandas, tqdm. Single-script pipeline in
+  code_benchmark/test_ollama.py; legacy/ scripts are frozen historical records.
+  Data: VMLU benchmark (58 subjects / 10,880 MC questions) unpacked from
+  vmlu_datasets.zip into gitignored vmlu_* folders; ground truth for test.jsonl
+  is withheld by design (leaderboard anti-contamination).
+  Conventions: conventional commits; CI gates ruff (F,B,E9) + bandit + parity
+  tests — see CLAUDE.md "CI" section. The build_prompt string is a contract
+  with the official submission format; extract_answer/build_prompt have
+  deliberately duplicated copies in test scripts (never deduplicate them).
+  Outputs (submission.csv, all_res/, logs/) are gitignored and local-only.
+
+# Per-artifact rules (optional)
+rules:
+  proposal:
+    - Always include a "Non-goals" section (research scope creep is costly)
+    - State which evaluation regime (A/B/C from PROPOSAL.md) the change touches
+  tasks:
+    - Benchmark-run tasks must note model + endpoint so results are reproducible

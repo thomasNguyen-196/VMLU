@@ -90,7 +90,7 @@ The gate deliberately does **not** run `test_ollama.py` (needs a live endpoint/m
 
 ## Agent skills
 
-`.claude/skills/` hosts the engineering skill set reused from `../AI-Image` (18 general skills: `/review-and-fix`, `/max-effort-code-audit`, `/diagnosing-bugs`, `/grilling`, `/domain-modeling`, `/codebase-design`, `/tdd`, `/prototype`, `/triage`, `/to-spec`, `/to-tickets`, `/handoff`, `/teach`, `/ask-matt`, `/writing-for-agents`, `/improve-codebase-architecture`, `/grill-with-docs`, `/setup-matt-pocock-skills`). Repo config for them:
+`.claude/skills/` hosts the engineering skill set reused from `../AI-Image` (23 general skills: `/review-and-fix`, `/max-effort-code-audit`, `/diagnosing-bugs`, `/grilling`, `/domain-modeling`, `/codebase-design`, `/tdd`, `/prototype`, `/triage`, `/to-spec`, `/to-tickets`, `/handoff`, `/teach`, `/ask-matt`, `/writing-for-agents`, `/improve-codebase-architecture`, `/grill-with-docs`, `/setup-matt-pocock-skills`, + the 5 openspec ones below). Repo config for them:
 
 ### Issue tracker
 
@@ -104,7 +104,7 @@ Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `
 
 Single-context: `CONTEXT.md` + `docs/adr/` at the repo root, created lazily by `/domain-modeling`. See `docs/agents/domain.md`.
 
-Not imported from AI-Image by design: the 8 frontend/imagegen design skills (web-app specific) and the 5 `openspec-*` skills + `/opsx:*` commands (need the `openspec/` tree and CLI this repo doesn't have).
+Also imported from AI-Image: the 5 `openspec-*` skills + `/opsx:*` commands (propose/explore/apply/archive/sync). `openspec` CLI (bun-global, v1.10.0) was run with `openspec init --tools none`; scaffold lives in `openspec/` (`config.yaml` carries project context + artifact rules, `changes/` + `specs/` start empty). Not imported by design: the 8 frontend/imagegen design skills (web-app specific).
 
 ## Code intelligence
 

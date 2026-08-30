@@ -67,3 +67,4 @@ jobs:
 #     endpoint + models; out of scope for a syntax/security gate.
 #   - legacy/ scripts: historical, need openai==0.28.0 + GPU stack; excluded
 #     from both linters' scope (see ruff.toml / .bandit.yml).
+#   - openspec validate: CLI (bun-global) not installed on GH runners.
