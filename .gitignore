@@ -1,6 +1,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# --- CodeGraph index (local, regenerable via `codegraph init`) ---
+.codegraph/
 .venv/
 .ipynb_checkpoints
 vmlu_v2

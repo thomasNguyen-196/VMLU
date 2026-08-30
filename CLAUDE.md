@@ -69,3 +69,8 @@ A single self-contained script, best understood as a pipeline:
 - Data/output paths gitignored: `vmlu/`, `all_res/`, `logs/`, `submission.csv`, `leaderboard.json`, `vmlu_v*`. `.env*` ignored except `.env.example`/templates — keep it that way.
 - `requirements.txt` is a **frozen env snapshot** and contains heavy leftovers (`torch==2.1.2`, `nvidia-*`, `transformers`). The only packages `test_ollama.py` actually needs are `openai>=1.0.0`, `python-dotenv>=1.0.0`, `pandas`, `tqdm`. The pinned GPU stack only matters for `legacy/test_prompt.py`.
 - Legacy scripts read old data paths (`vmlu_v2/`, `vmlu_v1.5/`) relative to `code_benchmark/`; `test_gpt.py` needs a venv with `openai==0.28.0` and the `GPT_KEY` env var.
+
+## Code intelligence
+
+- The repo has `.codegraph/` (index is gitignored; rebuild with `codegraph init`): use **CodeGraph before grep/find/Read** when locating or understanding code. `codegraph_explore` (MCP) or `codegraph explore "<symbols or question>"` returns verbatim source plus call paths and blast radius; the daemon auto-syncs file changes. Code intelligence order: **CodeGraph first → context-mode** (`ctx_search`/`ctx_execute` for indexed content and large-output processing) **→ grep/read/glob last** (configs, docs, dataset files, or confirming one small detail only).
+- For symbol renames, prefer an IDE-aware refactor or CodeGraph call-site review (`codegraph callers`/`codegraph impact`) over naive find-and-replace — `extract_answer`/`build_prompt` have deliberately duplicated copies in the test scripts that grep-based renames will silently miss.

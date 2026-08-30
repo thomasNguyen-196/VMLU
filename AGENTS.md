@@ -34,3 +34,8 @@ python test_gpt.py
 - Data format: JSONL files (`dev.jsonl`, `test.jsonl`) with objects containing `id`, `question`, `choices` (list of 4-5 options), and `answer` (A/B/C/D/E).
 - Submission format: UTF-8 CSV with `id,answer` columns.
 - Outputs & logs are stored in `logs/` or `code_benchmark/all_res/`.
+
+## Code Intelligence
+
+- Code intelligence tool order (mandatory): **CodeGraph first** (`codegraph_explore` MCP or `codegraph explore "<question>"` CLI — one call returns verbatim source + call path + blast radius; don't grep/read first) → context-mode (`ctx_search`/`ctx_execute`) → grep/read/glob last (configs, docs, dataset files, or confirming one detail). Check the staleness banner: files listed there are pending re-index — read those directly.
+- `.codegraph/` is gitignored; rebuild the index with `codegraph init` after cloning.
