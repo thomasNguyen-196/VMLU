@@ -34,3 +34,12 @@ python test_gpt.py
 - Data format: JSONL files (`dev.jsonl`, `test.jsonl`) with objects containing `id`, `question`, `choices` (list of 4-5 options), and `answer` (A/B/C/D/E).
 - Submission format: UTF-8 CSV with `id,answer` columns.
 - Outputs & logs are stored in `logs/` or `code_benchmark/all_res/`.
+
+## CI (light syntax + security review)
+
+CI (`.github/workflows/ci.yml`) gates PRs/pushes to `main`: `ruff check .` (syntax/logic — rules F,B,E9; config `ruff.toml`) + `bandit -r code_benchmark -c .bandit.yml -q` (security) + both test suites. Reproduce locally with `uvx ruff@0.16.1 check .` and `uvx --from bandit bandit -r code_benchmark -c .bandit.yml -q`. `code_benchmark/legacy/` is excluded from both linters by design.
+
+## Code Intelligence
+
+- Code intelligence tool order (mandatory): **CodeGraph first** (`codegraph_explore` MCP or `codegraph explore "<question>"` CLI — one call returns verbatim source + call path + blast radius; don't grep/read first) → context-mode (`ctx_search`/`ctx_execute`) → grep/read/glob last (configs, docs, dataset files, or confirming one detail). Check the staleness banner: files listed there are pending re-index — read those directly.
+- `.codegraph/` is gitignored; rebuild the index with `codegraph init` after cloning.

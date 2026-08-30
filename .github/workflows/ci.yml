@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # ── Light review: Python syntax/logic + security ─────────────────────────
+  python-static:
+    name: Python syntax + security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff + bandit
+        run: pip install ruff==0.16.1 bandit==1.9.4
+
+      # Syntax/logic errors (F = undefined names/unused imports, B = bugbear
+      # logic bugs, E9 = syntax). Style rules intentionally not gated.
+      # Config in ruff.toml scopes to code_benchmark/ and exempts legacy/.
+      - name: Ruff — syntax & logic check
+        run: ruff check .
+
+      # Security scan. Config in .bandit.yml skips test asserts (intentional)
+      # and exempts legacy/ (historical, trust_remote_code is by design there).
+      - name: Bandit — security scan
+        run: bandit -r code_benchmark -c .bandit.yml -q
+
+  # ── Parity tests (no API key needed — pure parsing/prompt checks) ────────
+  tests:
+    name: Unit + parity tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps
+        run: pip install openai pandas python-dotenv tqdm
+
+      # Standalone extract_answer/build_prompt parity reference (dep-free).
+      - name: test_parsing.py (parity contract)
+        run: python code_benchmark/test_parsing.py
+
+      # Imports code_benchmark.test_ollama as a package — must run from root.
+      - name: test_suite.py (unittest)
+        run: python -m unittest code_benchmark.test_suite
+
+# Not gated on PRs (by design):
+#   - Actual benchmark runs (test_ollama.py): need a live OpenAI-compatible
+#     endpoint + models; out of scope for a syntax/security gate.
+#   - legacy/ scripts: historical, need openai==0.28.0 + GPU stack; excluded
+#     from both linters' scope (see ruff.toml / .bandit.yml).
+#   - openspec validate: CLI (bun-global) not installed on GH runners.

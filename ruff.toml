@@ -1,0 +1,20 @@
+# Ruff config — syntax + logic focused (CI gate), pattern mirrors ../AI-Image
+#
+# Rules:
+#   F   = pyflakes logic errors (undefined names, unused imports, shadowing)
+#   B   = flake8-bugbear logic bugs
+#   E9  = syntax errors
+# Style-only rules (E/W/C/I) are intentionally NOT selected — light gate only.
+
+target-version = "py312"
+line-length = 120
+
+# Legacy scripts are historical records (openai==0.28.0 era, frozen code):
+# not gated, and their unused imports document the original research setup.
+exclude = [
+    ".venv",
+    "code_benchmark/legacy",
+]
+
+[lint]
+select = ["F", "B", "E9"]

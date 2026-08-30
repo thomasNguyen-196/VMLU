@@ -1,19 +1,14 @@
-import os
-import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import pandas as pd
-from openai import AuthenticationError
 
 from code_benchmark.test_ollama import (
     call_model_with_retry,
     build_prompt,
     extract_answer,
     find_latest_checkpoint,
-    verify_credentials,
-    parse_args
 )
 
 class TestVMLUBenchmark(unittest.TestCase):
@@ -90,7 +85,7 @@ class TestVMLUBenchmark(unittest.TestCase):
             (tmppath / "raw_result_200.csv").touch()
             latest = find_latest_checkpoint(tmppath)
             self.assertIsNotNone(latest)
-            self.assertEqual(latest.name, "raw_result_500.csv")
+            self.assertEqual(latest.name if latest else None, "raw_result_500.csv")
 
     def test_checkpoint_resume_simulation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
