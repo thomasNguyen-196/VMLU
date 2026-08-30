@@ -88,6 +88,24 @@ uvx --from bandit bandit -r code_benchmark -c .bandit.yml -q
 
 The gate deliberately does **not** run `test_ollama.py` (needs a live endpoint/models) and never lints `legacy/` (frozen `openai==0.28.0` scripts — their unused imports document the original research setup).
 
+## Agent skills
+
+`.claude/skills/` hosts the engineering skill set reused from `../AI-Image` (18 general skills: `/review-and-fix`, `/max-effort-code-audit`, `/diagnosing-bugs`, `/grilling`, `/domain-modeling`, `/codebase-design`, `/tdd`, `/prototype`, `/triage`, `/to-spec`, `/to-tickets`, `/handoff`, `/teach`, `/ask-matt`, `/writing-for-agents`, `/improve-codebase-architecture`, `/grill-with-docs`, `/setup-matt-pocock-skills`). Repo config for them:
+
+### Issue tracker
+
+Issues and specs live as GitHub Issues on `thomasNguyen-196/VMLU`, driven by the `gh` CLI (logged in as `nttung245`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`) — labels must be created once in the GitHub repo before `/triage` can apply them. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root, created lazily by `/domain-modeling`. See `docs/agents/domain.md`.
+
+Not imported from AI-Image by design: the 8 frontend/imagegen design skills (web-app specific) and the 5 `openspec-*` skills + `/opsx:*` commands (need the `openspec/` tree and CLI this repo doesn't have).
+
 ## Code intelligence
 
 - The repo has `.codegraph/` (index is gitignored; rebuild with `codegraph init`): use **CodeGraph before grep/find/Read** when locating or understanding code. `codegraph_explore` (MCP) or `codegraph explore "<symbols or question>"` returns verbatim source plus call paths and blast radius; the daemon auto-syncs file changes. Code intelligence order: **CodeGraph first → context-mode** (`ctx_search`/`ctx_execute` for indexed content and large-output processing) **→ grep/read/glob last** (configs, docs, dataset files, or confirming one small detail only).
