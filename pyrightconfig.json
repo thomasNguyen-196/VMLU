@@ -1,0 +1,6 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "include": ["code_benchmark"],
+  "exclude": ["code_benchmark/legacy", ".venv"]
+}

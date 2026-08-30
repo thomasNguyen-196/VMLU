@@ -70,6 +70,24 @@ A single self-contained script, best understood as a pipeline:
 - `requirements.txt` is a **frozen env snapshot** and contains heavy leftovers (`torch==2.1.2`, `nvidia-*`, `transformers`). The only packages `test_ollama.py` actually needs are `openai>=1.0.0`, `python-dotenv>=1.0.0`, `pandas`, `tqdm`. The pinned GPU stack only matters for `legacy/test_prompt.py`.
 - Legacy scripts read old data paths (`vmlu_v2/`, `vmlu_v1.5/`) relative to `code_benchmark/`; `test_gpt.py` needs a venv with `openai==0.28.0` and the `GPT_KEY` env var.
 
+## CI (light syntax + security review)
+
+`.github/workflows/ci.yml` gates PRs and pushes to `main` with two jobs (pattern mirrors `../AI-Image`):
+
+1. **python-static** — `ruff check .` (rules `F,B,E9` = syntax/logic/bugbear only, no style rules; config in `ruff.toml`) + `bandit -r code_benchmark -c .bandit.yml -q` (security; `B101` skipped for test asserts, `code_benchmark/legacy/` excluded as historical research records).
+2. **tests** — `test_parsing.py` (parity contract) + `python -m unittest code_benchmark.test_suite`.
+
+Reproduce the gate locally before pushing:
+
+```bash
+uvx ruff@0.16.1 check .                                          # versions pinned in ci.yml
+uvx --from bandit bandit -r code_benchmark -c .bandit.yml -q
+.venv/bin/python code_benchmark/test_parsing.py
+.venv/bin/python -m unittest code_benchmark.test_suite
+```
+
+The gate deliberately does **not** run `test_ollama.py` (needs a live endpoint/models) and never lints `legacy/` (frozen `openai==0.28.0` scripts — their unused imports document the original research setup).
+
 ## Code intelligence
 
 - The repo has `.codegraph/` (index is gitignored; rebuild with `codegraph init`): use **CodeGraph before grep/find/Read** when locating or understanding code. `codegraph_explore` (MCP) or `codegraph explore "<symbols or question>"` returns verbatim source plus call paths and blast radius; the daemon auto-syncs file changes. Code intelligence order: **CodeGraph first → context-mode** (`ctx_search`/`ctx_execute` for indexed content and large-output processing) **→ grep/read/glob last** (configs, docs, dataset files, or confirming one small detail only).

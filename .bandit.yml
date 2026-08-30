@@ -1,0 +1,14 @@
+# Bandit config — Python security scanner (CI gate), pattern mirrors ../AI-Image
+# Scope: the active pipeline (code_benchmark/*.py). Tests and legacy are
+# dev/historical tools, handled per-file below.
+
+exclude_dirs:
+  # Historical scripts (openai==0.28.0 era): load HF models with
+  # trust_remote_code=True by design (B615) — research records, not shipped
+  # code. Excluded from the gate like in ruff.toml.
+  - code_benchmark/legacy
+
+skips:
+  # B101: assert is the intended check mechanism in test_parsing.py (the
+  # dependency-free parity harness) — process-local, not a security boundary.
+  - B101
