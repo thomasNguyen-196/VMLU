@@ -36,6 +36,11 @@ from code_benchmark.run_reading_eval import (
     resume_key,
     find_latest_reading_checkpoint,
 )
+from code_benchmark.export_annotation_workbooks import (
+    merge_answers,
+    normalize_answer,
+    workbook_rows,
+)
 
 class TestVMLUBenchmark(unittest.TestCase):
 
@@ -410,6 +415,36 @@ class TestReadingRunner(unittest.TestCase):
             latest = find_latest_reading_checkpoint(tmp)
             assert latest is not None
             self.assertEqual(latest.name, "reading_result_400.csv")  # still ignores MC
+
+
+class TestAnnotationWorkbooks(unittest.TestCase):
+    def test_normalize_conservative(self):
+        # case/whitespace/trailing punctuation fold together...
+        self.assertEqual(normalize_answer("  Hà   Nội. "), normalize_answer("hà nội"))
+        # ...but number-separator variants must NOT (go to adjudication)
+        self.assertNotEqual(normalize_answer("15,00%"), normalize_answer("15.00%"))
+
+    def test_merge_answers_buckets(self):
+        a = {"k1": "Hà Nội", "k2": "1916", "k3": "A", "k4": "x", "k5": ""}
+        b = {"k1": "hà nội ", "k2": "1916.", "k3": "B", "k4": "", "k5": ""}
+        r = merge_answers(a, b)
+        self.assertEqual(dict(r["agreed"]), {"k1": "Hà Nội", "k2": "1916"})
+        self.assertEqual(r["disagreements"], [("k3", "A", "B")])
+        self.assertEqual(r["empty_b"], ["k4"])
+        self.assertEqual(r["empty_both"], ["k5"])
+
+    def test_workbook_rows_group_passages(self):
+        joined = [
+            {"dataset": "squad", "item_id": 9, "passage_id": 2, "stratum": "s", "question": "q9", "context": "c"},
+            {"dataset": "squad", "item_id": 10, "passage_id": 2, "stratum": "s", "question": "q10", "context": "c"},
+            {"dataset": "drop", "item_id": 3, "passage_id": 1, "stratum": "d", "question": "q3", "context": "c"},
+        ]
+        rows = workbook_rows(joined)
+        self.assertEqual([r["item_id"] for r in rows], ["3", "9", "10"])  # drop first, then grouped
+        keys = [r["passage_key"] for r in rows]
+        self.assertEqual(keys, ["drop:1", "squad:2", "squad:2"])  # same passage contiguous
+        self.assertTrue(all(r["gold_answer"] == "" for r in rows))  # blind, empty
+        self.assertNotIn("raw_response", rows[0])  # model answers must never leak in
 
 
 if __name__ == "__main__":
