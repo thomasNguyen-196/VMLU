@@ -1,6 +1,8 @@
+import random
 import tempfile
 import unittest
 from pathlib import Path
+from collections import Counter
 from unittest.mock import MagicMock
 import pandas as pd
 
@@ -14,6 +16,17 @@ from code_benchmark.test_ollama import (
     detect_scorable,
     score_row,
     build_accuracy_rows,
+)
+from code_benchmark.make_eval_sample import (
+    allocate,
+    sample_strata,
+    passage_ids,
+    primary_category,
+    squad_stratum,
+    build_manifest,
+    DROP_PINNED,
+    PASSAGE_CAP,
+    SQUAD_INFER_FLOOR,
 )
 
 class TestVMLUBenchmark(unittest.TestCase):
@@ -104,6 +117,7 @@ class TestVMLUBenchmark(unittest.TestCase):
             
             latest = find_latest_checkpoint(tmppath)
             self.assertEqual(latest, cp_file)
+            assert latest is not None  # narrows Path|None for pd.read_csv
             cp_df = pd.read_csv(latest)
             self.assertEqual(len(cp_df), 2)
             self.assertEqual(cp_df.iloc[0]["answer"], "A")
@@ -114,7 +128,7 @@ class TestSubjectCategoryMap(unittest.TestCase):
         self.assertEqual(len(SUBJECTS), 58)
         self.assertEqual(set(SUBJECTS), set(range(1, 59)))
         by_cat = {}
-        for num, (_name, cat) in SUBJECTS.items():
+        for num, (_subject_name, cat) in SUBJECTS.items():
             by_cat.setdefault(cat, []).append(num)
         # official README: 01-21 STEM, 22-31 Social Science, 32-49 Humanity, 50-58 Other
         self.assertEqual(sorted(by_cat), ["Humanity", "Other", "STEM", "Social Science"])
@@ -209,6 +223,125 @@ class TestScoring(unittest.TestCase):
         self.assertTrue(p.startswith("Chỉ đưa ra chữ cái đứng trước câu trả lời đúng"))
         self.assertTrue(p.endswith("Đáp án: "))
         self.assertEqual(extract_answer("B"), "B")
+
+
+def _synth_squad(n_passages=60, words=100):
+    """Synthetic SQuAD-like rows: 2 questions per passage (one direct, one
+    inference), context sized so the caller picks the length bucket."""
+    rows, rid = [], 0
+    for p in range(n_passages):
+        ctx = " ".join(f"từ{p}_{i}" for i in range(words))
+        rows.append({"id": rid, "question": "Ai là người X?", "context": ctx}); rid += 1
+        rows.append({"id": rid, "question": "Tại sao X xảy ra?", "context": ctx}); rid += 1
+    return rows
+
+
+class TestAllocate(unittest.TestCase):
+    def test_largest_remainder_sums_to_total(self):
+        w = {"a": 1001, "b": 979, "c": 732, "d": 471, "e": 126}
+        q = allocate(w, 200)
+        self.assertEqual(sum(q.values()), 200)
+        # all five strata represented (no silent zero from 126/3309*200~7.6)
+        self.assertEqual(set(q), set(w))
+
+    def test_pinned_excluded_from_redistribution(self):
+        w = {"count": 471, "add_sub": 979, "comparison": 1001}
+        q = allocate(w, 200, pinned=DROP_PINNED)
+        self.assertEqual(q["count"], 40)
+        self.assertEqual(sum(q.values()), 200)
+        # free strata split 160 proportionally to each other
+        self.assertEqual(q["comparison"] + q["add_sub"], 160)
+
+    def test_pinned_over_total_raises(self):
+        with self.assertRaises(ValueError):
+            allocate({"a": 10}, 5, pinned={"b": 6})
+
+    def test_deterministic_tiebreak(self):
+        w = {"zz": 10, "aa": 10, "mm": 10}
+        self.assertEqual(allocate(w, 7), allocate(w, 7))
+
+
+class TestStratumFns(unittest.TestCase):
+    def test_primary_category_normalizes(self):
+        self.assertEqual(primary_category("comparison1,add_sub"), "comparison")
+        self.assertEqual(primary_category("add_sub"), "add_sub")
+        self.assertEqual(primary_category("count,comparison"), "count")
+
+    def test_squad_stratum_buckets_and_cues(self):
+        short_direct = {"context": "x " * 50, "question": "Ai là ai?"}
+        long_infer = {"context": "x " * 600, "question": "Tại sao lại như vậy?"}
+        self.assertEqual(squad_stratum(short_direct), "short-direct")
+        self.assertEqual(squad_stratum(long_infer), "long-infer")
+
+
+class TestSampleStrata(unittest.TestCase):
+    def test_quota_met_and_reproducible(self):
+        rows = _synth_squad()  # 100-word contexts -> short bucket only
+        pid = passage_ids(rows)
+        fn = squad_stratum
+        quotas = {"short-direct": 15, "short-infer": 15}
+        a = sample_strata(rows, quotas, fn, random.Random(42), passage_cap=PASSAGE_CAP, pid=pid)
+        b = sample_strata(rows, quotas, fn, random.Random(42), passage_cap=PASSAGE_CAP, pid=pid)
+        self.assertEqual([x["id"] for x in a], [x["id"] for x in b])  # same seed -> same draw
+        self.assertEqual(Counter(map(fn, a)), quotas)
+
+    def test_passage_cap_respected_with_two_per_passage_pool(self):
+        rows = _synth_squad()  # every passage has exactly 2 questions, both strata differ
+        pid = passage_ids(rows)
+        quotas = {"short-direct": 20}
+        got = sample_strata(rows, quotas, squad_stratum, random.Random(1),
+                            passage_cap=1, pid=pid)
+        self.assertEqual(len(got), 20)
+        self.assertLessEqual(max(Counter(pid[str(r["context"])] for r in got).values()), 1)
+
+    def test_starved_stratum_refilled_without_overshooting(self):
+        # 4 short passages (1q each), 1 long (>400 words) passage with 4 questions, cap 2
+        big = " ".join(f"w{i}" for i in range(500))
+        rows = ([{"id": i, "question": "q", "context": f"w{i}"} for i in range(4)]
+                + [{"id": 10 + i, "question": "q", "context": big} for i in range(4)])
+        pid = passage_ids(rows)
+        quotas = {"short-direct": 2, "long-direct": 2}
+        got = sample_strata(rows, quotas, squad_stratum, random.Random(3),
+                            passage_cap=PASSAGE_CAP, pid=pid)
+        self.assertEqual(Counter(squad_stratum(r) for r in got), quotas)
+        self.assertEqual(len({id(r) for r in got}), 4)  # no duplicates
+
+    def test_missing_stratum_raises(self):
+        rows = _synth_squad(n_passages=3)
+        with self.assertRaises(ValueError):
+            sample_strata(rows, {"nope-stratum": 1}, squad_stratum, random.Random(0))
+
+
+class TestBuildManifest(unittest.TestCase):
+    def test_shape_caps_and_empty_gold(self):
+        # half short (100w), half long (500w) passages -> 4 strata: short/long x direct/infer
+        squad = _synth_squad(n_passages=60, words=100) + _synth_squad(n_passages=60, words=500)
+        for i, r in enumerate(squad):  # unique ids across the two halves
+            r["id"] = i
+        drop = [{"question_id": i, "category": c, "context": f"c{i} text", "question": "q?"}
+                for i, c in enumerate(["count", "add_sub", "comparison", "selection", "other"] * 40)]
+        rows = build_manifest(squad, drop, seed=42, n_each=60)
+        self.assertEqual(len(rows), 120)
+        self.assertTrue(all(r["gold_answer"] == "" for r in rows))
+        by_ds = Counter(r["dataset"] for r in rows)
+        self.assertEqual(by_ds, {"squad": 60, "drop": 60})
+        sq = [r for r in rows if r["dataset"] == "squad"]
+        self.assertLessEqual(max(Counter(r["passage_id"] for r in sq).values()), PASSAGE_CAP)
+        # every infer stratum pinned to the floor (fixture spans 2 infer cells:
+        # short-infer + long-infer; no mid contexts in the synthetic data)
+        self.assertEqual(sum(1 for r in sq if r["stratum"].endswith("-infer")), 2 * SQUAD_INFER_FLOOR)
+        # DROP count oversample survives end-to-end
+        dr = [r for r in rows if r["dataset"] == "drop"]
+        self.assertEqual(Counter(r["stratum"] for r in dr)["count"],
+                         min(DROP_PINNED["count"], len(dr)))
+
+    def test_manifest_reproducible_bytes(self):
+        squad = _synth_squad(n_passages=80)
+        drop = [{"question_id": i, "category": c, "context": f"c{i}", "question": "q?"}
+                for i, c in enumerate(["add_sub", "count"] * 100)]
+        a = build_manifest(squad, drop, seed=42, n_each=50)
+        b = build_manifest(squad, drop, seed=42, n_each=50)
+        self.assertEqual(a, b)
 
 
 if __name__ == "__main__":
