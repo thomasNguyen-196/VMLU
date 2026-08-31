@@ -32,3 +32,6 @@ vmlu_squad_v1/
 annotation_workbooks/
 gold_agreed.csv
 adjudication.csv
+review_ui.html
+review_*.csv
+state_*.json

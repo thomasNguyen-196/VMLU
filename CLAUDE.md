@@ -38,11 +38,18 @@ cp .env.example .env
 # *-infer pinned to 5 each, max PASSAGE_CAP questions per passage. gold_answer ships
 # EMPTY — filled by the 2-annotator pass. The committed CSV is the pre-registration.
 
-# 4. Tests
+# 4. Annotate / review the eval set (issue #3)
+.venv/bin/python code_benchmark/export_annotation_workbooks.py build     # -> annotation_workbooks/annotator_{A,B}.csv (blind, context embedded)
+.venv/bin/python code_benchmark/export_annotation_workbooks.py merge     # compare the 2 filled books -> gold_agreed/adjudication (+ --apply)
+.venv/bin/python code_benchmark/build_review_ui.py build                 # -> review_ui.html (model-visible accept/reject UI, localStorage per reviewer+model)
+.venv/bin/python code_benchmark/export_annotation_workbooks.py review --a review_A.csv --b review_B.csv   # acceptance% + IAA + gold (accept -> model answer, reject -> correction); --apply fills manifest
+# review_ui.html is the REVIEW pass (answers visible); merge is the BLIND gold pass — two pipelines, do not cross-apply.
+
+# 5. Tests
 .venv/bin/python code_benchmark/test_parsing.py   # standalone parity tests (also works on system python3)
 .venv/bin/python -m unittest code_benchmark.test_suite   # run from REPO ROOT: imports `code_benchmark.test_ollama` as a package
 
-# 5. Legacy scripts (historical only, need a venv pinned to openai==0.28.0)
+# 6. Legacy scripts (historical only, need a venv pinned to openai==0.28.0)
 cd code_benchmark && GPT_KEY="<KEY>" python3 legacy/test_gpt.py
 cd code_benchmark && python3 legacy/test_prompt.py --llm "bigscience/bloom-1b7" --folder "./vmlu_v1.5/" --device "cuda"
 ```

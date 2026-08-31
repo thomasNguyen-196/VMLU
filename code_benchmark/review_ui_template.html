@@ -1,0 +1,449 @@
+<!doctype html>
+<!--
+  Review UI for the 400-item reading eval (issue #3). DO NOT OPEN THIS FILE
+  DIRECTLY — it is a template: build the real page with
+    .venv/bin/python code_benchmark/build_review_ui.py build
+  which replaces the JSON placeholder in the #data script below with the item
+  blob (build_review_ui.render_html requires EXACTLY ONE occurrence — keep
+  this comment free of the quoted token).
+
+  Single self-contained page (HTML-REPORT.md house pattern: Tailwind CDN +
+  small custom style). Reviewer state: localStorage, namespaced per
+  (annotator, model); leaves via Export CSV / state JSON. Use Chrome/Firefox
+  (file:// localStorage is blocked in Safari). Blind-protocol note: this is
+  the REVIEW pass — model answers are intentionally visible here; the 2-person
+  blind gold pass is a different workbook (annotation_workbooks/).
+-->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VMLU Reading Review — accept % + gold</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* minimal layer; Tailwind utilities carry the rest */
+  .seg[aria-pressed="true"].acc { background:#16a34a; color:#fff; }
+  .seg[aria-pressed="true"].rej { background:#dc2626; color:#fff; }
+  .seg[aria-pressed="true"].uns { background:#475569; color:#fff; }
+  textarea:disabled { opacity:.45; cursor:not-allowed; }
+  .bad { outline:2px solid #dc2626; }
+  kbd { border:1px solid #94a3b8; border-bottom-width:2px; border-radius:4px;
+        padding:0 5px; font-family:ui-monospace,monospace; font-size:11px; background:#f1f5f9; }
+  #ctxBox { white-space:pre-wrap; }
+</style>
+</head>
+<body class="bg-slate-100 text-slate-900 text-sm">
+
+<!-- name gate (blocks the app until a reviewer identity exists) -->
+<div id="gate" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-80">
+    <h1 class="text-base font-bold mb-1">Reviewer identity</h1>
+    <p class="text-slate-500 mb-3">State is stored locally per reviewer + model. Reviewers must work independently — do not import someone else's state.</p>
+    <label class="block mb-1 font-medium" for="gateName">Tên người review (ASCII giúp, vd: <code>linh</code>)</label>
+    <input id="gateName" class="w-full border border-slate-300 rounded px-2 py-1.5 mb-3" autocomplete="off">
+    <button id="gateOk" class="w-full bg-slate-800 text-white rounded px-3 py-1.5 font-semibold">Vào review</button>
+  </div>
+</div>
+
+<!-- shortcuts overlay -->
+<div id="help" class="fixed inset-0 z-40 bg-slate-900/50 hidden items-center justify-center">
+  <div class="bg-white rounded-lg shadow-xl p-5 max-w-md text-[13px] leading-6">
+    <div class="font-bold mb-2">Phím tắt <span class="text-slate-400 font-normal">(Esc đóng)</span></div>
+    <div><kbd>j</kbd>/<kbd>↓</kbd> câu kế · <kbd>k</kbd>/<kbd>↑</kbd> câu trước</div>
+    <div><kbd>a</kbd> hoặc <kbd>Space</kbd> accept (lần 2 = unset)</div>
+    <div><kbd>r</kbd> reject (focus ô sửa nếu trống) · <kbd>u</kbd> clear decision</div>
+    <div><kbd>e</kbd> sửa câu trả lời · <kbd>n</kbd> note · <kbd>t</kbd> next unreviewed</div>
+    <div><kbd>?</kbd> mở/đóng bảng này</div>
+  </div>
+</div>
+
+<!-- header -->
+<header class="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center gap-x-5 gap-y-1" aria-live="polite">
+    <div class="flex items-center gap-2">
+      <label class="font-semibold" for="modelSel">Model</label>
+      <select id="modelSel" class="border border-slate-300 rounded px-2 py-1"></select>
+      <label class="text-slate-500 underline decoration-dotted cursor-pointer">
+        + CSV<input id="csvIn" type="file" accept=".csv" class="hidden">
+      </label>
+    </div>
+    <div class="text-lg font-black tabular-nums">accept <span id="mAcc">—</span>%</div>
+    <div class="tabular-nums">reviewed <span id="mProg" class="font-bold">0/0</span></div>
+    <div class="tabular-nums text-slate-600">squad <span id="mSq">0/0</span> · drop <span id="mDr">0/0</span></div>
+    <details id="stratWrap" class="text-slate-600"><summary class="cursor-pointer select-none">per-stratum</summary>
+      <table id="stratTbl" class="absolute right-4 bg-white border border-slate-300 shadow-lg text-xs tabular-nums"><tbody></tbody></table>
+    </details>
+    <button id="nextUnrev" class="ml-auto bg-slate-700 text-white rounded px-2.5 py-1 font-medium">→ next unreviewed <kbd>t</kbd></button>
+    <div class="text-[11px] text-slate-400"><span id="who"></span> · <span id="saved">—</span></div>
+  </div>
+  <div id="quotaBanner" class="hidden bg-red-600 text-white text-center py-1 font-medium"></div>
+</header>
+
+<!-- main: left reading pane, right decision pane -->
+<main class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+  <section class="lg:col-span-3 space-y-3">
+    <div id="passageBanner" class="text-xs font-semibold text-slate-500"></div>
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">Context</div>
+      <article id="ctxBox" lang="vi" class="text-[15px] leading-7 max-h-[38vh] overflow-y-auto"></article>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">Câu hỏi <span id="itemTag" class="normal-case tracking-normal"></span></div>
+      <p id="qBox" lang="vi" class="text-[15px] font-medium leading-6"></p>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 rounded-lg shadow-sm p-4">
+      <div class="text-xs uppercase tracking-wide text-amber-700 mb-1">Model answer</div>
+      <p id="aBox" lang="vi" class="text-[15px] leading-6 font-mono"></p>
+    </div>
+  </section>
+
+  <aside class="lg:col-span-2 lg:sticky lg:top-[3.2rem] bg-white rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <div class="text-xs uppercase tracking-wide text-slate-400 mb-1.5">Decision</div>
+      <div id="seg" role="radiogroup" aria-label="Decision" class="grid grid-cols-3 gap-1 bg-slate-100 rounded-lg p-1">
+        <button class="seg uns rounded-md py-1.5 font-semibold border border-transparent" data-d="">Unset <kbd>u</kbd></button>
+        <button class="seg acc rounded-md py-1.5 font-semibold border border-transparent" data-d="accept">Accept <kbd>a</kbd></button>
+        <button class="seg rej rounded-md py-1.5 font-semibold border border-transparent" data-d="reject">Reject <kbd>r</kbd></button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1">Accept = model answer thành gold. Reject = câu sửa bên dưới thành gold.</p>
+    </div>
+    <div>
+      <label class="text-xs uppercase tracking-wide text-slate-400" for="corrBox">Corrected answer (bắt buộc khi reject) <kbd>e</kbd></label>
+      <textarea id="corrBox" rows="2" lang="vi" disabled
+        class="mt-1 w-full border border-slate-300 rounded px-2 py-1.5" placeholder="đáp án đúng theo bạn…"></textarea>
+    </div>
+    <div>
+      <label class="text-xs uppercase tracking-wide text-slate-400" for="noteBox">Note <kbd>n</kbd></label>
+      <textarea id="noteBox" rows="3" lang="vi"
+        class="mt-1 w-full border border-slate-300 rounded px-2 py-1.5"
+        placeholder="ghi chú vì sao reject / nguồn span…"></textarea>
+    </div>
+    <div class="grid grid-cols-3 gap-1 pt-1 border-t border-slate-100">
+      <button id="expCsv" class="bg-emerald-600 text-white rounded px-2 py-1.5 font-semibold">Export CSV</button>
+      <button id="expJson" class="bg-slate-600 text-white rounded px-2 py-1.5">Export state</button>
+      <label class="bg-slate-600 text-white rounded px-2 py-1.5 text-center cursor-pointer">
+        Import state<input id="jsonIn" type="file" accept=".json" class="hidden">
+      </label>
+    </div>
+    <p class="text-[11px] text-slate-400">Export CSV sau <b>mỗi buổi review</b> — localStorage chỉ sống trên máy/trình duyệt này.</p>
+    <nav class="flex gap-1 pt-1">
+      <button id="prevBtn" class="flex-1 border border-slate-300 rounded px-2 py-1.5">← prev <kbd>k</kbd></button>
+      <button id="nextBtn" class="flex-1 border border-slate-300 rounded px-2 py-1.5">next → <kbd>j</kbd></button>
+    </nav>
+  </aside>
+</main>
+
+<script id="data" type="application/json">"__VMLU_DATA__"</script>
+<script>
+"use strict";
+const DATA = JSON.parse(document.getElementById("data").textContent);
+if (DATA.schema_version !== 1) alert("blob schema_version " + DATA.schema_version + " — rebuild the page");
+
+/* ---------- state model ----------
+   One bucket per (annotator, model): { [itemKey]: {d,c,n} }, itemKey = dataset:item_id.
+   Never the array index: regeneration/reorder must not shift decisions.       */
+const LS_ANNO = "vmlu.review.annotator";
+const slug = s => String(s).trim().toLowerCase().normalize("NFD")
+  .replace(/[̀-ͯ]/g, "")            // strip Vietnamese diacritics
+  .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+const stateKey = (aSlug, m) => `vmlu.review.state.${aSlug}.${slug(m)}`;
+const saveKey  = (aSlug, m) => `vmlu.review.lastsave.${aSlug}.${slug(m)}`;
+
+const S = {
+  annotator: "", model: DATA.models[0], idx: 0,
+  state: {},          // active bucket {key: {d,c,n}}
+  extraModels: {},    // model name -> {key: answer} loaded via file picker
+  quota: false,       // localStorage full/blocked -> banner, in-memory only
+  dirty: false,
+};
+
+function lsGet(k) { try { return localStorage.getItem(k); } catch { S.quota = true; return null; } }
+function lsSet(k, v) {
+  if (S.quota) return false;
+  try { localStorage.setItem(k, v); return true; }
+  catch (e) { S.quota = true; banner("localStorage đầy hoặc bị chặn (" + (e && e.name) + ") — state chỉ còn trong bộ nhớ phiên này; HÃY Export state JSON thường xuyên."); return false; }
+}
+function banner(msg) { const el = document.getElementById("quotaBanner"); el.textContent = msg; el.classList.remove("hidden"); }
+
+const itemKey = it => it.dataset + ":" + it.item_id;
+function modelsAvailable() { return DATA.models.concat(Object.keys(S.extraModels)); }
+function answerFor(it, model) {
+  if (S.extraModels[model]) return S.extraModels[model][itemKey(it)] ?? null;
+  return it.answers[model] ?? null;
+}
+
+/* ---------- persistence ---------- */
+function loadBucket() {
+  if (!S.annotator) return {};
+  try {
+    const raw = lsGet(stateKey(slug(S.annotator), S.model));
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    return (obj && obj.schema_version === 1 && obj.items) ? obj.items : {};
+  } catch { return {}; }
+}
+function persist() {
+  if (!S.annotator || S.quota) { stampSave(); return; }
+  const ok = lsSet(stateKey(slug(S.annotator), S.model), JSON.stringify({
+    schema_version: 1, annotator: S.annotator, model: S.model,
+    saved_at: new Date().toISOString(), items: S.state,
+  }));
+  if (ok) stampSave();
+  S.dirty = false;
+}
+function stampSave() { if (!S.quota && S.annotator) lsSet(saveKey(slug(S.annotator), S.model), new Date().toISOString()); }
+let saveTimer = null;
+function touch() {
+  S.dirty = true;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persist, 400);   // debounce per keystroke
+}
+addEventListener("beforeunload", () => { if (S.dirty) persist(); });
+
+/* ---------- mutations ---------- */
+function setDecision(d) {
+  const it = DATA.items[S.idx], k = itemKey(it);
+  const cur = S.state[k] || (S.state[k] = { d: null, c: "", n: "" });
+  cur.d = cur.d === d ? null : d;
+  renderSeg(); renderSideWarn(); renderStats(); touch();
+  if (cur.d === "reject" && !document.getElementById("corrBox").value.trim())
+    document.getElementById("corrBox").focus();
+}
+function setField(which, v) {
+  const it = DATA.items[S.idx], k = itemKey(it);
+  const cur = S.state[k] || (S.state[k] = { d: null, c: "", n: "" });
+  cur[which] = v;
+  renderSideWarn(); renderStats(); touch();
+}
+
+/* ---------- rendering ---------- */
+const $ = id => document.getElementById(id);
+function goto(i) {
+  S.idx = Math.max(0, Math.min(DATA.items.length - 1, i));
+  renderItem();
+}
+function renderItem() {
+  const it = DATA.items[S.idx];
+  // passage adjacency banner (items are passage-contiguous from the workbook)
+  let first = S.idx, last = S.idx;
+  while (first > 0 && DATA.items[first - 1].passage_key === it.passage_key) first--;
+  while (last < DATA.items.length - 1 && DATA.items[last + 1].passage_key === it.passage_key) last++;
+  $("passageBanner").textContent =
+    `passage ${it.passage_key} · câu ${S.idx - first + 1}/${last - first + 1} của passage này · item ${S.idx + 1}/${DATA.items.length} (dataset=${it.dataset}, stratum=${it.stratum})`;
+  $("ctxBox").textContent = DATA.passages[it.passage_key] ?? "(context missing — rebuild)";
+  $("qBox").textContent = it.question;
+  $("itemTag").textContent = `· ${it.dataset} #${it.item_id}`;
+  const a = answerFor(it, S.model);
+  $("aBox").textContent = a === null ? "(model này không có đáp án cho item — n/a)" : a;
+  const st = S.state[itemKey(it)] || {};
+  $("corrBox").value = st.c || ""; $("corrBox").disabled = st.d !== "reject";
+  $("noteBox").value = st.n || "";
+  renderSeg(); renderSideWarn();
+  $("ctxBox").scrollTop = 0;
+}
+function renderSeg() {
+  const it = DATA.items[S.idx];
+  const d = (S.state[itemKey(it)] || {}).d || "";
+  for (const b of $("seg").querySelectorAll(".seg"))
+    b.setAttribute("aria-pressed", String(b.dataset.d === d));
+  $("corrBox").disabled = d !== "reject";
+}
+function renderSideWarn() {   // reject with empty correction = no gold derivable
+  const it = DATA.items[S.idx], st = S.state[itemKey(it)] || {};
+  $("corrBox").classList.toggle("bad", st.d === "reject" && !st.c.trim());
+}
+function counts() {
+  let rev = 0, acc = 0, byDs = { squad: [0, 0], drop: [0, 0] }, byStr = {};
+  for (const it of DATA.items) {
+    const st = S.state[itemKey(it)];
+    if (!st || !st.d) continue;
+    rev++; if (st.d === "accept") acc++;
+    byDs[it.dataset] && (byDs[it.dataset][0]++, st.d === "accept" && byDs[it.dataset][1]++);
+    const k = it.dataset + "/" + it.stratum;
+    (byStr[k] = byStr[k] || [0, 0]); byStr[k][0]++; st.d === "accept" && byStr[k][1]++;
+  }
+  return { rev, acc, byDs, byStr, n: DATA.items.length };
+}
+function renderStats() {
+  const c = counts();
+  $("mAcc").textContent = c.rev ? (100 * c.acc / c.rev).toFixed(1) : "—";
+  $("mProg").textContent = `${c.rev}/${c.n}`;
+  $("mSq").textContent = `${c.byDs.squad[1]}/${c.byDs.squad[0]}`;
+  $("mDr").textContent = `${c.byDs.drop[1]}/${c.byDs.drop[0]}`;
+  const tb = $("stratTbl").tBodies[0]; tb.textContent = "";
+  tb.insertAdjacentHTML("beforeend", "<tr class='bg-slate-50'><th class='px-2 py-1 text-left'>stratum</th><th class='px-2'>acc/rev</th></tr>");
+  for (const k of Object.keys(c.byStr).sort()) {
+    const tr = document.createElement("tr");
+    const td1 = document.createElement("td"); td1.className = "px-2 py-0.5"; td1.textContent = k;
+    const td2 = document.createElement("td"); td2.className = "px-2 text-center";
+    td2.textContent = `${c.byStr[k][1]}/${c.byStr[k][0]}`;
+    tr.append(td1, td2); tb.append(tr);
+  }
+}
+function tickSaved() {
+  if (!S.annotator) return;
+  const t = lsGet(saveKey(slug(S.annotator), S.model));
+  if (!t) { $("saved").textContent = "chưa lưu"; return; }
+  const secs = Math.max(0, Math.round((Date.now() - new Date(t).getTime()) / 1000));
+  $("saved").textContent = "saved " + (secs < 60 ? secs + "s" : Math.round(secs / 60) + "m") + " ago";
+}
+
+/* ---------- export / import ---------- */
+function csvCell(v) {
+  v = String(v ?? "");
+  return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+function download(name, text, mime) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+function exportCsv() {
+  persist();
+  const head = ["annotator", "model", "dataset", "item_id", "stratum",
+                "decision", "model_answer", "corrected_answer", "note"];
+  const lines = [head.join(",")];
+  for (const it of DATA.items) {
+    const st = S.state[itemKey(it)] || {};
+    lines.push([S.annotator, S.model, it.dataset, it.item_id, it.stratum,
+                st.d || "", answerFor(it, S.model) ?? "",
+                st.d === "reject" ? (st.c || "") : "", st.n || ""].map(csvCell).join(","));
+  }
+  download(`review_${slug(S.annotator)}_${slug(S.model)}.csv`, "﻿" + lines.join("\r\n") + "\r\n", "text/csv");
+}
+function exportJson() {
+  persist();
+  download(`state_${slug(S.annotator)}_${slug(S.model)}.json`, JSON.stringify({
+    schema_version: 1, annotator: S.annotator, model: S.model,
+    saved_at: new Date().toISOString(), items: S.state,
+  }), "application/json");
+}
+/* RFC-4180-ish CSV text -> array of row arrays (quoted fields with "" escape, CRLF/LF ok) */
+function parseCsv(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ",") { row.push(cell); cell = ""; }
+    else if (ch === "\r") { /* skip, \n will cut */ }
+    else if (ch === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += ch;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function importJson(file) {
+  file.text().then(t => {
+    let obj; try { obj = JSON.parse(t); } catch { alert("file không phải JSON"); return; }
+    if (obj.schema_version !== 1) return alert("schema_version khác 1 — không import");
+    if (slug(obj.annotator || "") !== slug(S.annotator)) return alert(`state của annotator '${obj.annotator}' ≠ bạn ('${S.annotator}') — giữ blind protocol, không import chéo`);
+    if (obj.model !== S.model) return alert(`state của model '${obj.model}' ≠ model đang chọn '${S.model}' — switch model rồi import lại`);
+    const valid = new Set(DATA.items.map(itemKey));
+    let added = 0;
+    for (const [k, v] of Object.entries(obj.items || {})) {
+      if (!valid.has(k)) continue;
+      const cur = S.state[k];
+      if (cur && cur.d) continue;                       // never overwrite an existing decision
+      if (!cur && v && v.d) { S.state[k] = { d: v.d, c: v.c || "", n: v.n || "" }; added++; }
+    }
+    persist(); renderItem(); renderStats();
+    alert(`import xong: +${added} decisions restored`);
+  });
+}
+/* load an extra reading_answers_<model>.csv in the browser */
+function loadAnswersCsv(file) {
+  const name = file.name;
+  if (!/^reading_answers_.+\.csv$/.test(name)) return alert("tên file phải là reading_answers_<model>.csv");
+  const model = name.slice("reading_answers_".length, -4);
+  file.text().then(t => {
+    const rows = parseCsv(t.replace(/^/, ""));
+    if (!rows.length) return alert("rỗng");
+    const head = rows[0].map(h => h.trim());
+    const iDs = head.indexOf("dataset"), iId = head.indexOf("item_id"), iAns = head.indexOf("raw_response");
+    if (Math.min(iDs, iId, iAns) < 0) return alert("thiếu cột dataset/item_id/raw_response");
+    const map = {};
+    for (const r of rows.slice(1)) if (r.length > Math.max(iDs, iId, iAns)) map[r[iDs].trim() + ":" + r[iId].trim()] = (r[iAns] || "").trim();
+    S.extraModels[model] = map;
+    const sel = $("modelSel");
+    const o = document.createElement("option"); o.value = model; o.textContent = model; sel.append(o);
+    sel.value = model; S.model = model; S.state = loadBucket(); renderItem(); renderStats();
+  });
+}
+
+/* ---------- navigation helpers ---------- */
+function nextUnreviewed() {
+  for (let d = 1; d <= DATA.items.length; d++) {
+    const i = (S.idx + d) % DATA.items.length;
+    const st = S.state[itemKey(DATA.items[i])];
+    if (!st || !st.d) { goto(i); return; }
+  }
+}
+
+/* ---------- keyboard ---------- */
+addEventListener("keydown", ev => {
+  if (!$("gate").classList.contains("hidden")) return;  // name gate modal
+  const typing = /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName);
+  if (ev.key === "Escape") { document.activeElement.blur(); $("help").classList.add("hidden"); $("help").classList.remove("flex"); return; }
+  if (typing) return;
+  switch (ev.key) {
+    case "j": case "ArrowDown": goto(S.idx + 1); ev.preventDefault(); break;
+    case "k": case "ArrowUp": goto(S.idx - 1); ev.preventDefault(); break;
+    case "a": case " ": setDecision("accept"); ev.preventDefault(); break;
+    case "r": setDecision("reject"); ev.preventDefault(); break;
+    case "u": { const k = itemKey(DATA.items[S.idx]); if (S.state[k]) S.state[k].d = null; renderSeg(); renderStats(); touch(); break; }
+    case "e": $("corrBox").disabled = false; $("corrBox").focus(); ev.preventDefault(); break;
+    case "n": $("noteBox").focus(); ev.preventDefault(); break;
+    case "t": nextUnreviewed(); break;
+    case "?": $("help").classList.toggle("hidden"); $("help").classList.toggle("flex"); break;
+  }
+});
+
+/* ---------- wire-up ---------- */
+for (const b of $("seg").querySelectorAll(".seg"))
+  b.addEventListener("click", () => { if (b.dataset.d === "") { const k = itemKey(DATA.items[S.idx]); if (S.state[k]) S.state[k].d = null; renderSeg(); renderStats(); touch(); } else setDecision(b.dataset.d); });
+$("corrBox").addEventListener("input", e => setField("c", e.target.value));
+$("noteBox").addEventListener("input", e => setField("n", e.target.value));
+$("prevBtn").onclick = () => goto(S.idx - 1);
+$("nextBtn").onclick = () => goto(S.idx + 1);
+$("nextUnrev").onclick = nextUnreviewed;
+$("expCsv").onclick = exportCsv;
+$("expJson").onclick = exportJson;
+$("jsonIn").onchange = e => e.target.files[0] && importJson(e.target.files[0]);
+$("csvIn").onchange = e => e.target.files[0] && loadAnswersCsv(e.target.files[0]);
+$("modelSel").onchange = e => { S.model = e.target.value; S.state = loadBucket(); renderItem(); renderStats(); };
+
+function boot() {
+  const stored = lsGet(LS_ANNO);
+  if (stored) {
+    S.annotator = stored;
+    $("gate").classList.add("hidden");
+    start();
+  } else {
+    $("gateName").focus();
+    $("gateOk").onclick = () => {
+      const v = $("gateName").value.trim();
+      if (!v) return;
+      S.annotator = v; lsSet(LS_ANNO, v);
+      $("gate").classList.add("hidden"); start();
+    };
+    $("gateName").addEventListener("keydown", e => { if (e.key === "Enter") $("gateOk").click(); });
+  }
+}
+function start() {
+  const sel = $("modelSel"); sel.textContent = "";
+  for (const m of modelsAvailable()) {
+    const o = document.createElement("option"); o.value = m; o.textContent = m; sel.append(o);
+  }
+  sel.value = S.model;
+  $("who").textContent = `reviewer: ${S.annotator}`;
+  S.state = loadBucket();
+  renderItem(); renderStats(); tickSaved(); setInterval(tickSaved, 5000);
+  if (S.quota) banner("localStorage bị chặn trên trình duyệt này (Safari + file:// thường bị). State KHÔNG tồn tại qua reload — Export state JSON mỗi khi đổi nhiều.");
+}
+boot();
+</script>
+</body>
+</html>

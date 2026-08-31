@@ -1,3 +1,4 @@
+import csv
 import json
 import random
 import tempfile
@@ -40,6 +41,18 @@ from code_benchmark.export_annotation_workbooks import (
     merge_answers,
     normalize_answer,
     workbook_rows,
+    REVIEW_COLS,
+    read_review,
+    gold_from_reviews,
+    review_stats,
+    apply_gold,
+)
+from code_benchmark.build_review_ui import (
+    model_from_filename,
+    load_answers_csv,
+    review_items,
+    embed_json,
+    render_html,
 )
 
 class TestVMLUBenchmark(unittest.TestCase):
@@ -445,6 +458,153 @@ class TestAnnotationWorkbooks(unittest.TestCase):
         self.assertEqual(keys, ["drop:1", "squad:2", "squad:2"])  # same passage contiguous
         self.assertTrue(all(r["gold_answer"] == "" for r in rows))  # blind, empty
         self.assertNotIn("raw_response", rows[0])  # model answers must never leak in
+
+
+def _review_row(annot, model, ds, iid, decision, ma, corr="", note=""):
+    return dict(zip(REVIEW_COLS, [annot, model, ds, iid, "short-direct",
+                                  decision, ma, corr, note], strict=True))
+
+
+class TestReviewBlobBuilder(unittest.TestCase):
+    def test_model_from_filename(self):
+        self.assertEqual(
+            model_from_filename(Path("all_res/ollama_result/reading_answers_Qwen3_8-27B-Q4_K_M_gguf.csv")),
+            "Qwen3_8-27B-Q4_K_M_gguf")
+        for bad in ("other.csv", "reading_answers_.csv"):
+            with self.assertRaises(ValueError):
+                model_from_filename(Path(bad))
+
+    def test_load_answers_csv_and_dup_guard(self):
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "reading_answers_m1.csv"
+            with open(p, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, ["dataset", "item_id", "stratum", "question",
+                                       "context_words", "raw_response"])
+                w.writeheader()
+                w.writerow({"dataset": "squad", "item_id": "1", "stratum": "s",
+                            "question": "q", "context_words": 5, "raw_response": " Hà Nội "})
+            model, amap = load_answers_csv(p)
+            self.assertEqual((model, amap), ("m1", {"squad:1": "Hà Nội"}))  # stripped
+            with open(p, "a", encoding="utf-8") as f:
+                f.write("squad,1,s,q,5,x\n")
+            with self.assertRaises(SystemExit):
+                load_answers_csv(p)  # duplicate key
+
+    def test_review_items_join_and_dedup(self):
+        book = [{"passage_key": "squad:0", "dataset": "squad", "item_id": "0",
+                 "stratum": "s", "question": "q0", "context": "ctx0"},
+                {"passage_key": "squad:0", "dataset": "squad", "item_id": "1",
+                 "stratum": "s", "question": "q1", "context": "ctx0"}]
+        items, passages = review_items(book, {"m1": {"squad:0": "a0", "squad:1": "a1"},
+                                              "m2": {}})
+        self.assertEqual([i["item_id"] for i in items], ["0", "1"])  # workbook order kept
+        self.assertEqual(items[0]["answers"], {"m1": "a0", "m2": None})
+        self.assertEqual(passages, {"squad:0": "ctx0"})  # deduped context map
+        with self.assertRaises(SystemExit):
+            review_items(book, {"m1": {"squad:99": "x"}})  # drift fail-fast
+
+    def test_embed_json_neutralizes_script_close_and_roundtrips(self):
+        payload = {"t": "a</script>b", "u": "x" + chr(0x2028) + "y", "v": "Hà Nội"}
+        s = embed_json(payload)
+        self.assertNotIn("</script", s)
+        self.assertNotIn(chr(0x2028), s)
+        self.assertEqual(json.loads(s), payload)  # escapes are JSON-meaning-preserving
+
+    def test_render_html_placeholder_guard(self):
+        self.assertEqual(render_html('<x>"__VMLU_DATA__"</x>', '{"a":1}'), '<x>{"a":1}</x>')
+        for bad in ("<x></x>", '<x>"__VMLU_DATA__" "__VMLU_DATA__"</x>'):
+            with self.assertRaises(SystemExit):
+                render_html(bad, "{}")
+
+
+class TestReviewMerge(unittest.TestCase):
+    def _pair(self):
+        a = {"squad:1": _review_row("linh", "mX", "squad", "1", "accept", "Hà Nội"),
+             "squad:2": _review_row("linh", "mX", "squad", "2", "accept", "1916"),
+             "squad:3": _review_row("linh", "mX", "squad", "3", "reject", "1916", " 1916"),
+             "squad:4": _review_row("linh", "mX", "squad", "4", "reject", "x", "A"),
+             "squad:5": _review_row("linh", "mX", "squad", "5", "reject", "x", ""),
+             "squad:6": _review_row("linh", "mX", "squad", "6", "", "x"),
+             "squad:7": _review_row("linh", "mX", "squad", "7", "accept", "")}
+        b = {"squad:1": _review_row("anh", "mX", "squad", "1", "accept", "Hà Nội"),
+             "squad:2": _review_row("anh", "mX", "squad", "2", "reject", "1916", "1917"),
+             "squad:3": _review_row("anh", "mX", "squad", "3", "reject", "1916", "1916."),
+             "squad:4": _review_row("anh", "mX", "squad", "4", "reject", "x", "B"),
+             "squad:5": _review_row("anh", "mX", "squad", "5", "reject", "x", ""),
+             "squad:6": _review_row("anh", "mX", "squad", "6", "accept", "x"),
+             "squad:7": _review_row("anh", "mX", "squad", "7", "accept", "")}
+        return a, b
+
+    def test_gold_and_adjudication_cases(self):
+        a, b = self._pair()
+        res = gold_from_reviews(a, b)
+        self.assertEqual(dict(res["gold_agreed"]), {"squad:1": "Hà Nội",   # both accept
+                                                    "squad:3": "1916"})    # both reject, match
+        adjud = {k: r for k, r, _, _ in res["adjudication"]}
+        self.assertEqual(adjud, {"squad:2": "accept_vs_reject",
+                                 "squad:4": "corrections_differ",
+                                 "squad:5": "missing_correction",
+                                 "squad:7": "missing_model_answer"})
+        self.assertEqual(res["skipped"], ["squad:6"])  # unset on either side
+
+    def test_model_answer_drift_detected(self):
+        a, b = self._pair()
+        a["squad:1"] = _review_row("linh", "mX", "squad", "1", "accept", "HÀ NỘI!")
+        res = gold_from_reviews(a, b)
+        self.assertNotIn("squad:1", dict(res["gold_agreed"]))
+        self.assertEqual({k: r for k, r, _, _ in res["adjudication"]}["squad:1"],
+                         "model_answer_drift")
+
+    def test_stats_math(self):
+        a, b = self._pair()
+        res = gold_from_reviews(a, b)
+        txt = review_stats(res, "linh", "anh")
+        # A accepted 3/6 reviewed, B accepted 3/7, agreement 5/6 both-reviewed
+        self.assertIn("accepted 3/6 = 50.0% acceptance", txt)
+        self.assertIn("accepted 3/7 = 42.9% acceptance", txt)
+        self.assertIn("5/6 = 83.3%", txt)
+        self.assertIn("gold agreed: 2", txt)
+        self.assertIn("accept_vs_reject=1", txt)
+
+    def test_read_review_round_trip_and_guards(self):
+        a, _ = self._pair()
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "review_linh_mx.csv"
+            with open(p, "w", newline="", encoding="utf-8-sig") as f:  # BOM like the UI export
+                w = csv.writer(f)
+                w.writerow(REVIEW_COLS)
+                for k in sorted(a):
+                    w.writerow([a[k][c] for c in REVIEW_COLS])
+            meta, got = read_review(p)
+            self.assertEqual(meta, {"annotator": "linh", "model": "mX", "n": 7,
+                                    "blank_rejects": 1})
+            self.assertEqual(set(got), set(a))
+            # guards: header / illegal decision / mixed identity in one file
+            for text, why in (
+                    ("x,y\n1,2", "header mismatch"),
+                    (",".join(REVIEW_COLS) + "\nlinh,m,s,1,s,bogus,,\n", "illegal decision"),
+                    (",".join(REVIEW_COLS) + "\nlinh,m,s,1,s,accept,,\nanh,m,s,2,s,accept,,\n",
+                     "mixes annotator")):
+                q = Path(td) / "bad.csv"
+                q.write_text(text, encoding="utf-8")
+                with self.assertRaises(SystemExit, msg=why):
+                    read_review(q)
+
+    def test_apply_gold_fills_manifest(self):
+        with tempfile.TemporaryDirectory() as td:
+            mp = Path(td) / "manifest.csv"
+            with open(mp, "w", newline="", encoding="utf-8") as f:
+                w = csv.writer(f)
+                w.writerow(["dataset", "item_id", "stratum", "passage_id", "question", "gold_answer"])
+                w.writerow(["squad", "1", "s", 0, "q1", ""])
+                w.writerow(["squad", "2", "s", 1, "q2", ""])
+            filled, still = apply_gold(mp, [("squad:1", "Hà Nội")])
+            self.assertEqual((filled, still), (1, 1))
+            got = {r["item_id"]: r["gold_answer"]
+                   for r in csv.DictReader(open(mp, encoding="utf-8"))}
+            self.assertEqual(got, {"1": "Hà Nội", "2": ""})
+            with self.assertRaises(SystemExit):
+                apply_gold(mp, [("squad:99", "x")])  # unknown key refuses
 
 
 if __name__ == "__main__":
