@@ -12,3 +12,9 @@ skips:
   # B101: assert is the intended check mechanism in test_parsing.py (the
   # dependency-free parity harness) — process-local, not a security boundary.
   - B101
+  # B311: random.Random is used ONLY for reproducible dataset sampling
+  # (make_eval_sample seed 42 = the pre-registration mechanism) and its unit
+  # tests. No cryptographic use of `random` exists or is planned in this repo;
+  # if a token/session generator is ever added it must use `secrets` (a new
+  # B311 skip would then be wrong — remove this line to re-arm the check).
+  - B311

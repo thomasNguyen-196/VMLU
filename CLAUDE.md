@@ -31,11 +31,18 @@ cp .env.example .env
 #               --max-tokens (default 4 — raise it for regime C / thinking models)
 # Resume after interruption:  --resume   (auto-picks newest raw_result_*.csv)
 
-# 3. Tests
+# 3. Build the 400-question reading-comprehension eval manifest (issue #3)
+.venv/bin/python code_benchmark/make_eval_sample.py   # -> eval_set_manifest.csv (200 SQuAD + 200 DROP, seed 42)
+# Stdlib-only (runs on system python3 too). DROP: proportional by primary category
+# with `count` pinned to 40 (oversample). SQuAD: context-length x direct/infer cells,
+# *-infer pinned to 5 each, max PASSAGE_CAP questions per passage. gold_answer ships
+# EMPTY — filled by the 2-annotator pass. The committed CSV is the pre-registration.
+
+# 4. Tests
 .venv/bin/python code_benchmark/test_parsing.py   # standalone parity tests (also works on system python3)
 .venv/bin/python -m unittest code_benchmark.test_suite   # run from REPO ROOT: imports `code_benchmark.test_ollama` as a package
 
-# 4. Legacy scripts (historical only, need a venv pinned to openai==0.28.0)
+# 5. Legacy scripts (historical only, need a venv pinned to openai==0.28.0)
 cd code_benchmark && GPT_KEY="<KEY>" python3 legacy/test_gpt.py
 cd code_benchmark && python3 legacy/test_prompt.py --llm "bigscience/bloom-1b7" --folder "./vmlu_v1.5/" --device "cuda"
 ```
@@ -75,7 +82,7 @@ A single self-contained script, best understood as a pipeline:
 
 `.github/workflows/ci.yml` gates PRs and pushes to `main` with two jobs (pattern mirrors `../AI-Image`):
 
-1. **python-static** — `ruff check .` (rules `F,B,E9` = syntax/logic/bugbear only, no style rules; config in `ruff.toml`) + `bandit -r code_benchmark -c .bandit.yml -q` (security; `B101` skipped for test asserts, `code_benchmark/legacy/` excluded as historical research records).
+1. **python-static** — `ruff check .` (rules `F,B,E9` = syntax/logic/bugbear only, no style rules; config in `ruff.toml`) + `bandit -r code_benchmark -c .bandit.yml -q` (security; `B101` skipped for test asserts, `B311` skipped — `random.Random` there is reproducible-sampling only, never crypto; `code_benchmark/legacy/` excluded as historical research records).
 2. **tests** — `test_parsing.py` (parity contract) + `python -m unittest code_benchmark.test_suite`.
 
 Reproduce the gate locally before pushing:
