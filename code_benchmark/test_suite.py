@@ -1,3 +1,4 @@
+import json
 import random
 import tempfile
 import unittest
@@ -27,6 +28,13 @@ from code_benchmark.make_eval_sample import (
     DROP_PINNED,
     PASSAGE_CAP,
     SQUAD_INFER_FLOOR,
+)
+from code_benchmark.run_reading_eval import (
+    build_reading_prompt,
+    join_manifest,
+    index_sources,
+    resume_key,
+    find_latest_reading_checkpoint,
 )
 
 class TestVMLUBenchmark(unittest.TestCase):
@@ -342,6 +350,66 @@ class TestBuildManifest(unittest.TestCase):
         a = build_manifest(squad, drop, seed=42, n_each=50)
         b = build_manifest(squad, drop, seed=42, n_each=50)
         self.assertEqual(a, b)
+
+
+class TestReadingRunner(unittest.TestCase):
+    def test_prompt_contract(self):
+        p = build_reading_prompt("Đoạn văn về Hà Nội.", "Thủ đô là gì?")
+        self.assertIn("Đoạn văn về Hà Nội.", p)
+        self.assertIn("Câu hỏi: Thủ đô là gì?", p)
+        self.assertTrue(p.endswith("Trả lời: "))
+
+    def _sources(self, tmp: Path):
+        squad = tmp / "sq.json"
+        drop = tmp / "dr.json"
+        squad.write_text(json.dumps({"data": [
+            {"id": 7, "question": "Q7?", "context": "ctx seven"}]}), encoding="utf-8")
+        drop.write_text(json.dumps({"data": [
+            {"question_id": 30, "question": "Q30?", "context": "ctx thirty",
+             "category": "count"}]}), encoding="utf-8")
+        return squad, drop
+
+    def test_join_attaches_context_and_keys(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            squad, drop = self._sources(tmp)
+            idx = index_sources(squad, drop)
+            manifest = [{"dataset": "squad", "item_id": "7", "stratum": "s",
+                         "question": "Q7?"},
+                        {"dataset": "drop", "item_id": "30", "stratum": "count",
+                         "question": "Q30?"}]
+            joined = join_manifest(manifest, idx)
+            self.assertEqual([j["context"] for j in joined], ["ctx seven", "ctx thirty"])
+            self.assertEqual({resume_key(j) for j in joined}, {"squad:7", "drop:30"})
+
+    def test_join_failfast_on_drift_and_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            squad, drop = self._sources(tmp)
+            idx = index_sources(squad, drop)
+            bad_q = [{"dataset": "squad", "item_id": "7", "stratum": "s",
+                      "question": "tampered?"}]
+            with self.assertRaises(SystemExit):
+                join_manifest(bad_q, idx)
+            missing = [{"dataset": "drop", "item_id": "999", "stratum": "c",
+                        "question": "Q?"}]
+            with self.assertRaises(SystemExit):
+                join_manifest(missing, idx)
+
+    def test_reading_checkpoint_never_picks_mc_checkpoints(self):
+        # MC raw_result_*.csv files must NOT be candidates for resume
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            (tmp / "raw_result_1047.csv").touch()
+            (tmp / "reading_result_100.csv").touch()
+            (tmp / "reading_result_400.csv").touch()
+            latest = find_latest_reading_checkpoint(tmp)
+            assert latest is not None
+            self.assertEqual(latest.name, "reading_result_400.csv")
+            (tmp / "raw_result_9999.csv").touch()
+            latest = find_latest_reading_checkpoint(tmp)
+            assert latest is not None
+            self.assertEqual(latest.name, "reading_result_400.csv")  # still ignores MC
 
 
 if __name__ == "__main__":
