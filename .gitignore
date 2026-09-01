@@ -39,6 +39,5 @@ adjudication.csv
 /state_*.json
 # Review-server state buckets (per reviewer×model JSON; the export CSVs above are the record)
 review_state/
-# Derived data for the Next review app (emitted by `build_review_ui.py export-blob`)
-web/data/
+# Contract-test scratch file for the Next app (written by TestNextContracts)
 web/.contract-test.ts
