@@ -1,8 +1,12 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { ReviewItem } from "@/lib/types.ts";
 import type { Position } from "@/lib/review-logic.ts";
+
+/** Contexts under this many words read as bare 1–2-sentence stubs (viSQuAD's
+ *  shortest tier) — 7/400 items in the sample. Flagged for reviewers. */
+const SHORT_WORDS = 60;
 
 /** Left pane: the reading instrument. Position meta row, question, the
  *  original passage (collapsible — reviewers read it once per passage, then
@@ -25,6 +29,8 @@ function ItemPaneInner({
   total: number;
   idx: number;
 }) {
+  const words = useMemo(() => context.trim().split(/\s+/).filter(Boolean).length, [context]);
+  const short = words > 0 && words < SHORT_WORDS;
   return (
     <section aria-labelledby="q-head" className="rounded-[10px] border border-card-edge bg-card p-5 shadow-[var(--shadow)] sm:p-6">
       <div className="mb-3.5 flex flex-wrap items-center gap-2">
@@ -58,7 +64,17 @@ function ItemPaneInner({
         <summary className="flex cursor-pointer list-none items-center gap-2.5 text-[13px] font-semibold text-ink-2 [&::-webkit-details-marker]:hidden hover:text-ink">
           <span aria-hidden className="text-ink-3 transition-transform duration-150">▸</span>
           Ngữ cảnh — đoạn văn gốc
-          {context && <span className="text-[11px] font-normal tabular-nums text-ink-3">· {context.length.toLocaleString("vi-VN")} ký tự</span>}
+          <span className="text-[11px] font-normal tabular-nums text-ink-3">
+            · {words.toLocaleString("vi-VN")} từ · {context.length.toLocaleString("vi-VN")} ký tự
+          </span>
+          {short && (
+            <span
+              title={`Đoạn chỉ có ${words} từ — nguồn viSQuAD/DROP chỉ cho 1–2 câu văn, dễ thiếu thông tin để trả lời`}
+              className="rounded-full border border-flag/40 bg-flag-soft px-2 py-[2px] text-[10px] font-semibold uppercase tracking-[.06em] text-flag"
+            >
+              ⚠ đoạn cộc
+            </span>
+          )}
         </summary>
         <p lang="vi" className="mt-3 whitespace-pre-wrap text-[15.5px] leading-[1.78] break-words text-ink">
           {context || "(thiếu ngữ cảnh — chạy lại export-blob)"}
