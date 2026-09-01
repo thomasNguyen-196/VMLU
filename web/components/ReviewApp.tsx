@@ -266,6 +266,22 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
     });
   }, [blob.items.length]);
 
+  /** Jump by 1-based question number (same numbering as the filmstrip). */
+  const jumpToNumber = useCallback(
+    (n: number) => {
+      if (!Number.isFinite(n)) {
+        toast2(`Nhập số câu hợp lệ (1–${blob.items.length})`);
+        return;
+      }
+      if (n < 1 || n > blob.items.length) {
+        toast2(`Câu ${n} ngoài phạm vi — bộ có ${blob.items.length} câu`);
+        return;
+      }
+      go(n - 1);
+    },
+    [blob.items.length, go, toast2],
+  );
+
   const jumpUnreviewed = useCallback(() => {
     const i = nextUnreviewed(blob.items, bucketRef.current, idx, peers);
     if (i === null) toast2("Hết! Mọi câu đã có quyết định 🎉");
@@ -392,6 +408,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
         case "u": setDecision("clear"); ev.preventDefault(); break;
         case "e": document.getElementById("corr")?.focus(); ev.preventDefault(); break;
         case "n": document.getElementById("note")?.focus(); ev.preventDefault(); break;
+        case "g": document.getElementById("goto")?.focus(); ev.preventDefault(); break;
         case "t": jumpUnreviewed(); ev.preventDefault(); break;
         case "Home": go(0); ev.preventDefault(); break;
         case "End": go(blob.items.length - 1); ev.preventDefault(); break;
@@ -527,6 +544,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
         onPrev={() => go(idx - 1)}
         onNext={() => go(idx + 1)}
         onNextUnreviewed={jumpUnreviewed}
+        onJumpToNumber={jumpToNumber}
         status={pill}
       />
 
@@ -545,6 +563,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
                 ["u", "Bỏ trống quyết định"],
                 ["e", "Tới ô đáp án sửa"],
                 ["n", "Tới ô ghi chú"],
+                ["g", "Gõ số câu để nhảy tới"],
                 ["t", "Nhảy tới câu chưa review kế tiếp"],
                 ["Home / End", "Câu đầu / câu cuối"],
                 ["? · Esc", "Mở / đóng bảng này"],

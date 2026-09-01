@@ -1,15 +1,21 @@
 "use client";
 
+import { useRef, useState } from "react";
+
 /** Fixed bottom navigation dock (spec review-ui "Always-available sequential
  *  navigation"): Prev / position counter / Next always one click away,
  *  plus the next-unreviewed jump. Boundary direction disables rather than
- *  wrapping, so End-of-set is a felt fact, not a silent loop. */
+ *  wrapping, so End-of-set is a felt fact, not a silent loop.
+ *  The number field jumps straight to a 1-based question number (the same
+ *  numbering as the filmstrip and the counter); validation lives in
+ *  ReviewApp so out-of-range input gets the shared toast. */
 export function NavDock({
   idx,
   total,
   onPrev,
   onNext,
   onNextUnreviewed,
+  onJumpToNumber,
   status,
 }: {
   idx: number;
@@ -17,10 +23,25 @@ export function NavDock({
   onPrev: () => void;
   onNext: () => void;
   onNextUnreviewed: () => void;
+  onJumpToNumber: (n: number) => void;
   status: React.ReactNode;
 }) {
   const first = idx <= 0;
   const last = idx >= total - 1;
+  const [q, setQ] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const submit = () => {
+    const t = q.trim();
+    if (!/^\d+$/.test(t)) {
+      onJumpToNumber(NaN); // ReviewApp toasts "nhập số câu hợp lệ"
+      return;
+    }
+    onJumpToNumber(parseInt(t, 10));
+    setQ("");
+    inputRef.current?.blur(); // return keys (j/k/a/r) to the page
+  };
+
   return (
     <nav
       aria-label="Điều hướng câu"
@@ -54,6 +75,33 @@ export function NavDock({
             <small className="font-mono text-[10px] font-normal text-paper/60">j / ↓</small>
           </button>
         </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+          className="flex shrink-0 items-stretch gap-2"
+        >
+          <label className="flex flex-col justify-center leading-tight">
+            <span className="sr-only">Nhảy tới số câu</span>
+            <input
+              ref={inputRef}
+              id="goto"
+              type="text"
+              inputMode="numeric"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={`# 1–${total}`}
+              className="w-24 rounded-lg border border-hair bg-card px-3 py-2 text-[13.5px] font-medium tabular-nums shadow-sm placeholder:text-ink-3 focus:border-ink-2 focus:outline-none"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-lg border border-hair bg-card px-3.5 py-2 text-[13.5px] font-semibold shadow-sm transition-[transform,border-color] duration-100 hover:-translate-y-px hover:border-ink-2"
+          >
+            Nhảy tới ⏎
+          </button>
+        </form>
         <div className="flex-1" />
         {status}
         <button
