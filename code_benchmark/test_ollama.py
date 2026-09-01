@@ -15,6 +15,109 @@ from openai import OpenAI, AuthenticationError, PermissionDeniedError
 
 load_dotenv()
 
+# Official VMLU subject numbering (ZaloAI-Jaist/VMLU README, dataset v1.5):
+# id prefix "XX-YYYY" -> (subject name, category). 21 STEM / 10 Social Science /
+# 18 Humanity / 9 Other. NOTE: repo-root dataset_stat.csv lists a DIFFERENT
+# ordering — the id prefixes follow this table, verified against dev/valid records.
+SUBJECTS: dict[int, tuple[str, str]] = {
+    # 01-21 STEM
+    1: ("Elementary Mathematics", "STEM"), 2: ("Elementary Science", "STEM"),
+    3: ("Middle School Biology", "STEM"), 4: ("Middle School Chemistry", "STEM"),
+    5: ("Middle School Mathematics", "STEM"), 6: ("Middle School Physics", "STEM"),
+    7: ("High School Biology", "STEM"), 8: ("High School Chemistry", "STEM"),
+    9: ("High School Mathematics", "STEM"), 10: ("High School Physics", "STEM"),
+    11: ("Applied Informatics", "STEM"), 12: ("Computer Architecture", "STEM"),
+    13: ("Computer Network", "STEM"), 14: ("Discrete Mathematics", "STEM"),
+    15: ("Electrical Engineering", "STEM"), 16: ("Introduction to Chemistry", "STEM"),
+    17: ("Introduction to Physics", "STEM"), 18: ("Introduction to Programming", "STEM"),
+    19: ("Metrology Engineer", "STEM"), 20: ("Operating System", "STEM"),
+    21: ("Statistics and Probability", "STEM"),
+    # 22-31 Social Science
+    22: ("Middle School Civil Education", "Social Science"), 23: ("Middle School Geography", "Social Science"),
+    24: ("High School Civil Education", "Social Science"), 25: ("High School Geography", "Social Science"),
+    26: ("Business Administration", "Social Science"), 27: ("Ho Chi Minh Ideology", "Social Science"),
+    28: ("Macroeconomics", "Social Science"), 29: ("Microeconomics", "Social Science"),
+    30: ("Principles of Marxism and Leninism", "Social Science"), 31: ("Sociology", "Social Science"),
+    # 32-49 Humanity
+    32: ("Elementary History", "Humanity"), 33: ("Middle School History", "Humanity"),
+    34: ("Middle School Literature", "Humanity"), 35: ("High School History", "Humanity"),
+    36: ("High School Literature", "Humanity"), 37: ("Administrative Law", "Humanity"),
+    38: ("Business Law", "Humanity"), 39: ("Civil Law", "Humanity"),
+    40: ("Criminal Law", "Humanity"), 41: ("Economic Law", "Humanity"),
+    42: ("Education Law", "Humanity"), 43: ("History of World Civilization", "Humanity"),
+    44: ("Idealogical and Moral Cultivation", "Humanity"), 45: ("Introduction to Laws", "Humanity"),
+    46: ("Introduction to Vietnam Culture", "Humanity"), 47: ("Logic", "Humanity"),
+    48: ("Revolutionary Policy of the Vietnamese Commununist Part", "Humanity"),
+    49: ("Vietnamese Language and Literature", "Humanity"),
+    # 50-58 Other
+    50: ("Accountant", "Other"), 51: ("Clinical Pharmacology", "Other"),
+    52: ("Environmental Engineering", "Other"), 53: ("Internal Basic Medicine", "Other"),
+    54: ("Preschool Pedagogy", "Other"), 55: ("Tax Accountant", "Other"),
+    56: ("Tax Civil Servant", "Other"), 57: ("Civil Servant", "Other"),
+    58: ("Driving License Certificate", "Other"),
+}
+CATEGORIES = ("STEM", "Social Science", "Humanity", "Other")
+
+def subject_category(id_str: str) -> tuple[int | None, str, str]:
+    """Map 'XX-YYYY' -> (subject number, subject name, category); unknown bucket for bad prefixes."""
+    try:
+        num = int(str(id_str).split("-")[0])
+    except (ValueError, IndexError):
+        return None, "unknown", "unknown"
+    name, cat = SUBJECTS.get(num, ("unknown", "unknown"))
+    return num, name, cat
+
+def detect_scorable(records: list[dict]) -> tuple[bool, dict[str, str]]:
+    """Pure check: scorable only when EVERY record carries a non-empty gold `answer`.
+    Returns (scorable, gold_by_id). Mixed inputs -> (False, {}) (caller logs the warning)."""
+    if not records:
+        return False, {}
+    with_gold = [r for r in records if str(r.get("answer", "")).strip()]
+    if len(with_gold) == len(records):
+        return True, {str(r["id"]): str(r["answer"]).strip().upper() for r in records}
+    return False, {}
+
+def score_row(res: dict, gold_by_id: dict[str, str]) -> dict:
+    """Idempotently enrich one result row with gold_answer + correct (0/1).
+    Unparseable model answer (empty) counts as incorrect but stays in the denominator."""
+    gold = gold_by_id.get(str(res.get("id", "")), "")
+    correct = 1 if (gold and str(res.get("answer", "")).strip().upper() == gold) else 0
+    out = dict(res)
+    out["gold_answer"] = gold
+    out["correct"] = correct
+    return out
+
+def build_accuracy_rows(scored_rows: list[dict]) -> list[dict]:
+    """Aggregate scored rows (long format: level, name, n, correct, accuracy).
+    Category/subject sums always partition the total (unknown buckets kept explicit)."""
+    from collections import defaultdict
+    stats: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])  # (level,name) -> [n, correct]
+
+    def add(level: str, name: str, row: dict):
+        stats[(level, name)][0] += 1
+        stats[(level, name)][1] += int(row.get("correct", 0))
+
+    for row in scored_rows:
+        add("overall", "overall", row)
+        num, name, cat = subject_category(row.get("id", ""))
+        add("category", cat, row)
+        add("subject", f"{num:02d} {name}" if num else "unknown", row)
+
+    def emit(level: str, name: str) -> dict:
+        n, c = stats[(level, name)]
+        return {"level": level, "name": name, "n": n, "correct": c,
+                "accuracy": round(100.0 * c / n, 2) if n else 0.0}
+
+    rows = [emit("overall", "overall")]
+    seen_cats = {name for (level, name) in stats if level == "category"}
+    for cat in CATEGORIES + tuple(("unknown",) if "unknown" in seen_cats else ()):
+        if ("category", cat) in stats:
+            rows.append(emit("category", cat))
+    for (level, name) in sorted(stats):
+        if level == "subject":
+            rows.append(emit(level, name))
+    return rows
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Evaluate models via Ollama / OpenAI-compatible endpoint on VMLU benchmark.")
     parser.add_argument("--folder", type=str, default="./vmlu", help="Path to data folder containing test.jsonl (default: ./vmlu)")
@@ -194,6 +297,13 @@ def main():
     total_questions = len(data)
     logging.info(f"Loaded {total_questions} questions from {file_path}")
 
+    scorable, gold_by_id = detect_scorable(data)
+    n_gold = sum(1 for r in data if str(r.get("answer", "")).strip())
+    if scorable:
+        logging.info("Input has gold answers for all questions -> accuracy scoring ENABLED.")
+    elif n_gold:
+        logging.warning(f"Mixed input ({n_gold}/{total_questions} with gold answers) -> scoring DISABLED (leaderboard-only mode).")
+
     for doc in data:
         doc["prompt"] = build_prompt(doc["question"], doc.get("choices", []))
 
@@ -215,7 +325,7 @@ def main():
                     }
             logging.info(f"Loaded {len(existing_answers)} pre-existing answers from checkpoint.")
 
-    results = [None] * total_questions
+    results: list[dict | None] = [None] * total_questions
     to_process = []
 
     for idx, item in enumerate(data):
@@ -274,6 +384,23 @@ def main():
     logging.info(f"Time taken for running inference: {duration:.2f}s ({duration/60:.2f} mins)")
 
     df_all = pd.DataFrame(results)
+
+    if scorable:
+        scored = [score_row(r, gold_by_id) for r in results if r is not None]
+        acc_rows = build_accuracy_rows(scored)
+        df_all = pd.DataFrame(scored)
+        acc_df = pd.DataFrame(acc_rows)
+        acc_path = result_folder / f"accuracy_{sanitized_model}.csv"
+        acc_df.to_csv(acc_path, index=False)
+        overall = acc_rows[0]
+        n_subjects = sum(1 for r in acc_rows if r["level"] == "subject")
+        logging.info(f"Accuracy overall: {overall['correct']}/{overall['n']} = {overall['accuracy']:.2f}%")
+        logging.info("Accuracy by category:")
+        for r in acc_rows:
+            if r["level"] == "category":
+                logging.info(f"  {r['name']:<15} {r['correct']:>5}/{r['n']:<5} = {r['accuracy']:.2f}%")
+        logging.info(f"Per-subject table ({n_subjects} subjects) written to {acc_path}")
+
     df_all.to_csv(result_folder / f"full_evaluation_{sanitized_model}.csv", index=False)
 
     submission_df = df_all[["id", "answer"]]
