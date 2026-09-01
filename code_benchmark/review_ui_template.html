@@ -1,0 +1,835 @@
+<!doctype html>
+<!--
+  STATIC FALLBACK review UI for the 400-item reading eval (issue #3).
+  The primary tool is the Next.js app in `web/` (state autosaved to disk);
+  this page is the zero-install artifact — build it, email it, open it:
+    .venv/bin/python code_benchmark/build_review_ui.py build   -> review_ui.html
+
+  DO NOT OPEN THIS FILE DIRECTLY — it is a template: the placeholder in the
+  #data script is replaced at build time (build_review_ui.render_html requires
+  EXACTLY ONE occurrence — keep this comment free of the quoted token).
+  Works fully offline: no CDN, no fetch, no external requests.
+
+  State envelope is shared with the Next app and the pre-redesign UI:
+  {schema_version:1, annotator, model, saved_at, items:{"dataset:item_id":
+  {d,c,n}}} — Export state JSON / Import state JSON bridge the two worlds.
+  Reviewer state: localStorage, namespaced per (annotator, model). Use
+  Chrome/Firefox (file:// localStorage is blocked in Safari). Blind-protocol
+  note: this is the REVIEW pass — model answers are intentionally visible
+  here; the 2-person blind gold pass is a different workbook
+  (annotation_workbooks/).
+
+  Design system "exam instrument": color is data — the ONLY saturated hues
+  are accept-green / reject-red / flag-amber; chrome is graphite ink on warm
+  paper. Be Vietnam Pro (system fallback) carries the Vietnamese passages.
+  The filmstrip ruler under the header is progress + overview + navigator in
+  one object; the bottom dock keeps prev/next always in reach.
+-->
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VMLU Reading Review — bảng nghiệm thu 400 câu</title>
+<style>
+  /* ============ tokens: ink on paper, decision is the only color ======== */
+  :root {
+    --paper:#F5F3EE; --card:#FFFFFF; --card-edge:#E4E0D6;
+    --ink:#1A1D23; --ink-2:#5A6270; --ink-3:#8C929C; --hair:#D8D4C9;
+    --accept:#1E7A46; --accept-soft:#E4F1E9;
+    --reject:#C2372C; --reject-soft:#F7E5E3;
+    --flag:#B4700E;   --flag-soft:#FBEFD9;
+    --null:#C8C4BA;
+    --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --font-disp:"Fraunces",Georgia,"Times New Roman",serif;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --r:10px; --shadow:0 1px 2px rgba(26,29,35,.05),0 8px 24px -12px rgba(26,29,35,.12);
+    --dock-h:64px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#17181B; --card:#1F2126; --card-edge:#2C2F35;
+      --ink:#E8E6E1; --ink-2:#A2A8B2; --ink-3:#767C86; --hair:#3A3E45;
+      --accept:#4CB782; --accept-soft:#1C3227;
+      --reject:#E06A5E; --reject-soft:#38201D;
+      --flag:#DCA24A;   --flag-soft:#332712;
+      --null:#43474E;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -12px rgba(0,0,0,.6);
+    }
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:400 15px/1.6 var(--font-body);
+    font-feature-settings:"cv06" 1; /* unambiguous straight á for a review tool */
+    padding-bottom:calc(var(--dock-h) + 24px)}
+  [hidden]{display:none!important}
+  ::selection{background:var(--accept-soft)}
+  a{color:var(--ink)}
+  h1,h2{font-family:var(--font-disp);font-weight:600;margin:0;letter-spacing:-.01em}
+  button{font:inherit;color:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+  }
+  .lbl{font:600 10.5px/1.4 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .num{font-variant-numeric:tabular-nums}
+  kbd{font:500 10.5px/1.4 var(--font-mono);background:var(--card);color:var(--ink-2);
+    border:1px solid var(--hair);border-bottom-width:2px;border-radius:4px;padding:2px 5px}
+
+  /* ============ shell grid ============ */
+  .wrap{max-width:1440px;margin:0 auto;padding:0 clamp(14px,3vw,32px)}
+
+  /* ============ masthead ============ */
+  header.mast{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--paper) 88%,transparent);
+    backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid var(--hair)}
+  .mastrow{display:flex;align-items:center;gap:clamp(12px,2vw,28px);padding:14px 0 12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+  .brand h1{font-size:19px;white-space:nowrap}
+  .brand .sub{font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  .stat{display:flex;flex-direction:column;line-height:1.25;min-width:74px}
+  .stat b{font:600 21px/1 var(--font-disp);font-variant-numeric:tabular-nums}
+  .stat.acc b{color:var(--accept)} .stat.rej b{color:var(--reject)}
+  .stat .lbl{margin-top:3px}
+  .spacer{flex:1 1 auto;min-width:8px}
+  .ctl{display:flex;align-items:center;gap:8px}
+  select.model{font:500 13.5px/1 var(--font-body);color:var(--ink);background:var(--card);
+    border:1px solid var(--hair);border-radius:8px;padding:9px 30px 9px 11px;appearance:none;
+    background-image:linear-gradient(45deg,transparent 49%,var(--ink-2) 50%),linear-gradient(-45deg,transparent 49%,var(--ink-2) 50%);
+    background-position:calc(100% - 15px) 55%,calc(100% - 10px) 55%;background-size:5px 5px;background-repeat:no-repeat}
+  .btn{display:inline-flex;align-items:center;gap:7px;background:var(--card);color:var(--ink);
+    border:1px solid var(--hair);border-radius:8px;padding:8px 13px;font-size:13.5px;font-weight:500;
+    box-shadow:var(--shadow);transition:transform .12s ease,border-color .12s ease}
+  .btn:hover{border-color:var(--ink-3)} .btn:active{transform:translateY(1px)}
+  .btn.solid{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .btn.ghost{box-shadow:none;background:transparent;border-color:transparent;color:var(--ink-2);padding:8px 8px}
+  .btn.ghost:hover{color:var(--ink);background:color-mix(in srgb,var(--hair) 35%,transparent)}
+  .who{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+  .who b{color:var(--ink);font-weight:600}
+  .savepill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);white-space:nowrap}
+  .savepill .dot{width:7px;height:7px;border-radius:50%;background:var(--accept);flex:none}
+  .savepill.dirty .dot{background:var(--flag)} .savepill.bad .dot{background:var(--reject)}
+  .savepill.bad{color:var(--reject)}
+
+  /* ============ filmstrip ruler (signature) ============ */
+  .strip{padding:10px 0 12px;border-bottom:1px solid var(--hair);overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:thin}
+  .stripinner{position:relative;height:34px;display:flex;gap:0;padding:0 2px;min-width:100%}
+  .dslabel{position:absolute;top:-1px;font:600 9.5px/1 var(--font-body);letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-3);pointer-events:none;transform:translateX(-50%)}
+  .pg{position:relative;flex:1 1 0;min-width:3px;height:100%;border:0;padding:0;background:transparent}
+  .pg+.pg{box-shadow:inset 1.5px 0 0 color-mix(in srgb,var(--hair) 60%,transparent)}
+  .cell{position:absolute;bottom:6px;height:9px;border-radius:1.5px;background:var(--null);
+    transition:height .16s cubic-bezier(.2,.8,.3,1),background-color .16s ease}
+  .cell.d-accept{height:20px;background:var(--accept)}
+  .cell.d-reject{height:20px;background:var(--reject)}
+  .cell.d-flag{height:20px;background:var(--flag)}
+  .pg:hover .cell{filter:brightness(.86)}
+  .pg.cur::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);
+    width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--ink)}
+  .pg.cur{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 28%,transparent);border-radius:3px}
+  .striphint{display:flex;align-items:center;gap:14px;padding-top:9px;font-size:11px;color:var(--ink-3);flex-wrap:wrap}
+  .key{display:inline-flex;align-items:center;gap:5px}
+  .key i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+  /* ============ main two-pane ============ */
+  main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr);
+    gap:clamp(16px,2vw,28px);padding:clamp(16px,2.4vw,28px) 0}
+  @media (max-width:1080px){main{grid-template-columns:1fr}}
+  .pane{background:var(--card);border:1px solid var(--card-edge);border-radius:var(--r);
+    box-shadow:var(--shadow);padding:clamp(16px,2vw,24px)}
+  .itemmeta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:14px}
+  .pos{font:600 13px/1 var(--font-disp);color:var(--ink);font-variant-numeric:tabular-nums}
+  .pos em{font-style:normal;color:var(--ink-3);font-weight:400}
+  .tag{font:600 10px/1.5 var(--font-body);letter-spacing:.06em;text-transform:uppercase;
+    border:1px solid var(--hair);border-radius:999px;padding:2.5px 9px;color:var(--ink-2);background:color-mix(in srgb,var(--paper) 55%,var(--card))}
+  .tag.sq{color:#1D5C8A;border-color:#B9D3E6;background:#EAF3FA}
+  .tag.dp{color:#7A4A9E;border-color:#DAC5EA;background:#F4ECF9}
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]) .tag.sq{color:#7FBBE8;border-color:#2C4A63;background:#16222E}
+    :root:not([data-theme="light"]) .tag.dp{color:#BC92DB;border-color:#4A3358;background:#211829}
+  }
+  .passageNote{margin-left:auto;font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .sec{margin:0 0 6px;display:flex;align-items:baseline;gap:9px}
+  .sec .idx{font:600 11px/1 var(--font-mono);color:var(--ink-3)}
+  h2.q{font-size:17px;line-height:1.5;font-weight:600;font-family:var(--font-body);letter-spacing:-.005em}
+  .ctx{font-size:15.5px;line-height:1.78;color:var(--ink);max-height:none;overflow-wrap:anywhere;
+    border-top:1px solid var(--hair);padding-top:12px;margin-top:4px;white-space:pre-wrap}
+  details.fold{margin-top:16px;border-top:1px solid var(--hair);padding-top:12px}
+  details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;
+    font-size:13px;font-weight:600;color:var(--ink-2)}
+  details.fold>summary::-webkit-details-marker{display:none}
+  details.fold>summary .chev{display:inline-block;transition:transform .16s ease;color:var(--ink-3)}
+  details.fold[open]>summary .chev{transform:rotate(90deg)}
+  details.fold>summary:hover{color:var(--ink)}
+  .modelans{margin-top:12px;background:color-mix(in srgb,var(--flag-soft) 60%,var(--card));
+    border:1px solid color-mix(in srgb,var(--flag) 26%,transparent);border-left:3px solid var(--flag);
+    border-radius:8px;padding:13px 15px;font-family:var(--font-mono);font-size:13.5px;line-height:1.65;
+    white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+  .modelans .lbl{color:var(--flag);display:block;margin-bottom:6px}
+  .modelans.na{background:color-mix(in srgb,var(--hair) 25%,var(--card));border-color:var(--hair);border-left-color:var(--ink-3);color:var(--ink-3)}
+  .modelans.na .lbl{color:var(--ink-3)}
+
+  /* ============ decision column ============ */
+  .side{display:flex;flex-direction:column;gap:clamp(16px,2vw,20px)}
+  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .segbtn{padding:14px 8px 12px;border-radius:9px;border:1.5px solid var(--hair);background:var(--card);
+    display:flex;flex-direction:column;align-items:center;gap:7px;font-weight:600;font-size:14px;
+    transition:border-color .12s ease,background-color .12s ease,transform .12s ease}
+  .segbtn:active{transform:translateY(1px)}
+  .segbtn .mark{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--ink-3);display:block}
+  .segbtn[data-d=accept].on{border-color:var(--accept);background:var(--accept-soft);color:var(--accept)}
+  .segbtn[data-d=accept].on .mark{background:var(--accept);border-color:var(--accept)}
+  .segbtn[data-d=reject].on{border-color:var(--reject);background:var(--reject-soft);color:var(--reject)}
+  .segbtn[data-d=reject].on .mark{background:var(--reject);border-color:var(--reject)}
+  .segbtn[data-d=""].on{border-color:var(--ink-2);background:color-mix(in srgb,var(--hair) 40%,var(--card))}
+  .segbtn:hover{border-color:var(--ink-3)}
+  .hint{font-size:12px;color:var(--ink-3);margin:10px 0 0}
+  .fld{margin-top:16px}
+  textarea{width:100%;font:400 14px/1.6 var(--font-body);color:var(--ink);background:var(--card);
+    border:1px solid var(--hair);border-radius:8px;padding:10px 12px;resize:vertical;transition:border-color .12s ease}
+  textarea:focus{outline:none;border-color:var(--ink-2)}
+  textarea:disabled{background:color-mix(in srgb,var(--hair) 25%,var(--card));color:var(--ink-3);cursor:not-allowed}
+  textarea.bad{border-color:var(--reject);background:color-mix(in srgb,var(--reject-soft) 50%,var(--card))}
+  textarea.bad:focus{outline:2px solid color-mix(in srgb,var(--reject) 45%,transparent);outline-offset:1px}
+  .err{color:var(--reject);font-size:12px;margin-top:6px;font-weight:500}
+  .stats .row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--hair);font-size:13px}
+  .stats .row:last-child{border-bottom:0}
+  .stats .row span:first-child{color:var(--ink-2);overflow-wrap:anywhere}
+  .stats .row span:last-child{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .stats .pacc{color:var(--accept)}
+  .io{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .io .btn{justify-content:center;padding:10px 8px;font-size:13px}
+  .io .btn.full{grid-column:1/-1}
+  .io .btn.up{border-style:dashed;background:transparent;box-shadow:none}
+  .fine{font-size:11.5px;line-height:1.55;color:var(--ink-3);margin:12px 0 0}
+
+  /* ============ bottom dock ============ */
+  .dock{position:fixed;inset:auto 0 0 0;z-index:45;background:color-mix(in srgb,var(--paper) 92%,transparent);
+    backdrop-filter:saturate(1.2) blur(10px);border-top:1px solid var(--hair)}
+  .dockinner{display:flex;align-items:center;gap:clamp(10px,2vw,20px);height:var(--dock-h);max-width:1440px;margin:0 auto;padding:0 clamp(14px,3vw,32px)}
+  .nav{display:flex;align-items:stretch;gap:8px;flex:none}
+  .navbtn{min-width:104px;border:1px solid var(--hair);background:var(--card);border-radius:9px;
+    padding:9px 14px;display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:var(--shadow);
+    font-weight:600;font-size:13.5px;transition:transform .12s ease,border-color .12s ease}
+  .navbtn small{font:400 10px/1 var(--font-mono);color:var(--ink-3)}
+  .navbtn:hover:not(:disabled){border-color:var(--ink-2);transform:translateY(-1px)}
+  .navbtn:disabled{opacity:.38;cursor:not-allowed;box-shadow:none}
+  .navbtn.pri{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .navbtn.pri small{color:color-mix(in srgb,var(--paper) 62%,transparent)}
+  .counter{display:flex;flex-direction:column;justify-content:center;line-height:1.15;min-width:0}
+  .counter b{font:600 22px/1 var(--font-disp);font-variant-numeric:tabular-nums}
+  .counter span{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+  .dock .spacer{flex:1 1 auto}
+  .dock .savepill{margin-right:auto}
+
+  /* ============ banners, overlays, toasts ============ */
+  .banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--reject-soft);
+    border-bottom:1px solid color-mix(in srgb,var(--reject) 30%,transparent);color:var(--ink);
+    padding:9px 0;font-size:13px}
+  .banner b{color:var(--reject)}
+  .overlay{position:fixed;inset:0;z-index:60;background:color-mix(in srgb,#0B0C0E 62%,transparent);
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);
+    padding:clamp(22px,4vw,34px);width:100%;max-width:420px;border:1px solid var(--card-edge)}
+  .card.wide{max-width:560px}
+  .card h2{font-size:24px;margin-bottom:6px}
+  .card p.lead{color:var(--ink-2);font-size:14px;margin:0 0 22px}
+  .field{display:block;margin-bottom:18px}
+  .field .lbl{display:block;margin-bottom:7px}
+  .field input{width:100%;font:400 15px/1.4 var(--font-body);color:var(--ink);background:var(--card);
+    border:1px solid var(--hair);border-radius:8px;padding:11px 13px}
+  .field input:focus{outline:none;border-color:var(--ink-2)}
+  .toast{position:fixed;left:50%;bottom:calc(var(--dock-h) + 18px);transform:translateX(-50%) translateY(8px);
+    z-index:70;background:var(--ink);color:var(--paper);border-radius:9px;padding:10px 16px;font-size:13px;
+    font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;box-shadow:var(--shadow);
+    max-width:min(90vw,460px);text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .keys{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;align-items:center;font-size:13.5px}
+  .keys .k{text-align:right;white-space:nowrap}
+  .boot{padding:60px 0;text-align:center;color:var(--ink-3);font-size:14px}
+  .boot.b-err{color:var(--reject);max-width:620px;margin:0 auto;text-align:left;line-height:1.6}
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap mastrow">
+    <div class="brand">
+      <h1>Reading Review</h1>
+      <span class="sub">VMLU · 400 câu · issue&nbsp;#3</span>
+    </div>
+    <div class="stat acc"><b class="num" id="mAcc">—</b><span class="lbl">accept %</span></div>
+    <div class="stat"><b class="num" id="mProg">0/0</b><span class="lbl">đã review</span></div>
+    <div class="stat rej"><b class="num" id="mRej">0</b><span class="lbl">reject</span></div>
+    <div class="spacer"></div>
+    <div class="ctl">
+      <label class="lbl" for="modelSel">Model</label>
+      <select id="modelSel" class="model"></select>
+    </div>
+    <div class="who"><b id="who">—</b></div>
+    <span class="savepill" id="savePill"><i class="dot"></i><span id="savedTxt">—</span></span>
+    <button id="btnNextUnrev" class="btn solid" title="Nhảy tới câu chưa review gần nhất (phím t)">
+      Câu chưa review <kbd>t</kbd></button>
+    <button id="btnHelp" class="btn ghost" aria-label="Phím tắt" title="Phím tắt (?)">?</button>
+  </div>
+  <div class="wrap"><div class="striphint">
+    <span class="key"><i style="background:var(--accept)"></i>accept</span>
+    <span class="key"><i style="background:var(--reject)"></i>reject</span>
+    <span class="key"><i style="background:var(--flag)"></i>reject thiếu đáp án sửa</span>
+    <span class="key"><i style="background:var(--null)"></i>chưa review</span>
+    <span>· mỗi vạch đứng = một đoạn văn (passage), click để nhảy tới câu</span>
+  </div></div>
+  <div class="wrap"><div class="strip" id="stripWrap"><div class="stripinner" id="strip"></div></div></div>
+</header>
+
+<div class="banner" id="banner" role="status" hidden>
+  <b id="bannerTitle"></b><span id="bannerMsg"></span>
+  <button class="btn ghost" id="bannerFix" hidden></button>
+</div>
+
+<main class="wrap">
+  <section class="pane" aria-labelledby="hQuestion">
+    <div id="bootMsg" class="boot">Đang tải dữ liệu review…</div>
+    <div id="itemView" hidden>
+      <div class="itemmeta">
+        <span class="pos"><span id="posNow">1</span><em> / <span id="posAll">400</span></em></span>
+        <span class="tag" id="tagDs"></span>
+        <span class="tag" id="tagStratum"></span>
+        <span class="tag" id="tagItem"></span>
+        <span class="passageNote num" id="passageNote"></span>
+      </div>
+      <div class="sec"><span class="idx">Q</span><h2 class="q" id="qBox" lang="vi"></h2></div>
+      <details class="fold" id="ctxFold" open>
+        <summary><span class="chev" aria-hidden="true">▸</span> Ngữ cảnh — đoạn văn gốc <span class="num" id="ctxLen"></span></summary>
+        <div class="sec" style="margin-top:14px"><span class="idx">CTX</span></div>
+        <div class="ctx" id="ctxBox" lang="vi"></div>
+      </details>
+      <div class="modelans" id="ansBox">
+        <span class="lbl">Câu trả lời của model <span id="ansModel"></span></span>
+        <span id="aBox" lang="vi"></span>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side" id="side" aria-label="Quyết định">
+    <div class="pane">
+      <span class="lbl">Quyết định của bạn</span>
+      <div id="seg" role="radiogroup" aria-label="Quyết định" class="seg">
+        <button class="segbtn" data-d="accept" role="radio" aria-checked="false"><i class="mark"></i>Accept<kbd>a</kbd></button>
+        <button class="segbtn" data-d="reject" role="radio" aria-checked="false"><i class="mark"></i>Reject<kbd>r</kbd></button>
+        <button class="segbtn" data-d="" role="radio" aria-checked="false"><i class="mark"></i>Bỏ trống<kbd>u</kbd></button>
+      </div>
+      <p class="hint">Accept = đáp án của model thành gold. Reject = đáp án sửa bên dưới thành gold.</p>
+      <div class="fld">
+        <label class="lbl" for="corrBox">Đáp án sửa <span style="text-transform:none;letter-spacing:0">— bắt buộc khi Reject</span> <kbd>e</kbd></label>
+        <textarea id="corrBox" rows="3" lang="vi" disabled placeholder="Đáp án đúng theo bạn…"></textarea>
+        <p class="err" id="corrErr" hidden>Reject cần một đáp án sửa — nếu không, gold không suy ra được và câu này rơi vào adjudication.</p>
+      </div>
+      <div class="fld">
+        <label class="lbl" for="noteBox">Ghi chú <kbd>n</kbd></label>
+        <textarea id="noteBox" rows="3" lang="vi" placeholder="Lý do reject, nguồn span… (không bắt buộc)"></textarea>
+      </div>
+    </div>
+
+    <div class="pane">
+      <span class="lbl">Tiến độ theo nhóm câu</span>
+      <div class="stats" id="stratBox" style="margin-top:10px"></div>
+    </div>
+
+    <div class="pane">
+      <span class="lbl">Xuất kết quả</span>
+      <div class="io" style="margin-top:10px">
+        <button id="expCsv" class="btn up">Export CSV</button>
+        <button id="expJson" class="btn up">Export state</button>
+        <label class="btn up">Import state<input id="jsonIn" type="file" accept=".json" class="sr"></label>
+      </div>
+      <p class="fine" id="ioFine">Nhãn trạng thái tự lưu theo phiên review của bạn.</p>
+    </div>
+  </aside>
+</main>
+
+<nav class="dock" aria-label="Điều hướng câu">
+  <div class="dockinner">
+    <div class="nav">
+      <button id="prevBtn" class="navbtn">← Trước<small>k / ↑</small></button>
+      <div class="counter"><b class="num"><span id="dockNow">1</span><em style="font-style:normal;color:var(--ink-3)"> / <span id="dockAll">400</span></em></b><span>câu hỏi</span></div>
+      <button id="nextBtn" class="navbtn pri">Tiếp →<small>j / ↓</small></button>
+    </div>
+    <div class="spacer"></div>
+    <span class="savepill" id="savePill2"><i class="dot"></i><span id="savedTxt2">—</span></span>
+    <button id="nextUnrev2" class="btn">Câu chưa review kế tiếp</button>
+  </div>
+</nav>
+
+<!-- reviewer identity gate -->
+<div id="gate" class="overlay" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="card">
+    <h2 id="gateTitle">Bạn là ai?</h2>
+    <p class="lead">Nhãn trạng thái được lưu riêng cho từng <b>người review × model</b>. Hai người phải review độc lập — đừng nhập state của người khác.</p>
+    <label class="field"><span class="lbl">Tên người review</span>
+      <input id="gateName" autocomplete="off" placeholder="vd: linh (gõ không dấu cũng được)">
+    </label>
+    <button id="gateOk" class="btn solid" style="width:100%;justify-content:center;padding:12px">Bắt đầu review</button>
+  </div>
+</div>
+
+<!-- shortcuts -->
+<div id="help" class="overlay" role="dialog" aria-modal="true" aria-label="Phím tắt" hidden>
+  <div class="card wide">
+    <h2 style="font-size:20px">Phím tắt</h2>
+    <p class="lead">Các phím này tắt khi con trỏ đang ở trong ô văn bản.</p>
+    <div class="keys">
+      <span class="k"><kbd>j</kbd> / <kbd>↓</kbd></span><span>Câu kế tiếp</span>
+      <span class="k"><kbd>k</kbd> / <kbd>↑</kbd></span><span>Câu trước</span>
+      <span class="k"><kbd>a</kbd> · <kbd>space</kbd></span><span>Accept (lần 2 = bỏ trống)</span>
+      <span class="k"><kbd>r</kbd></span><span>Reject · focus ô sửa nếu đang trống</span>
+      <span class="k"><kbd>u</kbd></span><span>Bỏ trống quyết định</span>
+      <span class="k"><kbd>e</kbd></span><span>Tới ô đáp án sửa</span>
+      <span class="k"><kbd>n</kbd></span><span>Tới ô ghi chú</span>
+      <span class="k"><kbd>t</kbd></span><span>Nhảy tới câu chưa review kế tiếp</span>
+      <span class="k"><kbd>Home</kbd> / <kbd>End</kbd></span><span>Câu đầu / câu cuối</span>
+      <span class="k"><kbd>?</kbd> · <kbd>Esc</kbd></span><span>Mở / đóng bảng này</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script id="data" type="application/json">"__VMLU_DATA__"</script>
+<script>
+"use strict";
+/* ==========================================================================
+   STATIC FALLBACK — the self-contained `review_ui.html` (built by
+   `build_review_ui.py build`, opened from file://, no network, no server).
+   The primary review tool is the Next.js app in `web/` (state autosaved to
+   disk via its API routes). The two modes speak the SAME state envelope:
+   {schema_version:1, annotator, model, saved_at, items:{ "dataset:item_id":
+   {d,c,n} }} — state JSON exported from either mode imports into the other,
+   and review CSVs from both satisfy `export_annotation_workbooks.py review`.
+   ========================================================================== */
+const SCHEMA = 1;
+
+const $ = id => document.getElementById(id);
+const itemKey = it => it.dataset + ":" + it.item_id;
+const slug = s => String(s).trim().toLowerCase().normalize("NFD")
+  .replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
+const S = {
+  annotator: "", model: null, idx: 0, items: [], passages: {}, models: [],
+  state: {},                 // active bucket, mutated in place
+  extraModels: {},           // name -> {key: answer} loaded via + answers CSV
+  ready: false,
+};
+
+/* ---------------- toasts + banners ---------------- */
+let toastT = null;
+function toast(msg, ms = 2200) {
+  const el = $("toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), ms);
+}
+function banner(title, msg, fix) {
+  const b = $("banner"); $("bannerTitle").textContent = title; $("bannerMsg").textContent = msg || "";
+  const btn = $("bannerFix");
+  if (fix) { btn.hidden = false; btn.textContent = fix.label; btn.onclick = fix.fn; } else btn.hidden = true;
+  b.hidden = false;
+}
+function clearBanner() { $("banner").hidden = true; }
+
+function saySaved(kind, text) {   // kind: ok | dirty | bad
+  for (const [pill, txt] of [["savePill", "savedTxt"], ["savePill2", "savedTxt2"]]) {
+    const p = $(pill); p.className = "savepill" + (kind === "ok" ? "" : " " + kind); $(txt).textContent = text;
+  }
+}
+
+/* ---------------- CSV (shared by both exporters) ---------------- */
+function csvCell(v) { v = String(v ?? ""); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function download(name, text, mime) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+function buildCsv(items, state, annotator, model, answerFor) {
+  const head = ["annotator", "model", "dataset", "item_id", "stratum",
+                "decision", "model_answer", "corrected_answer", "note"];
+  const lines = [head.join(",")];
+  for (const it of items) {
+    const st = state[itemKey(it)] || {};
+    lines.push([annotator, model, it.dataset, it.item_id, it.stratum,
+                st.d || "", answerFor ? (answerFor(it, model) ?? "") : "",
+                st.d === "reject" ? (st.c || "") : "", st.n || ""].map(csvCell).join(","));
+  }
+  return "﻿" + lines.join("\r\n") + "\r\n";
+}
+function parseCsv(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ",") { row.push(cell); cell = ""; }
+    else if (ch === "\r") { /* \n cuts */ }
+    else if (ch === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += ch;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+/* ---------------- localStorage persistence ---------------- */
+const LS_ANNO = "vmlu.review.annotator";
+let quota = false;
+function lsGet(k) { try { return localStorage.getItem(k); } catch { quota = true; return null; } }
+function lsSet(k, v) {
+  if (quota) return false;
+  try { localStorage.setItem(k, v); return true; }
+  catch (e) {
+    quota = true;
+    banner("localStorage đầy hoặc bị chặn", (e && e.name ? e.name : "lỗi") +
+      " — state chỉ còn trong bộ nhớ phiên này. Hãy Export state JSON thường xuyên.",
+      { label: "Đã hiểu", fn: () => clearBanner() });
+    return false;
+  }
+}
+const stateKey = (a, m) => `vmlu.review.state.${slug(a)}.${slug(m)}`;
+const saveKey = (a, m) => `vmlu.review.lastsave.${slug(a)}.${slug(m)}`;
+
+/* ---------------- answers (embedded models + client-loaded extras) ------ */
+function answerFor(it, model) {
+  if (S.extraModels[model]) return S.extraModels[model][itemKey(it)] ?? null;
+  return (it.answers || {})[model] ?? null;
+}
+
+/* ---------------- persistence loop ---------------- */
+let dirty = false, saveTimer = null;
+function touch() {
+  dirty = true; saySaved("dirty", "chưa lưu…");
+  clearTimeout(saveTimer); saveTimer = setTimeout(persistNow, 450);
+}
+function persistNow() {
+  if (!S.ready || !S.annotator) return;
+  clearTimeout(saveTimer);
+  const env = { schema_version: SCHEMA, annotator: S.annotator, model: S.model,
+                saved_at: new Date().toISOString(), items: S.state };
+  const ok = lsSet(stateKey(S.annotator, S.model), JSON.stringify(env))
+          && lsSet(saveKey(slug(S.annotator), S.model), env.saved_at);
+  if (ok) { dirty = false; saySaved("ok", "đã lưu " + hhmm(env.saved_at)); }
+  else { dirty = true; saySaved("bad", "chỉ trong bộ nhớ"); }
+}
+addEventListener("beforeunload", () => { if (dirty) persistNow(); });
+function hhmm(iso) { try { return new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }); } catch { return ""; } }
+
+/* ---------------- mutations ---------------- */
+function bucket() {
+  const it = S.items[S.idx], k = itemKey(it);
+  return S.state[k] || (S.state[k] = { d: null, c: "", n: "" });
+}
+function setDecision(d) {
+  const cur = bucket();
+  cur.d = (d === "" ) ? null : (cur.d === d ? null : d);
+  renderSeg(); renderWarn(); renderStats(); renderStripCell(); touch();
+  if (cur.d === "reject" && !$("corrBox").value.trim()) $("corrBox").focus();
+}
+function setField(which, v) { const cur = bucket(); cur[which] = v; renderWarn(); renderStats(); renderStripCell(); touch(); }
+
+/* ---------------- filmstrip ---------------- */
+function renderStrip() {
+  const strip = $("strip"); strip.textContent = "";
+  const byPassage = [];
+  S.items.forEach((it, i) => {
+    const last = byPassage[byPassage.length - 1];
+    if (last && last.key === it.passage_key) last.idx.push(i);
+    else byPassage.push({ key: it.passage_key, idx: [i] });
+  });
+  const n = S.items.length;
+  for (const g of byPassage) {
+    const grp = document.createElement("button");
+    grp.className = "pg"; grp.type = "button";
+    grp.setAttribute("aria-label", `đoạn ${g.key}, ${g.idx.length} câu`);
+    grp.style.flexGrow = String(g.idx.length);
+    grp.dataset.first = String(g.idx[0]);
+    for (const j of g.idx) {
+      const cell = document.createElement("i");
+      cell.className = "cell"; cell.dataset.i = String(j);
+      const k = g.idx.indexOf(j);
+      cell.style.left = `${k / g.idx.length * 100}%`;
+      cell.style.width = `${100 / g.idx.length}%`;
+      cell.title = `${S.items[j].dataset} #${S.items[j].item_id}`;
+      grp.append(cell);
+    }
+    grp.addEventListener("click", () => goto(Number(grp.dataset.first)));
+    strip.append(grp);
+  }
+  // dataset labels at the boundary between squad and drop blocks
+  const firstDs = S.items[0] && S.items[0].dataset;
+  let cut = -1;
+  for (let i = 1; i < n; i++) if (S.items[i].dataset !== S.items[i - 1].dataset) { cut = i; break; }
+  if (cut > 0) {
+    const l1 = document.createElement("span"); l1.className = "dslabel"; l1.textContent = firstDs;
+    const l2 = document.createElement("span"); l2.className = "dslabel"; l2.textContent = S.items[cut].dataset;
+    strip.append(l1, l2);
+    requestAnimationFrame(() => {
+      const w = strip.scrollWidth - 4;             // labels ride the scroll width, not the viewport
+      l1.style.left = (cut / n * w / 2) + "px";
+      l2.style.left = ((cut + (n - cut) / 2) / n * w + 2) + "px";
+      l1.style.top = "30px"; l2.style.top = "30px";
+    });
+  }
+  renderStripAll();
+}
+function stateOf(i) {
+  const st = S.state[itemKey(S.items[i])] || {};
+  if (!st.d) return "";
+  if (st.d === "reject" && !(st.c || "").trim()) return "flag";
+  return st.d;
+}
+function renderStripAll() {
+  for (const c of $("strip").querySelectorAll(".cell")) {
+    const st = stateOf(Number(c.dataset.i));
+    c.className = "cell" + (st ? " d-" + st : "");
+  }
+  renderStripCur();
+}
+function renderStripCell() {
+  const c = $("strip").querySelector(`.cell[data-i="${S.idx}"]`);
+  if (c) { const st = stateOf(S.idx); c.className = "cell" + (st ? " d-" + st : ""); }
+}
+function renderStripCur() {
+  for (const g of $("strip").querySelectorAll(".pg")) g.classList.toggle("cur", Number(g.dataset.first) <= S.idx && S.idx < Number(g.dataset.first) + g.querySelectorAll(".cell").length);
+  const cur = $("strip").querySelector(".pg.cur");
+  if (cur) cur.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
+/* ---------------- render item ---------------- */
+function goto(i, opts) {
+  S.idx = Math.max(0, Math.min(S.items.length - 1, i));
+  renderItem(opts);
+}
+function renderItem() {
+  if (!S.items.length) return;
+  const it = S.items[S.idx];
+  let first = S.idx, last = S.idx;
+  while (first > 0 && S.items[first - 1].passage_key === it.passage_key) first--;
+  while (last < S.items.length - 1 && S.items[last + 1].passage_key === it.passage_key) last++;
+  $("posNow").textContent = String(S.idx + 1);
+  $("posAll").textContent = $("dockAll").textContent = String(S.items.length);
+  $("dockNow").textContent = String(S.idx + 1);
+  const td = $("tagDs"); td.textContent = it.dataset; td.className = "tag " + (it.dataset === "squad" ? "sq" : "dp");
+  $("tagStratum").textContent = it.stratum;
+  $("tagItem").textContent = "#" + it.item_id;
+  $("passageNote").textContent = `đoạn ${it.passage_key} · câu ${S.idx - first + 1}/${last - first + 1} của đoạn này`;
+  const ctx = S.passages[it.passage_key] ?? "";
+  $("ctxBox").textContent = ctx || "(thiếu ngữ cảnh — dựng lại trang)";
+  $("ctxLen").textContent = ctx ? `· ${ctx.length} ký tự` : "";
+  $("qBox").textContent = it.question;
+  const a = answerFor(it, S.model);
+  const box = $("ansBox");
+  box.classList.toggle("na", a === null);
+  $("ansModel").textContent = "· " + S.model;
+  $("aBox").textContent = a === null ? "(model này không có đáp án cho câu hỏi — n/a)" : a;
+  const st = S.state[itemKey(it)] || {};
+  $("corrBox").value = st.c || ""; $("noteBox").value = st.n || "";
+  renderSeg(); renderWarn(); renderStats(); renderStripCur();
+  $("prevBtn").disabled = S.idx === 0; $("nextBtn").disabled = S.idx === S.items.length - 1;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+}
+function renderSeg() {
+  const d = (S.state[itemKey(S.items[S.idx])] || {}).d || "";
+  for (const b of $("seg").querySelectorAll(".segbtn")) {
+    const on = b.dataset.d === d;
+    b.classList.toggle("on", on); b.setAttribute("aria-checked", String(on));
+  }
+  $("corrBox").disabled = d !== "reject";
+}
+function renderWarn() {   // reject + empty correction = no derivable gold
+  const st = S.state[itemKey(S.items[S.idx])] || {};
+  const bad = st.d === "reject" && !(st.c || "").trim();
+  $("corrBox").classList.toggle("bad", bad);
+  $("corrErr").hidden = !bad;
+}
+function renderStats() {
+  let rev = 0, acc = 0, rej = 0;
+  const byDs = {}, byStr = {};
+  for (const it of S.items) {
+    const st = S.state[itemKey(it)];
+    if (!st || !st.d) continue;
+    rev++; if (st.d === "accept") acc++; else rej++;
+    const d = byDs[it.dataset] = byDs[it.dataset] || [0, 0]; d[0]++; if (st.d === "accept") d[1]++;
+    const k = it.dataset + "/" + it.stratum; const g = byStr[k] = byStr[k] || [0, 0];
+    g[0]++; if (st.d === "accept") g[1]++;
+  }
+  $("mAcc").textContent = rev ? (100 * acc / rev).toFixed(1) : "—";
+  $("mProg").textContent = `${rev}/${S.items.length}`;
+  $("mRej").textContent = String(rej);
+  const pct = (c, t) => `${c}/${t} · ${t ? Math.round(100 * c / t) : 0}%`;
+  const rows = Object.keys(byDs).sort().map(k => [k, byDs[k]])
+    .concat(Object.keys(byStr).sort().map(k => [k, byStr[k]]));
+  $("stratBox").innerHTML = rows.map(([k, v]) =>
+    `<div class="row"><span>${esc(k)}</span><span><span class="pacc">${pct(v[1], v[0])}</span></span></div>`).join("")
+    || `<div class="row"><span>chưa có quyết định nào</span><span>—</span></div>`;
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+/* ---------------- navigation ---------------- */
+function nextUnreviewed() {
+  if (!S.items.length) return;
+  for (let d = 1; d <= S.items.length; d++) {
+    const i = (S.idx + d) % S.items.length;
+    const st = S.state[itemKey(S.items[i])];
+    if (!st || !st.d) { goto(i); if (d > 1) toast(`câu ${i + 1} chưa review`); return; }
+  }
+  toast("Hết! Mọi câu đã có quyết định 🎉", 3200);
+}
+
+/* ---------------- import / extra models ---------------- */
+function importJson(file) {
+  file.text().then(t => {
+    let obj;
+    try { obj = JSON.parse(t); } catch { toast("File không phải JSON hợp lệ"); return; }
+    if (obj.schema_version !== SCHEMA) { toast(`schema_version ${obj.schema_version} ≠ ${SCHEMA} — không import`); return; }
+    if (slug(obj.annotator || "") !== slug(S.annotator)) { toast(`State của '${obj.annotator}' ≠ bạn ('${S.annotator}') — giữ blind protocol`); return; }
+    if (obj.model && obj.model !== S.model) { toast(`State của model '${obj.model}' ≠ model đang chọn — đổi model rồi import lại`); return; }
+    const valid = new Set(S.items.map(itemKey));
+    let added = 0;
+    for (const [k, v] of Object.entries(obj.items || {})) {
+      if (!valid.has(k)) continue;
+      const cur = S.state[k];
+      if (cur && cur.d) continue;                      // never overwrite an existing decision
+      if (!cur && v && v.d) { S.state[k] = { d: v.d, c: v.c || "", n: v.n || "" }; added++; }
+    }
+    persistNow(); renderItem(); renderStripAll();
+    toast(`Đã import: +${added} quyết định`);
+  });
+}
+function loadAnswersCsv(file) {
+  const name = file.name;
+  if (!/^reading_answers_.+\.csv$/.test(name)) { toast("Tên file phải là reading_answers_<model>.csv"); return; }
+  const model = name.slice("reading_answers_".length, -4);
+  file.text().then(t => {
+    const rows = parseCsv(t.replace(/^/, ""));
+    if (!rows.length) { toast("File rỗng"); return; }
+    const head = rows[0].map(h => h.trim());
+    const iDs = head.indexOf("dataset"), iId = head.indexOf("item_id"), iAns = head.indexOf("raw_response");
+    if (Math.min(iDs, iId, iAns) < 0) { toast("Thiếu cột dataset/item_id/raw_response"); return; }
+    const map = {};
+    for (const r of rows.slice(1)) if (r.length > Math.max(iDs, iId, iAns)) map[r[iDs].trim() + ":" + r[iId].trim()] = (r[iAns] || "").trim();
+    S.extraModels[model] = map;
+    const o = document.createElement("option"); o.value = model; o.textContent = model + " (nạp từ máy)";
+    $("modelSel").append(o);
+    selectModel(model);
+    toast(`Đã nạp answers cho ${model}`);
+  });
+}
+
+/* ---------------- keyboard ---------------- */
+addEventListener("keydown", ev => {
+  if (!$("gate").hidden) return;               // identity gate swallows all keys until named
+  const typing = /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName);
+  if (ev.key === "Escape") {
+    document.activeElement.blur(); $("help").hidden = true; return;
+  }
+  if (typing) return;
+  if (!S.ready) return;
+  switch (ev.key) {
+    case "j": case "ArrowDown": goto(S.idx + 1); ev.preventDefault(); break;
+    case "k": case "ArrowUp": goto(S.idx - 1); ev.preventDefault(); break;
+    case "a": case " ": setDecision("accept"); ev.preventDefault(); break;
+    case "r": setDecision("reject"); ev.preventDefault(); break;
+    case "u": setDecision(""); ev.preventDefault(); break;
+    case "e": { const c = $("corrBox"); c.disabled = false; c.focus(); ev.preventDefault(); break; }
+    case "n": $("noteBox").focus(); ev.preventDefault(); break;
+    case "t": nextUnreviewed(); ev.preventDefault(); break;
+    case "Home": goto(0); ev.preventDefault(); break;
+    case "End": goto(S.items.length - 1); ev.preventDefault(); break;
+    case "?": $("help").hidden = !$("help").hidden; ev.preventDefault(); break;
+  }
+});
+
+/* ---------------- wiring ---------------- */
+for (const b of $("seg").querySelectorAll(".segbtn"))
+  b.addEventListener("click", () => setDecision(b.dataset.d));
+$("corrBox").addEventListener("input", e => setField("c", e.target.value));
+$("noteBox").addEventListener("input", e => setField("n", e.target.value));
+$("prevBtn").onclick = () => goto(S.idx - 1);
+$("nextBtn").onclick = () => goto(S.idx + 1);
+$("btnNextUnrev").onclick = nextUnreviewed;
+$("nextUnrev2").onclick = nextUnreviewed;
+$("expCsv").onclick = () => { persistNow();
+  download(`review_${slug(S.annotator)}_${slug(S.model)}.csv`,
+    buildCsv(S.items, S.state, S.annotator, S.model, answerFor), "text/csv");
+  toast("Đã tải review CSV"); };
+$("expJson").onclick = () => { persistNow();
+  download(`state_${slug(S.annotator)}_${slug(S.model)}.json`, JSON.stringify({
+    schema_version: SCHEMA, annotator: S.annotator, model: S.model,
+    saved_at: new Date().toISOString(), items: S.state }), "application/json"); };
+$("jsonIn").onchange = e => e.target.files[0] && importJson(e.target.files[0]);
+$("btnHelp").onclick = () => { $("help").hidden = !$("help").hidden; };
+$("help").addEventListener("click", e => { if (e.target === $("help")) $("help").hidden = true; });
+$("modelSel").onchange = e => selectModel(e.target.value);
+(function addAnswersCsvButton() {
+  const lab = document.createElement("label");
+  lab.className = "btn up"; lab.textContent = "+ answers CSV";
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = ".csv"; inp.className = "sr";
+  inp.onchange = e => e.target.files[0] && loadAnswersCsv(e.target.files[0]);
+  lab.append(inp); $("expJson").parentElement.append(lab);
+})();
+
+function selectModel(m) {
+  if (!m || m === S.model) return;
+  if (dirty) persistNow();
+  S.model = m; $("modelSel").value = m;
+  mountState();
+  renderItem(); renderStripAll();
+}
+
+/* ---------------- boot ---------------- */
+function bootErr(msg) {
+  const b = $("bootMsg"); b.className = "boot b-err"; b.hidden = false;
+  b.innerHTML = "<b>Không tải được dữ liệu.</b><br>" + esc(msg) +
+    "<br><br>File này chưa có dữ liệu nhúng — chạy <code>build_review_ui.py build</code>.";
+}
+function mountState() {
+  const raw = lsGet(stateKey(S.annotator, S.model));
+  let obj = null;
+  if (raw) { try { const o = JSON.parse(raw); if (o && o.schema_version === SCHEMA && o.items) obj = o; } catch { obj = null; } }
+  S.state = obj ? obj.items : {};
+  const t = obj ? obj.saved_at : lsGet(saveKey(slug(S.annotator), S.model));
+  saySaved("ok", t ? "đã lưu " + hhmm(t) : "chưa có thay đổi");
+}
+function start() {
+  $("who").textContent = "reviewer: " + S.annotator;
+  let blob;
+  try {
+    blob = JSON.parse($("data").textContent);
+    if (blob === null) { bootErr("trang chưa được nhúng dữ liệu."); return; }
+  } catch (e) { bootErr(e && e.message ? e.message : String(e)); return; }
+  if (blob.schema_version !== SCHEMA) { bootErr(`blob schema_version ${blob.schema_version} ≠ ${SCHEMA} — dựng lại trang.`); return; }
+  S.items = blob.items; S.passages = blob.passages; S.models = blob.models;
+  $("posAll").textContent = $("dockAll").textContent = String(S.items.length);
+  const sel = $("modelSel"); sel.textContent = "";
+  for (const m of S.models) { const o = document.createElement("option"); o.value = m; o.textContent = m; sel.append(o); }
+  S.model = S.models[0] || null;
+  if (!S.model) { bootErr("blob không có model nào."); return; }
+  mountState();
+  S.ready = true;
+  $("bootMsg").hidden = true; $("itemView").hidden = false;
+  renderStrip(); goto(0);
+  $("ioFine").innerHTML = "Mở bằng <code>file://</code>: state nằm trong localStorage của trình duyệt này — <b>Export CSV/state sau mỗi buổi review</b>. Công cụ chính (lưu lên đĩa) là app Next.js trong <code>web/</code>: <code>build_review_ui.py export-blob && cd web && npm run dev</code>.";
+}
+$("gateOk").onclick = () => {
+  const v = $("gateName").value.trim();
+  if (!v) { $("gateName").focus(); return; }
+  S.annotator = v; lsSet(LS_ANNO, v);
+  $("gate").classList.add("gone"); $("gate").hidden = true;
+  start();
+};
+$("gateName").addEventListener("keydown", e => { if (e.key === "Enter") $("gateOk").click(); });
+(function initGate() {
+  const stored = lsGet(LS_ANNO);
+  if (stored) { S.annotator = stored; $("gate").classList.add("gone"); $("gate").hidden = true; start(); }
+  else $("gateName").focus();
+})();
+</script>
+</body>
+</html>

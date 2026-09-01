@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   "Exam instrument" design system (openspec revamp-review-ui, design D5).
+   Color is DATA: the only saturated hues are accept-green / reject-red /
+   flag-amber (a reject with no correction). Everything else is graphite ink
+   on warm paper — deliberately NOT the cream-serif or acid-dark defaults.
+   Raw semantic vars carry light/dark; @theme inline exposes them as Tailwind
+   utilities (bg-paper, text-ink-2, border-hair, …). Mirrors the static
+   fallback (code_benchmark/review_ui_template.html) — same token names.
+   ========================================================================== */
+:root {
+  --paper: #f5f3ee;
+  --card: #ffffff;
+  --card-edge: #e4e0d6;
+  --ink: #1a1d23;
+  --ink-2: #5a6270;
+  --ink-3: #8c929c;
+  --hair: #d8d4c9;
+  --accept: #1e7a46;
+  --accept-soft: #e4f1e9;
+  --reject: #c2372c;
+  --reject-soft: #f7e5e3;
+  --flag: #b4700e;
+  --flag-soft: #fbefd9;
+  --null: #c8c4ba;
+  --squad: #1d5c8a;
+  --drop: #7a4a9e;
+  --shadow: 0 1px 2px rgba(26, 29, 35, 0.05), 0 8px 24px -12px rgba(26, 29, 35, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #17181b;
+    --card: #1f2126;
+    --card-edge: #2c2f35;
+    --ink: #e8e6e1;
+    --ink-2: #a2a8b2;
+    --ink-3: #767c86;
+    --hair: #3a3e45;
+    --accept: #4cb782;
+    --accept-soft: #1c3227;
+    --reject: #e06a5e;
+    --reject-soft: #38201d;
+    --flag: #dca24a;
+    --flag-soft: #332712;
+    --null: #43474e;
+    --squad: #7fbbe8;
+    --drop: #bc92db;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #17181b;
+  --card: #1f2126;
+  --card-edge: #2c2f35;
+  --ink: #e8e6e1;
+  --ink-2: #a2a8b2;
+  --ink-3: #767c86;
+  --hair: #3a3e45;
+  --accept: #4cb782;
+  --accept-soft: #1c3227;
+  --reject: #e06a5e;
+  --reject-soft: #38201d;
+  --flag: #dca24a;
+  --flag-soft: #332712;
+  --null: #43474e;
+  --squad: #7fbbe8;
+  --drop: #bc92db;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-card-edge: var(--card-edge);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-hair: var(--hair);
+  --color-accept: var(--accept);
+  --color-accept-soft: var(--accept-soft);
+  --color-reject: var(--reject);
+  --color-reject-soft: var(--reject-soft);
+  --color-flag: var(--flag);
+  --color-flag-soft: var(--flag-soft);
+  --color-null: var(--null);
+  --color-squad: var(--squad);
+  --color-drop: var(--drop);
+  --font-body: var(--font-be-vietnam), system-ui, sans-serif;
+  --font-disp: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  color-scheme: light dark;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-feature-settings: "cv06" 1; /* straight á — unambiguous for review */
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: var(--accept-soft);
+}
+details[open] summary > span[aria-hidden]:first-child {
+  transform: rotate(90deg);
+}
+/* A peer reviewer already locked this item (split-400 sync): hairline
+   diagonal hatching over the null swatch — never decision-colored, so a
+   colleague's accept can't masquerade as yours in the filmstrip. */
+.peer-stripe {
+  background-color: var(--null);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--paper) 0 2px,
+    transparent 2px 4px
+  );
+}
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -27,3 +27,17 @@ vmlu_drop_v1/
 vmlu_mqa_v1.5/
 vmlu_squad_v1/
 
+
+# Annotation workbooks (local human artifacts; the filled manifest is the committed record)
+annotation_workbooks/
+gold_agreed.csv
+adjudication.csv
+# Root-level artifacts ONLY — review_records/*.csv below must stay tracked
+# (the shared split-400 sync log; each reviewer's published CSV = their record).
+/review_ui.html
+/review_*.csv
+/state_*.json
+# Review-server state buckets (per reviewer×model JSON; the export CSVs above are the record)
+review_state/
+# Contract-test scratch file for the Next app (written by TestNextContracts)
+web/.contract-test.ts
