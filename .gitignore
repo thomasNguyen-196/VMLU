@@ -32,6 +32,13 @@ vmlu_squad_v1/
 annotation_workbooks/
 gold_agreed.csv
 adjudication.csv
-review_ui.html
-review_*.csv
-state_*.json
+# Root-level artifacts ONLY — review_records/*.csv below must stay tracked
+# (the shared split-400 sync log; each reviewer's published CSV = their record).
+/review_ui.html
+/review_*.csv
+/state_*.json
+# Review-server state buckets (per reviewer×model JSON; the export CSVs above are the record)
+review_state/
+# Derived data for the Next review app (emitted by `build_review_ui.py export-blob`)
+web/data/
+web/.contract-test.ts

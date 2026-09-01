@@ -23,7 +23,6 @@ Semantics chosen with the project owner: accept => the MODEL answer becomes
 gold; reject => the reviewer's corrected answer becomes gold. Prints each
 reviewer's acceptance % and raw decision agreement (IAA), writes
 review_gold_agreed.csv + review_adjudication.csv; --apply fills agreed golds.
-
   | A      | B      | corrections match? | outcome            | gold            |
   | accept | accept | -                  | agreed             | model answer    |
   | accept | reject | -                  | adjudicate         | blank           |
@@ -31,6 +30,13 @@ review_gold_agreed.csv + review_adjudication.csv; --apply fills agreed golds.
   | reject | reject | normalize(cA)==cB  | agreed             | A's correction  |
   | reject | reject | differ/blank       | adjudicate         | blank           |
   | unset* | any    | -                  | skipped            | untouched       |
+
+merge-split: the SPLIT-workflow counterpart of `review`, for when reviewers
+divide the 400 (each item owned by exactly one person; see review_records/).
+Union, not intersection: any single accept => model answer gold, any single
+reject+correction => that correction gold. Overlap is tolerated only when
+identical; disagreeing overlaps and blank corrections go to adjudication.
+--apply fills the manifest the same way.
 
 NOTE the two passes are separate pipelines: `merge` consumes BLIND workbooks
 (model answer not shown); `review` consumes model-visible review exports.
@@ -346,6 +352,121 @@ def cmd_review(args):
         print(f"--apply: manifest got {filled} review-agreed golds; {still} rows still empty")
 
 
+def gold_from_split(reviews: list[tuple[str, dict[str, dict]]]) -> dict:
+    """Union classifier for the SPLIT workflow (review_records/: each reviewer
+    covers a disjoint share of the 400). One accept/reject from ANY reviewer
+    yields gold (accept -> model answer, reject -> their correction) — unlike
+    `review`, which demands BOTH sides per item. Overlaps are tolerated only
+    when they agree (decisions equal; reject corrections normalize-equal);
+    disagreeing overlaps and blank corrections go to adjudication. Items
+    nobody decided are simply absent (manifest stays blank there)."""
+    owners: dict[str, list[tuple[str, dict]]] = {}
+    per_reviewer: dict[str, int] = {}
+    for annot, m in reviews:
+        for k, r in m.items():
+            if r["decision"] in ("accept", "reject"):
+                owners.setdefault(k, []).append((annot, r))
+                per_reviewer[annot] = per_reviewer.get(annot, 0) + 1
+    gold: list[tuple[str, str]] = []
+    adjud: list[tuple[str, str, str, str]] = []
+    for k in sorted(owners):
+        rows = owners[k]
+        first = rows[0][1]
+        das = {r["decision"] for _, r in rows}
+        if len(das) > 1:
+            adjud.append((k, "overlap_accept_vs_reject",
+                          first["model_answer"].strip(), first["corrected_answer"].strip()))
+            continue
+        if first["decision"] == "accept":
+            mas = {r["model_answer"].strip() for _, r in rows}
+            if len(mas) != 1 or "" in mas:
+                adjud.append((k, "missing_or_drifted_model_answer", "", ""))
+            else:
+                gold.append((k, mas.pop()))
+        else:  # one or more rejects
+            cs = [r["corrected_answer"].strip() for _, r in rows]
+            if not cs[0]:
+                adjud.append((k, "missing_correction", "", ""))
+            elif len({normalize_answer(c) for c in cs}) == 1:
+                gold.append((k, cs[0]))
+            else:
+                adjud.append((k, "overlap_corrections_differ", cs[0], cs[1]))
+    return {"gold_agreed": gold, "adjudication": adjud,
+            "per_reviewer": per_reviewer, "covered": len(owners)}
+
+def split_stats(res: dict, n_items: int, annotators: list[str]) -> str:
+    pct = lambda c, n: f"{100 * c / n:.1f}%" if n else "—"
+    lines = [
+        f"reviewers: {', '.join(annotators)}",
+        "decisions per reviewer: " + "  ".join(f"{a}={res['per_reviewer'].get(a, 0)}" for a in annotators),
+        f"union coverage: {res['covered']}/{n_items} = {pct(res['covered'], n_items)}"
+        f"  (not yet reviewed by anyone: {n_items - res['covered']})",
+        f"gold: {len(res['gold_agreed'])}  |  adjudication: {len(res['adjudication'])}",
+    ]
+    reasons: dict[str, int] = {}
+    for _, r, _, _ in res["adjudication"]:
+        reasons[r] = reasons.get(r, 0) + 1
+    if reasons:
+        lines.append("adjudication reasons: " + "  ".join(f"{k}={v}" for k, v in sorted(reasons.items())))
+    return "\n".join(lines)
+
+def cmd_merge_split(args):
+    """Union-merge N review CSVs from review_records/ (split-the-400 workflow).
+    Same outputs and --apply semantics as `review`, but coverage is the UNION
+    of decided items, not the intersection — designed for disjoint assignment."""
+    if len(args.files) < 2:
+        raise SystemExit("Error: merge-split needs >=2 review CSVs (one per reviewer)")
+    reviews: list[tuple[dict, dict[str, dict]]] = []
+    for p in args.files:
+        reviews.append(read_review(p))
+    models = {m["model"] for m, _ in reviews}
+    if len(models) != 1:
+        raise SystemExit(f"Error: cross-model merge refused — files cover {sorted(models)}")
+    annots = [m["annotator"] for m, _ in reviews]
+    if len(set(annots)) != len(annots):
+        raise SystemExit(f"Error: duplicate reviewer among files ({annots}) — same person twice is not a split")
+    for (_, rows), p in zip(reviews, args.files, strict=True):  # 1:1 by construction
+        blanks = sum(1 for r in rows.values() if r["decision"] == "reject" and not r["corrected_answer"].strip())
+        if blanks:
+            print(f"warning: {p} has {blanks} reject(s) without corrected answer -> adjudication (missing_correction)")
+    res = gold_from_split([(m["annotator"], rows) for m, rows in reviews])
+    if args.manifest.exists():
+        n_items = len(load_manifest(args.manifest))
+    else:
+        n_items = res["covered"]
+        print(f"warning: {args.manifest} missing — coverage shown against decided items only")
+    print(split_stats(res, n_items, annots))
+
+    ctx: dict[str, dict] = {}
+    if args.workbook and args.workbook.exists():
+        ctx = read_book(args.workbook)
+    # the first row seen for a key carries stratum (same contract as `review`)
+    src_by_key: dict[str, dict] = {}
+    for _, rows in reviews:
+        for k, r in rows.items():
+            src_by_key.setdefault(k, r)
+
+    with open(args.out_gold, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["dataset", "item_id", "gold_answer"])
+        for k, g in res["gold_agreed"]:
+            w.writerow([*k.split(":", 1), g])
+    with open(args.out_adjud, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["dataset", "item_id", "stratum", "reason", "answer_A", "answer_B",
+                    "question", "context"])
+        for k, reason, va, vb in res["adjudication"]:
+            ds, iid = k.split(":", 1)
+            wb = ctx.get(k, {})
+            w.writerow([ds, iid, src_by_key.get(k, {}).get("stratum", ""), reason, va, vb,
+                        wb.get("question", ""), wb.get("context", "")])
+    print(f"union gold -> {args.out_gold} | adjudication -> {args.out_adjud}"
+          + ("" if ctx else " (adjudication question/context blank: --workbook not found)"))
+
+    if args.apply:
+        filled, still = apply_gold(args.manifest, res["gold_agreed"])
+        print(f"--apply: manifest got {filled} split-union golds; {still} rows still empty")
+
 def main():
     ap = argparse.ArgumentParser(description="Build/merge the 400-item gold annotation workbooks.")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -381,6 +502,19 @@ def main():
     rp.add_argument("--apply", action="store_true",
                     help="write review-agreed golds into the manifest")
     rp.set_defaults(func=cmd_review)
+
+    sp = sub.add_parser("merge-split", help="union-merge N review CSVs from review_records/ "
+                        "(split workflow: each item needs ONE decision, not two)")
+    sp.add_argument("files", type=Path, nargs="+",
+                    help="review_*.csv files (review_records/review_<who>_<model>.csv)")
+    sp.add_argument("--workbook", type=Path, default=Path("annotation_workbooks/annotator_A.csv"),
+                    help="enriches adjudication rows with question + context")
+    sp.add_argument("--manifest", type=Path, default=Path("eval_set_manifest.csv"))
+    sp.add_argument("--out-gold", type=Path, default=Path("review_gold_agreed.csv"))
+    sp.add_argument("--out-adjud", type=Path, default=Path("review_adjudication.csv"))
+    sp.add_argument("--apply", action="store_true",
+                    help="write union golds into the manifest")
+    sp.set_defaults(func=cmd_merge_split)
 
     args = ap.parse_args()
     args.func(args)

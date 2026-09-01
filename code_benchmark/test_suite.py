@@ -1,6 +1,9 @@
 import csv
 import json
 import random
+import shutil
+import subprocess  # nosec B404 — test harness shells out to local CLI/node only
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,10 +47,12 @@ from code_benchmark.export_annotation_workbooks import (
     REVIEW_COLS,
     read_review,
     gold_from_reviews,
+    gold_from_split,
     review_stats,
     apply_gold,
 )
 from code_benchmark.build_review_ui import (
+    build_blob,
     model_from_filename,
     load_answers_csv,
     review_items,
@@ -605,6 +610,219 @@ class TestReviewMerge(unittest.TestCase):
             self.assertEqual(got, {"1": "Hà Nội", "2": ""})
             with self.assertRaises(SystemExit):
                 apply_gold(mp, [("squad:99", "x")])  # unknown key refuses
+
+
+class TestMergeSplit(unittest.TestCase):
+    """The split-400 workflow (review_records/): coverage is the UNION of
+    decided items; one decision per item is enough. gold_from_split is the
+    classifier; cmd-level guards live in export_annotation_workbooks."""
+
+    def test_union_coverage_single_owner_yields_gold(self):
+        a = {"squad:1": _review_row("linh", "mX", "squad", "1", "accept", "Hà Nội"),
+             "squad:2": _review_row("linh", "mX", "squad", "2", "reject", "1916", "1917")}
+        b = {"squad:3": _review_row("anh", "mX", "squad", "3", "accept", "3"),
+             "squad:4": _review_row("anh", "mX", "squad", "4", "reject", "x", "20")}
+        res = gold_from_split([("linh", a), ("anh", b)])
+        self.assertEqual(dict(res["gold_agreed"]),
+                         {"squad:1": "Hà Nội", "squad:2": "1917",
+                          "squad:3": "3", "squad:4": "20"})
+        self.assertEqual(res["adjudication"], [])
+        self.assertEqual(res["covered"], 4)
+        self.assertEqual(res["per_reviewer"], {"linh": 2, "anh": 2})
+
+    def test_agreeing_overlap_collapses_to_one_gold(self):
+        a = {"squad:5": _review_row("linh", "mX", "squad", "5", "accept", "Paris")}
+        b = {"squad:5": _review_row("anh", "mX", "squad", "5", "accept", "Paris")}
+        res = gold_from_split([("linh", a), ("anh", b)])
+        self.assertEqual(dict(res["gold_agreed"]), {"squad:5": "Paris"})
+        self.assertEqual(res["adjudication"], [])
+
+    def test_disagreeing_overlap_goes_to_adjudication(self):
+        a = {"squad:1": _review_row("linh", "mX", "squad", "1", "accept", "Hanoi")}
+        b = {"squad:1": _review_row("anh", "mX", "squad", "1", "reject", "Hanoi", "Sai Gon")}
+        res = gold_from_split([("linh", a), ("anh", b)])
+        self.assertEqual(res["gold_agreed"], [])
+        self.assertEqual([(k, r) for k, r, _, _ in res["adjudication"]],
+                         [("squad:1", "overlap_accept_vs_reject")])
+
+    def test_blank_correction_reject_adjudicates(self):
+        a = {"squad:2": _review_row("linh", "mX", "squad", "2", "reject", "1916", "")}
+        res = gold_from_split([("linh", a)])
+        self.assertEqual([(k, r) for k, r, _, _ in res["adjudication"]],
+                         [("squad:2", "missing_correction")])
+
+    def test_undecided_items_simply_absent(self):
+        a = {"squad:9": _review_row("linh", "mX", "squad", "9", "", "x")}  # unset/flag
+        res = gold_from_split([("linh", a)])
+        self.assertEqual(res["covered"], 0)
+        self.assertEqual(res["gold_agreed"], [])
+        self.assertEqual(res["adjudication"], [])
+
+
+class TestExportBlob(unittest.TestCase):
+    """`build_review_ui.py export-blob` — the Python→Next data bridge (spec
+    review-server 'Data emission reuses the validated join'). Runs the real CLI
+    against fixture CSVs so the whole argv->validate->write path is exercised."""
+
+    ROOT = Path(__file__).resolve().parent.parent
+    PY = sys.executable
+
+    def _inputs(self, td, n=3):
+        wb = Path(td) / "annotator_A.csv"
+        with open(wb, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["passage_key", "dataset", "item_id", "stratum", "question", "context",
+                                   "gold_answer", "note"])
+            w.writeheader()
+            for i in range(n):
+                w.writerow({"passage_key": "squad:0", "dataset": "squad", "item_id": str(i),
+                            "stratum": "s", "question": f"q{i}", "context": "ctx", "gold_answer": "", "note": ""})
+        an = Path(td) / "reading_answers_m1.csv"
+        with open(an, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["dataset", "item_id", "raw_response"])
+            w.writeheader()
+            for i in range(n):
+                w.writerow({"dataset": "squad", "item_id": str(i), "raw_response": f"a{i}"})
+        return wb, an
+
+    def _cli(self, wb, an, out, extra=()):
+        # fixture paths on argv, no shell
+        return subprocess.run(  # nosec B603
+            [self.PY, str(self.ROOT / "code_benchmark" / "build_review_ui.py"), "export-blob",
+             "--workbook", str(wb), "--answers", str(an), "--out", str(out), *extra],
+            capture_output=True, text=True, cwd=str(self.ROOT))
+
+    def test_emits_validated_blob(self):
+        with tempfile.TemporaryDirectory() as td:
+            wb, an = self._inputs(td)
+            out = Path(td) / "review-blob.json"
+            r = self._cli(wb, an, out)
+            self.assertEqual(r.returncode, 0, msg=r.stderr)
+            blob = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(blob["schema_version"], 1)
+            self.assertEqual([i["item_id"] for i in blob["items"]], ["0", "1", "2"])  # workbook order
+            self.assertEqual(blob["models"], ["m1"])
+            self.assertEqual(blob["items"][0]["answers"], {"m1": "a0"})
+            self.assertEqual(blob["passages"], {"squad:0": "ctx"})  # deduped
+
+    def test_coverage_drift_refuses_and_leaves_prior(self):
+        with tempfile.TemporaryDirectory() as td:
+            wb, an = self._inputs(td, n=3)
+            out = Path(td) / "review-blob.json"
+            self._cli(wb, an, out)                      # seed a good blob
+            before = out.read_bytes()
+            # truncate answers -> coverage 1/3 -> must fail and NOT overwrite
+            with open(an, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, ["dataset", "item_id", "raw_response"]); w.writeheader()
+                w.writerow({"dataset": "squad", "item_id": "0", "raw_response": "a0"})
+            r = self._cli(wb, an, out)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("covers 1/3", r.stdout + r.stderr)
+            self.assertEqual(out.read_bytes(), before)   # unchanged
+            # --allow-partial then succeeds
+            r = self._cli(wb, an, out, extra=("--allow-partial",))
+            self.assertEqual(r.returncode, 0, msg=r.stderr)
+            blob = json.loads(out.read_text(encoding="utf-8"))
+            self.assertIsNone(blob["items"][2]["answers"]["m1"])  # gap -> null
+
+
+REVIEW_JS_SLUG_REF = {   # template JS slug() outputs (node-verified; web/lib/slug.ts must agree)
+    "Linh": "linh", "lình": "linh", "l ạnh  X!": "l_anh_x", "nguyễn văn A": "nguyen_van_a",
+    "Qwen3_8-27B-Q4_K_M_gguf": "qwen3_8_27b_q4_k_m_gguf", "tom@corp": "tom_corp",
+    "Hoàng — B": "hoang_b", "Bùi Thị Hồng Hạnh": "bui_thi_hong_hanh",
+}
+
+
+def _ts_runner():
+    """Find a way to execute the app's TS modules: bun directly, or node >=22
+    with --experimental-strip-types. None -> contract tests skip."""
+    if shutil.which("bun"):
+        return "bun"
+    node = shutil.which("node")
+    if node:
+        major = subprocess.run([node, "--version"], capture_output=True, text=True).stdout  # nosec B603
+        try:
+            if int(major.lstrip("v").split(".")[0]) >= 22:
+                return "node"
+        except ValueError:
+            pass
+    return None
+
+
+class TestNextContracts(unittest.TestCase):
+    """Cross-boundary contracts of the Next app (web/) against the static
+    fallback template: slug identity + export-CSV equivalence (spec
+    review-ui 'Mode equivalence'). Skipped when no TS runner is installed."""
+
+    ROOT = Path(__file__).resolve().parent.parent
+
+    def _run_ts(self, module: str, body: str):
+        runner = _ts_runner()
+        if not runner:
+            self.skipTest("neither bun nor node>=22 on PATH")
+        tmp = self.ROOT / "web" / ".contract-test.ts"
+        tmp.write_text(f"import * as M from {module!r};\n" + body, encoding="utf-8")
+        try:
+            cmd = ["bun", "run", str(tmp)] if runner == "bun" else \
+                ["node", "--experimental-strip-types", "--disable-warning=ExperimentalWarning", str(tmp)]
+            # cmd = [bun|node, script]: our own generated file
+            r = subprocess.run(  # nosec B603
+                cmd, capture_output=True, text=True, timeout=60, cwd=str(self.ROOT / "web"))
+            self.assertEqual(r.returncode, 0, msg=f"{runner}: {r.stderr[:800]}")
+            return r.stdout
+        finally:
+            tmp.unlink(missing_ok=True)
+
+    def test_slug_ts_matches_js_reference(self):
+        out = self._run_ts("./lib/slug.ts", "console.log(JSON.stringify(Object.entries("
+                        + json.dumps(REVIEW_JS_SLUG_REF, ensure_ascii=False) +
+                        ").map(([k,v]) => [M.slug(k), k, v])));")
+        for got, input_, want in json.loads(out):
+            self.assertEqual(got, want, msg=f"TS slug({input_!r}) != JS reference")
+
+    def test_next_export_csv_equals_template_buildcsv_and_feeds_read_review(self):
+        """Same blob + decisions through (a) web/lib/export-csv.ts and (b) the
+        static template's buildCsv(); both must parse via read_review() to
+        identical row mappings — the byte-compat contract of the merge step."""
+        book = [{"passage_key": "squad:0", "dataset": "squad", "item_id": "1",
+                 "stratum": "short-direct", "question": "q1", "context": "ctx"},
+                {"passage_key": "squad:0", "dataset": "squad", "item_id": "2",
+                 "stratum": "short-infer", "question": "q2, with comma", "context": "ctx"},
+                {"passage_key": "drop:0", "dataset": "drop", "item_id": "7",
+                 "stratum": "num-simple", "question": 'q3 "quoted"', "context": "ctx2"}]
+        blob = build_blob(book, {"mX": {"squad:1": "Hà Nội", "squad:2": "1916", "drop:7": "3"}},
+                          created="2026-01-01")
+        env = {"schema_version": 1, "annotator": "lình", "model": "mX",
+               "saved_at": "2026-01-01T00:00:00.000Z",
+               "items": {"squad:1": {"d": "accept", "c": "ignored", "n": "ghi, chú"},
+                         "squad:2": {"d": "reject", "c": '"1916" năm', "n": "multi\nline"},
+                         "drop:7": {"d": None, "c": "", "n": "note only"}}}
+        js_out = self._run_ts("./lib/export-csv.ts",
+                              "console.log(M.makeExportCsv(" + json.dumps(blob, ensure_ascii=False)
+                              + ", " + json.dumps(env, ensure_ascii=False) + "));")
+        tmpl = (Path(__file__).parent / "review_ui_template.html").read_text(encoding="utf-8")
+        start, end = tmpl.index("function csvCell"), tmpl.index("function parseCsv")
+        js = tmpl[start:end] + f"""
+const itemKey = it => it.dataset + ":" + it.item_id;
+const blob = {json.dumps(blob, ensure_ascii=False)};
+const env = {json.dumps(env, ensure_ascii=False)};
+const answerFor = (it, m) => (it.answers || {{}})[m] ?? "";
+process.stdout.write(buildCsv(blob.items, env.items, env.annotator, env.model, answerFor));
+"""
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node absent — cannot run the template's buildCsv() to compare")
+        r = subprocess.run([node, "-e", js], capture_output=True, text=True, check=True)  # nosec B603
+        client_csv = r.stdout
+        with tempfile.TemporaryDirectory() as td:
+            pa, pb = Path(td) / "a.csv", Path(td) / "b.csv"
+            pa.write_text(js_out, encoding="utf-8")           # Next lib output
+            pb.write_text(client_csv, encoding="utf-8")        # static template output
+            ma, ra = read_review(pa)
+            mb, rb = read_review(pb)
+        self.assertEqual(ma, mb)
+        self.assertEqual(ma["annotator"], "lình")              # unicode survives both exporters
+        for k in ra:
+            self.assertEqual(ra[k], rb[k], msg=f"row {k} differs between Next and static export")
 
 
 if __name__ == "__main__":

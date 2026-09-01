@@ -41,9 +41,22 @@ cp .env.example .env
 # 4. Annotate / review the eval set (issue #3)
 .venv/bin/python code_benchmark/export_annotation_workbooks.py build     # -> annotation_workbooks/annotator_{A,B}.csv (blind, context embedded)
 .venv/bin/python code_benchmark/export_annotation_workbooks.py merge     # compare the 2 filled books -> gold_agreed/adjudication (+ --apply)
-.venv/bin/python code_benchmark/build_review_ui.py build                 # -> review_ui.html (model-visible accept/reject UI, localStorage per reviewer+model)
+# PRIMARY review tool = the Next.js app in web/ (localhost, state autosaved to disk):
+.venv/bin/python code_benchmark/build_review_ui.py export-blob           # -> web/data/review-blob.json (the validated workbook×answers join)
+cd web && npm install && npm run dev                                     # -> http://localhost:3000 (state -> review_state/*.json)
+# OFFLINE fallback = one self-contained HTML (localStorage only, works from file://, no network — email it to a reviewer):
+.venv/bin/python code_benchmark/build_review_ui.py build                 # -> review_ui.html
+# Both modes share the 9-column review CSV + the {schema_version:1,annotator,model,saved_at,items} state
+# envelope. Whichever produced the CSV, the merge step is the same:
 .venv/bin/python code_benchmark/export_annotation_workbooks.py review --a review_A.csv --b review_B.csv   # acceptance% + IAA + gold (accept -> model answer, reject -> correction); --apply fills manifest
-# review_ui.html is the REVIEW pass (answers visible); merge is the BLIND gold pass — two pipelines, do not cross-apply.
+# review is the REVIEW pass (answers visible); merge is the BLIND gold pass — two pipelines, do not cross-apply.
+# SPLIT THE 400 between 2 reviewers (each item reviewed ONCE, disjoint shares):
+# Export CSV in the web app ALSO publishes it to review_records/*.csv (TRACKED — the shared
+# work log). At startup the app reads every peer CSV there and locks those items read-only
+# (hatched filmstrip cells; `t` skips them), so nobody reviews the same item twice. Flow:
+# reviewer 1 reviews -> Export CSV -> git commit+push review_records/ -> reviewer 2 pulls,
+# sees 1's items locked, reviews the rest -> exports+pushes. Final gold = UNION of records:
+.venv/bin/python code_benchmark/export_annotation_workbooks.py merge-split review_records/*.csv   # union accept/reject -> gold (reject needs correction); disagreements -> adjudication; --apply fills manifest
 
 # 5. Tests
 .venv/bin/python code_benchmark/test_parsing.py   # standalone parity tests (also works on system python3)
@@ -81,7 +94,7 @@ A single self-contained script, best understood as a pipeline:
 - `extract_answer` uses unicode word boundaries (`(?<!\w)([A-E])(?!\w)`) so Vietnamese words containing ASCII letters (e.g. `các`, `bói`) are never misread as options.
 - `test_parsing.py` deliberately **duplicates** `extract_answer`/`build_prompt` rather than importing them — it is the standalone parity reference. `test_suite.py` imports from the package and must run from the repo root.
 - The 30×30s retry cadence (15 min/case) is the default; auth errors are excluded from it deliberately — don't "fix" the retry loop back into touching auth errors.
-- Data/output paths gitignored: `vmlu/`, `all_res/`, `logs/`, `submission.csv`, `leaderboard.json`, `vmlu_v*`. `.env*` ignored except `.env.example`/templates — keep it that way.
+- Data/output paths gitignored: `vmlu/`, `all_res/`, `logs/`, `submission.csv`, `leaderboard.json`, `vmlu_v*`, `review_state/` (the review server's per-reviewer×model working buckets — private, never shared). The **`review_records/*.csv`** published-export folder is the durable, TRACKED record (the split-the-400 work log; root-level `review_*.csv`/`state_*.json`/`review_ui.html` are still gitignored via anchored `/*` patterns — keep `review_records/` un-ignored). `.env*` ignored except `.env.example`/templates — keep it that way.
 - `requirements.txt` is a **frozen env snapshot** and contains heavy leftovers (`torch==2.1.2`, `nvidia-*`, `transformers`). The only packages `test_ollama.py` actually needs are `openai>=1.0.0`, `python-dotenv>=1.0.0`, `pandas`, `tqdm`. The pinned GPU stack only matters for `legacy/test_prompt.py`.
 - Legacy scripts read old data paths (`vmlu_v2/`, `vmlu_v1.5/`) relative to `code_benchmark/`; `test_gpt.py` needs a venv with `openai==0.28.0` and the `GPT_KEY` env var.
 

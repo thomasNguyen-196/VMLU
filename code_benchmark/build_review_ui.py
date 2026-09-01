@@ -1,8 +1,6 @@
-"""Build review_ui.html — the human-acceptance review tool for the 400-item
-reading eval set (issue #3 step 2 UI).
+"""Data + fallback layer of the human-acceptance review pass (issue #3 step 2).
 
-Joins three sources into ONE self-contained HTML (Tailwind CDN, HTML-REPORT.md
-house pattern, no build step):
+Joins two sources through ONE fail-fast code path (openspec revamp-review-ui):
 
   * annotation_workbooks/annotator_A.csv  -> static columns + embedded context,
     kept in workbook order (passage-contiguous: read once, answer many). Its
@@ -10,16 +8,24 @@ house pattern, no build step):
     this is the review pass (model answers visible by design); the blind gold
     pass stays a separate pipeline.
   * reading_answers_<model>.csv (repeatable) -> {model: raw_answer} per item,
-    joined on dataset:item_id. The first model becomes the embedded default;
-    the UI's file-picker loads additional models client-side.
+    joined on dataset:item_id.
 
-Reviewer state lives in browser localStorage keyed by
-(dataset:item_id, annotator, model) and leaves via Export CSV / state JSON —
-see review_ui_template.html. Review CSVs are merged by
-`export_annotation_workbooks.py review`.
+Two outputs from the same validated join:
+
+  build        -> review_ui.html: self-contained STATIC FALLBACK (localStorage,
+                  works from file:// with no network) for a reviewer without a
+                  dev environment.
+  export-blob  -> web/data/review-blob.json: the item blob consumed by the
+                  PRIMARY tool, the Next.js app in `web/` (state autosaved to
+                  disk via its API routes; see web/ and the change design).
+
+Review CSVs from either tool are merged by `export_annotation_workbooks.py
+review`; the state envelope {schema_version:1, annotator, model, saved_at,
+items:{key:{d,c,n}}} is shared across both (and with the pre-redesign UI).
 
 Run from repo root:
   .venv/bin/python code_benchmark/build_review_ui.py build
+  .venv/bin/python code_benchmark/build_review_ui.py export-blob
 """
 from __future__ import annotations
 
@@ -140,24 +146,13 @@ def default_answers() -> list[Path]:
     return sorted(Path("all_res/ollama_result").glob(f"{ANSWER_PREFIX}*.csv"))
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Build review_ui.html (issue #3 review pass).")
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    bp = sub.add_parser("build", help="join workbook + answers CSVs into one HTML")
-    bp.add_argument("--workbook", type=Path, default=Path("annotation_workbooks/annotator_A.csv"))
-    bp.add_argument("--answers", type=Path, action="append", default=None,
-                    help=f"{ANSWER_PREFIX}<model>.csv (repeatable; default: every match under all_res/ollama_result/)")
-    bp.add_argument("--template", type=Path,
-                    default=Path("code_benchmark/review_ui_template.html"))
-    bp.add_argument("--out", type=Path, default=Path("review_ui.html"))
-    bp.add_argument("--allow-partial", action="store_true",
-                    help="permit model coverage < 400 items (default: fail — silent gaps skew acceptance %)")
-    args = ap.parse_args()
-
+def validated_blob(args) -> dict:
+    """Shared fail-fast join for both `build` and `export-blob` (the whole point
+    of the two-command split: the Next app never re-implements column,
+    duplicate-key, unknown-key, or coverage validation)."""
     paths = args.answers or default_answers()
     if not paths:
         raise SystemExit("Error: no reading_answers_*.csv found; run run_reading_eval.py first")
-
     answers: dict[str, dict[str, str]] = {}
     for p in paths:
         model, amap = load_answers_csv(p)
@@ -172,13 +167,48 @@ def main():
             if len(amap) != n:
                 raise SystemExit(f"Error: model '{m}' covers {len(amap)}/{n} items; "
                                  "re-run the reader or pass --allow-partial")
-    blob = build_blob(book_rows, answers, created=date.today().isoformat())
+    return build_blob(book_rows, answers, created=date.today().isoformat())
 
-    template = args.template.read_text(encoding="utf-8")
-    html = render_html(template, embed_json(blob))
-    args.out.write_text(html, encoding="utf-8")
-    print(f"{args.out}: {len(blob['items'])} items, {len(blob['passages'])} passages, "
-          f"{len(html)//1024} KB | models: {', '.join(blob['models'])}")
+
+def main():
+    ap = argparse.ArgumentParser(description="Review-pass data + fallback (issue #3 / revamp-review-ui).")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    common = {
+        "--workbook": dict(type=Path, default=Path("annotation_workbooks/annotator_A.csv")),
+        "--answers": dict(type=Path, action="append", default=None,
+                          help=f"{ANSWER_PREFIX}<model>.csv (repeatable; default: every match under all_res/ollama_result/)"),
+        "--allow-partial": dict(action="store_true",
+                                help="permit model coverage < 400 items (default: fail — silent gaps skew acceptance %)"),
+    }
+    bp = sub.add_parser("build", help="self-contained static fallback review_ui.html (offline, localStorage)")
+    for flag, kw in common.items():
+        bp.add_argument(flag, **kw)
+    bp.add_argument("--template", type=Path, default=Path("code_benchmark/review_ui_template.html"))
+    bp.add_argument("--out", type=Path, default=Path("review_ui.html"))
+    ep = sub.add_parser("export-blob", help="emit web/data/review-blob.json for the Next.js app in web/")
+    for flag, kw in common.items():
+        ep.add_argument(flag, **kw)
+    ep.add_argument("--out", type=Path, default=Path("web/data/review-blob.json"))
+    args = ap.parse_args()
+
+    blob = validated_blob(args)
+
+    if args.cmd == "export-blob":
+        # atomic-ish: the app refuses a half-written blob, so write then rename
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        tmp = args.out.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(blob, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        tmp.replace(args.out)
+        print(f"{args.out}: {len(blob['items'])} items, {len(blob['passages'])} passages | "
+              f"models: {', '.join(blob['models'])}")
+        print("next:  cd web && npm install && npm run dev   (primary review app)")
+    else:
+        template = args.template.read_text(encoding="utf-8")
+        html = render_html(template, embed_json(blob))
+        args.out.write_text(html, encoding="utf-8")
+        print(f"{args.out}: {len(blob['items'])} items, {len(blob['passages'])} passages, "
+              f"{len(html)//1024} KB | models: {', '.join(blob['models'])}")
+
     print("REMINDER: this is the REVIEW pass (model answers visible by design); "
           "the blind 2-annotator gold pass stays separate — do not --apply review golds "
           "into the manifest before it finishes (issue #3).")

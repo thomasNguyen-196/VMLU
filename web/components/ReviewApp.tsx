@@ -1,0 +1,643 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { ItemState, ReviewBlob, StateEnvelope } from "@/lib/types.ts";
+import { SCHEMA_VERSION, itemKey } from "@/lib/types.ts";
+import { slug } from "@/lib/slug.ts";
+import type { PeerMap, RecordFileRow } from "@/lib/records.ts";
+import { computeStats, nextUnreviewed, passageGroups, passagePosition } from "@/lib/review-logic.ts";
+import { Filmstrip } from "./Filmstrip.tsx";
+import { ItemPane } from "./ItemPane.tsx";
+import { DecisionPanel } from "./DecisionPanel.tsx";
+import { NavDock } from "./NavDock.tsx";
+
+const LS_ANNO = "vmlu.review.annotator";
+const bucketLsKey = (a: string, m: string) => `vmlu.review.state.${slug(a)}.${slug(m)}`;
+
+/** Reviewer identity is browser-local by design (the Next server holds every
+ *  reviewer's buckets). useSyncExternalStore is React's sanctioned pattern for
+ *  reading localStorage after hydration without a hydration mismatch — the
+ *  server snapshot is null, so SSR renders the gate and the client either
+ *  fills it in or dismisses it. */
+function readAnno(): string | null {
+  try {
+    return localStorage.getItem(LS_ANNO);
+  } catch {
+    return null;
+  }
+}
+const subscribeNoop = () => () => {};
+
+type Save = "ok" | "dirty" | "bad";
+
+const hhmm = (iso: string) =>
+  new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+
+/** POST one envelope; pure over its args so the component keeps a stable
+ *  saveNow() (module-level function, no closure to churn in deps arrays). */
+async function postState(
+  a: string,
+  m: string,
+  items: Record<string, ItemState>,
+): Promise<{ ok: true; savedAt: string } | { ok: false; error: string }> {
+  const saved_at = new Date().toISOString();
+  const env: StateEnvelope = { schema_version: SCHEMA_VERSION, annotator: a, model: m, saved_at, items };
+  try {
+    const res = await fetch(`/api/state?r=${encodeURIComponent(a)}&m=${encodeURIComponent(m)}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(env),
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || `HTTP ${res.status}`);
+    return { ok: true, savedAt: saved_at };
+  } catch (e) {
+    // never lose work: mirror to localStorage before reporting
+    try {
+      localStorage.setItem(bucketLsKey(a, m), JSON.stringify(env));
+    } catch {
+      /* private mode: in-memory only */
+    }
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** The review tool. Owns: identity gate, the active (reviewer × model)
+ *  bucket, debounced autosave to /api/state (with a localStorage mirror so a
+ *  dead server never costs work), navigation, and the keyboard protocol. */
+export function ReviewApp({ blob }: { blob: ReviewBlob }) {
+  const storedAnno = useSyncExternalStore(subscribeNoop, readAnno, () => null);
+  const [manualAnno, setManualAnno] = useState<string | null>(null);
+  const annotator = manualAnno ?? storedAnno; // null = gate open
+  const [model, setModel] = useState(blob.models[0] ?? "");
+  const [idx, setIdx] = useState(0);
+  const [bucket, setBucket] = useState<Record<string, ItemState>>({});
+  const [save, setSave] = useState<Save>("ok");
+  const [savedLabel, setSavedLabel] = useState("đang mở…");
+  const [banner, setBanner] = useState<{ t: string; m: string; fix?: { l: string; fn: () => void } } | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [help, setHelp] = useState(false);
+  // peer locks from review_records/*.csv (split-400 sync): items other
+  // reviewers already published — read-only here, striped in the filmstrip.
+  const [peers, setPeers] = useState<PeerMap>({});
+  const [peerFiles, setPeerFiles] = useState<RecordFileRow[]>([]);
+
+  // source of truth for save/import/export reads; setBucket only mirrors it to React
+  const bucketRef = useRef<Record<string, ItemState>>({});
+  const dirtyRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveNonce, setSaveNonce] = useState(0); // bump + retry flag: flush NOW (error-banner button)
+  const retryNowRef = useRef(false);
+
+  const groups = useMemo(() => passageGroups(blob.items), [blob.items]);
+  const stats = useMemo(() => computeStats(blob.items, bucket), [blob.items, bucket]);
+  const item = blob.items[idx];
+
+  const toast2 = useCallback((m: string) => {
+    setToastMsg(m);
+    setTimeout(() => setToastMsg((cur) => (cur === m ? null : cur)), 2400);
+  }, []);
+
+  /* ---------------- persistence ---------------- */
+  const saveNow = useCallback(async (a: string, m: string) => {
+    const r = await postState(a, m, bucketRef.current);
+    if (r.ok) {
+      dirtyRef.current = false;
+      setSave("ok");
+      setSavedLabel("đã lưu " + hhmm(r.savedAt));
+      setBanner(null);
+    } else {
+      dirtyRef.current = true;
+      setSave("bad");
+      setSavedLabel("lỗi lưu");
+      setBanner({
+        t: "Máy chủ không nhận được state",
+        m: `${r.error} — đã giữ bản sao trong localStorage của trình duyệt này.`,
+        fix: {
+          l: "Thử lưu ngay",
+          fn: () => {
+            retryNowRef.current = true;
+            setSaveNonce((n) => n + 1);
+          },
+        },
+      });
+    }
+  }, []);
+
+  /** The single write path: mutate ref + mirror to React + mark dirty (which
+   *  arms the debounce effect below). `save: false` is the load-injection case
+   *  — adopting disk state must not round-trip it back. */
+  const commit = useCallback((next: Record<string, ItemState>, opts: { save?: boolean; label?: string } = {}) => {
+    bucketRef.current = next;
+    setBucket(next);
+    if (opts.save === false) {
+      dirtyRef.current = false;
+      setSave("ok");
+      setSavedLabel(opts.label ?? "đồng bộ đĩa");
+    } else {
+      dirtyRef.current = true;
+      setSave("dirty");
+      setSavedLabel("chưa lưu…");
+    }
+  }, []);
+
+  // debounce every dirty change into a save (retry-bump flushes immediately)
+  useEffect(() => {
+    if (!annotator || !model || !dirtyRef.current) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const delay = retryNowRef.current ? 0 : 450;
+    retryNowRef.current = false;
+    timerRef.current = setTimeout(() => {
+      if (dirtyRef.current) void saveNow(annotator, model);
+    }, delay);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [bucket, annotator, model, saveNonce, saveNow]);
+
+  // load the bucket whenever the (reviewer, model) pair changes
+  useEffect(() => {
+    if (!annotator || !model) return;
+    let alive = true;
+    (async () => {
+      // peer sync (the split-400 workflow): scan committed review_records/*.csv
+      // so items a colleague already published are locked + marked from the
+      // first render. Fail-open: if the scan errors, nobody is locked — the
+      // worst case is duplicate review, never hidden progress.
+      try {
+        const res = await fetch(`/api/records?r=${encodeURIComponent(annotator)}&m=${encodeURIComponent(model)}`);
+        if (res.ok) {
+          const j = (await res.json()) as { peers?: PeerMap; files?: RecordFileRow[] };
+          if (alive) {
+            setPeers(j.peers ?? {});
+            setPeerFiles(j.files ?? []);
+          }
+        } else if (alive) {
+          setPeers({});
+        }
+      } catch {
+        if (alive) setPeers({});
+      }
+      const label = (iso: string) => "đã lưu " + hhmm(iso);
+      try {
+        const res = await fetch(`/api/state?r=${encodeURIComponent(annotator)}&m=${encodeURIComponent(model)}`);
+        const obj = (await res.json().catch(() => null)) as (StateEnvelope & { empty?: boolean; error?: string }) | null;
+        if (!alive) return;
+        if (res.status === 409) {
+          commit({}, { save: false, label: "lỗi đĩa" });
+          setBanner({
+            t: "State trên đĩa không đọc được",
+            m: `${obj?.error ?? "file hỏng"} — sửa file rồi tải lại, hoặc export CSV đã có.`,
+          });
+          return;
+        }
+        let mirror: { env: StateEnvelope } | null = null;
+        try {
+          const raw = localStorage.getItem(bucketLsKey(annotator, model));
+          const p = raw ? (JSON.parse(raw) as StateEnvelope) : null;
+          if (p?.schema_version === SCHEMA_VERSION && p.items) mirror = { env: p };
+        } catch {
+          /* no mirror */
+        }
+        if (obj?.empty) {
+          if (mirror) {
+            // a copy saved while the server was unreachable: replay it
+            commit(mirror.env.items, { label: "phục hồi localStorage" });
+          } else {
+            commit({}, { save: false, label: "chưa có thay đổi" });
+          }
+          return;
+        }
+        if (obj?.items && obj.schema_version === SCHEMA_VERSION) {
+          const diskNewer = !(mirror?.env.saved_at && obj.saved_at && mirror.env.saved_at > obj.saved_at);
+          if (!diskNewer && mirror) {
+            commit(mirror.env.items, { label: "phục hồi localStorage (mới hơn đĩa)" });
+          } else {
+            commit(obj.items, { save: false, label: obj.saved_at ? label(obj.saved_at) : "đồng bộ đĩa" });
+          }
+          return;
+        }
+        commit({}, { save: false, label: "chưa có thay đổi" });
+      } catch (e) {
+        if (!alive) return;
+        commit({}, { save: false, label: "mất kết nối" });
+        setBanner({ t: "Không đọc được state", m: e instanceof Error ? e.message : String(e) });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [annotator, model, commit]);
+
+  /* ---------------- mutations ---------------- */
+  const peerLock = item ? peers[itemKey(item)] : undefined;
+  const setDecision = useCallback(
+    (d: "accept" | "reject" | "clear") => {
+      const k = itemKey(blob.items[idx]);
+      if (peers[k]) {
+        toast2(`Câu này ${peers[k].reviewer} đã chốt (${peers[k].decision}) — bỏ qua`);
+        return;
+      }
+      const cur = bucketRef.current[k] ?? { d: null, c: "", n: "" };
+      const nd: ItemState["d"] = d === "clear" ? null : cur.d === d ? null : d;
+      commit({ ...bucketRef.current, [k]: { ...cur, d: nd } });
+      if (nd === "reject" && !cur.c.trim()) {
+        requestAnimationFrame(() => document.getElementById("corr")?.focus());
+      }
+    },
+    [blob.items, idx, commit, peers, toast2],
+  );
+
+  const setField = useCallback(
+    (which: "c" | "n") => (v: string) => {
+      const k = itemKey(blob.items[idx]);
+      if (peers[k]) return;
+      const cur = bucketRef.current[k] ?? { d: null, c: "", n: "" };
+      commit({ ...bucketRef.current, [k]: { ...cur, [which]: v } });
+    },
+    [blob.items, idx, commit, peers],
+  );
+
+  /* ---------------- navigation ---------------- */
+  const go = useCallback((i: number) => {
+    setIdx((cur) => {
+      const n = Math.max(0, Math.min(blob.items.length - 1, i));
+      if (n !== cur) window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      return n;
+    });
+  }, [blob.items.length]);
+
+  const jumpUnreviewed = useCallback(() => {
+    const i = nextUnreviewed(blob.items, bucketRef.current, idx, peers);
+    if (i === null) toast2("Hết! Mọi câu đã có quyết định 🎉");
+    else {
+      go(i);
+      if (i !== (idx + 1) % blob.items.length) toast2(`câu ${i + 1} chưa review`);
+    }
+  }, [blob.items, idx, go, toast2, peers]);
+
+  const pickModel = useCallback((m: string) => {
+    if (!m || m === model) return;
+    setModel(m);
+    setIdx(0);
+  }, [model]);
+
+  const submitReviewer = useCallback((v: string) => {
+    const name = v.trim();
+    if (!name) return;
+    try {
+      localStorage.setItem(LS_ANNO, name);
+    } catch {
+      /* gate still works this session */
+    }
+    setManualAnno(name);
+  }, []);
+
+  /* ---------------- export / import ---------------- */
+  const exportCsv = useCallback(async () => {
+    if (!annotator) return;
+    if (dirtyRef.current && timerRef.current) {
+      clearTimeout(timerRef.current);
+      await saveNow(annotator, model);
+    }
+    try {
+      const res = await fetch(`/api/export?r=${encodeURIComponent(annotator)}&m=${encodeURIComponent(model)}`);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || `HTTP ${res.status}`);
+      const text = await res.text();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" }));
+      a.download = `review_${slug(annotator)}_${slug(model)}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      // publish: same bytes land in review_records/ — git commit + push hands
+      // the finished items to the next reviewer (the split-400 sync record).
+      let pub = "";
+      try {
+        const pr = await fetch(`/api/records?r=${encodeURIComponent(annotator)}&m=${encodeURIComponent(model)}`, { method: "POST" });
+        const pj = (await pr.json().catch(() => null)) as { ok?: boolean; file?: string; error?: string } | null;
+        pub = pj?.ok ? ` · đã công bố ${pj.file} — nhớ git commit` : ` · ⚠ không công bố được (${pj?.error ?? "lỗi"})`;
+      } catch (e) {
+        pub = ` · ⚠ không công bố được (${e instanceof Error ? e.message : String(e)})`;
+      }
+      toast2("Đã tải review CSV" + pub);
+    } catch (e) {
+      setBanner({ t: "Xuất CSV thất bại", m: e instanceof Error ? e.message : String(e) });
+    }
+  }, [annotator, model, saveNow, toast2]);
+
+  const exportState = useCallback(() => {
+    if (!annotator) return;
+    const env: StateEnvelope = { schema_version: SCHEMA_VERSION, annotator, model, saved_at: new Date().toISOString(), items: bucketRef.current };
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(env)], { type: "application/json" }));
+    a.download = `state_${slug(annotator)}_${slug(model)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }, [annotator, model]);
+
+  const importState = useCallback(
+    async (file: File) => {
+      if (!annotator) return;
+      let obj: Partial<StateEnvelope> | null = null;
+      try {
+        obj = JSON.parse(await file.text()) as Partial<StateEnvelope>;
+      } catch {
+        toast2("File không phải JSON hợp lệ");
+        return;
+      }
+      if (!obj || obj.schema_version !== SCHEMA_VERSION) {
+        toast2(`schema_version ${String(obj?.schema_version)} ≠ ${SCHEMA_VERSION} — không import`);
+        return;
+      }
+      if (slug(obj.annotator ?? "") !== slug(annotator)) {
+        toast2(`State của '${obj.annotator}' ≠ bạn ('${annotator}') — giữ blind protocol`);
+        return;
+      }
+      if (obj.model && obj.model !== model) {
+        toast2(`State của model '${obj.model}' ≠ model đang chọn — đổi model rồi import lại`);
+        return;
+      }
+      const valid = new Set(blob.items.map(itemKey));
+      const next = { ...bucketRef.current };
+      let added = 0;
+      for (const [k, v] of Object.entries(obj.items ?? {})) {
+        if (!valid.has(k)) continue;
+        if (next[k]?.d) continue; // never overwrite an existing decision
+        if (!next[k] && v?.d) {
+          next[k] = { d: v.d, c: v.c ?? "", n: v.n ?? "" };
+          added++;
+        }
+      }
+      commit(next);
+      toast2(`Đã import: +${added} quyết định`);
+    },
+    [annotator, model, blob.items, commit, toast2],
+  );
+
+  /* ---------------- keyboard ---------------- */
+  useEffect(() => {
+    if (!annotator) return; // gate open: keys belong to the form
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        (document.activeElement as HTMLElement | null)?.blur();
+        setHelp(false);
+        return;
+      }
+      if (/^(TEXTAREA|INPUT|SELECT)$/.test(String(document.activeElement?.tagName))) return;
+      if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      switch (ev.key) {
+        case "j": case "ArrowDown": go(idx + 1); ev.preventDefault(); break;
+        case "k": case "ArrowUp": go(idx - 1); ev.preventDefault(); break;
+        case "a": case " ": setDecision("accept"); ev.preventDefault(); break;
+        case "r": setDecision("reject"); ev.preventDefault(); break;
+        case "u": setDecision("clear"); ev.preventDefault(); break;
+        case "e": document.getElementById("corr")?.focus(); ev.preventDefault(); break;
+        case "n": document.getElementById("note")?.focus(); ev.preventDefault(); break;
+        case "t": jumpUnreviewed(); ev.preventDefault(); break;
+        case "Home": go(0); ev.preventDefault(); break;
+        case "End": go(blob.items.length - 1); ev.preventDefault(); break;
+        case "?": setHelp((h) => !h); ev.preventDefault(); break;
+      }
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, [annotator, idx, go, setDecision, jumpUnreviewed, blob.items.length]);
+
+  const pos = passagePosition(groups, idx);
+  const curState = item ? bucket[itemKey(item)] : undefined;
+  const answer = item ? (item.answers[model] ?? null) : null;
+
+  const pill = (
+    <span className={"flex items-center gap-1.5 whitespace-nowrap text-[12px] " + (save === "bad" ? "text-reject" : "text-ink-2")}>
+      <span aria-hidden className={"h-[7px] w-[7px] shrink-0 rounded-full " + (save === "ok" ? "bg-accept" : save === "dirty" ? "bg-flag" : "bg-reject")} />
+      {savedLabel}
+    </span>
+  );
+
+  return (
+    <>
+      <header className="sticky top-0 z-30 border-b border-hair bg-paper/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-3.5 sm:px-8">
+          <div className="flex min-w-0 items-baseline gap-2.5">
+            <h1 className="font-disp text-[19px] font-semibold tracking-[-.01em] whitespace-nowrap">Reading Review</h1>
+            <span className="text-[11px] uppercase tracking-[.06em] text-ink-3 whitespace-nowrap">
+              VMLU · {blob.items.length} câu · issue&nbsp;#3
+            </span>
+          </div>
+          <Stat label="accept %" value={stats.acceptPct === null ? "—" : stats.acceptPct.toFixed(1)} tone="accept" />
+          <Stat label="đã review" value={`${stats.reviewed}/${stats.total}`} />
+          <Stat label="reject" value={String(stats.reject)} tone="reject" />
+          <div className="min-w-2 flex-1" />
+          <label className="flex items-center gap-2">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">Model</span>
+            <select
+              value={model}
+              onChange={(e) => pickModel(e.target.value)}
+              className="rounded-lg border border-hair bg-card px-3 py-2 text-[13.5px] font-medium"
+            >
+              {blob.models.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="whitespace-nowrap text-[12.5px] text-ink-2">
+            reviewer: <b className="font-semibold text-ink">{annotator ?? "—"}</b>
+          </span>
+          {pill}
+          <button
+            type="button"
+            onClick={() => setHelp(true)}
+            aria-label="Phím tắt"
+            className="rounded-lg px-2 py-2 text-[13.5px] font-medium text-ink-2 transition-colors hover:bg-hair/35 hover:text-ink"
+          >
+            ?
+          </button>
+        </div>
+        <div className="mx-auto max-w-[1440px] overflow-x-auto px-4 py-2.5 sm:px-8 [scrollbar-width:thin]">
+          {item && <Filmstrip items={blob.items} bucket={bucket} peers={peers} idx={idx} onJump={go} />}
+        </div>
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-3.5 gap-y-1.5 px-4 pb-2.5 text-[11px] text-ink-3 sm:px-8">
+          <Key swatch="bg-accept">accept</Key>
+          <Key swatch="bg-reject">reject</Key>
+          <Key swatch="bg-flag">reject thiếu đáp án sửa</Key>
+          <Key swatch="bg-null">chưa review</Key>
+          <Key striped>người khác đã chốt</Key>
+          <span>· mỗi vạch đứng = một đoạn văn, click để nhảy tới câu</span>
+        </div>
+      </header>
+
+      {banner && (
+        <div className="border-b border-reject/30 bg-reject-soft px-4 py-2 text-[13px] sm:px-8" role="status">
+          <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-2.5">
+            <b className="text-reject">{banner.t}</b>
+            <span>{banner.m}</span>
+            {banner.fix && (
+              <button
+                type="button"
+                onClick={banner.fix.fn}
+                className="rounded-lg border border-hair bg-card px-2.5 py-1 text-[12.5px] font-medium"
+              >
+                {banner.fix.l}
+              </button>
+            )}
+            <button type="button" onClick={() => setBanner(null)} aria-label="Đóng thông báo" className="ml-auto text-ink-2 hover:text-ink">
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto grid max-w-[1440px] grid-cols-1 items-start gap-4 px-4 py-4 sm:px-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] lg:gap-7">
+        {item ? (
+          <>
+            <ItemPane
+              it={item}
+              context={blob.passages[item.passage_key] ?? ""}
+              answer={answer}
+              model={model}
+              position={pos}
+              total={blob.items.length}
+              idx={idx}
+            />
+            <DecisionPanel
+              st={curState}
+              peerLock={peerLock}
+              modelAnswer={answer}
+              onDecision={setDecision}
+              onCorrection={setField("c")}
+              onNote={setField("n")}
+              stats={stats}
+              onExportCsv={() => void exportCsv()}
+              onExportState={exportState}
+              onImportState={(f) => void importState(f)}
+              reviewer={annotator ?? "…"}
+              model={model}
+              peerFiles={peerFiles}
+            />
+          </>
+        ) : (
+          <p className="col-span-full py-16 text-center text-ink-3">blob không có câu nào — chạy lại export-blob</p>
+        )}
+      </main>
+
+      <NavDock
+        idx={idx}
+        total={blob.items.length}
+        onPrev={() => go(idx - 1)}
+        onNext={() => go(idx + 1)}
+        onNextUnreviewed={jumpUnreviewed}
+        status={pill}
+      />
+
+      {!annotator && <Gate onSubmit={submitReviewer} />}
+      {help && (
+        <Overlay onClose={() => setHelp(false)}>
+          <h2 className="font-disp text-[20px] font-semibold">Phím tắt</h2>
+          <p className="mt-1.5 text-[14px] text-ink-2">Các phím này tắt khi con trỏ đang ở trong ô văn bản.</p>
+          <div className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-[13.5px]">
+            {(
+              [
+                ["j / ↓", "Câu kế tiếp"],
+                ["k / ↑", "Câu trước"],
+                ["a · space", "Accept (lần 2 = bỏ trống)"],
+                ["r", "Reject · focus ô sửa nếu đang trống"],
+                ["u", "Bỏ trống quyết định"],
+                ["e", "Tới ô đáp án sửa"],
+                ["n", "Tới ô ghi chú"],
+                ["t", "Nhảy tới câu chưa review kế tiếp"],
+                ["Home / End", "Câu đầu / câu cuối"],
+                ["? · Esc", "Mở / đóng bảng này"],
+              ] as const
+            ).map(([k, v]) => (
+              <div key={k} className="contents">
+                <span className="text-right whitespace-nowrap">
+                  <kbd className="rounded border border-hair bg-card px-1.5 py-0.5 font-mono text-[10.5px] text-ink-2">{k}</kbd>
+                </span>
+                <span>{v}</span>
+              </div>
+            ))}
+          </div>
+        </Overlay>
+      )}
+      {toastMsg && (
+        <div role="status" aria-live="polite" className="pointer-events-none fixed bottom-22 left-1/2 z-50 max-w-[min(90vw,460px)] -translate-x-1/2 rounded-lg bg-ink px-4 py-2.5 text-center text-[13px] font-medium text-paper">
+          {toastMsg}
+        </div>
+      )}
+    </>
+  );
+}
+
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "accept" | "reject" }) {
+  return (
+    <div className="flex min-w-19 flex-col leading-tight">
+      <b className={"font-disp text-[21px] font-semibold tabular-nums " + (tone === "accept" ? "text-accept" : tone === "reject" ? "text-reject" : "")}>
+        {value}
+      </b>
+      <span className="mt-[3px] text-[10.5px] uppercase leading-[1.4] tracking-[.1em] text-ink-3">{label}</span>
+    </div>
+  );
+}
+
+function Key({ swatch, striped, children }: { swatch?: string; striped?: boolean; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <i
+        className={"inline-block h-[9px] w-[9px] rounded-[2px] " + (striped ? "peer-stripe" : swatch)}
+        aria-hidden
+      />
+      {children}
+    </span>
+  );
+}
+
+function Gate({ onSubmit }: { onSubmit: (v: string) => void }) {
+  const [v, setV] = useState("");
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="gate-title" className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-5">
+      <form
+        className="w-full max-w-[420px] rounded-[14px] border border-card-edge bg-card p-6 shadow-2xl sm:p-8"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit(v);
+        }}
+      >
+        <h2 id="gate-title" className="font-disp text-[24px] font-semibold">Bạn là ai?</h2>
+        <p className="mt-1.5 text-[14px] leading-relaxed text-ink-2">
+          Nhãn trạng thái được lưu riêng cho từng <b>người review × model</b>. Hai người phải review độc lập — đừng nhập state của người khác.
+        </p>
+        <label className="mt-5 block">
+          <span className="block text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">Tên người review</span>
+          <input
+            autoFocus
+            value={v}
+            onChange={(e) => setV(e.target.value)}
+            autoComplete="off"
+            placeholder="vd: linh (gõ không dấu cũng được)"
+            className="mt-2 w-full rounded-lg border border-hair bg-card px-3.5 py-3 text-[15px] focus:border-ink-2 focus:outline-none"
+          />
+        </label>
+        <button
+          type="submit"
+          className="mt-4 w-full rounded-lg border border-ink bg-ink px-3 py-3 text-[14px] font-semibold text-paper"
+        >
+          Bắt đầu review
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function Overlay({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-[560px] rounded-[14px] border border-card-edge bg-card p-6 shadow-2xl sm:p-8">{children}</div>
+    </div>
+  );
+}
