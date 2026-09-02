@@ -1,0 +1,401 @@
+﻿annotator,model,dataset,item_id,stratum,decision,model_answer,corrected_answer,note
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5135,comparison,accept,hành tinh b,,"Chu kỳ b 1,209 ngày < c 3,648 ngày → b ngắn hơn, đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1435,comparison,reject,10,Liverpool,"Hỏi 'đội nào' → Liverpool (10–0 một trận; City 10–0 chỉ là tổng 2 lượt, trận đơn tốt nhất 9–0); model trả con số 10."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6077,add_sub,accept,"11,5 cm",,"Quả đại ~8 cm + mào lông đầu hạt ~3,5 cm = 11,5 cm."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3964,selection,accept,351,,Đoạn nêu Pháp tăng 351 ca tử vong so với một ngày trước.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,980,comparison,accept,ngành xây dựng,,"Xây dựng đạt 99,09% — thấp nhất trong 5 ngành."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3051,count,accept,4,,"4 mốc trữ lượng chứng minh: 100 (10/2007), 172 (2/2008), 211,17 (2009), 300,9 (2015)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9209,comparison,accept,Vào tháng 10 năm 2007,,100 tỷ thùng (10/2007) là mức thấp nhất được nêu.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1039,add_sub,accept,"50,25%",,"Đoạn nêu đúng tăng 50,25% so với 2010-2015."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8758,comparison,accept,tiếng Anh,,"90,5% nói tiếng Anh — ngôn ngữ đầu tiên phổ biến nhất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,301,comparison,accept,thấp hơn,,"Mỹ bản xứ 0,17% < châu Á 0,31% (kể cả cộng TTBD 0,01%) → thấp hơn, đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,30,count,reject,12,13,Năm 1301 có 13 chức vụ được nêu; 'thượng thư và viên ngoại lang' là 2 chức — model gộp còn 12.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1689,count,reject,12,13,"Đếm chức vụ năm 1301: thượng thư, viên ngoại lang, các thiết, chủ sự, Mông Cổ tất đồ xích, lệnh sử, Hồi Hồi lệnh sử, khiếp lý mã xích, tri ấn, tấu sai, Mông Cổ thư tả, điển lại, ti kế quan = 13."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6105,comparison,accept,bọ nhảy,,"Bọ nhảy 113 < ve giáp 145 → bọ nhảy ít hơn, đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,316,comparison,reject,ít hơn,nhiều hơn,"Số hộ gia đình 24.691 lớn hơn số gia đình 16.837, nên trả lời phải là 'nhiều hơn', model đảo ngược chiều so sánh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4365,add_sub,accept,"1,2",,"Tỷ lệ người châu Á 0,5% nhỏ hơn tỷ lệ hai chủng tộc trở lên 1,7% đúng 1,2 điểm %, khớp đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6314,add_sub,reject,"19,5%",khoảng 12.968 người,"Hỏi chênh lệch SỐ NGƯỜI (19,5% × 66.501); model trả % — sai dạng đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9893,comparison,accept,người da đen hoặc người Mỹ gốc Phi,,"Người da đen hoặc Mỹ gốc Phi 5,7% cao hơn người châu Á 0,5%, chiều so sánh và thực thể trả lời đều đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,357,selection,accept,"4,8%",,"Đoạn văn nêu rõ người Cơ Đốc giáo phi Ả Rập và người không tôn giáo chiếm 4,8% dân số, model trích đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3008,add_sub,reject,34,"31,4%","Kit 24-105 giá 4.599 USD so với thân máy 3.499 USD tăng (4.599−3.499)/3.499×100 ≈ 31,4%, không phải 34%."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,273,count,accept,4,,"Đoạn văn liệt kê đúng 4 nhóm tù nhân theo tỷ lệ: trước án tù 21,5%, nữ 8,7%, chưa thành niên 0,4%, người nước ngoài 5,9%."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7552,count,accept,0,,"Mọi sự kiện 'cải nhiệm' trong đoạn văn đều từ 20/2/511 trở đi; trước năm 511 chỉ là phong, thụ chức, tiến hiệu nên đáp án 0 là đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6890,add_sub,accept,19.425,,"10.221 đơn vị nhà ở cộng 9.204 hộ gia đình bằng 19.425, model tính đúng phép cộng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1512,count,accept,2,,"Hợp phần 1 đầu tư theo hình thức BOT được chia làm 2 dự án, nên trước khi chuyển đổi có 2 dự án BOT."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8213,add_sub,reject,667.612,76,Hỏi số nhà truyền giáo: 13+20+8+20+15 = 76 (Cagayan không nêu); model lấy nhầm tổng dân số 667.612.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,726,selection,accept,nhỏ hơn,,"Diện tích xã Sơn Bình 3.571,53 ha nhỏ hơn diện tích còn lại của Sơn Kiên 5.310,60 ha, chiều so sánh đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8716,count,accept,5,,"Chia Sóc Sơn thành 4 xã (Sóc Sơn, Sơn Hưng, Sơn Kiên, Sơn Thái) rồi lập thêm xã Sơn Bình từ Sơn Kiên, tổng 5 xã được tạo ra."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,713,comparison,reject,1954,1952,"Viện trợ ít nhất là 524 tỉ francs năm 1952, nhỏ hơn 575 tỉ năm 1954 và 585 tỉ năm 1953; model chọn sai năm."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6593,add_sub,accept,95.000,,"Quân số tăng từ 135.000 (1952) lên 230.000 (1954), chênh lệch đúng 95.000 người."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2183,add_sub,accept,"0,40%",,"Tỷ lệ người Mỹ bản xứ 0,53% nhiều hơn người châu Á 0,13% đúng 0,40 điểm %."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3916,comparison,accept,25-44,,"Nhóm 25-44 chiếm 27,80% là tỷ lệ cao nhất trong các nhóm tuổi, model chọn đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5493,comparison,accept,202%,,"Tỷ lệ tăng kim ngạch xuất khẩu 202% cao hơn tăng thu ngân sách 43% so với cùng kỳ, model chỉ đúng tỷ lệ cao nhất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1652,count,accept,10,,"Đoạn văn liệt kê 10 loại tiền giấy: 2, 5, 10, 20, 50, 100, 500, 1.000, 5.000 và 10.000 afghani."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4026,other,accept,1.000 afghani,,"1.000 afghani gấp đôi 500 afghani, model chọn đúng mệnh giá lớn hơn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,939,count,reject,8,9,"Đoạn văn nêu 9 công việc/khóa học riêng biệt (2 khóa học Gymnasium và Delft cộng 7 công việc: Deventer, Văn phòng Sáng chế, HĐND Rijswijk, lãnh đạo NVV, giám đốc đảng, tổng biên tập, HĐND Amsterdam); model đếm thiếu 1."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6827,selection,accept,"91,00",,"Đoạn văn ghi mỗi 100 nữ từ 18 tuổi trở lên có 91,00 nam giới, model trích đúng con số."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8786,add_sub,reject,"38,3%","44,3%","Tổng gốc Đức 15,0% + Ailen 11,8% + Anh 10,9% + Ý 6,6% bằng 44,3%, model tính ra 38,3% là sai phép cộng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1137,count,reject,6,5,"Ông bắn hạ 2 chiếc C-130, 1 máy bay không người lái, 1 A-37 và 1 L-19, tổng 5 chiếc; model đếm thành 6."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2166,selection,accept,1,,"Đoạn văn chỉ nêu đúng 1 máy bay không người lái bị bắn hạ ngày 15/1/1975, model trả lời đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4857,add_sub,reject,"1,5",52,"Diện tích nền trước 16x13=208 m², bệ giữa 13x12=156 m², chênh lệch là 52 m² chứ không phải 1,5."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8351,comparison,accept,350.000 USD,,"Giá cho thuê 330.000–350.000 USD/tháng, mức cao nhất là 350.000 USD, đúng theo đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9928,selection,reject,282.929,2.858,Hỏi số ca tử vong TRONG ngày 3/12 = 2.858; model trả tổng lũy kế 282.929.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7511,selection,accept,"3,15%",,"Đoạn văn ghi rõ 3,15% dân số là người Hispanic hoặc Latin, khớp với câu hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8268,add_sub,accept,20.281,,"52.539 hộ trừ 32.258 gia đình bằng 20.281, phép tính đúng và có căn cứ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9060,comparison,reject,"1,80%","Nhóm từ các chủng tộc khác (1,80%)","Câu hỏi 'cái nào' cần tên nhóm chủng tộc (1,80% là nhóm 'từ các chủng tộc khác'), mô hình chỉ trả con số nên sai dạng đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,385,comparison,reject,7 mùa giải,José Altafini,"Câu hỏi 'ai' cần tên cầu thủ có ít mùa giải nhất là José Altafini (7 mùa), mô hình trả '7 mùa giải' là sai dạng đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3224,selection,accept,Mauro Tassotti,,"Trong nhóm có thống kê số trận, Mauro Tassotti ít nhất với 583 trận, đúng theo đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1986,comparison,accept,người da trắng,,"Người da trắng chiếm 96,39%, cao nhất trong các nhóm sắc tộc được nêu."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4402,selection,accept,"0,48%",,"Đoạn văn ghi rõ 0,48% dân số là người Hispanic hay Latino."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5218,selection,accept,Ngày 12 tháng 5 năm 2010,,"Đoạn văn nêu chuyến bay 771 rơi ngày 12 tháng 5 năm 2010, trả lời đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1467,comparison,accept,SF-2U,,"SF-2U chứa 50% tripolyphotphat natri trong khi SF-2 không có thành phần này (chỉ có trinatri photphat 30%), nên SF-2U cao hơn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1598,count,accept,4,,"Có 4 quốc gia được nêu tên (Anh, Italy, Pháp, Đức); EU và Schengen không phải quốc gia."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6527,comparison,accept,Anh,,"Tử vong trong ngày: Anh 428, Pháp 351, Italy 262, Đức 67 — Anh cao nhất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8021,comparison,accept,Pháp,,"Nhập khẩu từ Pháp chiếm 16,6%, cao nhất so với Hà Lan 13%, Cameroon 9,7%, Mỹ 6,3%."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8750,add_sub,accept,"48,1",,"54,4% − 6,3% = 48,1 điểm phần trăm, phép tính đúng và có căn cứ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1573,comparison,accept,tàu phóng lôi và tuần tiễu,,"Hải quân có gần 20 tàu phóng lôi và tuần tiễu, nhiều hơn 9 tàu tên lửa, nên đây là loại nhiều nhất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,514,selection,accept,3 kênh,,"Sau chương trình giao thừa, 3 kênh AM 610 KHz, FM 95,6 MHz và FM 87,7 MHz tắt sóng, đúng theo đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1706,add_sub,reject,"56,366",44.789,"39.985.427 − 39.940.638 = 44.789 m, mô hình tính ra 56.366 là sai số học."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3101,selection,accept,66%,,Đoạn văn nêu trực tiếp 726 trực thăng tổn thất chiếm 66% trong khoảng 1.100 chiếc được huy động.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3174,comparison,accept,Không,,"Năm 2010 có 259,8 triệu người nói tiếng Nga, nhỏ hơn 300 triệu nên 'Không' là đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1753,comparison,accept,2,,"Chỉ Ba Đồn (200,81 ha) và Quảng Phong (470,04 ha) dưới 500 ha, tổng 2 phường."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8704,comparison,accept,Gent,,"Thắng Gent 10-2 (chênh 8 bàn) nhiều hơn thắng Košice 10-4 (chênh 6 bàn), câu trả lời đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2052,add_sub,accept,49.000,,"320.000 − 271.000 = 49.000 ca, phép tính đúng và có căn cứ trong đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1962,count,reject,11,9,"Chỉ 9 lễ hội/kỷ niệm ghi rõ tổ chức theo tháng âm lịch (Bình Định 3, Bình Thuận 3, Cao Bằng 3); liên hoan Bình Phước và lễ Ka tê ghi dương lịch, Ramưwan không nêu tháng, nên 11 là đếm thừa."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,60,count,accept,8,,"Đếm các mệnh giá phát hành từ 1945 đến 1982: 5, 10, 100, 1000, 500, 50, 2, 20 rupee = 8 mệnh giá (tiền 1 rupee đã ngừng in, không tính)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5761,add_sub,reject,37,28,"Tàu container đang đặt thêm là 37, số tàu đặt thêm ở Dalian Yard là 9, chênh lệch phải là 37 − 9 = 28 chứ không phải 37."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7539,add_sub,reject,34.153,44.153,"Dân số năm 1999: Brive-la-Gaillarde 121.150 − Tulle 76.997 = 44.153 người, mô hình tính sai thành 34.153."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3298,add_sub,accept,150,,"Kỷ lục 1000 km đạt 1.822 km/h, chuyến bay 183 đạt 1.972 km/h, chênh lệch đúng 150 km/h."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2295,comparison,accept,Cỡ gia đình trung bình,,"Cỡ gia đình trung bình 3,00 lớn hơn cỡ hộ trung bình 2,50 nên đáp án của mô hình đúng hướng so sánh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2270,selection,accept,5 chiếc,,"Trước đó đã thuê 2 chiếc, năm 2006 thuê thêm 3 chiếc (chiếc thứ 3 giao tháng 3/2007), tổng cộng 5 chiếc."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8335,add_sub,reject,"96,74%","96,56%","Người da trắng 95,84% cộng người Hispanic/Latino 0,72% bằng 96,56%; mô hình cộng nhầm 0,90% (hai hay nhiều chủng tộc)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,989,add_sub,reject,15-25 cm,19-31 cm,"Câu hỏi yêu cầu cộng hai đại lượng: trục cuống lá 15-25 cm + cuống lá 4-6 cm = 19-31 cm, mô hình chỉ chép lại khoảng 15-25 cm."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9380,selection,accept,69%,,"46% máy bay một động cơ cộng 23% đa động cơ bằng 69%, đúng tổng hai tỉ lệ nêu trong đoạn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6002,comparison,reject,"37,5 MW","Hai tổ máy có công suất bằng nhau (đều 37,5 MW)",Hỏi 'tổ máy nào lớn hơn' → phải nêu so sánh; hai tổ máy bằng nhau.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2331,count,reject,3,4,"Cú đúp ở Cúp quốc gia (2 bàn) + bàn gỡ 1-1 trước Schalke (1) + bàn đem về 1 điểm trước RB Leipzig (1) = 4 bàn, trận gặp Ingolstadt chỉ có kiến tạo."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6207,comparison,accept,Phương diện quân Kalinin,,Đoạn văn ghi rõ Zhukov là tư lệnh Phương diện quân Kalinin trước khi Koniev tiếp quản ngày 26 tháng 8.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2430,comparison,reject,thấp hơn,cao hơn,"Thị xã Giá Rai có 35.466,81 ha còn phường 1 chỉ 1.186,60 ha, nên diện tích thị xã cao hơn chứ không thấp hơn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2462,add_sub,accept,"6,01 USD",,"Giá thuê giảm từ 12 USD xuống 5,99 USD, mức giảm 12 − 5,99 = 6,01 USD là đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7624,count,reject,6,5,"Chỉ có 5 thông số trọng lượng nêu bằng kg: nguyên mẫu 2.238 và 2.950, Ki-61-I 3.130, Ki-61-KAI 2.630 và 3.470 (Ki-61-I không nêu trọng lượng tối đa)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9046,count,reject,5,4,Từ 1/2014 đến 5/2014: cú đúp gặp Sampdoria (2) + bàn gặp Juventus (1) + bàn ở chung kết Cúp quốc gia (1) = 4 bàn; các bàn ở Europa League thuộc 2015-16.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4622,count,accept,5,,"Các khu dân cư hiện nay gồm 5 làng: Thống Nhất, An Xuân, Phú Cường, Z4 và Phú Điền."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6579,count,accept,5,,"Đoạn văn giới thiệu 5 làng: An Xuân, Thống Nhất, Phú Điền, Phú Cường và Z4."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6607,add_sub,reject,32.200,32.100,Bắc Mỹ 42.700 − (châu Âu 10.500 + các nước còn lại 100) = 32.100 chiếc; mô hình bỏ sót 100 chiếc ở nhóm còn lại.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3069,comparison,accept,Iran,,"Iran 77 ca là mức cao nhất so với Ý 52, Hàn Quốc 29 và các nơi còn lại."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3166,comparison,accept,thị trấn Vân Du,,Trước sáp nhập (số liệu 2018) thị trấn Vân Du 2.925 người ít hơn xã Thành Vân 6.237 người.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7054,selection,accept,2.880,,"Đoạn văn nêu rõ 2.880 hộ gia đình (17,6%) được tạo thành từ các cá nhân."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3355,comparison,accept,lớn hơn,,"Năm 2019 thị trấn Phố Lu 15,03 km² lớn hơn xã Phố Lu 7,76 km², mô hình trả lời đúng hướng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3411,add_sub,accept,6,,"Từ mốc 2019 đến 2025 là 6 năm, mỗi năm thêm 1 tổ dân phố nên số tổ tăng thêm là 6, đúng như câu hỏi 'tăng thêm'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4574,count,accept,1,,"Đoạn văn ghi chỉ tập đoàn quân xe tăng 4 được tính đến hết tháng 4 năm 1942, tức 1 tập đoàn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9295,other,accept,"4,56",,"Tự tính: 162.713 người chết / 35.650 người mất tích ≈ 4,56 lần, khớp đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3415,comparison,accept,Phần 1,,Phần 1 kết thúc 15/1/2019 sớm hơn Phần 2 kết thúc 7/10/2020.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3520,add_sub,accept,44,,"Hạng 2019 là 66, hạng 2017 là 22, chênh lệch 66 − 22 = 44."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4697,add_sub,accept,846,,Đường hạ cất cánh 3.250 m − đường lăn song song 2.404 m = 846 m.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6283,add_sub,accept,5,,4 bàn ở vòng loại cộng 1 bàn trước U-23 Iraq tại giải = tổng 5 bàn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8895,comparison,accept,thấp hơn,,"Tỉ lệ nam/nữ từ 18 tuổi trở lên là 81,60 thấp hơn tỉ lệ chung 87,00."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3493,count,reject,Hai,Ba,"Có ba đô thị tách ra từ Hemne: Heim (1911), Snillfjord và Vinje (1924); Fossdalen chỉ chuyển đến Hemne."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9902,add_sub,reject,"14,9%","24,9%","Gốc Đức 41,4% trừ gốc Na Uy 16,5% bằng 24,9%, model tính sai thành 14,9%."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9750,comparison,reject,Ít,nhiều hơn,"Đầu 2003–2004 có 895 chiếc so với 840 chiếc năm 2006, tức là nhiều hơn chứ không ít."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,200,selection,accept,63.664,,Đoạn văn nêu dân số tăng 63.664 so với năm trước (2013→2014).
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3815,add_sub,accept,"Quận Limoux, giảm 758 người",,"Quận Limoux giảm từ 42.247 (1990) xuống 41.489 (1999), tức giảm đúng 758 người."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4091,add_sub,accept,"9.060,05 ha",,"5.478,05 ha (Xuân Lao) + 3.582 ha (Nặm Lịch) = 9.060,05 ha."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1723,count,reject,Bảy,Năm,"Đoạn văn nêu 5 tên ngôn ngữ dùng tại gia đình: Zulu, Xhosa, Tiếng Afrikaans, tiếng Anh, tiếng Hà Lan Nam Phi — không phải bảy."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2989,comparison,reject,tiếng Hà Lan Nam Phi,Zulu,"Nhóm ngôn ngữ thứ hai tại gia đình: Anh 2,2 triệu, Hà Lan Nam Phi 1,1 triệu, Zulu 0,5 triệu — Zulu được chọn ít nhất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4199,selection,accept,1920,,"Murakumo Nichi'ei (3/4/1855 – 1920), sống đến năm 1920."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4112,count,reject,Klin,Một,"Hỏi 'bao nhiêu địa điểm' → đáp án dạng số: 1 (Klin). Model trả tên địa điểm, sai dạng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,253,add_sub,accept,5.864,,13.739 (1990) − 7.875 (1954) = 5.864 người.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9213,comparison,accept,Bộ Tư pháp,,Bộ Tư pháp giam 1.649.804 tù nhân so với 650.000 của Bộ Công an — lớn hơn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9318,selection,reject,2,Một,"Hai giải đầu Carlsen bất bại (+2−0, +3−0); chỉ giải Na Uy có 1 trận thua trước So (−1)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,10085,other,reject,"33,25%","49,92%","5,99/12 = 49,92% giá gốc; 33,25% là MỨC GIẢM."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4498,comparison,reject,32 năm,Nhóm 25 đến 44 tuổi,"Tuổi trung bình 32 nằm trong nhóm 25-44; hỏi 'nhóm tuổi nào' phải trả tên nhóm, không lặp lại '32 năm'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4531,other,reject,Thấp hơn,cao hơn,"Cơ Tiền trung bộ có 12 đội × 5 thuyền = 60 thuyền, cao hơn 4 đội × 5 = 20 thuyền của nhóm thủy quân."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4598,add_sub,accept,"0,61",,"3,28 − 2,67 = 0,61, đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4797,add_sub,accept,48.331,,Mỹ 78.532 − Italy 30.201 = 48.331 ca tử vong.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5748,comparison,reject,"510,01 ha",xã Thới Sơn,"Thới Sơn 1.211,64 ha lớn hơn Phước Thạnh 510,01 ha; model trả lời con số của xã nhỏ hơn, sai cả tên lẫn kiểu trả lời."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5057,selection,accept,"49,53%",,"Đoạn văn nêu rõ 49,53% người da trắng, câu trả lời trích đúng và có căn cứ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5039,add_sub,reject,"""Chiến lược và nguồn cung trong các chiến dịch xâm lược Tây Âu thế kỷ thứ mười bốn""","""Vai trò quân sự của các ống kính Frankish - đánh giá lại"" (75-116, 41 trang)","Bài đầu dài 42 trang (75–116), dài hơn bài 'Chiến lược và nguồn cung' chỉ 38 trang (297–334)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5164,add_sub,reject,Không,Có,"16/21 (12/4/2011) cách 17/119 (19/7/2011) 98 ngày, gần hơn khoảng 101 ngày giữa 5/1 và 6/102 năm 2007."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5336,count,reject,4,5,'Các CLB địa phương khác' (4) + Hannover 96 → 5 CLB địa phương chơi tại sân.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7055,comparison,reject,Không,Có,"Eurovision bắt đầu 18/5, bầu cử 23/5 nên bầu cử diễn ra sau ngày bắt đầu cuộc thi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5298,comparison,accept,tăng dần,,"Đoạn văn nêu sản lượng cá bạc má Bình Thuận 2003–2005 có xu hướng tăng dần (7,8% → 11,9% → 17,6%)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5979,count,accept,4,,"Trong khoảng 4–12/1999 có 4 mốc tháng được ghi nhận sự kiện: 4, 7, 10 và 12."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9044,comparison,reject,192.011,Số ca nhiễm mới (53.584) cao hơn số ca tử vong mới (1.052),Model lấy tổng ca tử vong tích lũy 192.011 thay vì so sánh ca mới; ca nhiễm mới 53.584 lớn hơn ca tử vong mới 1.052.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8405,other,reject,"5,4 đạn",5,"Câu hỏi buộc tính 35 đạn ÷ 7 B-52 = 5; số 5,4 trong đoạn không khớp phép tính này."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5868,selection,accept,"12,88%",,"Đoạn văn ghi 12,88% dân số là người Hispanic hay Latino, trích đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7429,comparison,accept,lớn hơn,,"Ống tràng hoa ~2 cm dài hơn đài hoa ~1,5 cm nên 'lớn hơn' là đúng hướng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8224,comparison,accept,Nigeria,,"Trong 5 nhóm đông nhất, Nigeria (17.642) có số lượng thấp nhất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6383,add_sub,accept,"2,57%",,"0,18% (chủng tộc khác) + 2,39% (hai hay nhiều chủng tộc) = 2,57%, tính đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6643,add_sub,accept,10,,"Tăng từ 10 lên 20 pháo Kiểu 96, mức tăng là 10 khẩu."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6755,count,reject,2,1,Chỉ QĐ 337 (1982) nằm trong 5 năm đầu (1981-1986); QĐ 610 (10/1986) đã ngoài mốc.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7048,add_sub,accept,"89,4–99,5 kg",,"Tăng từ sơ sinh 0,5–0,6 kg lên 90–100 kg, hiệu đúng cặp là 89,4–99,5 kg."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7170,selection,accept,Trung tá An ninh Nhà nước Isaak Ilyich Shapiro,,Shapiro (28/3/1938–13/11/1938) là thư ký cuối cùng được liệt kê.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7581,selection,accept,ngày 3 tháng 5 năm 1972,,"Chiến dịch Bắc Bình Định ghi nhận từ 9/4 đến 3/5/1972, ngày kết thúc là 3/5/1972."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6454,count,accept,Ba,,"Passage nêu hai thử nghiệm close beta đầu rồi thử nghiệm close beta thứ ba, tổng là ba."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8024,count,accept,6 người con,,Friedrich Franz là con thứ 4 trong 6 người con của Franz Heinrich von Waldersee.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8087,comparison,reject,"Cỡ hộ trung bình là 2,45 người và cỡ gia đình trung bình là 2,99 người.","Cỡ gia đình trung bình (2,99 người) lớn hơn cỡ hộ trung bình (2,45 người)",Câu 'so sánh' yêu cầu nêu chiều; model chỉ trích hai số.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8105,selection,accept,Ngày 19 tháng 3 năm 1973,,"Trong năm 1973 tai nạn ngày 19/3 (DC-4) xảy ra trước tai nạn 17/11, mốc ngày xác định đúng tai nạn đầu tiên."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2662,add_sub,reject,35,40,"Tối đa theo khảo sát là 160, tối thiểu tại Việt Nam là 120, chênh lệch là 40 chứ không phải 35."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9689,selection,accept,lá chét đầu cùng,,"Lá chét đầu cùng dài tới 13 cm, vượt mọi số đo tối đa khác (chùy hoa 10, lá chét bên 10,2, trục lá 5,5)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,420,selection,accept,"5,12%",,"Đoạn văn ghi 5,12% dân số là người Hispanic hay Latino, trích đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9061,comparison,accept,Không,,"Đoạn văn nêu mật độ năm 2018 của thị trấn Vân Du là 688 người/km², nên trả lời 'Không' (không vượt 700) là đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9053,add_sub,reject,từ ngày 5 tháng 4 năm 2018 đến sáng ngày 12 tháng 4 năm 2018,vòng chung kết (4 ngày),"Vòng chung kết chỉ 4 ngày (12–15/7), ngắn hơn ban hành điều lệ đến bốc thăm (5/4–12/4, 7 ngày) và ngắn hơn lượt đi hay lượt về (mỗi lượt 30 ngày)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1699,add_sub,accept,70,,"Đoạn văn ghi rõ ngày 16/2 có 70 người khác được báo cáo nhiễm, khớp đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6133,add_sub,accept,99,,"Tổng số tăng từ 355 (16/2) lên 454 (17/2) nên chênh lệch đúng 99 ca, khớp số ca mới công bố ngày 17/2."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8891,count,reject,11,9,"Trong Quân đoàn kỵ binh cận vệ 3 có 3 sư đoàn (cận vệ 5, 6, kỵ binh 32) cộng các trung đoàn pháo tự hành 1814, pháo chống tăng 144, súng cối 3, phòng không 1731 và 2 tiểu đoàn (trinh sát cơ giới 3, súng cối 64) = 9 đơn vị, mô hình đếm 11 là gộp cả đơn vị ngoài quân đoàn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,138,selection,accept,"2,60",,"Đoạn văn nêu quy mô trung bình của hộ là 2,60, mô hình trích đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,174,comparison,reject,"15,00%","11,60% (nhóm từ 18 đến 24)","So các nhóm tuổi 21,90% / 11,60% / 29,70% / 21,80% / 15,00% thì thấp nhất là 11,60%, không phải 15,00%."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5511,count,accept,861,,"Đoạn văn ghi sư đoàn không quân tiêm kích 861 thuộc quân đoàn hỗn hợp 44, mô hình trả lời đúng số hiệu."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,193,add_sub,reject,1.427.000,477.000 người,"Theo báo cáo chính thức, bị thương 1.797.000 và thiệt mạng 1.320.000 nên chênh lệch là 477.000; con số 1.427.000 của mô hình không tính ra được từ số liệu nào của đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9134,selection,accept,"6,002 triệu đồng/tháng",,"Đoạn văn nêu Hà Nội 6,002 triệu đồng/tháng năm 2021, khớp đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6525,comparison,reject,"22,80%","dưới độ tuổi 18 (22,80%)","Hỏi 'cái nào lớn hơn' → cần nêu nhóm tuổi, không trả trần con số."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,444,add_sub,reject,311.755,Không tính được — Ý không nêu số ca nhiễm mới trong ngày,"Mỹ thêm 211.762 ca nhiễm mới và Ý tăng 23.225 ca (từ 23.225 lên 1,66 triệu), tổng là 234.987; mô hình dùng sai 993 ca tử vong của Ý nên ra 311.755."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5179,count,accept,4,,"Cả 4 quốc gia Anh, Italy, Pháp, Đức đều nêu số ca tử vong mới (428, 262, 351, 67), khớp đáp án 4."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2701,comparison,reject,25-44,"nhóm dưới 18 tuổi (27,00%)","So các nhóm 27,00% / 7,50% / 26,90% / 22,60% / 16,10% thì cao nhất là dưới 18 tuổi với 27,00%, chỉ nhỉnh hơn nhóm 25–44 (26,90%)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,583,comparison,reject,Không thể so sánh,"Phòng không có 4 tiểu đoàn (13, 27, 31, 615), nhiều hơn Thiết giáp chỉ có 2 tiểu đoàn (13, 43)","Đoạn văn nêu đủ quân số tiểu đoàn của cả hai phần nên so sánh được, mô hình trả lời 'Không thể so sánh' là sai."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7110,count,accept,3,,"Phần Phòng không nêu đúng 3 sư đoàn (cận vệ 2, 31 và 65), khớp đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6977,selection,accept,8,,"Đoạn văn ghi khoang hạng thương gia A321neo ACF có 8 ghế Collins Diamond cấu hình 2-2, mô hình trả lời đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5556,selection,accept,"21,70%",,"Đoạn văn nêu 21,70% trong tất cả các hộ gồm các cá nhân, khớp đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8915,count,reject,Ba,2 (Mỹ và Brazil),Đoạn văn chỉ gọi tên hai quốc gia là Mỹ và Brazil; Tân Cương/người Duy Ngô Nhĩ là vùng và dân tộc chứ Trung Quốc không được nêu tên.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9489,comparison,reject,Gần 1.000 căn,Đoạn văn không nêu riêng số căn nhà 167 (chỉ gộp 'trên 6800 căn nhà tình thương và nhà 167') nên không xác định được chênh lệch với gần 1.000 căn nhà tình nghĩa,Mô hình chỉ lặp lại con số 'Gần 1.000 căn' mà không trả lời loại nhà nào nhiều hơn và không nêu chênh lệch như câu hỏi yêu cầu.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1105,count,reject,Quân đoàn bộ binh 6,"Bằng nhau, mỗi quân đoàn có 3 sư đoàn","Quân đoàn bộ binh 6 (87, 206, 330) và quân đoàn bộ binh 43 (85, 205, 233) đều có đúng 3 sư đoàn nên không quân đoàn nào đông hơn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1646,count,reject,10,9,"Sư đoàn bộ binh gồm 87, 206, 330 (quân đoàn 6), 35, 252, 342 (quân đoàn 9) và 85, 205, 233 (quân đoàn 43) là 9; 4 sư đoàn đổ bộ đường không không phải bộ binh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1288,comparison,reject,Xã Lương Hòa,"Lớn nhất: xã Đa Lộc (714,8 ha); nhỏ nhất: xã Nguyệt Hóa (187,13 ha)","Trong ba xã sáp nhập vào thị xã Trà Vinh (Nguyệt Hóa 187,13 ha, Đa Lộc 714,8 ha, Lương Hòa 400,16 ha) thì Lương Hòa ở giữa, mô hình lại chỉ nêu một xã là thiếu và sai."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1495,comparison,reject,137.221 người,quận Carcassonne,Câu hỏi 'quận nào nhiều hơn' cần tên quận (Carcassonne 137.221 người so với Limoux 42.247 người năm 1990); mô hình trả lời con số dân số là sai dạng đáp án.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2741,count,reject,10,15,"Thiết giáp của Tập đoàn quân 21 có 4 lữ đoàn và 6 trung đoàn trong Quân đoàn xe tăng cận vệ 2 (3 lữ đoàn xe tăng + 1 lữ đoàn cơ giới + 2 trung đoàn pháo tự hành + 2 trung đoàn pháo chống tăng + 1 trung đoàn súng cối + 1 trung đoàn phòng không) cộng 1 lữ đoàn xe tăng cận vệ 23 và 4 trung đoàn (xe tăng 248, xe tăng cận vệ 64, pháo tự hành 1494, 1830) = 15; mô hình đếm 10 là bỏ 5 đơn vị ngoài quân đoàn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5954,count,reject,3 quân đoàn và 7 sư đoàn,"2 quân đoàn (61, 69) và 7 sư đoàn","Đoạn văn chỉ nêu 2 quân đoàn bộ binh (61 và 69) với tổng cộng 7 sư đoàn, model đếm nhầm sư đoàn 63 thành quân đoàn thứ ba."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4262,comparison,accept,18 đến 24,,"Nhóm 18-24 chỉ chiếm 9,10%, thấp nhất trong các nhóm tuổi (dưới 18: 24,7%; 25-44: 29,8%; 45-64: 22,5%; 65+: 14,0%)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2216,count,reject,"1,9 triệu bản",2,"Hỏi số PHIÊN BẢN mở rộng: Opposing Force + Blue Shift = 2; '1,9 triệu' là số bản bán."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1870,add_sub,reject,353,553 ca tử vong,"Tây Ban Nha thêm 268 ca và Italy thêm 285 ca tử vong, tổng đúng là 268+285=553 chứ không phải 353."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1865,comparison,accept,2013,,"Đoạn văn ghi 2015 là 14 còn 2013 là 18,5, nên năm 2013 cao hơn; model trả lời đúng hướng so sánh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8068,add_sub,reject,"3,36 điểm phần trăm","39,32 điểm phần trăm","Câu hỏi so tỷ lệ thành thị với nông thôn (69,66% − 30,34% = 39,32), còn 3,36 điểm phần trăm là mức tăng tỷ lệ thành thị sau 10 năm, không phải chênh lệch thành thị so với nông thôn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4022,add_sub,accept,"4,8",,"Hộ không lập gia đình 29,30% trừ hộ tạo từ các cá nhân 24,50% bằng 4,8 điểm phần trăm, model tính đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2531,selection,accept,5.068,,"Trong các xã liên quan (Lê Lợi 5.068, Đồng Tâm 897, Đồng Thái 217, Nam Sơn 412), xã Lê Lợi đông dân nhất với 5.068 người."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8889,selection,accept,12.690 hộ,,"Đoạn văn nêu điều tra 2000 ghi nhận 12.690 hộ sinh sống trong quận, model trích đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4698,selection,accept,"9,5%",,"Đoạn văn ghi rõ 9,5% hộ có người sống một mình từ 65 tuổi trở lên, đúng tỷ lệ hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8257,add_sub,reject,1591,1601,"Tổng các mùa giải là 320+307+265+248+223+238 = 1601, model tính ra 1591 là sai phép cộng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2276,selection,accept,Hải Dương,,"Đoạn văn ghi từ 18/3 đến 31/3 Hải Dương nới lỏng và giãn cách theo chỉ thị 19, đúng địa danh hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7927,comparison,accept,"Quận Ussel, 6.37%",,"Theo % 'tăng trưởng' ĐOẠN VĂN GHI thì Ussel 6,37% cao nhất; dấu trừ của Tulle/Ussel là lỗi nguồn viWiki, không bắt model sửa."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2395,add_sub,reject,600.000,700.000 đơn vị,"Quý I bán 1,73 triệu đơn vị phần mềm, quý II bán 1,03 triệu, chênh lệch là 0,7 triệu = 700.000 chứ không phải 600.000."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2522,selection,accept,"20,9%",,"Đoạn văn nêu 20,9% người Luân Đôn là người gốc Á và lai gốc Á, model trích đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2837,selection,accept,255.984,,"Đoạn văn ghi ông trúng cử với 255.984 phiếu, khớp với câu trả lời (dấu chấm là phân cách hàng nghìn)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7950,comparison,accept,Huân chương Lenin,,"Huân chương Lenin trao 5 lần còn Huân chương Cờ đỏ 4 lần, nên Lenin được trao nhiều hơn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7017,other,reject,5000 thăng,500 thăng thóc,"Tô ruộng mỗi mẫu nộp 100 thăng thóc nên 5 mẫu là 5×100 = 500 thăng; 3 quan chỉ là thuế tiền, model tính ra 5000 là sai."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5699,add_sub,accept,13.352,,"Dân số thị trấn Cẩm Thủy 6.341 cộng xã Cẩm Phong 7.011 bằng 13.352 người, model tính đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7459,other,reject,56.6%,"27,1%","Cư dân 25-64 tuổi là 29,3%+22,5% = 51,8%, trừ nhóm dưới 18 là 24,7% thì chênh lệch đúng là 27,1%, không phải 56,6%."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3394,selection,reject,16945,31.381,"Mẫu điều tra dân số Mỹ: hộ gia đình luôn ≥ gia đình → 31.381 hộ, 16.945 gia đình; bản dịch gắn nhãn sai."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4408,comparison,accept,Không,,"Tỷ lệ thất nghiệp 12,6% thấp hơn tỷ lệ người nước ngoài 22,5% nên trả lời 'Không' là đúng hướng so sánh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4566,comparison,accept,từ 25 đến 44,,"Nhóm 25-44 chiếm 30,80%, cao nhất trong phân bố tuổi (dưới 18: 21,4%; 18-24: 6,3%; 45-64: 27,7%; 65+: 13,8%)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4229,add_sub,accept,nhiều,,"Chaves sinh 1882, mất 1978 ở tuổi 96 nên sống nhiều hơn 90 năm, model trả lời 'nhiều' là đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7531,selection,accept,mạnh hơn hầu hết PC chạy Windows,,"Đoạn văn trích theo Apple: hiệu năng 'mạnh hơn hầu hết PC chạy Windows', model trích đúng nguyên văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8250,count,accept,2,,"Đoạn văn nêu rõ iPad Pro 2020 gồm 2 tùy chọn màn hình 11 inch và 12,9 inch nên đáp án '2' chính xác."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8451,count,accept,Một,,"Đoạn văn chỉ dùng một kích thước 29,5 × 23,5 inch (749 × 597 mm) để mô tả nhật báo khổ rộng nên 'Một' đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,10001,add_sub,accept,"24,10%",,"Chênh lệch 58,10% − 34,00% = 24,10 điểm phần trăm, khớp tính từ số liệu đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4724,count,accept,4,,"Đoạn văn mô tả đủ 4 phân đoạn: lối vào 13,2 km tới âu thuyền, âu thuyền Miraflores, hồ Miraflores, âu thuyền Pedro Miguel."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7970,add_sub,accept,57.827,,"74,127 − 16,3 = 57,827 triệu đô-la, đúng phép trừ giữa tổng doanh thu 17 ngày và doanh thu tuần hai."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8492,add_sub,reject,29.348,29.963 người,18-24 (3.912) + 25-44 (10.496) + 45-64 (15.555) = 29.963 người; model tính ra 29.348.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5404,add_sub,accept,"$1,100",,"4.599 − 3.499 = 1.100 USD, khớp mức chênh giá giữa kit 24-105 f/4L IS II và chỉ thân máy."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6073,add_sub,accept,6 lần,,"Huân chương Cờ đỏ 4 lần cộng Huân chương Suvorov 2 lần bằng 6 lần, đúng tổng đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6124,selection,accept,28 ngày,,Đoạn văn nêu rõ 'Trứng vịt ấp 28 ngày' nên đáp án '28 ngày' chính xác.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6505,selection,accept,"5,40%",,"Đoạn văn ghi 5,40% hộ có người sống một mình từ 65 tuổi trở lên, khớp đáp án."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,7684,selection,accept,422 ha diện tích tự nhiên và 4.178 người,,"Câu đầu đoạn văn nêu thị trấn Vân Du sau khi thành lập có 422 ha và 4.178 người, đúng yêu cầu."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9062,selection,accept,"0,13%",,"Cơ cấu chủng tộc ghi người châu Á chiếm 0,13% dân số nên đáp án đúng và có căn cứ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,0,short-direct,accept,New England Sports Ventures,,Đoạn văn nêu rõ tên ban đầu của Fenway Sports Group là New England Sports Ventures.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,5,short-direct,accept,1916,,Đoạn văn ghi 'Công ty được thành lập vào năm 1916'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3037,long-direct,accept,nửa đầu thế kỷ 19,,"Đoạn văn: 'mãi đến nửa đầu thế kỷ 19, Bach mới được nhìn nhận là nhà soạn nhạc vĩ đại'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,24,short-direct,accept,tổng hợp hạt nhân và phân rã phóng xạ,,Đúng đoạn văn: các phương pháp khác gồm tổng hợp hạt nhân và phân rã phóng xạ.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,118,short-infer,accept,thông qua các lò phản ứng hạt nhân có kiểm soát,,Đúng đoạn văn: tách năng lượng 'thông qua các lò phản ứng hạt nhân có kiểm soát'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,25,short-direct,accept,giải Oscar,,Đoạn văn ghi 'AMPAS được biết đến nhiều nhất thông qua giải Oscar'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2017,short-direct,accept,Georges Braque,,Đoạn văn: Picasso cùng Georges Braque sáng lập trường phái lập thể.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,38,mid-direct,accept,3 định luật,,Đúng số lượng đoạn văn nêu: hệ thống gồm 3 định luật.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,655,mid-direct,accept,F=ma,,Đoạn văn: Định luật II thường được phát biểu dưới dạng F=ma.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1767,long-direct,accept,"4,46 triệu km²",,"Đúng số liệu đoạn văn: diện tích đất 4,46 triệu km²."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,58,short-direct,accept,Vietnam General Confederation of Labor,,Đoạn văn: VGCL là viết tắt của Vietnam General Confederation of Labor.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,683,long-direct,accept,18,,Đúng số đoạn văn nêu: 18 danh hiệu FIFA và UEFA.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,520,mid-direct,accept,trầm tích sông ngòi,,Đoạn văn: 'Đồng bằng châu thổ là điển hình của quá trình trầm tích sông ngòi'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,68,mid-direct,accept,một chuỗi kết hợp các công đoạn khác nhau,,Đúng span đoạn văn: in 3D là 'một chuỗi kết hợp các công đoạn khác nhau'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,74,short-direct,accept,0.5 đến 1.2,,Đoạn văn: viên bi đường kính khoảng từ 0.5 đến 1.2 mm.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1686,long-direct,accept,Kim Jong-nam,,Đúng thực thể đoạn văn nêu: người anh em cùng cha khác mẹ Kim Jong-nam.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1521,long-direct,accept,Anne Hathaway,,Đoạn văn: năm 18 tuổi ông kết hôn với Anne Hathaway.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2422,long-direct,accept,thời Đế quốc La Mã,,Đoạn văn: 'Sư tử đã được nuôi nhốt từ thời Đế quốc La Mã'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,83,long-direct,accept,1999,,Đoạn văn: Đức trở thành đồng sáng lập khu vực đồng Euro vào năm 1999.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3004,long-direct,accept,hơn 585 triệu USD,,Đúng số liệu đoạn văn: thu về hơn 585 triệu USD doanh thu.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1114,long-direct,accept,thứ tư,,Đoạn văn: anime phổ biến thứ tư tại Nhật Bản năm 2006.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,90,short-infer,accept,'Touring',,Đoạn văn: G61 định vị trên thị trường là 'Touring'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1774,short-direct,reject,Đoạn văn,Đoạn văn không nêu vị trí của nhà máy Dingolfing,Câu trả lời 'Đoạn văn' là mảnh vỡ vô nghĩa; bản thân đoạn văn cũng không cho biết nhà máy Dingolfing nằm ở đâu.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,92,short-direct,accept,đầu thập niên 50,,Đoạn văn: trường mở ra ở miền Nam Việt Nam vào đầu thập niên 50.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2579,short-direct,accept,"Tư lệnh Lực lượng Đặc biệt Việt Nam Cộng hòa, kiêm Chỉ huy trưởng Lữ đoàn Liên binh Phòng vệ Phủ Tổng thống",,"Đúng chức vụ đoạn văn nêu: Tư lệnh Lực lượng Đặc biệt, kiêm Chỉ huy trưởng Lữ đoàn Liên binh Phòng vệ Phủ Tổng thống."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2866,short-direct,accept,75 ngày,,"Đoạn văn nêu rõ 'Hiệp định hình thành sau 75 ngày đàm phán', đúng yêu cầu tổng số ngày."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2031,long-direct,accept,1966,,"Đúng câu 'Năm 1966, người Rapa Nui được cấp quyền công dân Chile'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,104,short-direct,accept,1768,,"Niên biểu '1768–1801' cho năm sinh là 1768, đúng trích xuất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,109,mid-direct,accept,điểm ở mặt đất ngay phía trên chấn tiêu,,Trung khớp định nghĩa 'Tâm chấn là điểm ở mặt đất ngay phía trên chấn tiêu'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1735,long-direct,accept,Thomas Newcomen vào năm 1712,,"Đoạn văn nói động cơ thương mại đầu tiên do Thomas Newcomen phát triển năm 1712, đủ cả người và năm."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,133,short-direct,accept,2 tỉ người,,"Đúng 'giới thiệu phúc âm cho khoảng 2 tỉ người', trả lời đủ số lượng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,145,mid-direct,accept,"53rd Street, giữa Fifth và Sixth Avenue",,"Span 'nằm trên 53rd Street, giữa Fifth và Sixth Avenue' đúng là vị trí bảo tàng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,799,mid-direct,accept,Museum of Modern Art,,"Đúng cụm gốc 'Museum of Modern Art, viết tắt là MoMA'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,151,mid-direct,accept,Điện tiền chỉ huy sứ,,"Đoạn văn ghi 'Với chức vụ Điện tiền chỉ huy sứ', đúng loại câu hỏi chức vụ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,636,short-direct,accept,VW,,Đúng 'viết tắt là VW' kèm chú thích cách đọc tiếng Đức.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,755,short-direct,accept,làm xoăn,,Đoạn văn giải thích 'crispa' trong tiếng Latinh 'có nghĩa là làm xoăn'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,162,short-direct,accept,quá trình một nguyên tử hay phân tử tích một điện tích âm hay dương bằng cách nhận thêm hay mất đi electron để tạo thành các ion,,"Trích đúng mệnh đề định nghĩa điện ly, đủ nghĩa và bám sát đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1234,short-direct,accept,31 tập,,Đúng 'bộ manga thể thao dài 31 tập'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,173,short-direct,accept,trạng thái cân bằng nhiệt động lực học với môi trường xung quanh,,Đúng trạng thái 'cân bằng nhiệt động lực học với môi trường xung quanh' trong đoạn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,367,mid-direct,accept,thành phần hóa học của Trái Đất,,Đúng câu 'Sự đa dạng và phong phú ... được điều khiển bởi thành phần hóa học của Trái Đất'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3249,mid-direct,accept,"nhiệt độ, áp suất, và thành phần của khối đá",,"Đúng 'Những thay đổi về nhiệt độ, áp suất, và thành phần của khối đá'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,206,mid-infer,accept,"do tỷ lệ tăng dân số hàng năm là 2,2%",,"Đúng nguyên nhân nêu trong đoạn 'do tỷ lệ tăng dân số hàng năm là 2,2%'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2041,mid-direct,accept,Bombay,,Đúng 'trước đây được gọi là Bombay'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2071,short-direct,accept,Assisi,,Danh xưng 'Thánh Phanxicô thành Assisi' (Francesco d'Assisi) là căn cứ duy nhất trong đoạn cho xuất xứ Assisi.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,221,long-direct,accept,do có sự hiện diện của một số cơ sở giáo dục nổi tiếng trong thành phố,,Trích đúng vế 'do có sự hiện diện của một số cơ sở giáo dục nổi tiếng trong thành phố'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,227,short-direct,accept,"""bản Tuyên ngôn độc lập đầu tiên""",,"Đúng trong sách Lịch sử Việt Nam, bài thơ được xem là 'bản Tuyên ngôn độc lập đầu tiên'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,972,short-direct,accept,quân đội cách mạng Cuba,,Đúng 'quân đội cách mạng Cuba đã đánh bại đội quân lưu vong'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3110,short-direct,accept,Auto Union và NSU Motorenwerke AG,,"Đoạn văn ghi Volkswagen AG mua tài sản của Auto Union và NSU Motorenwerke AG, đúng loại câu hỏi 'những công ty nào'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1830,mid-direct,accept,thứ 3,,Đúng 'Năm 2016 ... được kê đơn nhiều thứ 3 tại Hoa Kỳ'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1549,short-direct,accept,50%,,Đúng 'bao gồm khoảng 50% màu ... chỉ định bởi không gian màu CIELAB'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2902,short-direct,accept,một người giữ vai trò quan trọng trong Đảng ở thời kỳ đầu,,"Đoạn văn nêu rõ Nguyễn Thị Minh Khai 'là một người giữ vai trò quan trọng trong Đảng ở thời kỳ đầu', câu trả lời trích đúng span."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1619,long-direct,accept,thứ bảy,,"Đoạn văn ghi Forbes xếp ông 'ở vị trí người giàu thứ bảy thế giới', trả lời đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,316,short-direct,accept,bệnh viêm đặc hiệu,,"Câu đầu đoạn văn định nghĩa viêm khớp dạng thấp 'là một bệnh viêm đặc hiệu', span trung thành với văn bản."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,322,mid-direct,accept,ba,,"Đoạn văn nêu 'Phía Việt Nam bị mất ba tàu vận tải của Hải quân', số lượng đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3031,short-direct,accept,đại hội kết tập kinh điển Phật giáo lần thứ nhất,,"Đoạn văn nói Ca Diếp 'tổ chức, chỉ đạo đại hội kết tập kinh điển Phật giáo lần thứ nhất', trả lời đúng sự kiện."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,332,long-direct,accept,28 tháng 10 năm 1955,,"Đoạn văn ghi Gates 'sinh ngày 28 tháng 10 năm 1955', đúng ngày sinh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1648,short-direct,accept,Không có thông tin cụ thể,,"Đoạn văn chỉ nói ca khúc của cô xuất hiện trên nhiều chương trình truyền hình, không nêu tên bài hát nào; trả lời 'Không có thông tin cụ thể' là thành thật và đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,339,short-direct,accept,1999,,"Đoạn văn: 'Lễ trao giải lần đầu tiên được tổ chức tại Seoul vào năm 1999', đáp án đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,374,short-direct,accept,Djokovic,,"Đoạn văn: 'Đương kim vô địch hiện tại là Djokovic (năm 2023)', trả lời đúng tên."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,436,short-direct,accept,"tại Paris, Pháp",,"Đoạn văn ghi giải 'diễn ra ... tại Paris, Pháp', địa điểm đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,394,short-direct,accept,Düsseldorf,,"Phiên bản thể nghiệm New York City I 'được triển lãm tại Kunstsammlung Nordrhein-Westfalen ở Düsseldorf, Đức', trả lời đúng thành phố."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1416,short-direct,accept,1942,,"Đoạn văn: bức tranh 'hoàn thành năm 1942', đáp án đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,396,mid-direct,accept,Thư ký Hội đồng,,"Đoạn văn: 'việc điều hành Hội đồng trên thực tế được giao cho Thư ký Hội đồng', trả lời đúng chức danh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2174,mid-direct,accept,Hai,,"Đoạn văn: 'Có hai phó thư ký', số lượng đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1307,short-direct,accept,Việt Nam,,"Đoạn văn: 'Dù Việt Nam là một quốc gia đơn đảng', trả lời đúng tên quốc gia."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,406,long-direct,accept,Hoàng thái tử Akihito,,"Đoạn văn: 'Hoàng thái tử Akihito lên nối ngôi' sau khi Chiêu Hòa qua đời, đáp án đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2742,mid-direct,accept,4 tháng 2 năm 2004,,"Đoạn văn: 'cho ra đời Facebook ... vào ngày 4 tháng 2 năm 2004', đúng ngày."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1982,mid-direct,accept,tất cả các tầng lớp xã hội Nhật Bản,,"Đoạn văn: 'Ikebana trở thành một môn nghệ thuật dành cho tất cả các tầng lớp xã hội Nhật Bản', span trung thành."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1996,short-direct,accept,thịt lợn,,"Đoạn văn cho thịt bò xếp thứ ba 'sau thịt lợn và thịt gà (lần lượt là 38% và 30%)', vậy thịt lợn (38%) đứng đầu, suy luận đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2629,long-direct,accept,7.662.000 tấn,,"Đoạn văn: '7.662.000 tấn chất nổ đã được Không quân Hoa Kỳ sử dụng', đúng con số gắn với Không quân (không nhầm với 15,35 triệu tấn của toàn quân đội)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2950,long-direct,accept,"cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải",,"Span trích đúng các cải cách trong đoạn văn (cải tạo kinh tế, văn hóa, giáo dục, bao cấp, quốc hữu hóa, xóa bỏ tư hữu); chỉ bị cắt ở cụm cuối 'học tập cải tạo' nhưng nội dung trả lời vẫn đầy đủ và trung thành."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2607,mid-direct,accept,Hồi giáo Shia,,"Đoạn văn: 'là một Grand Marja (lãnh tụ tôn giáo) của Hồi giáo Shia', đáp án đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,458,short-direct,accept,15 tháng 5 năm 1935,,"Đoạn văn ghi mất ngày '15 tháng 5 năm 1935' tại Leningrad, đúng ngày mất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2968,long-direct,accept,động cơ nhiệt,,"Câu đầu: 'Động cơ đốt trong ... là một loại động cơ nhiệt', trả lời đúng loại động cơ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3035,long-direct,accept,khoảng năm 1860,,"Đoạn văn: ứng dụng thương mại đầu tiên 'được tạo ra bởi Étienne Lenoir vào khoảng năm 1860', mốc thời gian đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,474,short-direct,accept,Tây Nam Á,,"Đoạn văn nêu rõ 'Lựu có nguồn gốc bản địa Tây Nam Á', câu trả lời đúng và bám sát ngữ cảnh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1351,long-infer,accept,bằng cách nghiền các hạt hay đun sôi trong nước hoặc dầu,,"Câu cuối đoạn ghi 'làm ra bằng cách nghiền các hạt hay đun sôi trong nước hoặc dầu', đúng trích xuất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,493,short-direct,accept,ít nghe tiếng tăm,,"Đoạn văn nói giáo phái 'tàn lụi dần và ít nghe tiếng tăm', trả lời đúng ý không còn phổ biến."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,963,short-direct,accept,1999,,Đoạn văn: 'MSF đã được trao giải Nobel Hòa bình vào năm 1999'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1777,short-direct,accept,Doctors Without Borders,,Đoạn văn ghi tiếng Anh là 'Doctors Without Borders'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,541,mid-direct,accept,từ những năm 1970,,Đoạn văn: 'sự phát triển của các bộ vi xử lý đã bám sát định luật này từ những năm 1970'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3041,short-direct,accept,19 tháng 1 năm 1946,,Đoạn văn: 'sinh ngày 19 tháng 1 năm 1946'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,581,mid-direct,accept,"1,1×10 −40 J.s.",,"Đoạn văn nêu 'sai số tuyệt đối là 1,1×10 −40 J.s.', đúng giá trị được hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1902,mid-direct,accept,cơ học lượng tử,,Đoạn văn: 'là một nguyên lý quan trọng của cơ học lượng tử'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1881,short-direct,accept,thuốc chống viêm non-steroid,,Đoạn văn: 'thuộc nhóm thuốc chống viêm non-steroid'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2371,short-direct,accept,"trường THPT chuyên Phan Bội Châu, Nghệ An",,"Đoạn văn ghi Nguyễn Tất Nghĩa là 'học sinh trường THPT chuyên Phan Bội Châu, Nghệ An'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,982,mid-direct,accept,100 - 160 km,,Đoạn văn: 'Nếu sức công phá là 1 triệu tấn thì có thể phá hủy 1 vùng với bán kính 100 - 160 km'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2738,short-direct,accept,phụ nữ Việt Nam,,"Đoạn văn: 'tổ chức chính trị, xã hội của phụ nữ Việt Nam'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,803,mid-direct,accept,Hệ thống tên lửa chống tên lửa đạn đạo A-35,,"Đoạn văn gọi tên đầy đủ hệ thống của Nga là 'Hệ thống tên lửa chống tên lửa đạn đạo A-35', câu trả lời đúng loại thực thể và có căn cứ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1072,short-direct,accept,31 tháng 7 năm 1958,,Đoạn văn: 'sinh ngày 31 tháng 7 năm 1958'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1494,long-direct,accept,không thể nắm bắt,,"Đoạn văn: 'có thể được coi là trừu tượng... vì sự thể hiện hoàn hảo là không thể nắm bắt', suy luận đúng hướng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,665,short-direct,accept,"All England Club ở Wimbledon, Luân Đôn",,"Đoạn văn: 'Giải được tổ chức tại All England Club ở Wimbledon, Luân Đôn'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,952,long-direct,accept,nguyên liệu đầu vào vật chất và phi vật chất,,Đoạn văn: 'sự kết hợp của các loại nguyên liệu đầu vào vật chất và phi vật chất'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,682,mid-direct,accept,Dish Network,,Đoạn văn: '1.700 cửa hàng còn lại... được nhà cung cấp truyền hình vệ tinh Dish Network mua lại'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1415,long-direct,accept,Khổng Tử,,Đoạn văn: đàn cổ cầm 'được liên kết với triết gia Trung Quốc cổ đại Khổng Tử'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1489,long-direct,accept,FISA,,Đoạn văn: 'Giải Vô địch đua thuyền Thế giới được tổ chức bởi FISA'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,734,short-direct,accept,Sóc Trăng,,"Đoạn văn gắn 'Xứ Giồng' với món bún nước lèo của Sóc Trăng, đúng thực thể được hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3048,short-direct,accept,công ty OpenAI,,Đoạn văn: 'một chatbot do công ty OpenAI của Mỹ phát triển'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1107,mid-infer,accept,sử dụng các phân tử polyme trong thiết kế vũ khí và việc sử dụng một thanh ray dùng để gắn đèn pin trên súng ngắn,,Đoạn văn nêu lịch sử đổi mới của HK 'chẳng hạn như việc sử dụng các phân tử polyme... thanh ray dùng để gắn đèn pin'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,720,short-direct,reject,Chiến khu,Đoạn văn không nêu đặc điểm của chiến khu Dương Minh Châu,"Đoạn văn chỉ là stub nêu chiến dịch Attleboro nhắm vào chiến khu, không mô tả đặc điểm nào; 'Chiến khu' chỉ lặp lại một từ trong câu hỏi chứ không phải câu trả lời."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2090,mid-direct,accept,1899,,"Đoạn văn nêu rõ 'Ông đã bắt đầu vẽ hoa súng trong năm 1899', đáp án khớp chính xác."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,773,long-direct,accept,"6.340,5 km²",,"Đoạn văn ghi 'Diện tích: 6.340,5 km²', trích đúng span."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,832,short-direct,accept,những năm 1960,,"Đoạn văn: 'Hệ thống cùng với rocket M-210F được phát triển từ những năm 1960', đáp án trung thành."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,758,short-direct,accept,H.265 và MPEG-H Phần 2,,"Đoạn văn: 'HEVC, còn được gọi là H.265 và MPEG-H Phần 2', đúng cả hai tên gọi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2850,short-direct,accept,Có,,"Đoạn văn xác nhận 'Có loại vắc-xin phòng viêm gan A trong tối thiểu 10 năm', trả lời 'Có' là đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,774,short-direct,accept,"xe ô tô, xe buýt, xe tải",,"Đoạn văn: 'hãng sản xuất xe ô tô, xe buýt, xe tải danh tiếng', trích đủ ba loại."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,779,long-direct,accept,8 tháng 11 năm 2019,,"Đoạn văn: 'ban đầu dự kiến được phát hành tại Hoa Kỳ vào ngày 8 tháng 11 năm 2019', đúng ngày dự kiến."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,790,short-direct,accept,Thủ tướng Chính phủ,,"Đoạn văn: 'Điều lệ ... được Thủ tướng Chính phủ phê duyệt', đúng thực thể được hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2539,mid-direct,accept,Stephen Hawking,,"Đoạn văn: 'được đặt theo tên của nhà vật lý người Anh Stephen Hawking', khớp chính xác."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2641,short-direct,accept,4 hiệp,,"Đoạn văn: 'một trận đấu bóng nước gồm 4 hiệp', số hiệp đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2741,long-direct,accept,1516,,"Đoạn văn: 'ở ngôi từ năm 1516 đến 1522' và được lập lên ngôi năm 1516, đáp án đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1548,long-direct,accept,13 bang và ba lãnh thổ liên bang,,"Đoạn văn: 'bao gồm 13 bang và ba lãnh thổ liên bang', trích nguyên văn đầy đủ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,868,long-direct,accept,cuối thế kỷ XV,,"Đoạn văn: 'Bắt đầu từ cuối thế kỷ XV, người Anh và người Pháp thành lập các thuộc địa trên vùng duyên hải Đại Tây Dương', đúng mốc thời gian."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2856,short-direct,reject,Một,Đoạn văn không nêu số môn thi đấu chính thức của Thế vận hội Mùa hè,"Đoạn văn chỉ nói bóng chuyền trở thành môn thi đấu chính thức từ 1964, không nêu tổng số môn; 'Một' là bịa đáp án cho câu hỏi không trả lời được từ đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,884,mid-direct,accept,32 knot (hay 37 hải lý/giờ),,"Đoạn văn: 'có thể di chuyển với tốc độ 32 knot (hay 37 hải lý/giờ)', trích đúng span."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,898,long-direct,accept,Không có thông tin,,"Đoạn văn không liệt kê/đếm các lực trong vũ trụ ngoài lực hấp dẫn, trả lời 'Không có thông tin' là trung thực và đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,916,long-direct,accept,Vua Bọ cạp,,"Đoạn văn: 'Vai diễn chính đầu tiên của Johnson là trong phim điện ảnh Vua Bọ cạp năm 2002', đúng tên phim."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3083,mid-direct,accept,"nhà hóa học, nhà hóa sinh, nhà hoạt động vì hòa bình, tác giả và nhà giáo dục người Mỹ",,"Đoạn văn mở đầu liệt kê đúng các vai trò 'nhà hóa học, nhà hóa sinh, nhà hoạt động vì hòa bình, tác giả và nhà giáo dục người Mỹ'."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1570,short-direct,accept,8:00. ET/ PT,,"Đoạn văn: 'vào các tối chủ nhật lúc 8:00. ET/ PT', đáp án khớp giờ phát sóng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,939,long-direct,accept,"thực phẩm, sợi, nhiên liệu, và nguyên liệu",,"Đoạn văn: 'chia thành các nhóm chung như thực phẩm, sợi, nhiên liệu, và nguyên liệu', trích đủ bốn nhóm."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1191,long-direct,accept,ba,,"Đoạn văn: 'Voyager 1 bắt đầu trải qua ""làn sóng thần"" thứ ba', suy ra đã trải qua ba làn sóng, đáp án đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3144,long-direct,accept,Phòng thí nghiệm Vật lý Quốc gia,,"Đoạn văn: 'Sau chiến tranh, ông công tác tại Phòng thí nghiệm Vật lý Quốc gia', đúng nơi làm việc ngay sau chiến tranh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1861,short-direct,accept,"2,13 tỷ USD",,"Đoạn văn: 'Năm 2020, Free Fire ... doanh thu cao thứ 4 trong năm với 2,13 tỷ USD', đúng con số."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,950,mid-direct,accept,truyện ngắn,,"Đoạn văn: 'nhà văn chuyên thể loại truyện ngắn người Nga', đáp án đúng thể loại."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,975,short-infer,accept,"được đặc trưng có những vùng của dạ dày-ruột bị dày lên, có viêm lan ra tất cả các lớp, loét sâu, lớp viêm mạc nứt nẻ và sự có mặt của u hạt",,"Trích nguyên văn phần mô tả bệnh Crohn: vùng dạ dày-ruột dày lên, viêm lan tất cả các lớp, loét sâu, nứt nẻ và u hạt."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1025,mid-direct,accept,Thành phố vườn quốc gia,,Đoạn văn nêu rõ Trường Xuân được trao tặng danh hiệu 'Thành phố vườn quốc gia' năm 2001.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1028,mid-direct,accept,tháng 12/1941,,Đoạn văn ghi PPSh-41 'được chấp nhận trang bị từ tháng 12/1941'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1032,short-direct,accept,suất ăn trưa,,Đoạn văn: chúng là thành phần phổ biến của suất ăn trưa.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1040,mid-direct,accept,Anh Quốc,,Đoạn văn nêu lãnh thổ này từng là thuộc địa và quốc gia tự trị của Anh Quốc.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1397,mid-direct,accept,vật lý hạt,,Đoạn văn: lĩnh vực khoa học nghiên cứu các hạt dưới nguyên tử là vật lý hạt.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2480,short-direct,accept,đau ngực dữ dội,,Đoạn văn: hoại tử cơ tim gây triệu chứng đau ngực dữ dội.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1192,mid-infer,accept,một nguyên tử liên kết với 4 phối tử (nguyên tử hoặc nhóm nguyên tử) hay nhóm thế trong một cấu trúc không gian mà cấu trúc này không thể chồng khít lên hình ảnh phản chiếu qua gương của nó,,Báo đúng định nghĩa trung tâm bất đối xứng nguyên văn từ đoạn văn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2501,mid-infer,accept,vì hoán đổi vị trí hai nhóm khác nhau bất kỳ sẽ tạo ra đồng phân lập thể,,"Suy diễn đúng: tầm quan trọng của tâm lập thể là hoán đổi hai nhóm bất kỳ sẽ tạo ra đồng phân lập thể, đúng như đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1140,short-direct,reject,"nhấn mạnh vai trò của văn học trong việc phát triển sự hiểu biết lẫn nhau và (hiểu biết) văn hóa thế giới, đấu tranh cho quyền tự do ngôn luận, và hành động như là một tiếng nói mạnh mẽ đại","nhấn mạnh vai trò của văn học trong việc phát triển sự hiểu biết lẫn nhau và (hiểu biết) văn hóa thế giới, đấu tranh cho quyền tự do ngôn luận, và hành động như là một tiếng nói mạnh mẽ đại diện cho các nhà văn bị sách nhiễu, bị cầm tù và đôi khi bị giết vì quan điểm của mình","Câu trả lời bị cắt cụt giữa cụm 'đại diện', thiếu trọn vẹn vế thứ ba của vai trò mà Hội nhắm tới."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2595,long-direct,accept,4,,Đoạn văn ghi '4 giải Brit Awards'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2611,long-direct,accept,"Columbia, Challenger, Discovery, và Atlantis",,"Đoạn văn nêu 4 tàu đầu tiên chế tạo cho chuyến bay vũ trụ: Columbia, Challenger, Discovery, và Atlantis."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3250,long-direct,accept,Ulysses,,Đoạn văn: 'Ông nổi tiếng nhất với tiểu thuyết bước ngoặt Ulysses (1922)'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1803,long-direct,accept,Không được đề cập trong đoạn văn.,,"Đoạn văn chỉ nói Solar Impulse 2 'từng bay vòng quanh thế giới', không nêu thời gian; model trả lời đúng là không được đề cập."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2347,short-direct,accept,Luân Đôn,,Đoạn văn: Sotheby's bán đấu giá tác phẩm ở Luân Đôn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1265,short-infer,accept,nơi mà nghệ thuật Batik đạt đến đỉnh cao,,Đoạn văn: Indonesia được coi là quốc gia của Batik vì nơi nghệ thuật Batik đạt đến đỉnh cao.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1306,short-direct,accept,7 tháng 8 năm 1912,,Đoạn văn ghi Võ Chí Công sinh 7 tháng 8 năm 1912.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3116,short-direct,accept,2 năm,,Suy ra đúng từ khoảng thời gian (1977–1979): 2 năm.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1308,mid-direct,accept,Hồ Chí Minh,,Đoạn văn: cố Chủ tịch Việt Nam Dân chủ Cộng hoà là Hồ Chí Minh.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1319,short-direct,accept,công chúa,,Đoạn văn: 'Bà là công chúa nhà Hậu Lê'.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2437,short-direct,accept,Nguyễn Huệ,,Đoạn văn nêu giai thoại cuộc tình đẹp đẽ giữa bà với Nguyễn Huệ.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3300,long-direct,accept,15 tháng 1 năm 1128,,Đoạn văn ghi Lý Nhân Tông mất 15 tháng 1 năm 1128.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1356,short-direct,accept,tiếng Hy Lạp,,Đoạn văn: 'cinématographie' xuất phát từ tiếng Hy Lạp.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2841,mid-direct,accept,3 tháng 1 năm 1969,,Đoạn văn: Schumacher sinh ngày 3 tháng 1 năm 1969.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2372,long-direct,accept,cấp độ nguyên tử hay ở hạt hạ nguyên tử,,Đoạn văn: cơ học lượng tử miêu tả tính chất tự nhiên ở cấp độ nguyên tử hay hạt hạ nguyên tử.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1400,short-direct,accept,Imperatorskaya Akademiya Khudozhestv,,"Báo đúng tên chính thức 'Императорская Академия художеств', model phiên âm Latin 'Imperatorskaya Akademiya Khudozhestv' trung thành với đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2370,short-direct,accept,một nhà lãnh đạo quân sự và chính trị gia người Việt Nam,,Đáp án trích đúng span mô tả thân phận Võ Nguyên Giáp trong đoạn văn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1434,short-direct,accept,một nghìn tỷ phép tính/giây,,Đoạn văn nêu rõ một teraflop tương đương hiệu suất một nghìn tỷ phép tính/giây.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1446,mid-direct,accept,"hoá lí, hoá phân tích, hoá học hữu cơ, hoá sinh, hoá dược",,"Liệt kê đầy đủ năm ngành (hoá lí, hoá phân tích, hoá học hữu cơ, hoá sinh, hoá dược) đúng như đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1470,short-direct,accept,8 đề cử Oscar,,"Đoạn văn ghi bộ phim nhận được 8 đề cử Oscar, đáp án khớp chính xác."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1502,mid-infer,accept,khiến tôi nhận ra rằng họ sợ nhất là hoa nhài,,"Span 'khiến tôi nhận ra rằng họ sợ nhất là hoa nhài' giải thích đúng lý do Ngải Vị Vị phát biểu như vậy, trung thành với đoạn văn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1563,short-direct,accept,"Không quân Hoa Kỳ, Hải quân Hoa Kỳ, Không quân Ý, và Không quân Hoàng gia Anh.",,Đáp án liệt kê đủ bốn lực lượng sử dụng MQ-9 Reaper đúng như đoạn văn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1632,mid-direct,accept,2004,,Đoạn văn nêu album đầu tay '24 giờ 7 ngày' ra mắt năm 2004.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1642,short-direct,accept,an toàn,,Đoạn văn ghi lưỡi dao được gỡ bỏ để đảm bảo an toàn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1691,short-direct,accept,Tiếng Anh,,Đoạn văn nêu bốn quốc gia dùng chung một ngôn ngữ là Tiếng Anh.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1697,mid-direct,accept,240 cm,,Đường kính gương thu ánh sáng được nêu rõ là 240 cm.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1718,short-direct,accept,Sân bay quốc tế Galeão - Antônio Carlos Jobim,,Sân bay kết nối Rio đúng là Sân bay quốc tế Galeão - Antônio Carlos Jobim.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1723,short-direct,accept,Nelumbo nucifera,,Đoạn văn nêu Nelumbo nucifera là quốc hoa của Ấn Độ.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2805,long-direct,accept,7 tháng 5 năm 1840,,"Ngày sinh trong đoạn văn là 7 tháng 5 năm 1840 (dương lịch), đáp án khớp."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1747,short-direct,accept,triết lý Vệ Đà,,Đoạn văn ghi ông là lãnh tụ tinh thần nổi tiếng của triết lý Vệ Đà.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1750,long-direct,accept,10 tháng 11 năm 2015,,Đoạn văn nêu phát hành toàn thế giới vào ngày 10 tháng 11 năm 2015.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1797,short-direct,accept,"môi trường sông, biển, nước lợ",,"Đoạn văn ghi chúng sống tập trung ở môi trường sông, biển, nước lợ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1829,mid-direct,accept,Robinhood và Webull,,Đợt bán non khởi xướng qua các ứng dụng giao dịch không hoa hồng Robinhood và Webull.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1855,long-direct,accept,Những sai số trong việc đo đạc các số liệu đầu vào và sự hiểu biết chưa hoàn thiện về các hoạt động của khí quyển,,Đáp án trích đúng hai yếu tố gây sai số: đo đạc số liệu đầu vào và hiểu biết chưa hoàn thiện về khí quyển.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1865,mid-direct,accept,nem cuốn,,Đoạn văn nêu nem cuốn là gọi theo phương ngữ Bắc bộ.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1877,short-direct,accept,"43,7 triệu dân",,"Đoạn văn ghi dân số Liêu Ninh năm 2018 là 43,7 triệu dân."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1884,short-direct,accept,người đầu tiên,,Đoạn văn xác nhận ông là người đầu tiên leo cả 3 đỉnh trong cùng một mùa đông.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1973,short-direct,accept,Thông tin không có trong đoạn văn.,,"Đoạn văn chỉ nói Trịnh Sảng đóng vai Sở Vũ Tiêm, không nêu đạo diễn; từ chối trả lời là trung thực và đúng."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2792,short-direct,accept,Việt Nam,,Đoạn văn nêu SEA Games 2021 (SEA Games 31) tổ chức ở Việt Nam.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2061,short-direct,accept,khoai tây và pho mát,,Đoạn văn liệt kê nguyên liệu đơn giản là khoai tây và pho mát.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2134,long-infer,accept,"bằng cách sử dụng quần áo, giày dép, lối sống, phụ kiện, cách trang điểm, kiểu tóc và tỷ lệ cơ thể",,Span mô tả đúng phương tiện thể hiện thẩm mỹ của thời trang theo câu mở đầu đoạn văn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2435,long-direct,accept,633–656,,"Đoạn văn nêu 'Cuộc chinh phạt Ba Tư của quân Hồi giáo (633–656) kết thúc triều đại Sassanid', nên mốc 633–656 là span đúng và có căn cứ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2196,short-direct,accept,Quyền Anh và Cờ Vua,,"Đoạn văn cho biết bộ môn kết hợp Quyền Anh và Cờ Vua và vận động viên phải thể hiện trình độ cao ở cả hai môn, nên đây là câu trả lời trung thành với ngữ cảnh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3268,short-direct,accept,Sergey Brin,,Đoạn văn ghi Page đồng sáng lập Google 'cùng với Sergey Brin' — đúng thực thể được hỏi.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2250,long-infer,accept,"giải quyết vấn đề "" quá tải thông tin """,,"Đoạn văn nêu thực hành PIM giúp làm việc hiệu quả hơn, trong đó có 'giải quyết vấn đề quá tải thông tin' — span trả lời đúng hướng câu hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2251,mid-direct,accept,Biểu tượng toàn cầu,,"Đoạn văn: 'Tại giải Âm nhạc châu Âu của MTV 2014, ông nhận giải Biểu tượng toàn cầu' — khớp chính xác."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2276,short-direct,accept,Hoa Kỳ,,"Đoạn văn ghi AMPAS là viện Hàn lâm của 'Hoa Kỳ', nên Hoa Kỳ là quốc gia của hệ thống giải Oscar."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2288,mid-direct,accept,1983,,"Đoạn văn: 'gia nhập TVB với tư cách nhân viên bán hàng năm 1983' — mốc lần đầu gia nhập, đúng câu hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3223,short-direct,accept,"Giang Tô, Trung Quốc",,"Đoạn văn mở đầu: 'Tiểu long bao là một loại màn thầu hấp tại Giang Tô, Trung Quốc' — địa điểm trung thành với ngữ cảnh."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2666,mid-direct,accept,"John Hus, hay John Huss",,"Đoạn văn: 'còn gọi là John Hus, hay John Huss' — trích đúng hai tên gọi được hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2698,mid-direct,accept,"một món ăn bao gồm một con gà được lấy xương ra hết, nhồi vào một con vịt, rồi sau đó nhồi tiếp vào một con gà tây",,"Mô hình trích nguyên định nghĩa ở câu đầu đoạn văn (gà nhồi vịt, vịt nhồi gà tây) — đầy đủ và có căn cứ."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2399,mid-direct,accept,thứ hai,,Đoạn văn: 'thành phố trung tâm thương mại lớn thứ hai ở Đông Trung Quốc sau Thượng Hải' — 'thứ hai' đúng.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2941,long-infer,accept,một Hoàng đế tài giỏi,,Đoạn văn: 'Ông thường được sử sách mô tả là một Hoàng đế tài giỏi' — span trả lời đúng câu hỏi.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2461,short-direct,accept,"Bắc Mỹ, Châu Âu và Úc",,"Đoạn văn: phiên bản đầu phát hành năm 2009 'tại Bắc Mỹ, Châu Âu và Úc' — đúng danh sách khu vực."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2600,short-direct,accept,Thể chế tự trị giáo đoàn,,Đoạn văn: 'Cấu trúc tổ chức theo thể chế tự trị giáo đoàn' — khớp chính xác thể chế được hỏi.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2708,long-direct,accept,Toronto,,"Đoạn văn: 'Quá trình quay phim bắt đầu ... tại Toronto' — địa điểm quay duy nhất được nêu, đúng thực thể."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2635,short-direct,accept,Archelaus,,"Đoạn văn: 'vị vua cuối cùng của Cappadocia, Archelaus' — đúng tên vua được hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2799,long-direct,accept,Đại Nam,,Đoạn văn: 'Ông đổi tên nước Việt Nam thành Đại Nam' — câu trả lời khớp chính xác.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2816,short-direct,accept,Bến tàu Valongo,,Đoạn văn: 'Di sản mới nhất của Brasil ... là Bến tàu Valongo được vinh danh vào năm 2017' — đúng tên di sản.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2817,short-direct,accept,Hãn quốc Kim Trướng,,Đoạn văn: các nhà lãnh đạo Rus 'trở thành một phần của Hãn quốc Kim Trướng' — đúng thực thể theo câu hỏi.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2886,short-direct,accept,tỉnh An Huy,,Đoạn văn: Hợp Phì 'là một thành phố (địa cấp thị) của tỉnh An Huy' — đúng tỉnh được hỏi.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2921,long-infer,accept,"giáo dục tuổi ấu thơ, giáo dục tiểu học, giáo dục trung học, và giáo dục đại học",,Trích đúng cả bốn giai đoạn trong câu 'Giáo dục thường được chia thành các giai đoạn...' của đoạn văn.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2971,mid-direct,accept,"hầu hết toàn bộ Mexico, Trung Mỹ và Nam Mỹ, ngoại trừ các lãnh thổ nói tiếng Anh hoặc tiếng Hà Lan",,"Trích nguyên span 'bao gồm hầu hết toàn bộ Mexico, Trung Mỹ và Nam Mỹ, ngoại trừ các lãnh thổ nói tiếng Anh hoặc tiếng Hà Lan' — đúng khu vực được hỏi."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3038,long-direct,accept,1995,,Đoạn văn: 'được xướng danh tại Đại sảnh Danh vọng Rock and Roll vào năm 1995' — mốc năm chính xác.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3166,mid-direct,accept,M1140,,Đoạn văn: 'được dựa trên khung gầm của xe tải M1140' — đúng ký hiệu xe tải.
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,3292,short-infer,accept,bằng cách điều khiển cường độ ánh sáng điểm ảnh riêng lẻ,,"Đoạn văn: mặt nạ 'điều khiển cường độ ánh sáng điểm ảnh riêng lẻ, cho phép kiểm soát các đặc tính vật liệu' — câu trả lời trung thành và đúng hướng 'như thế nào'."
