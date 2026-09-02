@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ItemState, ReviewBlob, StateEnvelope } from "@/lib/types.ts";
 import { SCHEMA_VERSION, itemKey } from "@/lib/types.ts";
 import { slug } from "@/lib/slug.ts";
+import { useReviewStore } from "@/lib/review-store.ts";
 import type { PeerMap, RecordFileRow } from "@/lib/records.ts";
 import { computeStats, nextUnreviewed, passageGroups, passagePosition } from "@/lib/review-logic.ts";
 import { Filmstrip } from "./Filmstrip.tsx";
@@ -11,22 +12,9 @@ import { ItemPane } from "./ItemPane.tsx";
 import { DecisionPanel } from "./DecisionPanel.tsx";
 import { NavDock } from "./NavDock.tsx";
 
+/** Legacy pre-zustand identity key — read once at boot to migrate returning
+ *  reviewers into the persisted session store. */
 const LS_ANNO = "vmlu.review.annotator";
-const bucketLsKey = (a: string, m: string) => `vmlu.review.state.${slug(a)}.${slug(m)}`;
-
-/** Reviewer identity is browser-local by design (the Next server holds every
- *  reviewer's buckets). useSyncExternalStore is React's sanctioned pattern for
- *  reading localStorage after hydration without a hydration mismatch — the
- *  server snapshot is null, so SSR renders the gate and the client either
- *  fills it in or dismisses it. */
-function readAnno(): string | null {
-  try {
-    return localStorage.getItem(LS_ANNO);
-  } catch {
-    return null;
-  }
-}
-const subscribeNoop = () => () => {};
 
 type Save = "ok" | "dirty" | "bad";
 
@@ -51,12 +39,8 @@ async function postState(
     if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || `HTTP ${res.status}`);
     return { ok: true, savedAt: saved_at };
   } catch (e) {
-    // never lose work: mirror to localStorage before reporting
-    try {
-      localStorage.setItem(bucketLsKey(a, m), JSON.stringify(env));
-    } catch {
-      /* private mode: in-memory only */
-    }
+    // never lose work: every change is already persisted to the session store,
+    // which the boot mirror-check replays when disk is older/empty
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
@@ -65,12 +49,14 @@ async function postState(
  *  bucket, debounced autosave to /api/state (with a localStorage mirror so a
  *  dead server never costs work), navigation, and the keyboard protocol. */
 export function ReviewApp({ blob }: { blob: ReviewBlob }) {
-  const storedAnno = useSyncExternalStore(subscribeNoop, readAnno, () => null);
-  const [manualAnno, setManualAnno] = useState<string | null>(null);
-  const annotator = manualAnno ?? storedAnno; // null = gate open
-  const [model, setModel] = useState(blob.models[0] ?? "");
-  const [idx, setIdx] = useState(0);
-  const [bucket, setBucket] = useState<Record<string, ItemState>>({});
+  const annotator = useReviewStore((s) => s.annotator); // null = gate open
+  const model = useReviewStore((s) => s.model);
+  const idx = useReviewStore((s) => s.idx);
+  const bucket = useReviewStore((s) => s.bucket);
+  const setAnnotator = useReviewStore((s) => s.setAnnotator);
+  const setModel = useReviewStore((s) => s.setModel);
+  const setIdx = useReviewStore((s) => s.setIdx);
+  const setBucket = useReviewStore((s) => s.setBucket);
   const [save, setSave] = useState<Save>("ok");
   const [savedLabel, setSavedLabel] = useState("đang mở…");
   const [banner, setBanner] = useState<{ t: string; m: string; fix?: { l: string; fn: () => void } } | null>(null);
@@ -81,10 +67,11 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
   const [peers, setPeers] = useState<PeerMap>({});
   const [peerFiles, setPeerFiles] = useState<RecordFileRow[]>([]);
 
-  // source of truth for save/import/export reads; setBucket only mirrors it to React
-  const bucketRef = useRef<Record<string, ItemState>>({});
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // true while the (reviewer, model) bucket is being adopted from disk —
+  // decisions in that window would sit in the stale bucket and vanish on adopt
+  const bucketLoadingRef = useRef(false);
   const [saveNonce, setSaveNonce] = useState(0); // bump + retry flag: flush NOW (error-banner button)
   const retryNowRef = useRef(false);
 
@@ -97,37 +84,64 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
     setTimeout(() => setToastMsg((cur) => (cur === m ? null : cur)), 2400);
   }, []);
 
+  // resume the persisted session once, after mount: SSR renders defaults so
+  // the server HTML matches, then the store fills in on the client
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const p = useReviewStore.persist.rehydrate();
+      if (p) await p;
+      if (!alive) return;
+      const s = useReviewStore.getState();
+      if (!s.annotator) {
+        try {
+          const legacy = localStorage.getItem(LS_ANNO);
+          if (legacy) s.setAnnotator(legacy);
+        } catch {
+          /* private mode */
+        }
+      }
+      if (s.idx > blob.items.length - 1) s.setIdx(blob.items.length - 1);
+      if (!s.model || !blob.models.includes(s.model)) {
+        if (blob.models[0]) s.setModel(blob.models[0]);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [blob.models, blob.items.length]);
+
   /* ---------------- persistence ---------------- */
-  const saveNow = useCallback(async (a: string, m: string) => {
-    const r = await postState(a, m, bucketRef.current);
+  const saveNow = useCallback(async (a: string, m: string): Promise<boolean> => {
+    const r = await postState(a, m, useReviewStore.getState().bucket);
     if (r.ok) {
       dirtyRef.current = false;
       setSave("ok");
       setSavedLabel("đã lưu " + hhmm(r.savedAt));
       setBanner(null);
-    } else {
-      dirtyRef.current = true;
-      setSave("bad");
-      setSavedLabel("lỗi lưu");
-      setBanner({
-        t: "Máy chủ không nhận được state",
-        m: `${r.error} — đã giữ bản sao trong localStorage của trình duyệt này.`,
-        fix: {
-          l: "Thử lưu ngay",
-          fn: () => {
-            retryNowRef.current = true;
-            setSaveNonce((n) => n + 1);
-          },
-        },
-      });
+      return true;
     }
+    dirtyRef.current = true;
+    setSave("bad");
+    setSavedLabel("lỗi lưu");
+    setBanner({
+      t: "Máy chủ không nhận được state",
+      m: `${r.error} — đã giữ bản sao trong localStorage của trình duyệt này.`,
+      fix: {
+        l: "Thử lưu ngay",
+        fn: () => {
+          retryNowRef.current = true;
+          setSaveNonce((n) => n + 1);
+        },
+      },
+    });
+    return false;
   }, []);
 
   /** The single write path: mutate ref + mirror to React + mark dirty (which
    *  arms the debounce effect below). `save: false` is the load-injection case
    *  — adopting disk state must not round-trip it back. */
   const commit = useCallback((next: Record<string, ItemState>, opts: { save?: boolean; label?: string } = {}) => {
-    bucketRef.current = next;
     setBucket(next);
     if (opts.save === false) {
       dirtyRef.current = false;
@@ -138,7 +152,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
       setSave("dirty");
       setSavedLabel("chưa lưu…");
     }
-  }, []);
+  }, [setBucket]);
 
   // debounce every dirty change into a save (retry-bump flushes immediately)
   useEffect(() => {
@@ -157,6 +171,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
   // load the bucket whenever the (reviewer, model) pair changes
   useEffect(() => {
     if (!annotator || !model) return;
+    bucketLoadingRef.current = true;
     let alive = true;
     (async () => {
       // peer sync (the split-400 workflow): scan committed review_records/*.csv
@@ -183,6 +198,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
         const obj = (await res.json().catch(() => null)) as (StateEnvelope & { empty?: boolean; error?: string }) | null;
         if (!alive) return;
         if (res.status === 409) {
+          bucketLoadingRef.current = false;
           commit({}, { save: false, label: "lỗi đĩa" });
           setBanner({
             t: "State trên đĩa không đọc được",
@@ -190,35 +206,41 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
           });
           return;
         }
-        let mirror: { env: StateEnvelope } | null = null;
-        try {
-          const raw = localStorage.getItem(bucketLsKey(annotator, model));
-          const p = raw ? (JSON.parse(raw) as StateEnvelope) : null;
-          if (p?.schema_version === SCHEMA_VERSION && p.items) mirror = { env: p };
-        } catch {
-          /* no mirror */
-        }
+        // local mirror = the persisted session store (written on every change):
+        // when disk is empty/older, the client copy is replayed so work made
+        // while the server was unreachable is never lost
+        const st = useReviewStore.getState();
+        const mirror: { items: Record<string, ItemState>; savedAt: string } | null =
+          st.bucket && Object.keys(st.bucket).length > 0
+            ? { items: st.bucket, savedAt: st.savedAt }
+            : null;
         if (obj?.empty) {
           if (mirror) {
             // a copy saved while the server was unreachable: replay it
-            commit(mirror.env.items, { label: "phục hồi localStorage" });
+            bucketLoadingRef.current = false;
+            commit(mirror.items, { label: "phục hồi localStorage" });
           } else {
+            bucketLoadingRef.current = false;
             commit({}, { save: false, label: "chưa có thay đổi" });
           }
           return;
         }
         if (obj?.items && obj.schema_version === SCHEMA_VERSION) {
-          const diskNewer = !(mirror?.env.saved_at && obj.saved_at && mirror.env.saved_at > obj.saved_at);
+          const diskNewer = !(mirror?.savedAt && obj.saved_at && mirror.savedAt > obj.saved_at);
           if (!diskNewer && mirror) {
-            commit(mirror.env.items, { label: "phục hồi localStorage (mới hơn đĩa)" });
+            bucketLoadingRef.current = false;
+            commit(mirror.items, { label: "phục hồi localStorage (mới hơn đĩa)" });
           } else {
+            bucketLoadingRef.current = false;
             commit(obj.items, { save: false, label: obj.saved_at ? label(obj.saved_at) : "đồng bộ đĩa" });
           }
           return;
         }
+        bucketLoadingRef.current = false;
         commit({}, { save: false, label: "chưa có thay đổi" });
       } catch (e) {
         if (!alive) return;
+        bucketLoadingRef.current = false;
         commit({}, { save: false, label: "mất kết nối" });
         setBanner({ t: "Không đọc được state", m: e instanceof Error ? e.message : String(e) });
       }
@@ -233,13 +255,15 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
   const setDecision = useCallback(
     (d: "accept" | "reject" | "clear") => {
       const k = itemKey(blob.items[idx]);
+      if (bucketLoadingRef.current) return; // bucket being adopted — a write here would vanish
       if (peers[k]) {
         toast2(`Câu này ${peers[k].reviewer} đã chốt (${peers[k].decision}) — bỏ qua`);
         return;
       }
-      const cur = bucketRef.current[k] ?? { d: null, c: "", n: "" };
+      const bk = useReviewStore.getState().bucket;
+      const cur = bk[k] ?? { d: null, c: "", n: "" };
       const nd: ItemState["d"] = d === "clear" ? null : cur.d === d ? null : d;
-      commit({ ...bucketRef.current, [k]: { ...cur, d: nd } });
+      commit({ ...bk, [k]: { ...cur, d: nd } });
       if (nd === "reject" && !cur.c.trim()) {
         requestAnimationFrame(() => document.getElementById("corr")?.focus());
       }
@@ -250,21 +274,27 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
   const setField = useCallback(
     (which: "c" | "n") => (v: string) => {
       const k = itemKey(blob.items[idx]);
+      if (bucketLoadingRef.current) return; // same adopt window as setDecision
       if (peers[k]) return;
-      const cur = bucketRef.current[k] ?? { d: null, c: "", n: "" };
-      commit({ ...bucketRef.current, [k]: { ...cur, [which]: v } });
+      const bk = useReviewStore.getState().bucket;
+      const cur = bk[k] ?? { d: null, c: "", n: "" };
+      commit({ ...bk, [k]: { ...cur, [which]: v } });
     },
     [blob.items, idx, commit, peers],
   );
 
   /* ---------------- navigation ---------------- */
-  const go = useCallback((i: number) => {
-    setIdx((cur) => {
+  const go = useCallback(
+    (i: number) => {
+      const cur = useReviewStore.getState().idx;
       const n = Math.max(0, Math.min(blob.items.length - 1, i));
-      if (n !== cur) window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-      return n;
-    });
-  }, [blob.items.length]);
+      if (n !== cur) {
+        window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        setIdx(n);
+      }
+    },
+    [blob.items.length, setIdx],
+  );
 
   /** Jump by 1-based question number (same numbering as the filmstrip). */
   const jumpToNumber = useCallback(
@@ -283,7 +313,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
   );
 
   const jumpUnreviewed = useCallback(() => {
-    const i = nextUnreviewed(blob.items, bucketRef.current, idx, peers);
+    const i = nextUnreviewed(blob.items, useReviewStore.getState().bucket, idx, peers);
     if (i === null) toast2("Hết! Mọi câu đã có quyết định 🎉");
     else {
       go(i);
@@ -291,22 +321,30 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
     }
   }, [blob.items, idx, go, toast2, peers]);
 
-  const pickModel = useCallback((m: string) => {
-    if (!m || m === model) return;
-    setModel(m);
-    setIdx(0);
-  }, [model]);
+  const pickModel = useCallback(
+    async (m: string) => {
+      if (!m || m === model || !annotator) return;
+      // flush a pending debounce now: model switch clears the timer effect deps,
+      // losing the last <450ms of edits to the previous model's bucket
+      if (dirtyRef.current && timerRef.current) {
+        clearTimeout(timerRef.current);
+        const ok = await saveNow(annotator, model);
+        if (!ok) return; // unreachable server — keep the old session's mirror
+      }
+      setModel(m); // store action: also resets idx to 0
+      setBucket({}); // the store persists only the active session
+    },
+    [model, annotator, saveNow, setModel, setBucket],
+  );
 
-  const submitReviewer = useCallback((v: string) => {
-    const name = v.trim();
-    if (!name) return;
-    try {
-      localStorage.setItem(LS_ANNO, name);
-    } catch {
-      /* gate still works this session */
-    }
-    setManualAnno(name);
-  }, []);
+  const submitReviewer = useCallback(
+    (v: string) => {
+      const name = v.trim();
+      if (!name) return;
+      setAnnotator(name); // persisted — the session resumes on the next visit
+    },
+    [setAnnotator],
+  );
 
   /* ---------------- export / import ---------------- */
   const exportCsv = useCallback(async () => {
@@ -342,7 +380,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
 
   const exportState = useCallback(() => {
     if (!annotator) return;
-    const env: StateEnvelope = { schema_version: SCHEMA_VERSION, annotator, model, saved_at: new Date().toISOString(), items: bucketRef.current };
+    const env: StateEnvelope = { schema_version: SCHEMA_VERSION, annotator, model, saved_at: new Date().toISOString(), items: useReviewStore.getState().bucket };
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(env)], { type: "application/json" }));
     a.download = `state_${slug(annotator)}_${slug(model)}.json`;
@@ -373,7 +411,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
         return;
       }
       const valid = new Set(blob.items.map(itemKey));
-      const next = { ...bucketRef.current };
+      const next = { ...useReviewStore.getState().bucket };
       let added = 0;
       for (const [k, v] of Object.entries(obj.items ?? {})) {
         if (!valid.has(k)) continue;

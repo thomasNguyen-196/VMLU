@@ -127,7 +127,8 @@ def parse_args():
     parser.add_argument("--max-tokens", type=int, default=4, help="Max new tokens to generate (default: 4)")
     parser.add_argument("--workers", type=int, default=4, help="Number of concurrent workers (default: 4)")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of questions to evaluate (must be > 0)")
-    parser.add_argument("--resume", action="store_true", help="Resume from the latest raw_result_*.csv checkpoint in all_res/ollama_result/")
+    parser.add_argument("--resume", action="store_true",
+                        help="Resume from the newest raw_result_<count>_<model>.csv checkpoint for THIS model in all_res/ollama_result/")
     parser.add_argument("--model", type=str, default=None, help="Model name (overrides OPENAI_MODEL env var)")
     parser.add_argument("--base-url", type=str, default=None, help="Base URL for OpenAI-compatible endpoint (overrides OPENAI_BASE_URL)")
     parser.add_argument("--api-key", type=str, default=None, help="API key (overrides OPENAI_API_KEY)")
@@ -221,12 +222,25 @@ def verify_credentials(client: OpenAI, model: str):
         print(f"\n[FATAL] Endpoint probe failed for model '{model}'.\nError: {e}\nPlease check OPENAI_BASE_URL, OPENAI_API_KEY, and OPENAI_MODEL.", file=sys.stderr)
         sys.exit(1)
 
-def find_latest_checkpoint(checkpoint_dir: Path) -> Path | None:
-    files = list(checkpoint_dir.glob("raw_result_*.csv"))
+def sanitize_model(model: str) -> str:
+    """Filename-safe model tag, shared by log files and checkpoints."""
+    return re.sub(r'[^a-zA-Z0-9_-]', '_', model)
+
+def checkpoint_name(model: str, count: int) -> str:
+    """Per-model checkpoint: raw_result_<count>_<model>.csv. The count alone
+    was a shared namespace, so a --resume run with a different model silently
+    reused the previous model's answers (this folder mixes several models)."""
+    return f"raw_result_{count}_{sanitize_model(model)}.csv"
+
+def find_latest_checkpoint(checkpoint_dir: Path, model: str) -> Path | None:
+    """Newest checkpoint for THIS model only. Legacy raw_result_<count>.csv
+    files carry no model identity and are never picked — guessing could graft
+    a different model's answers onto this run."""
+    files = list(checkpoint_dir.glob(f"raw_result_*_{sanitize_model(model)}.csv"))
     if not files:
         return None
     def get_count(p: Path):
-        m = re.search(r'raw_result_(\d+)\.csv', p.name)
+        m = re.search(r'raw_result_(\d+)_', p.name)
         return int(m.group(1)) if m else 0
     return max(files, key=get_count)
 
@@ -249,7 +263,7 @@ def main():
     result_folder = Path("all_res/ollama_result")
     result_folder.mkdir(parents=True, exist_ok=True)
 
-    sanitized_model = re.sub(r'[^a-zA-Z0-9_-]', '_', model)
+    sanitized_model = sanitize_model(model)
     log_file = f"logs/{sanitized_model}.log"
     logging.basicConfig(
         filename=log_file,
@@ -310,7 +324,7 @@ def main():
     # Checkpoint resume support
     existing_answers = {}
     if args.resume:
-        latest_cp = find_latest_checkpoint(result_folder)
+        latest_cp = find_latest_checkpoint(result_folder, model)
         if latest_cp:
             logging.info(f"Resuming from checkpoint: {latest_cp}")
             cp_df = pd.read_csv(latest_cp)
@@ -324,6 +338,13 @@ def main():
                         "answer": str(row["answer"])
                     }
             logging.info(f"Loaded {len(existing_answers)} pre-existing answers from checkpoint.")
+        else:
+            others = sorted(result_folder.glob("raw_result_*.csv"))
+            if others:
+                logging.warning(
+                    "No checkpoint found for model '%s' — the raw_result_*.csv files present "
+                    "belong to other models or lack any model identity, so none can be resumed "
+                    "safely. Starting fresh.", model)
 
     results: list[dict | None] = [None] * total_questions
     to_process = []
@@ -366,7 +387,8 @@ def main():
             current_completed = completed_count
             if current_completed % 100 == 0 or current_completed == total_questions:
                 valid_res = [r for r in results if r is not None]
-                pd.DataFrame(valid_res).to_csv(result_folder / f"raw_result_{len(valid_res)}.csv", index=False)
+                pd.DataFrame(valid_res).to_csv(
+                    result_folder / checkpoint_name(model, len(valid_res)), index=False)
 
         return index
 

@@ -53,6 +53,7 @@ export function NavDock({
             type="button"
             onClick={onPrev}
             disabled={first}
+            suppressHydrationWarning
             className="flex min-w-26 flex-col items-center gap-0.5 rounded-lg border border-hair bg-card px-3.5 py-2 text-[13.5px] font-semibold shadow-sm transition-[transform,border-color] duration-100 hover:not-disabled:-translate-y-px hover:not-disabled:border-ink-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           >
             ← Trước
@@ -69,6 +70,7 @@ export function NavDock({
             type="button"
             onClick={onNext}
             disabled={last}
+            suppressHydrationWarning
             className="flex min-w-26 flex-col items-center gap-0.5 rounded-lg border border-ink bg-ink px-3.5 py-2 text-[13.5px] font-semibold text-paper shadow-sm transition-[transform,border-color] duration-100 hover:not-disabled:-translate-y-px disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           >
             Tiếp →
