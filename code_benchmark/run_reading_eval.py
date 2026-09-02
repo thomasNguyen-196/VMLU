@@ -33,9 +33,10 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
-    from code_benchmark.test_ollama import call_model_with_retry, verify_credentials
+    from code_benchmark.test_ollama import (
+        call_model_with_retry, verify_credentials, sanitize_model)
 except ImportError:
-    from test_ollama import call_model_with_retry, verify_credentials
+    from test_ollama import call_model_with_retry, verify_credentials, sanitize_model
 
 load_dotenv()
 
@@ -96,10 +97,13 @@ def resume_key(row: dict) -> str:
     return f"{row['dataset']}:{row['item_id']}"
 
 
-def find_latest_reading_checkpoint(folder: Path) -> Path | None:
+def find_latest_reading_checkpoint(folder: Path, model: str) -> Path | None:
+    """Newest checkpoint for THIS model only — reading_result_<count>_<model>.csv.
+    Legacy reading_result_<count>.csv files carry no model identity and are never
+    picked (a different model's --resume used to silently reuse their answers)."""
     best, best_n = None, -1
-    for p in folder.glob(f"{CHECKPOINT_PREFIX}*.csv"):
-        m = re.search(r"reading_result_(\d+)\.csv", p.name)
+    for p in folder.glob(f"{CHECKPOINT_PREFIX}*_{sanitize_model(model)}.csv"):
+        m = re.search(r"reading_result_(\d+)_", p.name)
         if m and int(m.group(1)) > best_n:
             best, best_n = p, int(m.group(1))
     return best
@@ -122,7 +126,7 @@ def parse_args():
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--limit", type=int, default=None, help="first N manifest rows only")
     ap.add_argument("--resume", action="store_true",
-                    help="continue from the newest reading_result_*.csv checkpoint")
+                    help="continue from the newest reading_result_<count>_<model>.csv checkpoint for this model")
     args = ap.parse_args()
     if args.limit is not None and args.limit <= 0:
         ap.error("--limit must be > 0")
@@ -168,12 +172,19 @@ def main():
 
     existing: dict[str, dict] = {}
     if args.resume:
-        cp = find_latest_reading_checkpoint(result_folder)
+        cp = find_latest_reading_checkpoint(result_folder, model)
         if cp:
             logging.info(f"Resuming from checkpoint: {cp}")
             with open(cp, encoding="utf-8") as f:
                 for row in csv.DictReader(f):
                     existing[resume_key(row)] = row
+        else:
+            others = sorted(result_folder.glob(f"{CHECKPOINT_PREFIX}*.csv"))
+            if others:
+                logging.warning(
+                    "No checkpoint found for model '%s' — the reading_result_*.csv files present "
+                    "belong to other models or lack any model identity, so none can be resumed "
+                    "safely. Starting fresh.", model)
 
     results: list[dict | None] = [None] * total
     to_process = []
@@ -203,7 +214,7 @@ def main():
             completed += 1
             done = [r for r in results if r is not None]
             if completed % 100 == 0 or completed == total:
-                write_csv(result_folder / f"{CHECKPOINT_PREFIX}{len(done)}.csv", done)
+                write_csv(result_folder / f"{CHECKPOINT_PREFIX}{len(done)}_{sanitize_model(model)}.csv", done)
         return index
 
     def write_csv(path: Path, rows: list[dict]) -> None:

@@ -1,3 +1,4 @@
+import argparse
 import csv
 import json
 import random
@@ -50,6 +51,7 @@ from code_benchmark.export_annotation_workbooks import (
     gold_from_split,
     review_stats,
     apply_gold,
+    cmd_merge_split,
 )
 from code_benchmark.build_review_ui import (
     build_blob,
@@ -129,24 +131,25 @@ class TestVMLUBenchmark(unittest.TestCase):
     def test_find_latest_checkpoint(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmppath = Path(tmpdir)
-            (tmppath / "raw_result_100.csv").touch()
-            (tmppath / "raw_result_500.csv").touch()
-            (tmppath / "raw_result_200.csv").touch()
-            latest = find_latest_checkpoint(tmppath)
-            self.assertIsNotNone(latest)
-            self.assertEqual(latest.name if latest else None, "raw_result_500.csv")
+            (tmppath / "raw_result_100_Qwen.csv").touch()
+            (tmppath / "raw_result_500_Qwen.csv").touch()
+            (tmppath / "raw_result_200_Other.csv").touch()
+            (tmppath / "raw_result_300.csv").touch()      # legacy: no model identity
+            latest = find_latest_checkpoint(tmppath, "Qwen")
+            self.assertEqual(latest.name if latest else None, "raw_result_500_Qwen.csv")
+            self.assertIsNone(find_latest_checkpoint(tmppath, "Mistral"))
 
     def test_checkpoint_resume_simulation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmppath = Path(tmpdir)
-            cp_file = tmppath / "raw_result_2.csv"
+            cp_file = tmppath / "raw_result_2_Qwen.csv"
             df = pd.DataFrame([
                 {"id": "01-0001", "question": "Q1", "prompt": "P1", "raw_response": "A", "answer": "A"},
                 {"id": "01-0002", "question": "Q2", "prompt": "P2", "raw_response": "B", "answer": "B"},
             ])
             df.to_csv(cp_file, index=False)
             
-            latest = find_latest_checkpoint(tmppath)
+            latest = find_latest_checkpoint(tmppath, "Qwen")
             self.assertEqual(latest, cp_file)
             assert latest is not None  # narrows Path|None for pd.read_csv
             cp_df = pd.read_csv(latest)
@@ -420,19 +423,23 @@ class TestReadingRunner(unittest.TestCase):
                 join_manifest(missing, idx)
 
     def test_reading_checkpoint_never_picks_mc_checkpoints(self):
-        # MC raw_result_*.csv files must NOT be candidates for resume
+        # MC raw_result_*.csv files must NOT be candidates for resume, and the
+        # checkpoint namespace is per-model: another model's or legacy files are ignored
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
             (tmp / "raw_result_1047.csv").touch()
-            (tmp / "reading_result_100.csv").touch()
-            (tmp / "reading_result_400.csv").touch()
-            latest = find_latest_reading_checkpoint(tmp)
+            (tmp / "reading_result_100.csv").touch()          # legacy: no model identity
+            (tmp / "reading_result_100_Qwen.csv").touch()
+            (tmp / "reading_result_400_Qwen.csv").touch()
+            (tmp / "reading_result_300_Mistral.csv").touch()
+            latest = find_latest_reading_checkpoint(tmp, "Qwen")
             assert latest is not None
-            self.assertEqual(latest.name, "reading_result_400.csv")
+            self.assertEqual(latest.name, "reading_result_400_Qwen.csv")
             (tmp / "raw_result_9999.csv").touch()
-            latest = find_latest_reading_checkpoint(tmp)
+            latest = find_latest_reading_checkpoint(tmp, "Qwen")
             assert latest is not None
-            self.assertEqual(latest.name, "reading_result_400.csv")  # still ignores MC
+            self.assertEqual(latest.name, "reading_result_400_Qwen.csv")  # still ignores MC
+            self.assertIsNone(find_latest_reading_checkpoint(tmp, "TESTMODELSMOKE"))  # legacy ignored
 
 
 class TestAnnotationWorkbooks(unittest.TestCase):
@@ -657,6 +664,32 @@ class TestMergeSplit(unittest.TestCase):
         self.assertEqual(res["covered"], 0)
         self.assertEqual(res["gold_agreed"], [])
         self.assertEqual(res["adjudication"], [])
+
+    def test_single_reviewer_cli_merge_split(self):
+        # N=1 split is legal: one reviewer owns all 400 (gold_from_split was
+        # built for it; the CLI must not refuse)
+        a = {"squad:1": _review_row("linh", "mX", "squad", "1", "accept", "Hà Nội"),
+             "squad:2": _review_row("linh", "mX", "squad", "2", "reject", "1916", "1917")}
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            p = tmp / "review_linh_mx.csv"
+            with open(p, "w", newline="", encoding="utf-8-sig") as f:
+                w = csv.writer(f)
+                w.writerow(REVIEW_COLS)
+                for k in sorted(a):
+                    w.writerow([a[k][c] for c in REVIEW_COLS])
+            args = argparse.Namespace(
+                files=[p],
+                workbook=tmp / "absent.csv",
+                manifest=tmp / "absent_manifest.csv",
+                out_gold=tmp / "g.csv",
+                out_adjud=tmp / "a.csv",
+                apply=False,
+            )
+            cmd_merge_split(args)  # must not raise
+            got = {r["item_id"]: r["gold_answer"]
+                   for r in csv.DictReader(open(tmp / "g.csv", encoding="utf-8"))}
+            self.assertEqual(got, {"1": "Hà Nội", "2": "1917"})
 
 
 class TestExportBlob(unittest.TestCase):

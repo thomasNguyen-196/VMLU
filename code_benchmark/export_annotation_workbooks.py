@@ -413,9 +413,8 @@ def split_stats(res: dict, n_items: int, annotators: list[str]) -> str:
 def cmd_merge_split(args):
     """Union-merge N review CSVs from review_records/ (split-the-400 workflow).
     Same outputs and --apply semantics as `review`, but coverage is the UNION
-    of decided items, not the intersection — designed for disjoint assignment."""
-    if len(args.files) < 2:
-        raise SystemExit("Error: merge-split needs >=2 review CSVs (one per reviewer)")
+    of decided items, not the intersection — designed for disjoint assignment.
+    N=1 is a fully-owned split: one reviewer covering all 400 items."""
     reviews: list[tuple[dict, dict[str, dict]]] = []
     for p in args.files:
         reviews.append(read_review(p))
