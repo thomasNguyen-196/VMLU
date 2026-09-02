@@ -109,6 +109,7 @@ function DecisionPanelInner({
             lang="vi"
             rows={3}
             disabled={d !== "reject"}
+            suppressHydrationWarning
             value={st?.c ?? ""}
             onChange={(e) => onCorrection(e.target.value)}
             placeholder="Đáp án đúng theo bạn…"
@@ -149,7 +150,7 @@ function DecisionPanelInner({
           Tiến độ theo nhóm câu
         </span>
         <div className="mt-2.5 text-[13px]">
-          <StatRow k="toàn bộ" v={`${stats.accept}/${stats.reviewed} · ${stats.total ? Math.round((100 * stats.accept) / stats.total) : 0}%`} />
+          <StatRow k="toàn bộ" v={`${stats.accept}/${stats.reviewed} · ${stats.reviewed ? Math.round((100 * stats.accept) / stats.reviewed) : 0}%`} />
           {Object.entries(stats.byDataset)
             .sort()
             .map(([k, [a, r]]) => (
