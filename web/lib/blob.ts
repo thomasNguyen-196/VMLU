@@ -8,7 +8,7 @@ import { SCHEMA_VERSION, type ReviewBlob } from "./types.ts";
 export const BLOB_REGEN_HINT =
   "chạy: .venv/bin/python code_benchmark/build_review_ui.py export-blob (từ thư mục gốc repo)";
 
-export function blobPath(): string {
+function blobPath(): string {
   return process.env.VMLU_REVIEW_BLOB
     ? path.resolve(process.env.VMLU_REVIEW_BLOB)
     : path.join(process.cwd(), "data", "review-blob.json");

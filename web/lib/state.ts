@@ -16,11 +16,11 @@ export function stateDir(): string {
   return process.env.VMLU_REVIEW_STATE_DIR ?? path.join(/* turbopackIgnore: true */ process.cwd(), "..", "review_state");
 }
 
-export function bucketPath(reviewer: string, model: string): string {
+function bucketPath(reviewer: string, model: string): string {
   return path.join(stateDir(), `${slug(reviewer)}__${slug(model)}.json`);
 }
 
-export interface LoadResult {
+interface LoadResult {
   /** null = bucket never saved (fresh start) */
   envelope: StateEnvelope | null;
   /** non-null = the file exists but is unreadable/foreign; the app must NOT
@@ -70,7 +70,7 @@ export async function saveBucket(envelope: StateEnvelope): Promise<void> {
   await fs.rename(tmp, target);
 }
 
-export interface BucketRow {
+interface BucketRow {
   file: string;
   reviewer: string;
   model: string;
