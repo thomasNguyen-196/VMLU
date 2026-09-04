@@ -48,6 +48,11 @@ from code_benchmark.run_vbench_eval import (
     extract_function_call as vb_extract_function_call,
     build_submission_rows as vb_build_submission_rows,
     diagnose_rejection as vb_diagnose_rejection,
+    parse_choice as vb_parse_choice,
+    parse_value as vb_parse_value,
+    guided_call as vb_guided_call,
+    load_checkpoint as vb_load_checkpoint,
+    CHECKPOINT_COLS as VB_CHECKPOINT_COLS,
 )
 from code_benchmark.export_annotation_workbooks import (
     merge_answers,
@@ -581,6 +586,64 @@ class TestVbenchRunner(unittest.TestCase):
                          "truncated_output")
         self.assertEqual(vb_diagnose_rejection("xin chào", [self.FN]), "no_call_shape_found")
         self.assertEqual(vb_diagnose_rejection(self._agentic_raw({"loai": "ung_tien"}), [self.FN]), "")
+
+    def test_parse_choice_and_value(self):
+        self.assertEqual(vb_parse_choice("3", 4), 3)
+        self.assertEqual(vb_parse_choice("Đáp án: 2", 4), 2)
+        self.assertEqual(vb_parse_choice("2. chọn mục này", 4), 2)
+        self.assertIsNone(vb_parse_choice("9", 4))          # out of range -> no default
+        self.assertIsNone(vb_parse_choice("tôi không biết", 4))
+        self.assertIsNone(vb_parse_choice("3.14", 4))       # decimal, not a choice
+        self.assertEqual(vb_parse_value("150", {"type": "integer"}), 150)
+        self.assertEqual(vb_parse_value("khoảng 0,4", {"type": "number"}), 0.4)
+        self.assertIsNone(vb_parse_value("không rõ số", {"type": "number"}))
+        self.assertIs(vb_parse_value("true", {"type": "boolean"}), True)
+        self.assertEqual(vb_parse_value('"Hà Nội"', {"type": "string"}), "Hà Nội")
+
+    def test_guided_interview_assembles_validated_call(self):
+        item = {"id": 1, "domain": "d", "track": "agentic", "question": "Q?",
+                "function": [self.FN]}
+        answers = iter(["1", "2", "0"])   # function 1; loai=enum[2]; optional ma_khu_vuc skip
+        asked = []
+        ans, tr = vb_guided_call(item, lambda p: (asked.append(p), next(answers))[1])
+        self.assertEqual(json.loads(ans), [{"tra_cuu_giao_dich": {"loai": "ung_tien"}}])
+        self.assertEqual(len(asked), 3)                      # model answered everything
+        self.assertTrue(any(s.startswith("ASSEMBLED") for s in tr))
+        # enum answer came VERBATIM from the row's enum list — the tool never invents
+        self.assertIn("ung_tien", asked[1])
+
+    def test_guided_unanswered_required_stays_failed(self):
+        item = {"id": 1, "domain": "d", "track": "agentic", "question": "Q?",
+                "function": [self.FN]}
+        ans, tr = vb_guided_call(item, lambda p: "0")        # never a valid 1-based choice
+        self.assertEqual(ans, "")
+        it2 = iter(["1", "99"])                              # enum choice out of range
+        ans2, tr2 = vb_guided_call(item, lambda p: next(it2))
+        self.assertEqual(ans2, "")
+        self.assertTrue(any("unanswered_required:loai" in s for s in tr2))
+
+    def test_load_checkpoint_keeps_guided_and_rederives_free(self):
+        # free row: stored answer is a stale snapshot -> must be re-derived
+        # guided row: transcript only makes sense WITH its stored answer -> keep
+        item_free = {"id": 5, "track": "agentic", "question": "Q",
+                     "function": [self.FN], "domain": "d"}
+        item_guided = {"id": 6, "track": "agentic", "question": "Q",
+                       "function": [self.FN], "domain": "d"}
+        guided_ans = json.dumps([{"tra_cuu_giao_dich": {"loai": "ung_tien"}}],
+                                ensure_ascii=False, separators=(",", ":"))
+        cp_rows = [
+            {"id": 5, "domain": "d", "track": "agentic", "question": "Q",
+             "raw_response": '["tra_cuu_giao_dich": {"loai": "chuyen_khoan"}]', "answer": ""},
+            {"id": 6, "domain": "d", "track": "agentic", "question": "Q",
+             "raw_response": "Q[function]\n...\nA\n1\n\n---\nASSEMBLED", "answer": guided_ans},
+        ]
+        with tempfile.TemporaryDirectory() as td:
+            cp = Path(td) / "vbench_result_2_test.csv"
+            pd.DataFrame(cp_rows)[VB_CHECKPOINT_COLS].to_csv(cp, index=False)
+            out = vb_load_checkpoint(cp, {5: item_free, 6: item_guided})
+        got = {r["id"]: r["answer"] for r in out}
+        self.assertEqual(json.loads(got[5]), [{"tra_cuu_giao_dich": {"loai": "chuyen_khoan"}}])
+        self.assertEqual(got[6], guided_ans)
 
 
 class TestAnnotationWorkbooks(unittest.TestCase):

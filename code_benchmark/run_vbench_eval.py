@@ -288,6 +288,124 @@ def diagnose_rejection(raw: str, functions: list[dict]) -> str:
     return "no_call_shape_found" if not saw_call_shape else "unparseable_output"
 
 
+# ── Guided mode: numbered-question interview per agentic row ───────────────
+
+_CHOICE_NUM = re.compile(r"(?<![\w.])(\d{1,2})(?![\w])(?!\.\d)")
+_SKIP_ANSWERS = {"0", "-", "bo qua", "bỏ qua", "skip", "khong", "không"}
+
+
+def parse_choice(raw: str, n: int) -> int | None:
+    """Numbered-choice answer -> 1-based index: first standalone number in
+    range wins ('2', 'Đáp án: 2', '2. …'). None when nothing in 1..n appears
+    — we never default the model's selection."""
+    for m in _CHOICE_NUM.finditer(raw or ""):
+        v = int(m.group(1))
+        if 1 <= v <= n:
+            return v
+    return None
+
+
+def parse_value(raw: str, spec: dict):
+    """Free-text typed answer -> JSON value, or None when absent/garbage.
+    Only number/bool coercion of the model's own text; strings are kept
+    verbatim (first line). Never invents a value."""
+    s = (raw or "").strip().strip("`").strip()
+    if not s:
+        return None
+    s = s.splitlines()[0].strip()
+    t = spec.get("type")
+    if t in ("number", "integer"):
+        m = re.search(r"-?\d+(?:[.,]\d+)?", s)
+        if not m:
+            return None
+        num = m.group(0).replace(",", ".")
+        return int(num) if (t == "integer" or re.fullmatch(r"\d+", num)) else float(num)
+    if t == "boolean":
+        low = s.lower()
+        if low.startswith(("true", "có", "co ", "đúng", "dong", "1")):
+            return True
+        if low.startswith(("false", "không", "khong", "sai", "0")):
+            return False
+        return None
+    return s.strip("\"'”“’‘")
+
+
+def _num_list(items: list[str]) -> str:
+    return "\n".join(f"{i + 1}. {t}" for i, t in enumerate(items))
+
+
+def guided_call(item: dict, ask) -> tuple[str, list[str]]:
+    """Ask one agentic row as a numbered interview (choose function, then one
+    question per parameter — enums as lists, scalars type-hinted); returns
+    (canonical validated answer or '', transcript). The model makes exactly
+    the semantic decisions of free generation; the tool only supplies JSON
+    syntax. The assembled call passes the SAME _validate_call gate; an
+    unanswered required field leaves the row failed, marked
+    [GUIDED-FAIL …] in the transcript — never filled in by us."""
+    fns = item["function"]
+    tr: list[str] = []
+
+    def step(prompt: str, kind: str) -> str:
+        raw = ask(prompt)
+        tr.append(f"Q[{kind}]\n{prompt}\nA\n{raw}")
+        return raw
+
+    head = ("Hãy chọn ĐÚNG MỘT hàm phù hợp nhất với yêu cầu. "
+            "Chỉ trả lời bằng SỐ của lựa chọn, không giải thích.\n\nYêu cầu:\n"
+            + item["question"] + "\n\nCác lựa chọn:\n"
+            + _num_list([f"{fn.get('name')} — {fn.get('description', '')}" for fn in fns])
+            + "\n\nSố:")
+    ch = parse_choice(step(head, "function"), len(fns))
+    if ch is None:
+        tr.append("[GUIDED-FAIL no_function_choice]")
+        return "", tr
+    schema = fns[ch - 1]
+    params = schema.get("parameters") or {}
+    props: dict = params.get("properties") or {}
+    required: list = params.get("required") or []
+    order = [k for k in required if k in props] + [k for k in props if k not in required]
+    args: dict = {}
+    for key in order:
+        spec = props[key]
+        is_req = key in required
+        req_tag = "(bắt buộc)" if is_req else "(không bắt buộc — trả lời 0 để bỏ qua)"
+        desc = spec.get("description") or spec.get("type") or ""
+        enum: list = spec.get("enum") or []
+        if enum:
+            p = (f'Hàm "{schema["name"]}" — tham số "{key}" {req_tag}: {desc}\n'
+                 "Chỉ trả lời bằng SỐ của lựa chọn.\n"
+                 + _num_list([str(e) for e in enum]) + "\n\nSố:")
+            c = parse_choice(step(p, f"arg:{key}"), len(enum))
+            if c is None:
+                if is_req:
+                    tr.append(f"[GUIDED-FAIL unanswered_required:{key}]")
+                    return "", tr
+                continue
+            args[key] = enum[c - 1]
+        else:
+            hint = {"number": "một số", "integer": "một số nguyên",
+                    "boolean": "true hoặc false", "array": "một JSON mảng",
+                    "object": "một JSON object"}.get(spec.get("type"), "một giá trị")
+            p = (f'Hàm "{schema["name"]}" — tham số "{key}" {req_tag}: {desc}\n'
+                 f"Chỉ trả lời bằng {hint}, không giải thích.\n\nGiá trị:")
+            raw = step(p, f"arg:{key}")
+            if not is_req and raw.strip().lower() in _SKIP_ANSWERS:
+                continue
+            v = parse_value(raw, spec)
+            if v is None:
+                if is_req:
+                    tr.append(f"[GUIDED-FAIL unanswered_required:{key}]")
+                    return "", tr
+                continue
+            args[key] = v
+    norm = _validate_call({schema["name"]: args}, fns)
+    if norm is None:
+        tr.append("[GUIDED-FAIL schema_validation]")
+        return "", tr
+    tr.append(f"ASSEMBLED: {norm}")
+    return json.dumps(norm, ensure_ascii=False, separators=(",", ":")), tr
+
+
 def write_model_errors(path: Path, results: list[dict], by_id: dict[int, dict]) -> None:
     """Durable record of every row the model failed to answer validly. The
     submission contract forbids guessing an answer in place of a wrong one —
@@ -300,10 +418,13 @@ def write_model_errors(path: Path, results: list[dict], by_id: dict[int, dict]) 
         item = by_id.get(int(r["id"]))
         reason = "parse_failure"
         if item and item["track"] == "agentic":
-            reason = diagnose_rejection(r["raw_response"], item["function"])
+            gm = re.search(r"\[GUIDED-FAIL ([\w:]+)\]", r["raw_response"])
+            reason = (f"guided_{gm.group(1)}" if gm
+                      else diagnose_rejection(r["raw_response"], item["function"]))
         rows.append({"id": r["id"], "domain": r["domain"], "track": r["track"],
                      "reason": reason, "raw_response": r["raw_response"]})
     if not rows:
+        path.unlink(missing_ok=True)   # stale ledger from an earlier pass must not survive
         return
     write_csv_atomic(path, rows, ["id", "domain", "track", "reason", "raw_response"])
     logging.warning(f"{len(rows)} model failure(s) recorded verbatim to {path} "
@@ -362,6 +483,10 @@ def parse_args():
                         help="with --resume: re-call only rows whose stored/raw response "
                              "does not parse under the CURRENT parser (correct model errors are "
                              "never touched)")
+    parser.add_argument("--guided", action="store_true",
+                        help="with --resume: re-ask agentic rows that have no valid answer as a "
+                             "numbered interview (function, then one question per parameter); the "
+                             "tool supplies JSON syntax only, the model makes every decision")
 
     add_endpoint_args(parser,
                       max_tokens_default=512,
@@ -388,7 +513,10 @@ def load_checkpoint(path: Path, by_id: dict[int, dict] | None = None) -> list[di
     `answer` is RE-DERIVED from raw_response with the current parser — the
     stored column is a snapshot of the parser at write time, so a fixed or
     improved extractor applies to an existing run without re-calling the
-    endpoint (server scoring is aggregate-only; raw_response is the truth)."""
+    endpoint (server scoring is aggregate-only; raw_response is the truth).
+    Exception: GUIDED rows keep the stored answer — their raw_response is an
+    interview transcript whose call only exists once assembled; re-parsing
+    free text would silently delete guided results."""
     cp_df = pd.read_csv(path, dtype={"id": "int64"})
     rows = []
     for _, row in cp_df.iterrows():
@@ -396,7 +524,8 @@ def load_checkpoint(path: Path, by_id: dict[int, dict] | None = None) -> list[di
         raw = "" if pd.isna(raw) else str(raw)
         item_id = int(row["id"])
         item = by_id.get(item_id) if by_id else None
-        if item is not None and raw:
+        transcript = raw.startswith("Q[function]") or "[GUIDED-FAIL" in raw
+        if item is not None and raw and not transcript:
             answer = parse_item(item, raw)
         else:
             answer = "" if pd.isna(row.get("answer")) else str(row["answer"])
@@ -425,9 +554,9 @@ def write_final_outputs(args, model, results, result_folder, by_id):
 
 def main():
     args = parse_args()
-    if args.retry_unparsed and not args.resume:
-        raise SystemExit("Error: --retry-unparsed is a --resume modifier (it re-calls the "
-                         "unparsed rows of an existing checkpoint); add --resume.")
+    if (args.retry_unparsed or args.guided) and not args.resume:
+        raise SystemExit("Error: --retry-unparsed/--guided are --resume modifiers (they re-call "
+                         "the unparsed rows of an existing checkpoint); add --resume.")
     result_folder = RESULTS_DIR
     result_folder.mkdir(parents=True, exist_ok=True)
 
@@ -467,10 +596,10 @@ def main():
         if latest:
             logging.info(f"Resuming from checkpoint: {latest}")
             existing = {r["id"]: r for r in load_checkpoint(latest, by_id)}
-            if args.retry_unparsed:
+            if args.retry_unparsed or args.guided:
                 keep = {k: v for k, v in existing.items() if str(v["answer"]).strip()}
-                logging.info(f"--retry-unparsed: re-calling {len(existing) - len(keep)} "
-                             f"unparsed row(s); {len(keep)} kept verbatim.")
+                logging.info(f"--{'guided' if args.guided else 'retry-unparsed'}: re-asking "
+                             f"{len(existing) - len(keep)} unparsed row(s); {len(keep)} kept verbatim.")
                 existing = keep
         else:
             logging.warning(f"No {VBENCH_PREFIX}*_{sanitized_model}.csv checkpoint found; "
@@ -491,16 +620,25 @@ def main():
 
     def process_item(index: int, item: dict):
         nonlocal completed
-        raw_ans = call_model_with_retry(
-            client=client, model=model, prompt=item["prompt"],
-            temperature=args.temperature, seed=args.seed, max_tokens=args.max_tokens)
+        if args.guided and item["track"] == "agentic":
+            def ask(prompt: str) -> str:
+                return call_model_with_retry(
+                    client=client, model=model, prompt=prompt,
+                    temperature=args.temperature, seed=args.seed, max_tokens=64)
+            ans, transcript = guided_call(item, ask)
+            raw_ans, parsed = "\n\n---\n\n".join(transcript), ans
+        else:
+            raw_ans = call_model_with_retry(
+                client=client, model=model, prompt=item["prompt"],
+                temperature=args.temperature, seed=args.seed, max_tokens=args.max_tokens)
+            parsed = parse_item(item, raw_ans)
         res = {
             "id": item["id"],
             "domain": item["domain"],
             "track": item["track"],
             "question": item["question"],
             "raw_response": raw_ans,
-            "answer": parse_item(item, raw_ans),
+            "answer": parsed,
         }
         with lock:
             results[index] = res
