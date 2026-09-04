@@ -6,7 +6,7 @@ and writes per-item free-text answers:
 
   all_res/ollama_result/reading_answers_<model>.csv
 
-This is deliberately SEPARATE from test_ollama.py: that harness is the frozen
+This is deliberately SEPARATE from run_mc_eval.py: that harness is the frozen
 multiple-choice pipeline (A-E contract, 4-token budget); reading comprehension
 needs a context prompt and a long answer budget. No scoring happens here —
 gold_answer is empty until the 2-annotator pass (EM + char-F1 script comes
@@ -21,27 +21,38 @@ import argparse
 import csv
 import json
 import logging
-import os
-import re
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from threading import Lock
 
 from dotenv import load_dotenv
-from openai import OpenAI
 
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
-    from code_benchmark.test_ollama import (
-        call_model_with_retry, verify_credentials, sanitize_model)
+    from code_benchmark.common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+                                       MANIFEST_DEFAULT, SQUAD_DEFAULT, DROP_DEFAULT,
+                                       read_csv_checked, add_endpoint_args,
+                                       parse_endpoint_args, setup_logging)
+    from code_benchmark.checkpoint import (READING_PREFIX, checkpoint_name,
+                                           find_latest_checkpoint)
+    from code_benchmark.llm import build_client, verify_credentials, call_model_with_retry
+    from code_benchmark.common import item_key
 except ImportError:
-    from test_ollama import call_model_with_retry, verify_credentials, sanitize_model
+    from common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+                        MANIFEST_DEFAULT, SQUAD_DEFAULT, DROP_DEFAULT,
+                        read_csv_checked, add_endpoint_args,
+                        parse_endpoint_args, setup_logging)
+    from checkpoint import READING_PREFIX, checkpoint_name, find_latest_checkpoint
+    from llm import build_client, verify_credentials, call_model_with_retry
+    from common import item_key
 
 load_dotenv()
 
-DEFAULT_MANIFEST = Path("eval_set_manifest.csv")
-CHECKPOINT_PREFIX = "reading_result_"  # never collides with raw_result_*.csv of the MC run
+CHECKPOINT_PREFIX = READING_PREFIX  # never collides with raw_result_*.csv of the MC run
+
+# Free-text answer rows: read by build_review_ui.py; fieldnames shared by the
+# checkpoint writer and the final answers file.
+ANSWER_COLS = ["dataset", "item_id", "stratum", "question", "context_words", "raw_response"]
 
 
 def build_reading_prompt(context: str, question: str) -> str:
@@ -56,15 +67,8 @@ def build_reading_prompt(context: str, question: str) -> str:
 
 
 def load_manifest(path: Path) -> list[dict]:
-    with open(path, encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-    need = {"dataset", "item_id", "stratum", "question"}
-    if not rows:
-        raise SystemExit(f"Error: empty manifest {path}")
-    missing = need - set(rows[0])
-    if missing:
-        raise SystemExit(f"Error: manifest {path} lacks columns: {sorted(missing)}")
-    return rows
+    return read_csv_checked(path, required={"dataset", "item_id", "stratum", "question"},
+                            label="manifest")
 
 
 def index_sources(squad_path: Path, drop_path: Path) -> dict[tuple[str, str], dict]:
@@ -94,64 +98,36 @@ def join_manifest(manifest: list[dict], idx: dict[tuple[str, str], dict]) -> lis
 
 
 def resume_key(row: dict) -> str:
-    return f"{row['dataset']}:{row['item_id']}"
+    return item_key(row)
 
 
 def find_latest_reading_checkpoint(folder: Path, model: str) -> Path | None:
     """Newest checkpoint for THIS model only — reading_result_<count>_<model>.csv.
     Legacy reading_result_<count>.csv files carry no model identity and are never
     picked (a different model's --resume used to silently reuse their answers)."""
-    best, best_n = None, -1
-    for p in folder.glob(f"{CHECKPOINT_PREFIX}*_{sanitize_model(model)}.csv"):
-        m = re.search(r"reading_result_(\d+)_", p.name)
-        if m and int(m.group(1)) > best_n:
-            best, best_n = p, int(m.group(1))
-    return best
+    return find_latest_checkpoint(folder, model, prefix=CHECKPOINT_PREFIX)
 
 
 def parse_args():
     ap = argparse.ArgumentParser(description="Run the 400-question reading eval (issue #3).")
-    ap.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
-    ap.add_argument("--squad-file", type=Path,
-                    default=Path("vmlu_squad_v1/vi_squad_benchmark_question_only.json"))
-    ap.add_argument("--drop-file", type=Path,
-                    default=Path("vmlu_drop_v1/vi_drop_benchmark_3309_question_only.json"))
-    ap.add_argument("--model", type=str, default=None, help="overrides OPENAI_MODEL")
-    ap.add_argument("--base-url", type=str, default=None, help="overrides OPENAI_BASE_URL")
-    ap.add_argument("--api-key", type=str, default=None, help="overrides OPENAI_API_KEY")
-    ap.add_argument("--temperature", type=float, default=0.0)
-    ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--max-tokens", type=int, default=48,
-                    help="answer budget (extractive spans are short; 48 is generous)")
-    ap.add_argument("--workers", type=int, default=4)
-    ap.add_argument("--limit", type=int, default=None, help="first N manifest rows only")
-    ap.add_argument("--resume", action="store_true",
-                    help="continue from the newest reading_result_<count>_<model>.csv checkpoint for this model")
-    args = ap.parse_args()
-    if args.limit is not None and args.limit <= 0:
-        ap.error("--limit must be > 0")
-    return args
+    ap.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
+    ap.add_argument("--squad-file", type=Path, default=SQUAD_DEFAULT)
+    ap.add_argument("--drop-file", type=Path, default=DROP_DEFAULT)
+    add_endpoint_args(ap, max_tokens_default=48,
+                      max_tokens_help="answer budget (extractive spans are short; 48 is generous)",
+                      resume_help="continue from the newest reading_result_<count>_<model>.csv checkpoint for this model")
+    return parse_endpoint_args(ap)
 
 
 def main():
     args = parse_args()
-    api_key = args.api_key or os.environ.get("OPENAI_API_KEY") or "ollama"
-    base_url = args.base_url or os.environ.get("OPENAI_BASE_URL")
-    model = args.model or os.environ.get("OPENAI_MODEL")
-    if not base_url or not model:
-        print("Error: set OPENAI_BASE_URL / OPENAI_MODEL (or pass --base-url/--model).", file=sys.stderr)
-        sys.exit(1)
+    base_url, api_key, model = resolve_endpoint(args)
 
-    os.makedirs("logs", exist_ok=True)
-    result_folder = Path("all_res/ollama_result")
+    result_folder = RESULTS_DIR
     result_folder.mkdir(parents=True, exist_ok=True)
-    sanitized_model = re.sub(r"[^a-zA-Z0-9_-]", "_", model)
+    sanitized_model = sanitize_model(model)
 
-    logging.basicConfig(filename=f"logs/reading_{sanitized_model}.log", level=logging.INFO,
-                        format="%(asctime)s - %(levelname)s: %(message)s")
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
-    logging.getLogger("").addHandler(console)
+    setup_logging(f"logs/reading_{sanitized_model}.log")
 
     logging.info(f"Model: {model} @ {base_url} | workers={args.workers} "
                  f"temp={args.temperature} seed={args.seed} max_tokens={args.max_tokens}")
@@ -166,7 +142,7 @@ def main():
                  f"({sum(r['dataset'] == 'squad' for r in items)} squad / "
                  f"{sum(r['dataset'] == 'drop' for r in items)} drop)")
 
-    client = OpenAI(base_url=base_url, api_key=api_key)
+    client = build_client(base_url, api_key)
     logging.info("Verifying endpoint connectivity and credentials...")
     verify_credentials(client, model)
 
@@ -214,13 +190,12 @@ def main():
             completed += 1
             done = [r for r in results if r is not None]
             if completed % 100 == 0 or completed == total:
-                write_csv(result_folder / f"{CHECKPOINT_PREFIX}{len(done)}_{sanitize_model(model)}.csv", done)
+                write_csv(result_folder / checkpoint_name(model, len(done), prefix=CHECKPOINT_PREFIX), done)
         return index
 
     def write_csv(path: Path, rows: list[dict]) -> None:
         with open(path, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=["dataset", "item_id", "stratum",
-                                              "question", "context_words", "raw_response"])
+            w = csv.DictWriter(f, fieldnames=ANSWER_COLS)
             w.writeheader()
             w.writerows(rows)
 

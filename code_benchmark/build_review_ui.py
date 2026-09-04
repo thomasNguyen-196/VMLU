@@ -30,20 +30,22 @@ Run from repo root:
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from datetime import date
 from pathlib import Path
 
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
-    from code_benchmark.export_annotation_workbooks import key_of
+    from code_benchmark.common import item_key, read_csv_checked, RESULTS_DIR, ANNOTATOR_A_DEFAULT
 except ImportError:
-    from export_annotation_workbooks import key_of
+    from common import item_key, read_csv_checked, RESULTS_DIR, ANNOTATOR_A_DEFAULT
 
 SCHEMA_VERSION = 1
-WORKBOOK_COLS = {"passage_key", "dataset", "item_id", "stratum", "question", "context"}
-ANSWER_COLS = {"dataset", "item_id", "raw_response"}
+# required-column SUBSET (set) — distinct from export_annotation_workbooks's
+# WORKBOOK_COLS, the writer's ordered 8-column list. Same name, different
+# meaning, so the validator's constant carries its own name.
+REQUIRED_WORKBOOK_COLS = {"passage_key", "dataset", "item_id", "stratum", "question", "context"}
+ANSWER_REQUIRED_COLS = {"dataset", "item_id", "raw_response"}
 ANSWER_PREFIX = "reading_answers_"
 
 
@@ -61,30 +63,17 @@ def model_from_filename(path: Path) -> str:
 
 
 def load_workbook(path: Path) -> list[dict]:
-    with open(path, encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-    if not rows:
-        raise SystemExit(f"Error: empty workbook {path}")
-    missing = WORKBOOK_COLS - set(rows[0])
-    if missing:
-        raise SystemExit(f"Error: workbook {path} lacks columns: {sorted(missing)}")
-    return rows
+    return read_csv_checked(path, required=REQUIRED_WORKBOOK_COLS, label="workbook")
 
 
 def load_answers_csv(path: Path) -> tuple[str, dict[str, str]]:
     """-> (model, {dataset:item_id -> raw_response}). Fail-fast: required
     columns, duplicate keys (same id twice = ambiguous join)."""
     model = model_from_filename(path)
+    rows = read_csv_checked(path, required=ANSWER_REQUIRED_COLS)
     out: dict[str, str] = {}
-    with open(path, encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-    if not rows:
-        raise SystemExit(f"Error: empty answers CSV {path}")
-    missing = ANSWER_COLS - set(rows[0])
-    if missing:
-        raise SystemExit(f"Error: {path} lacks columns: {sorted(missing)}")
     for r in rows:
-        k = key_of(r)
+        k = item_key(r)
         if k in out:
             raise SystemExit(f"Error: duplicate key {k} in {path}")
         out[k] = str(r["raw_response"]).strip()
@@ -99,7 +88,7 @@ def review_items(book_rows: list[dict],
     the same fail-fast contract as join_manifest(). A model missing whole
     coverage is an error; an item a model simply lacks gets None (UI shows
     'n/a'). Returns (items, passages) with contexts deduped by passage_key."""
-    valid = {key_of(r) for r in book_rows}
+    valid = {item_key(r) for r in book_rows}
     for model, amap in answers.items():
         unknown = sorted(set(amap) - valid)
         if unknown:
@@ -108,7 +97,7 @@ def review_items(book_rows: list[dict],
     passages = {r["passage_key"]: r["context"] for r in book_rows}
     items = []
     for r in book_rows:
-        k = key_of(r)
+        k = item_key(r)
         items.append({"dataset": r["dataset"], "item_id": str(r["item_id"]),
                       "stratum": r["stratum"], "passage_key": r["passage_key"],
                       "question": r["question"],
@@ -143,7 +132,7 @@ def render_html(template: str, blob_json: str, placeholder: str = '"__VMLU_DATA_
 
 
 def default_answers() -> list[Path]:
-    return sorted(Path("all_res/ollama_result").glob(f"{ANSWER_PREFIX}*.csv"))
+    return sorted(RESULTS_DIR.glob(f"{ANSWER_PREFIX}*.csv"))
 
 
 def validated_blob(args) -> dict:
@@ -174,7 +163,7 @@ def main():
     ap = argparse.ArgumentParser(description="Review-pass data + fallback (issue #3 / revamp-review-ui).")
     sub = ap.add_subparsers(dest="cmd", required=True)
     common = {
-        "--workbook": dict(type=Path, default=Path("annotation_workbooks/annotator_A.csv")),
+        "--workbook": dict(type=Path, default=ANNOTATOR_A_DEFAULT),
         "--answers": dict(type=Path, action="append", default=None,
                           help=f"{ANSWER_PREFIX}<model>.csv (repeatable; default: every match under all_res/ollama_result/)"),
         "--allow-partial": dict(action="store_true",

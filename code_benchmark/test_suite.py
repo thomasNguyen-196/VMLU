@@ -12,17 +12,18 @@ from collections import Counter
 from unittest.mock import MagicMock
 import pandas as pd
 
-from code_benchmark.test_ollama import (
-    call_model_with_retry,
+from code_benchmark.run_mc_eval import (
     build_prompt,
     extract_answer,
-    find_latest_checkpoint,
     SUBJECTS,
     subject_category,
     detect_scorable,
     score_row,
     build_accuracy_rows,
 )
+from code_benchmark.llm import call_model_with_retry
+from code_benchmark.checkpoint import find_latest_checkpoint
+from code_benchmark.common import item_key, split_item_key, sanitize_model
 from code_benchmark.make_eval_sample import (
     allocate,
     sample_strata,
@@ -40,6 +41,19 @@ from code_benchmark.run_reading_eval import (
     index_sources,
     resume_key,
     find_latest_reading_checkpoint,
+)
+from code_benchmark.run_vbench_eval import (
+    classify_track as vb_classify_track,
+    extract_mc_answer as vb_extract_mc_answer,
+    extract_function_call as vb_extract_function_call,
+    build_agentic_prompt as vb_build_agentic_prompt,
+    build_submission_rows as vb_build_submission_rows,
+    diagnose_rejection as vb_diagnose_rejection,
+    parse_choice as vb_parse_choice,
+    parse_value as vb_parse_value,
+    guided_call as vb_guided_call,
+    load_checkpoint as vb_load_checkpoint,
+    CHECKPOINT_COLS as VB_CHECKPOINT_COLS,
 )
 from code_benchmark.export_annotation_workbooks import (
     merge_answers,
@@ -181,6 +195,37 @@ class TestSubjectCategoryMap(unittest.TestCase):
     def test_unknown_bucket(self):
         self.assertEqual(subject_category("99-0001"), (99, "unknown", "unknown"))
         self.assertEqual(subject_category("garbage"), (None, "unknown", "unknown"))
+
+
+class TestCommonHelpers(unittest.TestCase):
+    """Shared-kernel contracts extracted from the runners' duplicates."""
+
+    def test_item_key_round_trip(self):
+        row = {"dataset": "squad", "item_id": 7}
+        k = item_key(row)
+        self.assertEqual(k, "squad:7")
+        self.assertEqual(split_item_key(k), ("squad", "7"))
+
+    def test_item_key_splits_on_first_colon_only(self):
+        # item_ids never contain colons, but the rule is partition(":") — pin it
+        self.assertEqual(split_item_key("drop:12:30"), ("drop", "12:30"))
+
+    def test_sanitize_model_matches_legacy_regex(self):
+        self.assertEqual(sanitize_model("Qwen3/8:27B-Q4_K_M.gguf"),
+                         "Qwen3_8_27B-Q4_K_M_gguf")
+
+    def test_checkpoint_regex_follows_prefix_constant(self):
+        # the old reading runner hardcoded "reading_result_" in its regex while
+        # globbing by the constant — renaming the prefix silently broke resume
+        from code_benchmark import checkpoint as ckpt
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            (t / "custom_10_Qwen.csv").touch()
+            (t / "custom_99_Qwen.csv").touch()
+            latest = ckpt.find_latest_checkpoint(t, "Qwen", prefix="custom_")
+            self.assertEqual(latest.name, "custom_99_Qwen.csv")
+            # other prefixes never bleed in
+            self.assertIsNone(ckpt.find_latest_checkpoint(t, "Qwen", prefix="raw_result_"))
 
 
 class TestDetectScorable(unittest.TestCase):
@@ -440,6 +485,178 @@ class TestReadingRunner(unittest.TestCase):
             assert latest is not None
             self.assertEqual(latest.name, "reading_result_400_Qwen.csv")  # still ignores MC
             self.assertIsNone(find_latest_reading_checkpoint(tmp, "TESTMODELSMOKE"))  # legacy ignored
+
+
+class TestVbenchRunner(unittest.TestCase):
+    FN = {
+        "name": "tra_cuu_giao_dich",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "loai": {"type": "string", "enum": ["chuyen_khoan", "ung_tien"]},
+                "ma_khu_vuc": {"type": "string"},
+            },
+            "required": ["loai"],
+        },
+    }
+
+    def _agentic_raw(self, args):
+        return json.dumps([{self.FN["name"]: args}], ensure_ascii=False)
+
+    def test_classify_track(self):
+        self.assertEqual(vb_classify_track({"id": 1, "choices": ["A. x"], "function": [], "domain": "d"}), "mc")
+        self.assertEqual(vb_classify_track({"id": 2, "choices": [], "function": [self.FN], "domain": "d"}), "agentic")
+        self.assertEqual(vb_classify_track({"id": 3, "choices": [], "function": [], "domain": "hatespeech"}), "safety")
+        with self.assertRaises(SystemExit):   # tracks are disjoint in the release
+            vb_classify_track({"id": 4, "choices": ["A"], "function": [self.FN], "domain": "d"})
+
+    def test_mc_letter_clamped_to_row_choices(self):
+        # frozen extract_answer accepts A-E; the submission label must exist on THIS row
+        self.assertEqual(vb_extract_mc_answer("Đáp án: D", ["A. a", "B. b", "C. c", "D. d"]), "D")
+        self.assertEqual(vb_extract_mc_answer("E", ["A. a", "B. b", "C. c", "D. d"]), "")
+        self.assertEqual(vb_extract_mc_answer("C", ["A. a", "B. b", "C. c"]), "C")
+        self.assertEqual(vb_extract_mc_answer("tôi không chắc", ["A. a", "B. b"]), "")
+
+    def test_agentic_valid_output_shapes(self):
+        call = self._agentic_raw({"loai": "chuyen_khoan"})
+        for raw in (call,
+                    f"```json\n{call}\n```",
+                    f"Suy luận lòng vòng.\n{call}\nTrên đây là lựa chọn của tôi."):
+            got = vb_extract_function_call(raw, [self.FN])
+            self.assertEqual(json.loads(got), [{"tra_cuu_giao_dich": {"loai": "chuyen_khoan"}}],
+                             f"failed for shape: {raw[:30]}")
+        # optional fields the model filled in are kept
+        got = vb_extract_function_call(self._agentic_raw({"loai": "ung_tien", "ma_khu_vuc": "VN-HN"}), [self.FN])
+        self.assertEqual(json.loads(got)[0][self.FN["name"]], {"loai": "ung_tien", "ma_khu_vuc": "VN-HN"})
+
+    def test_agentic_never_ships_invalid_calls(self):
+        bad = [
+            json.dumps({"khoong_co_thuc": {"loai": "chuyen_khoan"}}),      # unknown name
+            json.dumps([{"tra_cuu_giao_dich": {}}]),                       # missing required
+            self._agentic_raw({"loai": "chuyen_huong"}),                   # enum value not in list
+            self._agentic_raw({"loai": "chuyen_khoan", "cot_ma": 1}),      # hallucinated field
+            "tôi không thể trả lời",                                       # no JSON at all
+            "",                                                            # empty
+        ]
+        for raw in bad:
+            self.assertEqual(vb_extract_function_call(raw, [self.FN]), "", f"leaked: {raw[:40]}")
+
+    def test_agentic_candidate_ordering(self):
+        good = self._agentic_raw({"loai": "chuyen_khoan"})
+        bad = self._agentic_raw({"loai": "khong_hop_le"})
+        # an invalid call earlier in the text does not block a later valid one
+        self.assertNotEqual(vb_extract_function_call(f"{bad} rồi {good}", [self.FN]), "")
+        # multi-call arrays ship the first element only
+        self.assertNotEqual(vb_extract_function_call(json.dumps([json.loads(good)[0], {"x": {}}]), [self.FN]), "")
+
+    def test_submission_rows_shape(self):
+        results = [
+            {"id": 9, "track": "mc", "answer": "C"},
+            {"id": 3, "track": "agentic", "answer": self._agentic_raw({"loai": "ung_tien"})},
+            {"id": 5, "track": "mc", "answer": ""},          # unparsed -> dropped, never guessed
+        ]
+        rows = vb_build_submission_rows(results)
+        self.assertEqual([r["id"] for r in rows], [3, 9])    # id-sorted
+        self.assertEqual(rows[0]["answer"], [{"tra_cuu_giao_dich": {"loai": "ung_tien"}}])  # real array
+        self.assertEqual(rows[1]["answer"], "C")
+
+    def test_agentic_repairs_braceless_output(self):
+        # observed in the live run: ["name": {args}] — quotes kept, element
+        # braces dropped. The repair pass must recover it ONLY when the name
+        # and args validate against the row's own schemas.
+        good = '["tra_cuu_giao_dich": {"loai": "chuyen_khoan"}]'
+        self.assertEqual(json.loads(vb_extract_function_call(good, [self.FN])),
+                         [{"tra_cuu_giao_dich": {"loai": "chuyen_khoan"}}])
+        self.assertEqual(vb_extract_function_call('["tra_cuu_giao_dich": {"loai": "sai_enum"}]', [self.FN]), "")
+        self.assertEqual(vb_extract_function_call('["ma_ham_khong_ton_tai": {"loai": "chuyen_khoan"}]', [self.FN]), "")
+        # truncated args (no closing brace) stay unparsed — never repaired by guessing
+        self.assertEqual(vb_extract_function_call('["tra_cuu_giao_dich": {"loai": "chuyen_khoan"', [self.FN]), "")
+        # names carry Vietnamese diacritics in the real data
+        fn_vn = dict(self.FN, name="xác_minh_giấy_tờ")
+        got = vb_extract_function_call('["xác_minh_giấy_tờ": {"loai": "ung_tien"}]', [fn_vn])
+        self.assertEqual(json.loads(got), [{"xác_minh_giấy_tờ": {"loai": "ung_tien"}}])
+
+    def test_diagnosis_records_wrong_answers_without_fixing_them(self):
+        # a readable call that fails validation is a MODEL error, labeled as
+        # such — and diagnose never changes what extract_function_call returns
+        self.assertEqual(vb_diagnose_rejection('["ma_ham": {"loai": "ung_tien"}]', [self.FN]),
+                         "unknown_function_name")
+        self.assertEqual(vb_diagnose_rejection(self._agentic_raw({"loai": "sai"}), [self.FN]),
+                         "off_enum_value")
+        self.assertEqual(vb_diagnose_rejection('["tra_cuu_giao_dich": {"loai": "chuyen_khoan"', [self.FN]),
+                         "truncated_output")
+        self.assertEqual(vb_diagnose_rejection("xin chào", [self.FN]), "no_call_shape_found")
+        self.assertEqual(vb_diagnose_rejection(self._agentic_raw({"loai": "ung_tien"}), [self.FN]), "")
+
+    def test_parse_choice_and_value(self):
+        self.assertEqual(vb_parse_choice("3", 4), 3)
+        self.assertEqual(vb_parse_choice("Đáp án: 2", 4), 2)
+        self.assertEqual(vb_parse_choice("2. chọn mục này", 4), 2)
+        self.assertIsNone(vb_parse_choice("9", 4))          # out of range -> no default
+        self.assertIsNone(vb_parse_choice("tôi không biết", 4))
+        self.assertIsNone(vb_parse_choice("3.14", 4))       # decimal, not a choice
+        self.assertEqual(vb_parse_value("150", {"type": "integer"}), 150)
+        self.assertEqual(vb_parse_value("khoảng 0,4", {"type": "number"}), 0.4)
+        self.assertIsNone(vb_parse_value("không rõ số", {"type": "number"}))
+        self.assertIs(vb_parse_value("true", {"type": "boolean"}), True)
+        self.assertEqual(vb_parse_value('"Hà Nội"', {"type": "string"}), "Hà Nội")
+
+    def test_guided_interview_assembles_validated_call(self):
+        item = {"id": 1, "domain": "d", "track": "agentic", "question": "Q?",
+                "function": [self.FN]}
+        answers = iter(["1", "2", "0"])   # function 1; loai=enum[2]; optional ma_khu_vuc skip
+        asked = []
+        ans, tr = vb_guided_call(item, lambda p: (asked.append(p), next(answers))[1])
+        self.assertEqual(json.loads(ans), [{"tra_cuu_giao_dich": {"loai": "ung_tien"}}])
+        self.assertEqual(len(asked), 3)                      # model answered everything
+        self.assertTrue(any(s.startswith("ASSEMBLED") for s in tr))
+        # enum answer came VERBATIM from the row's enum list — the tool never invents
+        self.assertIn("ung_tien", asked[1])
+
+    def test_guided_unanswered_required_stays_failed(self):
+        item = {"id": 1, "domain": "d", "track": "agentic", "question": "Q?",
+                "function": [self.FN]}
+        ans, tr = vb_guided_call(item, lambda p: "0")        # never a valid 1-based choice
+        self.assertEqual(ans, "")
+        it2 = iter(["1", "99"])                              # enum choice out of range
+        ans2, tr2 = vb_guided_call(item, lambda p: next(it2))
+        self.assertEqual(ans2, "")
+        self.assertTrue(any("unanswered_required:loai" in s for s in tr2))
+
+    def test_load_checkpoint_keeps_guided_and_rederives_free(self):
+        # free row: stored answer is a stale snapshot -> must be re-derived
+        # guided row: transcript only makes sense WITH its stored answer -> keep
+        item_free = {"id": 5, "track": "agentic", "question": "Q",
+                     "function": [self.FN], "domain": "d"}
+        item_guided = {"id": 6, "track": "agentic", "question": "Q",
+                       "function": [self.FN], "domain": "d"}
+        guided_ans = json.dumps([{"tra_cuu_giao_dich": {"loai": "ung_tien"}}],
+                                ensure_ascii=False, separators=(",", ":"))
+        cp_rows = [
+            {"id": 5, "domain": "d", "track": "agentic", "question": "Q",
+             "raw_response": '["tra_cuu_giao_dich": {"loai": "chuyen_khoan"}]', "answer": ""},
+            {"id": 6, "domain": "d", "track": "agentic", "question": "Q",
+             "raw_response": "Q[function]\n...\nA\n1\n\n---\nASSEMBLED", "answer": guided_ans},
+        ]
+        with tempfile.TemporaryDirectory() as td:
+            cp = Path(td) / "vbench_result_2_test.csv"
+            pd.DataFrame(cp_rows)[VB_CHECKPOINT_COLS].to_csv(cp, index=False)
+            out = vb_load_checkpoint(cp, {5: item_free, 6: item_guided})
+        got = {r["id"]: r["answer"] for r in out}
+        self.assertEqual(json.loads(got[5]), [{"tra_cuu_giao_dich": {"loai": "chuyen_khoan"}}])
+        self.assertEqual(got[6], guided_ans)
+
+    def test_prompt_styles_minimal_vs_detailed(self):
+        q, fns = "Câu hỏi test XYZ?", [self.FN]
+        minimal = vb_build_agentic_prompt(q, fns, "minimal")
+        detailed = vb_build_agentic_prompt(q, fns, "detailed")
+        self.assertEqual(minimal.splitlines()[0], q)          # question comes FIRST, raw
+        self.assertIn("tra_cuu_giao_dich", minimal)           # row's own schema present
+        for leak in ("Bạn là trợ lý", "Quy tắc:", "tra_cuu_thoi_tiet", "Không giải thích"):
+            self.assertNotIn(leak, minimal)                   # no role/rules/example/CoT ban
+        self.assertIn("tra_cuu_thoi_tiet", detailed)          # detailed keeps the example
+        # default must be the honest condition
+        self.assertEqual(vb_build_agentic_prompt(q, fns), minimal)
 
 
 class TestAnnotationWorkbooks(unittest.TestCase):
