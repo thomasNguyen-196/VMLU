@@ -12,17 +12,18 @@ from collections import Counter
 from unittest.mock import MagicMock
 import pandas as pd
 
-from code_benchmark.test_ollama import (
-    call_model_with_retry,
+from code_benchmark.run_mc_eval import (
     build_prompt,
     extract_answer,
-    find_latest_checkpoint,
     SUBJECTS,
     subject_category,
     detect_scorable,
     score_row,
     build_accuracy_rows,
 )
+from code_benchmark.llm import call_model_with_retry
+from code_benchmark.checkpoint import find_latest_checkpoint
+from code_benchmark.common import item_key, split_item_key, sanitize_model
 from code_benchmark.make_eval_sample import (
     allocate,
     sample_strata,
@@ -181,6 +182,37 @@ class TestSubjectCategoryMap(unittest.TestCase):
     def test_unknown_bucket(self):
         self.assertEqual(subject_category("99-0001"), (99, "unknown", "unknown"))
         self.assertEqual(subject_category("garbage"), (None, "unknown", "unknown"))
+
+
+class TestCommonHelpers(unittest.TestCase):
+    """Shared-kernel contracts extracted from the runners' duplicates."""
+
+    def test_item_key_round_trip(self):
+        row = {"dataset": "squad", "item_id": 7}
+        k = item_key(row)
+        self.assertEqual(k, "squad:7")
+        self.assertEqual(split_item_key(k), ("squad", "7"))
+
+    def test_item_key_splits_on_first_colon_only(self):
+        # item_ids never contain colons, but the rule is partition(":") — pin it
+        self.assertEqual(split_item_key("drop:12:30"), ("drop", "12:30"))
+
+    def test_sanitize_model_matches_legacy_regex(self):
+        self.assertEqual(sanitize_model("Qwen3/8:27B-Q4_K_M.gguf"),
+                         "Qwen3_8_27B-Q4_K_M_gguf")
+
+    def test_checkpoint_regex_follows_prefix_constant(self):
+        # the old reading runner hardcoded "reading_result_" in its regex while
+        # globbing by the constant — renaming the prefix silently broke resume
+        from code_benchmark import checkpoint as ckpt
+        with tempfile.TemporaryDirectory() as tmp:
+            t = Path(tmp)
+            (t / "custom_10_Qwen.csv").touch()
+            (t / "custom_99_Qwen.csv").touch()
+            latest = ckpt.find_latest_checkpoint(t, "Qwen", prefix="custom_")
+            self.assertEqual(latest.name, "custom_99_Qwen.csv")
+            # other prefixes never bleed in
+            self.assertIsNone(ckpt.find_latest_checkpoint(t, "Qwen", prefix="raw_result_"))
 
 
 class TestDetectScorable(unittest.TestCase):

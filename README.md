@@ -200,7 +200,7 @@ Copy-Item .env.example .env
 2. Run evaluation with Ollama / OpenAI-compatible endpoint:
 ```bash
 cd code_benchmark
-python test_ollama.py --folder "./vmlu" --workers 4
+python run_mc_eval.py --folder "./vmlu" --workers 4
 ```
 
 > **Note on Legacy Scripts**: Previous evaluation scripts (`test_gpt.py`, `test_prompt.py`) have been moved to `code_benchmark/legacy/`. See `code_benchmark/legacy/README.md` for legacy usage instructions.

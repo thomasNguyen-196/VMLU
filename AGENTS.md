@@ -9,7 +9,7 @@ VMLU (Vietnamese Multitask Language Understanding) — evaluation of Vietnamese 
 Two independent pipelines, one shared review layer. Contracts are **byte-frozen across surfaces** and asserted by CI.
 
 **MC pipeline** (frozen):
-`vmlu_mqa_v1.5/<file>.jsonl` (`id, question, choices[], answer?`) → `code_benchmark/test_ollama.py` prompts → OpenAI-compatible endpoint (ThreadPool `--workers`, 30×30s retry, auth fail-fast) → checkpoints `all_res/ollama_result/raw_result_<n>_<model>.csv` → finals `full_evaluation_<model>.csv`, `accuracy_<model>.csv`, root `submission.csv` (`id,answer`).
+`vmlu_mqa_v1.5/<file>.jsonl` (`id, question, choices[], answer?`) → `code_benchmark/run_mc_eval.py` prompts → OpenAI-compatible endpoint (ThreadPool `--workers`, 30×30s retry, auth fail-fast) → checkpoints `all_res/ollama_result/raw_result_<n>_<model>.csv` → finals `full_evaluation_<model>.csv`, `accuracy_<model>.csv`, root `submission.csv` (`id,answer`; redirect with `--submission-out`).
 Scoring: `detect_scorable` is all-or-none (mixed gold → no scoring, warning); case-insensitive exact letter match; unparseable = incorrect but stays in denominator; subject = id prefix `XX-YYYY` via the in-code `SUBJECTS` dict (**`dataset_stat.csv` ordering is different — never use it**); unknown prefixes get an explicit "unknown" bucket.
 
 **Reading pipeline**:
@@ -21,7 +21,7 @@ The blind `merge` workflow (`annotation_workbooks/`) is the separate stricter-IA
 
 ## Key Directories
 
-- `code_benchmark/` — all pipeline Python. `legacy/` is frozen history (openai==0.28.0 / transformers+GPU; excluded from every linter, not in CI) — leave it alone.
+- `code_benchmark/` — all pipeline Python (a real package: `__init__.py`). Shared kernel: `common.py` (stdlib-only — slug, `dataset:item_id` key, endpoint/argparse/logging resolution, atomic CSV; the two dependency-free files run through it on system python3), `llm.py` (client + retry + probe), `checkpoint.py` (per-model checkpoint naming/lookup). Runners: `run_mc_eval.py` (MC pipeline, ex `test_ollama.py`) + `run_reading_eval.py`. `legacy/` is frozen history (openai==0.28.0 / transformers+GPU; excluded from every linter, not in CI) — leave it alone.
 - `web/` — Next.js 16 review app (own `web/AGENTS.md`). App code in `components/`, concurrency-free logic in `lib/`, disk APIs in `app/api/`.
 - `vmlu_mqa_v1.5/`, `vmlu_squad_v1/`, `vmlu_drop_v1/` — gitignored datasets (unpacked from tracked `vmlu_datasets.zip`). SQuAD: `{id, question, context}`; DROP: `{question_id, category, context, question}`; MQA: `{id, question, choices[], answer}`.
 - `all_res/ollama_result/`, `annotation_workbooks/`, `review_state/`, `logs/` — gitignored local artifacts.
@@ -34,7 +34,7 @@ All from repo root with `.venv/bin/python` unless noted:
 
 ```bash
 # MC evaluation (gold answers required for scoring: use all_gold.jsonl / dev / valid)
-python code_benchmark/test_ollama.py --folder vmlu_mqa_v1.5 --file all_gold.jsonl --workers 4 [--resume]
+python code_benchmark/run_mc_eval.py --folder vmlu_mqa_v1.5 --file all_gold.jsonl --workers 4 [--resume]
 
 # Reading comprehension inference
 python code_benchmark/run_reading_eval.py --workers 4 [--resume]
@@ -73,12 +73,13 @@ Env: `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_API_KEY` (default `"ollama"`) vi
 
 ## Important Files
 
-- `code_benchmark/test_ollama.py` — MC pipeline: prompt/parser contract, `SUBJECTS`, retry/auth, checkpoint + scoring.
+- `code_benchmark/run_mc_eval.py` — MC pipeline: prompt/parser contract, `SUBJECTS`, checkpoint + scoring (retry/auth now in `llm.py`).
+- `code_benchmark/common.py` — the shared kernel both runners import (stdlib-only): `sanitize_model`, `item_key`/`split_item_key`, `resolve_endpoint`, `add_endpoint_args`, `setup_logging`, `read_csv_checked`, `write_csv_atomic`.
 - `code_benchmark/make_eval_sample.py` — sampler constants (`DROP_PINNED=40`, `PASSAGE_CAP=2`, `SQUAD_INFER_FLOOR=5`, bounds 230/400).
 - `code_benchmark/run_reading_eval.py`, `export_annotation_workbooks.py`, `build_review_ui.py` — reading pipeline + gold/review tools (subcommands `build|merge|review|merge-split`, `build|export-blob`).
 - `eval_set_manifest.csv` — the pre-registered 400; `gold_answer` filled only via `--apply`.
 - `web/data/review-blob.json` — tracked blob input (regenerate via `export-blob`; the revamp design doc's claim it's gitignored is stale).
-- `web/lib/types.ts` (TS contract mirror), `web/lib/slug.ts`, `web/components/ReviewApp.tsx` (identity/autosave/keyboard owner).
+- `web/lib/types.ts` (TS contract mirror), `web/lib/slug.ts`, `web/components/hooks/` (persistence+peer-sync / transfer / keyboard), `ReviewApp.tsx` (orchestration/layout only).
 - `code_benchmark/review_ui_template.html` — static fallback whose JS mirrors `web/lib` (parity asserted).
 - `.github/workflows/ci.yml`, `ruff.toml`, `.bandit.yml`, `pyrightconfig.json`, `.env.example`, `vmlu_datasets.zip`.
 
@@ -92,7 +93,7 @@ Env: `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_API_KEY` (default `"ollama"`) vi
 
 ## Testing & QA
 
-- Suite: `python code_benchmark/test_parsing.py` (standalone parity reference, 17 cases, run as a script) and `python -m unittest code_benchmark.test_suite` (56 tests / 15 classes; **must run from repo root** — package imports). Both offline: tempdirs + `MagicMock`, no network or keys.
+- Suite: `python code_benchmark/test_parsing.py` (standalone parity reference, 17 cases, run as a script) and `python -m unittest code_benchmark.test_suite` (60 tests / 16 classes; **must run from repo root** — package imports). Both offline: tempdirs + `MagicMock`, no network or keys.
 - The suite covers every pure pipeline function: allocator invariants, stratum functions, manifest shape/caps, checkpoint model isolation, review classifiers (`review` vs `merge-split` semantics), blob validation, render guard, and cross-surface contracts.
 - `TestNextContracts` runs the real TS modules (`web/lib/slug.ts`, `web/lib/export-csv.ts`) against the Python/JS references — slug parity + export-CSV byte compatibility fed back through Python `read_review`. Skips when neither bun nor node ≥ 22 is on PATH.
-- Full benchmark runs (`test_ollama.py`, `run_reading_eval.py`) need a live endpoint and models — not CI-gated.
+- Full benchmark runs (`run_mc_eval.py`, `run_reading_eval.py`) need a live endpoint and models — not CI-gated.
