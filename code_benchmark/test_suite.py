@@ -47,6 +47,7 @@ from code_benchmark.run_vbench_eval import (
     extract_mc_answer as vb_extract_mc_answer,
     extract_function_call as vb_extract_function_call,
     build_submission_rows as vb_build_submission_rows,
+    diagnose_rejection as vb_diagnose_rejection,
 )
 from code_benchmark.export_annotation_workbooks import (
     merge_answers,
@@ -568,6 +569,18 @@ class TestVbenchRunner(unittest.TestCase):
         fn_vn = dict(self.FN, name="xác_minh_giấy_tờ")
         got = vb_extract_function_call('["xác_minh_giấy_tờ": {"loai": "ung_tien"}]', [fn_vn])
         self.assertEqual(json.loads(got), [{"xác_minh_giấy_tờ": {"loai": "ung_tien"}}])
+
+    def test_diagnosis_records_wrong_answers_without_fixing_them(self):
+        # a readable call that fails validation is a MODEL error, labeled as
+        # such — and diagnose never changes what extract_function_call returns
+        self.assertEqual(vb_diagnose_rejection('["ma_ham": {"loai": "ung_tien"}]', [self.FN]),
+                         "unknown_function_name")
+        self.assertEqual(vb_diagnose_rejection(self._agentic_raw({"loai": "sai"}), [self.FN]),
+                         "off_enum_value")
+        self.assertEqual(vb_diagnose_rejection('["tra_cuu_giao_dich": {"loai": "chuyen_khoan"', [self.FN]),
+                         "truncated_output")
+        self.assertEqual(vb_diagnose_rejection("xin chào", [self.FN]), "no_call_shape_found")
+        self.assertEqual(vb_diagnose_rejection(self._agentic_raw({"loai": "ung_tien"}), [self.FN]), "")
 
 
 class TestAnnotationWorkbooks(unittest.TestCase):

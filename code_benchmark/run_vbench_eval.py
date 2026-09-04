@@ -40,14 +40,14 @@ from dotenv import load_dotenv
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
     from code_benchmark.common import (resolve_endpoint, add_endpoint_args,
                                        parse_endpoint_args, setup_logging,
-                                       RESULTS_DIR, sanitize_model)
+                                       RESULTS_DIR, sanitize_model, write_csv_atomic)
     from code_benchmark.llm import build_client, verify_credentials, call_model_with_retry
     from code_benchmark.checkpoint import find_latest_checkpoint, checkpoint_name, VBENCH_PREFIX
     from code_benchmark.run_mc_eval import build_prompt, extract_answer
 except ImportError:
     from common import (resolve_endpoint, add_endpoint_args,
                         parse_endpoint_args, setup_logging,
-                        RESULTS_DIR, sanitize_model)
+                        RESULTS_DIR, sanitize_model, write_csv_atomic)
     from llm import build_client, verify_credentials, call_model_with_retry
     from checkpoint import find_latest_checkpoint, checkpoint_name, VBENCH_PREFIX
     from run_mc_eval import build_prompt, extract_answer
@@ -252,6 +252,66 @@ def _repair_braceless_call(raw: str, functions: list[dict]) -> str:
     return ""
 
 
+def diagnose_rejection(raw: str, functions: list[dict]) -> str:
+    """Why did an agentic row end up unparsed? Never mutates the model's
+    answer — this only labels it for the record: a readable call with a
+    name off the row's schema is a MODEL ERROR (wrong function chosen),
+    not a parser failure, and must be logged as such."""
+    if extract_function_call(raw, functions):
+        return ""
+    dec = json.JSONDecoder()
+    names = {fn.get("name") for fn in functions}
+    saw_call_shape = False
+    for m in re.finditer(r'"([^\W"]{2,})"\s*:\s*(?=\{)', raw or ""):
+        saw_call_shape = True
+        name = m.group(1)
+        try:
+            args, _ = dec.raw_decode(raw, m.end())
+        except ValueError:
+            return "truncated_output"
+        if name not in names:
+            return "unknown_function_name"
+        norm = _validate_call({name: args}, functions)
+        if norm is not None:
+            return ""   # race-free: repaired elsewhere; keep consistent
+        schema = next(fn for fn in functions if fn.get("name") == name)
+        props = (schema.get("parameters") or {}).get("properties") or {}
+        required = (schema.get("parameters") or {}).get("required") or []
+        if any(r not in args for r in required):
+            return "missing_required_arg"
+        if any(k not in props for k in args):
+            return "hallucinated_arg"
+        if any(props[k].get("enum") is not None and args[k] not in props[k]["enum"]
+               for k in args):
+            return "off_enum_value"
+        return "schema_violation"
+    return "no_call_shape_found" if not saw_call_shape else "unparseable_output"
+
+
+def write_model_errors(path: Path, results: list[dict], by_id: dict[int, dict]) -> None:
+    """Durable record of every row the model failed to answer validly. The
+    submission contract forbids guessing an answer in place of a wrong one —
+    but 'not shipped' must never mean 'not recorded': each rejected answer is
+    preserved verbatim (raw_response) with a diagnosis label."""
+    rows = []
+    for r in results:
+        if str(r.get("answer", "")).strip():
+            continue
+        item = by_id.get(int(r["id"]))
+        reason = "parse_failure"
+        if item and item["track"] == "agentic":
+            reason = diagnose_rejection(r["raw_response"], item["function"])
+        rows.append({"id": r["id"], "domain": r["domain"], "track": r["track"],
+                     "reason": reason, "raw_response": r["raw_response"]})
+    if not rows:
+        return
+    write_csv_atomic(path, rows, ["id", "domain", "track", "reason", "raw_response"])
+    logging.warning(f"{len(rows)} model failure(s) recorded verbatim to {path} "
+                    "(NOT auto-corrected — a wrong answer stays wrong):")
+    for grp, n in pd.DataFrame(rows).groupby("reason").size().items():
+        logging.warning(f"    {grp:<24} {n}")
+
+
 def build_submission_rows(results: list[dict]) -> list[dict]:
     """Parsed checkpoint rows -> {id, answer} submission rows, id-sorted.
     MC answer stays a letter; agentic answer is re-parsed so the JSONL line
@@ -298,6 +358,11 @@ def parse_args():
                         help="submission jsonl path (default: submission_vbench_<model>.jsonl)")
     parser.add_argument("--submission-only", action="store_true",
                         help="skip inference; rebuild submission + stats from the latest checkpoint")
+    parser.add_argument("--retry-unparsed", action="store_true",
+                        help="with --resume: re-call only rows whose stored/raw response "
+                             "does not parse under the CURRENT parser (correct model errors are "
+                             "never touched)")
+
     add_endpoint_args(parser,
                       max_tokens_default=512,
                       max_tokens_help="Completion cap; agentic calls need the room (default: 512).",
@@ -346,23 +411,23 @@ def load_checkpoint(path: Path, by_id: dict[int, dict] | None = None) -> list[di
     return rows
 
 
-def write_final_outputs(args, model, results, result_folder):
+def write_final_outputs(args, model, results, result_folder, by_id):
     sanitized = sanitize_model(model)
     out_path = args.submission_out or Path(f"submission_vbench_{sanitized}.jsonl")
     rows = build_submission_rows(results)
     write_submission_jsonl(out_path, rows)
-    missing = len(results) - len(rows)
-    if missing:
-        logging.warning(f"{missing} row(s) unparsed -> omitted from submission "
-                        f"(server scores submitted ids only).")
     logging.info(f"Submission written to {out_path} ({len(rows)} rows)")
     pd.DataFrame(results)[CHECKPOINT_COLS].to_csv(
         result_folder / f"vbench_full_evaluation_{sanitized}.csv", index=False)
     log_track_stats(results)
+    write_model_errors(result_folder / f"vbench_failures_{sanitized}.csv", results, by_id)
 
 
 def main():
     args = parse_args()
+    if args.retry_unparsed and not args.resume:
+        raise SystemExit("Error: --retry-unparsed is a --resume modifier (it re-calls the "
+                         "unparsed rows of an existing checkpoint); add --resume.")
     result_folder = RESULTS_DIR
     result_folder.mkdir(parents=True, exist_ok=True)
 
@@ -377,6 +442,7 @@ def main():
     if args.limit:
         data = data[:args.limit]
     total = len(data)
+    by_id = {d["id"]: d for d in data}
 
     if args.submission_only:
         latest = find_latest_checkpoint(result_folder, model, prefix=VBENCH_PREFIX)
@@ -384,7 +450,7 @@ def main():
             raise SystemExit("Error: --submission-only needs a vbench_result_* "
                              f"checkpoint for model '{model}' in {result_folder}")
         logging.info(f"Rebuilding submission from checkpoint: {latest}")
-        write_final_outputs(args, model, load_checkpoint(latest, {d["id"]: d for d in data}), result_folder)
+        write_final_outputs(args, model, load_checkpoint(latest, by_id), result_folder, by_id)
         return
 
     for item in data:
@@ -400,7 +466,12 @@ def main():
         latest = find_latest_checkpoint(result_folder, model, prefix=VBENCH_PREFIX)
         if latest:
             logging.info(f"Resuming from checkpoint: {latest}")
-            existing = {r["id"]: r for r in load_checkpoint(latest, {d["id"]: d for d in data})}
+            existing = {r["id"]: r for r in load_checkpoint(latest, by_id)}
+            if args.retry_unparsed:
+                keep = {k: v for k, v in existing.items() if str(v["answer"]).strip()}
+                logging.info(f"--retry-unparsed: re-calling {len(existing) - len(keep)} "
+                             f"unparsed row(s); {len(keep)} kept verbatim.")
+                existing = keep
         else:
             logging.warning(f"No {VBENCH_PREFIX}*_{sanitized_model}.csv checkpoint found; "
                             "starting fresh.")
@@ -453,7 +524,7 @@ def main():
 
     duration = time.time() - start_time
     logging.info(f"Inference time: {duration:.2f}s ({duration/60:.2f} mins)")
-    write_final_outputs(args, model, [r for r in results if r is not None], result_folder)
+    write_final_outputs(args, model, [r for r in results if r is not None], result_folder, by_id)
     logging.info("Upload the submission at https://vbench.ai/submission")
 
 
