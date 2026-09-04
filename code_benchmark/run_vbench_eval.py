@@ -146,8 +146,11 @@ def build_agentic_prompt(question: str, functions: list) -> str:
         "- Chỉ được dùng tên hàm có trong danh sách hàm cho trước.\n"
         "- Mọi tham số bắt buộc (required) phải có mặt; tham số có enum phải "
         "dùng đúng một giá trị liệt kê trong enum.\n"
-        "- Chỉ trả về duy nhất một mảng JSON theo định dạng "
-        "[\"<tên_hàm>\": {<tham số>}] (một phần tử), không giải thích.\n\n"
+        "- Chỉ trả về duy nhất một mảng JSON một phần tử, mỗi phần tử là một "
+        "object trong ngoặc nhọn, theo đúng khuôn: "
+        "[{\"<tên_hàm>\": {\"<tham_số>\": \"<giá_trị>\"}}]. "
+        "Ví dụ: [{\"tra_cuu_thoi_tiet\": {\"thanh_pho\": \"Ha Noi\"}}]. "
+        "Không giải thích.\n\n"
         "Yêu cầu của người dùng:\n"
         + question
         + "\n\nDanh sách hàm (JSON):\n"
@@ -227,7 +230,27 @@ def extract_function_call(raw_text: str, functions: list[dict]) -> str:
             norm = _validate_call(call, functions)
             if norm is not None:
                 return json.dumps(norm, ensure_ascii=False, separators=(",", ":"))
+    return _repair_braceless_call(raw_text or "", functions)
+
+def _repair_braceless_call(raw: str, functions: list[dict]) -> str:
+    """Recover from the shape models actually emit here: '["<name>": {args}]'
+    — a quoted call name with its braces dropped (968/1000 raw responses of
+    the v2026.03.28 smoke run). Scan every '"token": {' position, raw_decode
+    the args object that starts there, and validate {name: args} through the
+    SAME _validate_call gate — a name not on this row's schema, a missing
+    required field, or an off-enum value still returns ''. Truncated args
+    fail raw_decode, so cut-off completions stay unparsed (correct)."""
+    dec = json.JSONDecoder()
+    for m in re.finditer(r'"([^\W"]{2,})"\s*:\s*(?=\{)', raw):
+        try:
+            args, _ = dec.raw_decode(raw, m.end())
+        except ValueError:
+            continue
+        norm = _validate_call({m.group(1): args}, functions)
+        if norm is not None:
+            return json.dumps(norm, ensure_ascii=False, separators=(",", ":"))
     return ""
+
 
 def build_submission_rows(results: list[dict]) -> list[dict]:
     """Parsed checkpoint rows -> {id, answer} submission rows, id-sorted.
@@ -295,18 +318,30 @@ def parse_item(item: dict, raw_response: str) -> str:
     return extract_function_call(raw_response, item["function"])
 
 
-def load_checkpoint(path: Path) -> list[dict]:
+def load_checkpoint(path: Path, by_id: dict[int, dict] | None = None) -> list[dict]:
+    """Checkpoint rows -> result dicts. When the source items are given, the
+    `answer` is RE-DERIVED from raw_response with the current parser — the
+    stored column is a snapshot of the parser at write time, so a fixed or
+    improved extractor applies to an existing run without re-calling the
+    endpoint (server scoring is aggregate-only; raw_response is the truth)."""
     cp_df = pd.read_csv(path, dtype={"id": "int64"})
     rows = []
     for _, row in cp_df.iterrows():
         raw = row.get("raw_response", "")
+        raw = "" if pd.isna(raw) else str(raw)
+        item_id = int(row["id"])
+        item = by_id.get(item_id) if by_id else None
+        if item is not None and raw:
+            answer = parse_item(item, raw)
+        else:
+            answer = "" if pd.isna(row.get("answer")) else str(row["answer"])
         rows.append({
-            "id": int(row["id"]),
+            "id": item_id,
             "domain": str(row["domain"]),
             "track": str(row["track"]),
             "question": str(row.get("question", "")),
-            "raw_response": "" if pd.isna(raw) else str(raw),
-            "answer": "" if pd.isna(row.get("answer")) else str(row["answer"]),
+            "raw_response": raw,
+            "answer": answer,
         })
     return rows
 
@@ -349,7 +384,7 @@ def main():
             raise SystemExit("Error: --submission-only needs a vbench_result_* "
                              f"checkpoint for model '{model}' in {result_folder}")
         logging.info(f"Rebuilding submission from checkpoint: {latest}")
-        write_final_outputs(args, model, load_checkpoint(latest), result_folder)
+        write_final_outputs(args, model, load_checkpoint(latest, {d["id"]: d for d in data}), result_folder)
         return
 
     for item in data:
@@ -365,7 +400,7 @@ def main():
         latest = find_latest_checkpoint(result_folder, model, prefix=VBENCH_PREFIX)
         if latest:
             logging.info(f"Resuming from checkpoint: {latest}")
-            existing = {r["id"]: r for r in load_checkpoint(latest)}
+            existing = {r["id"]: r for r in load_checkpoint(latest, {d["id"]: d for d in data})}
         else:
             logging.warning(f"No {VBENCH_PREFIX}*_{sanitized_model}.csv checkpoint found; "
                             "starting fresh.")

@@ -553,6 +553,22 @@ class TestVbenchRunner(unittest.TestCase):
         self.assertEqual(rows[0]["answer"], [{"tra_cuu_giao_dich": {"loai": "ung_tien"}}])  # real array
         self.assertEqual(rows[1]["answer"], "C")
 
+    def test_agentic_repairs_braceless_output(self):
+        # observed in the live run: ["name": {args}] — quotes kept, element
+        # braces dropped. The repair pass must recover it ONLY when the name
+        # and args validate against the row's own schemas.
+        good = '["tra_cuu_giao_dich": {"loai": "chuyen_khoan"}]'
+        self.assertEqual(json.loads(vb_extract_function_call(good, [self.FN])),
+                         [{"tra_cuu_giao_dich": {"loai": "chuyen_khoan"}}])
+        self.assertEqual(vb_extract_function_call('["tra_cuu_giao_dich": {"loai": "sai_enum"}]', [self.FN]), "")
+        self.assertEqual(vb_extract_function_call('["ma_ham_khong_ton_tai": {"loai": "chuyen_khoan"}]', [self.FN]), "")
+        # truncated args (no closing brace) stay unparsed — never repaired by guessing
+        self.assertEqual(vb_extract_function_call('["tra_cuu_giao_dich": {"loai": "chuyen_khoan"', [self.FN]), "")
+        # names carry Vietnamese diacritics in the real data
+        fn_vn = dict(self.FN, name="xác_minh_giấy_tờ")
+        got = vb_extract_function_call('["xác_minh_giấy_tờ": {"loai": "ung_tien"}]', [fn_vn])
+        self.assertEqual(json.loads(got), [{"xác_minh_giấy_tờ": {"loai": "ung_tien"}}])
+
 
 class TestAnnotationWorkbooks(unittest.TestCase):
     def test_normalize_conservative(self):
