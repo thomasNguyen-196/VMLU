@@ -27,6 +27,12 @@ vmlu_drop_v1/
 vmlu_mqa_v1.5/
 vmlu_squad_v1/
 
+# V-Bench public test + official sample (downloaded from vbench.ai; re-fetchable)
+# and the runner's generated submissions (root-level artifacts, like submission.csv)
+v_bench/
+/sample_submission.jsonl
+/submission_vbench_*.jsonl
+
 
 # Annotation workbooks (local human artifacts; the filled manifest is the committed record)
 annotation_workbooks/

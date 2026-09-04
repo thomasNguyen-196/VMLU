@@ -27,6 +27,7 @@ load_dotenv()
 
 MC_PREFIX = "raw_result_"        # the MC runner's checkpoint family
 READING_PREFIX = "reading_result_"  # the reading runner's (never collides with MC)
+VBENCH_PREFIX = "vbench_result_"  # the V-Bench public-test runner's (run_vbench_eval.py)
 
 _COUNT_RE_CACHE: dict[str, re.Pattern] = {}
 

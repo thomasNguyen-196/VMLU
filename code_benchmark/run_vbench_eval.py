@@ -1,0 +1,426 @@
+"""V-Bench public-test runner (vbench.ai, release v2026.03.28).
+
+Third runner in the pipeline family. Consumes the downloaded public test
+({id:int, question, choices[], function[], domain}) and produces a
+submission.jsonl uploadable at https://vbench.ai/submission. There are NO
+gold answers — scoring is server-side and returns only an aggregate, so the
+local contract is "parse + validate every row that leaves the checkpoint".
+
+Tracks (confirmed against the Submission & Scoring Spec on the site):
+  mc      choices[] non-empty  -> answer is a letter A..E, CLAMPED to the
+            actual number of choices on the row (frozen build_prompt /
+            extract_answer imported from run_mc_eval, never re-copied).
+  agentic function[] non-empty -> answer is [{"<fn_name>": {args}}] picked
+            from the row's own schemas; required fields present, enum values
+            verbatim. Invalid calls are NEVER shipped — they are dropped and
+            counted.
+  safety  both empty (hatespeech/politics) -> the current release ignores
+            them; skipped at load.
+
+Checkpoints follow the per-model convention (vbench_result_<count>_<slug>.csv)
+in all_res/ollama_result/; --resume/--submission-only reuse them.
+
+Run from repo root:
+  .venv/bin/python code_benchmark/run_vbench_eval.py --workers 4 [--resume]
+  .venv/bin/python code_benchmark/run_vbench_eval.py --submission-only   # rebuild jsonl from latest checkpoint
+"""
+import re
+import json
+import time
+import argparse
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
+from pathlib import Path
+
+import pandas as pd
+from tqdm import tqdm
+from dotenv import load_dotenv
+
+try:  # package run (repo root) or direct run (cwd == code_benchmark)
+    from code_benchmark.common import (resolve_endpoint, add_endpoint_args,
+                                       parse_endpoint_args, setup_logging,
+                                       RESULTS_DIR, sanitize_model)
+    from code_benchmark.llm import build_client, verify_credentials, call_model_with_retry
+    from code_benchmark.checkpoint import find_latest_checkpoint, checkpoint_name, VBENCH_PREFIX
+    from code_benchmark.run_mc_eval import build_prompt, extract_answer
+except ImportError:
+    from common import (resolve_endpoint, add_endpoint_args,
+                        parse_endpoint_args, setup_logging,
+                        RESULTS_DIR, sanitize_model)
+    from llm import build_client, verify_credentials, call_model_with_retry
+    from checkpoint import find_latest_checkpoint, checkpoint_name, VBENCH_PREFIX
+    from run_mc_eval import build_prompt, extract_answer
+
+load_dotenv()
+
+VB_FILE_DEFAULT = Path("v_bench/public-test.jsonl")
+# Coverage of the v2026.03.28 release (4141 mc + 1000 agentic). Not a hard
+# gate — rules change per release — but a mismatch means the local file is
+# from another version, exactly the drift the pipeline fails on elsewhere.
+VB_SCORED_EXPECTED = 5141
+
+CHECKPOINT_COLS = ["id", "domain", "track", "question", "raw_response", "answer"]
+
+_MC_LETTERS = "ABCDE"
+
+
+# ── Row classification (fail-fast on contract drift) ────────────────────────
+
+def classify_track(row: dict) -> str:
+    """'mc' | 'agentic' | 'safety' from one public-test row. A row carrying
+    BOTH choices and function is contract drift (the release keeps tracks
+    disjoint) and aborts the run."""
+    has_choices = bool(row.get("choices"))
+    has_function = bool(row.get("function"))
+    if has_choices and has_function:
+        raise SystemExit(f"Contract drift: item id={row.get('id')} carries both "
+                         "choices and function — tracks must be disjoint.")
+    if has_choices:
+        return "mc"
+    if has_function:
+        return "agentic"
+    return "safety"
+
+
+def load_vbench(path: Path) -> list[dict]:
+    """Read + validate public-test.jsonl, keep the scorable rows (mc/agentic),
+    skip safety rows (counted and logged). Fail-fast on duplicate ids and
+    missing required keys."""
+    if not path.exists():
+        raise SystemExit(f"Error: V-Bench public test not found at '{path}'. "
+                         "Download it from https://vbench.ai/dataset.")
+    rows: list[dict] = []
+    seen: set[int] = set()
+    n_safety = 0
+    with open(path, encoding="utf-8") as f:
+        for lineno, line in enumerate(f, 1):
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            missing = {"id", "question", "choices", "function", "domain"} - set(row)
+            if missing:
+                raise SystemExit(f"Malformed row at {path}:{lineno}: missing {sorted(missing)}")
+            if row["id"] in seen:
+                raise SystemExit(f"Duplicate id {row['id']} at {path}:{lineno}")
+            seen.add(row["id"])
+            row["track"] = classify_track(row)
+            if row["track"] == "safety":
+                n_safety += 1
+                continue
+            if row["track"] == "mc" and len(row["choices"]) > len(_MC_LETTERS):
+                raise SystemExit(f"Item id={row['id']} has {len(row['choices'])} choices — "
+                                 f"beyond the frozen {_MC_LETTERS[-1]}-letter extraction range.")
+            rows.append(row)
+    if not rows:
+        raise SystemExit(f"Error: no scorable (mc/agentic) rows in {path}")
+    logging.info(f"Loaded {len(rows)} scorable rows "
+                 f"({sum(r['track'] == 'mc' for r in rows)} mc / "
+                 f"{sum(r['track'] == 'agentic' for r in rows)} agentic); "
+                 f"{n_safety} safety rows skipped (not scored in this release).")
+    if len(rows) != VB_SCORED_EXPECTED:
+        logging.warning(f"Release drift: expected {VB_SCORED_EXPECTED} scorable rows "
+                        f"(v2026.03.28), found {len(rows)}. Update after checking the site.")
+    return rows
+
+
+# ── MC: frozen parser + per-row letter clamp ────────────────────────────────
+
+def extract_mc_answer(raw_text: str, choices: list) -> str:
+    """Frozen extract_answer, then clamp: a letter beyond the row's actual
+    option count (e.g. 'E' on 4 choices) is NOT a valid submission value."""
+    letter = extract_answer(raw_text)
+    if not letter:
+        return ""
+    return letter if letter in _MC_LETTERS[:len(choices)] else ""
+
+
+# ── Agentic: prompt + validated function-call extraction ────────────────────
+
+def build_agentic_prompt(question: str, functions: list) -> str:
+    schema_json = json.dumps(functions, ensure_ascii=False, separators=(",", ":"))
+    return (
+        "Bạn là trợ lý AI có khả năng gọi hàm. Chọn ĐÚNG MỘT hàm phù hợp nhất "
+        "với yêu cầu dưới đây và điền đầy đủ tham số theo sơ đồ của hàm đó.\n"
+        "Quy tắc:\n"
+        "- Chỉ được dùng tên hàm có trong danh sách hàm cho trước.\n"
+        "- Mọi tham số bắt buộc (required) phải có mặt; tham số có enum phải "
+        "dùng đúng một giá trị liệt kê trong enum.\n"
+        "- Chỉ trả về duy nhất một mảng JSON theo định dạng "
+        "[\"<tên_hàm>\": {<tham số>}] (một phần tử), không giải thích.\n\n"
+        "Yêu cầu của người dùng:\n"
+        + question
+        + "\n\nDanh sách hàm (JSON):\n"
+        + schema_json
+        + "\n\nĐầu ra:\n"
+    )
+
+
+def _as_object(candidate):
+    """Normalize a candidate (str | dict | list) to a parsed Python object."""
+    if isinstance(candidate, str):
+        try:
+            return json.loads(candidate)
+        except (ValueError, TypeError):
+            return None
+    return candidate
+
+
+def _iter_json_candidates(raw: str):
+    """Yield parse attempts in confidence order: fenced ```json``` blocks
+    first, then the whole text, then every substring that starts with [ or {
+    (raw_decode scan). Never guesses across two candidate arrays."""
+    text = raw.strip()
+    if not text:
+        return
+    for m in re.finditer(r"```(?:json)?\s*(.+?)\s*```", text, re.DOTALL):
+        yield m.group(1)
+    yield text
+    dec = json.JSONDecoder()
+    for i, ch in enumerate(text):
+        if ch in "[{":
+            try:
+                obj, _ = dec.raw_decode(text, i)
+            except ValueError:
+                continue
+            yield obj
+
+
+def _validate_call(call_obj, functions: list[dict]) -> list | None:
+    """One candidate object -> [{"name": args}] (normalized) or None.
+    Rejects: non-dict/single-key shapes, unknown names, non-dict args,
+    missing required fields, extra fields outside the schema, and enum
+    values not verbatim in the enum list. No coercion — the backend
+    compares key/value after normalization, we ship exactly what validated."""
+    if not isinstance(call_obj, dict) or len(call_obj) != 1:
+        return None
+    name, args = next(iter(call_obj.items()))
+    schema = next((fn for fn in functions if fn.get("name") == name), None)
+    if schema is None or not isinstance(args, dict):
+        return None
+    props: dict = (schema.get("parameters") or {}).get("properties") or {}
+    required: list = (schema.get("parameters") or {}).get("required") or []
+    if any(r not in args for r in required):
+        return None
+    if any(k not in props for k in args):
+        return None
+    for key, val in args.items():
+        enum = props[key].get("enum")
+        if enum is not None and val not in enum:
+            return None
+    return [{name: args}]
+
+
+def extract_function_call(raw_text: str, functions: list[dict]) -> str:
+    """Model output -> canonical compact JSON '[{"name":{...}}]' or '' when
+    no candidate validates (never ship a malformed call). An array with
+    several calls contributes its first element only."""
+    for cand in _iter_json_candidates(raw_text or ""):
+        obj = _as_object(cand)
+        if isinstance(obj, dict):
+            calls = [obj]
+        elif isinstance(obj, list) and obj:
+            calls = obj
+        else:
+            continue
+        for call in calls:
+            norm = _validate_call(call, functions)
+            if norm is not None:
+                return json.dumps(norm, ensure_ascii=False, separators=(",", ":"))
+    return ""
+
+def build_submission_rows(results: list[dict]) -> list[dict]:
+    """Parsed checkpoint rows -> {id, answer} submission rows, id-sorted.
+    MC answer stays a letter; agentic answer is re-parsed so the JSONL line
+    carries a real array, not a string. Unparsed rows are dropped (missing id
+    = no points server-side; a fabricated guess is not)."""
+    rows = []
+    for r in results:
+        ans = str(r.get("answer", "")).strip()
+        if not ans:
+            continue
+        if r["track"] == "agentic":
+            ans = json.loads(ans)
+        rows.append({"id": int(r["id"]), "answer": ans})
+    return sorted(rows, key=lambda x: x["id"])
+
+
+def write_submission_jsonl(path: Path, rows: list[dict]) -> None:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    tmp.replace(path)
+
+
+def log_track_stats(results: list[dict]) -> None:
+    df = pd.DataFrame(results)
+    df["ok"] = df["answer"].astype(str) != ""
+    for track, grp in df.groupby("track"):
+        logging.info(f"[{track}] parsed {int(grp['ok'].sum())}/{len(grp)}")
+        for domain, d in grp.groupby("domain"):
+            logging.info(f"    {domain:<22} {int(d['ok'].sum()):>4}/{len(d)}")
+
+
+# ── CLI + runner ────────────────────────────────────────────────────────────
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Run models on the V-Bench public test and build an uploadable submission.")
+    parser.add_argument("--file", type=Path, default=VB_FILE_DEFAULT,
+                        help="public-test.jsonl path (default: v_bench/public-test.jsonl)")
+    parser.add_argument("--track", choices=["all", "mc", "agentic"], default="all",
+                        help="subset of scorable tracks to run (default: all)")
+    parser.add_argument("--submission-out", type=Path, default=None,
+                        help="submission jsonl path (default: submission_vbench_<model>.jsonl)")
+    parser.add_argument("--submission-only", action="store_true",
+                        help="skip inference; rebuild submission + stats from the latest checkpoint")
+    add_endpoint_args(parser,
+                      max_tokens_default=512,
+                      max_tokens_help="Completion cap; agentic calls need the room (default: 512).",
+                      resume_help="Resume from the latest vbench_result_* checkpoint for THIS model.")
+    return parse_endpoint_args(parser)
+
+
+def prepare_prompt(item: dict) -> str:
+    if item["track"] == "mc":
+        return build_prompt(item["question"], item["choices"])
+    return build_agentic_prompt(item["question"], item["function"])
+
+
+def parse_item(item: dict, raw_response: str) -> str:
+    """Parsed submission value as string (letter, or compact JSON)."""
+    if item["track"] == "mc":
+        return extract_mc_answer(raw_response, item["choices"])
+    return extract_function_call(raw_response, item["function"])
+
+
+def load_checkpoint(path: Path) -> list[dict]:
+    cp_df = pd.read_csv(path, dtype={"id": "int64"})
+    rows = []
+    for _, row in cp_df.iterrows():
+        raw = row.get("raw_response", "")
+        rows.append({
+            "id": int(row["id"]),
+            "domain": str(row["domain"]),
+            "track": str(row["track"]),
+            "question": str(row.get("question", "")),
+            "raw_response": "" if pd.isna(raw) else str(raw),
+            "answer": "" if pd.isna(row.get("answer")) else str(row["answer"]),
+        })
+    return rows
+
+
+def write_final_outputs(args, model, results, result_folder):
+    sanitized = sanitize_model(model)
+    out_path = args.submission_out or Path(f"submission_vbench_{sanitized}.jsonl")
+    rows = build_submission_rows(results)
+    write_submission_jsonl(out_path, rows)
+    missing = len(results) - len(rows)
+    if missing:
+        logging.warning(f"{missing} row(s) unparsed -> omitted from submission "
+                        f"(server scores submitted ids only).")
+    logging.info(f"Submission written to {out_path} ({len(rows)} rows)")
+    pd.DataFrame(results)[CHECKPOINT_COLS].to_csv(
+        result_folder / f"vbench_full_evaluation_{sanitized}.csv", index=False)
+    log_track_stats(results)
+
+
+def main():
+    args = parse_args()
+    result_folder = RESULTS_DIR
+    result_folder.mkdir(parents=True, exist_ok=True)
+
+    base_url, api_key, model = resolve_endpoint(args)
+    sanitized_model = sanitize_model(model)
+    setup_logging(Path("logs") / f"vbench_{sanitized_model}.log")
+    logging.info(f"Model: {model} | Base URL: {base_url} | workers: {args.workers}")
+
+    data = load_vbench(args.file)
+    if args.track != "all":
+        data = [d for d in data if d["track"] == args.track]
+    if args.limit:
+        data = data[:args.limit]
+    total = len(data)
+
+    if args.submission_only:
+        latest = find_latest_checkpoint(result_folder, model, prefix=VBENCH_PREFIX)
+        if not latest:
+            raise SystemExit("Error: --submission-only needs a vbench_result_* "
+                             f"checkpoint for model '{model}' in {result_folder}")
+        logging.info(f"Rebuilding submission from checkpoint: {latest}")
+        write_final_outputs(args, model, load_checkpoint(latest), result_folder)
+        return
+
+    for item in data:
+        item["prompt"] = prepare_prompt(item)
+
+    client = build_client(base_url, api_key)
+    logging.info("Verifying endpoint connectivity and credentials...")
+    verify_credentials(client, model)
+    logging.info("Credentials verified successfully.")
+
+    existing: dict[int, dict] = {}
+    if args.resume:
+        latest = find_latest_checkpoint(result_folder, model, prefix=VBENCH_PREFIX)
+        if latest:
+            logging.info(f"Resuming from checkpoint: {latest}")
+            existing = {r["id"]: r for r in load_checkpoint(latest)}
+        else:
+            logging.warning(f"No {VBENCH_PREFIX}*_{sanitized_model}.csv checkpoint found; "
+                            "starting fresh.")
+
+    results: list[dict | None] = [None] * total
+    to_process = []
+    for idx, item in enumerate(data):
+        if item["id"] in existing:
+            results[idx] = existing[item["id"]]
+        else:
+            to_process.append((idx, item))
+    logging.info(f"Remaining to evaluate: {len(to_process)}/{total}")
+
+    lock = Lock()
+    completed = len(existing)
+    start_time = time.time()
+
+    def process_item(index: int, item: dict):
+        nonlocal completed
+        raw_ans = call_model_with_retry(
+            client=client, model=model, prompt=item["prompt"],
+            temperature=args.temperature, seed=args.seed, max_tokens=args.max_tokens)
+        res = {
+            "id": item["id"],
+            "domain": item["domain"],
+            "track": item["track"],
+            "question": item["question"],
+            "raw_response": raw_ans,
+            "answer": parse_item(item, raw_ans),
+        }
+        with lock:
+            results[index] = res
+            completed += 1
+            if completed % 100 == 0 or completed == total:
+                valid = [r for r in results if r is not None]
+                pd.DataFrame(valid)[CHECKPOINT_COLS].to_csv(
+                    result_folder / checkpoint_name(model, len(valid), prefix=VBENCH_PREFIX),
+                    index=False)
+        return index
+
+    if to_process:
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            futures = {executor.submit(process_item, idx, item): idx for idx, item in to_process}
+            with tqdm(total=total, initial=len(existing), desc=f"V-Bench {model}") as pbar:
+                for future in as_completed(futures):
+                    future.result()
+                    pbar.update(1)
+    else:
+        logging.info("All rows already resolved from checkpoint.")
+
+    duration = time.time() - start_time
+    logging.info(f"Inference time: {duration:.2f}s ({duration/60:.2f} mins)")
+    write_final_outputs(args, model, [r for r in results if r is not None], result_folder)
+    logging.info("Upload the submission at https://vbench.ai/submission")
+
+
+if __name__ == "__main__":
+    main()

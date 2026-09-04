@@ -42,6 +42,12 @@ from code_benchmark.run_reading_eval import (
     resume_key,
     find_latest_reading_checkpoint,
 )
+from code_benchmark.run_vbench_eval import (
+    classify_track as vb_classify_track,
+    extract_mc_answer as vb_extract_mc_answer,
+    extract_function_call as vb_extract_function_call,
+    build_submission_rows as vb_build_submission_rows,
+)
 from code_benchmark.export_annotation_workbooks import (
     merge_answers,
     normalize_answer,
@@ -472,6 +478,80 @@ class TestReadingRunner(unittest.TestCase):
             assert latest is not None
             self.assertEqual(latest.name, "reading_result_400_Qwen.csv")  # still ignores MC
             self.assertIsNone(find_latest_reading_checkpoint(tmp, "TESTMODELSMOKE"))  # legacy ignored
+
+
+class TestVbenchRunner(unittest.TestCase):
+    FN = {
+        "name": "tra_cuu_giao_dich",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "loai": {"type": "string", "enum": ["chuyen_khoan", "ung_tien"]},
+                "ma_khu_vuc": {"type": "string"},
+            },
+            "required": ["loai"],
+        },
+    }
+
+    def _agentic_raw(self, args):
+        return json.dumps([{self.FN["name"]: args}], ensure_ascii=False)
+
+    def test_classify_track(self):
+        self.assertEqual(vb_classify_track({"id": 1, "choices": ["A. x"], "function": [], "domain": "d"}), "mc")
+        self.assertEqual(vb_classify_track({"id": 2, "choices": [], "function": [self.FN], "domain": "d"}), "agentic")
+        self.assertEqual(vb_classify_track({"id": 3, "choices": [], "function": [], "domain": "hatespeech"}), "safety")
+        with self.assertRaises(SystemExit):   # tracks are disjoint in the release
+            vb_classify_track({"id": 4, "choices": ["A"], "function": [self.FN], "domain": "d"})
+
+    def test_mc_letter_clamped_to_row_choices(self):
+        # frozen extract_answer accepts A-E; the submission label must exist on THIS row
+        self.assertEqual(vb_extract_mc_answer("Đáp án: D", ["A. a", "B. b", "C. c", "D. d"]), "D")
+        self.assertEqual(vb_extract_mc_answer("E", ["A. a", "B. b", "C. c", "D. d"]), "")
+        self.assertEqual(vb_extract_mc_answer("C", ["A. a", "B. b", "C. c"]), "C")
+        self.assertEqual(vb_extract_mc_answer("tôi không chắc", ["A. a", "B. b"]), "")
+
+    def test_agentic_valid_output_shapes(self):
+        call = self._agentic_raw({"loai": "chuyen_khoan"})
+        for raw in (call,
+                    f"```json\n{call}\n```",
+                    f"Suy luận lòng vòng.\n{call}\nTrên đây là lựa chọn của tôi."):
+            got = vb_extract_function_call(raw, [self.FN])
+            self.assertEqual(json.loads(got), [{"tra_cuu_giao_dich": {"loai": "chuyen_khoan"}}],
+                             f"failed for shape: {raw[:30]}")
+        # optional fields the model filled in are kept
+        got = vb_extract_function_call(self._agentic_raw({"loai": "ung_tien", "ma_khu_vuc": "VN-HN"}), [self.FN])
+        self.assertEqual(json.loads(got)[0][self.FN["name"]], {"loai": "ung_tien", "ma_khu_vuc": "VN-HN"})
+
+    def test_agentic_never_ships_invalid_calls(self):
+        bad = [
+            json.dumps({"khoong_co_thuc": {"loai": "chuyen_khoan"}}),      # unknown name
+            json.dumps([{"tra_cuu_giao_dich": {}}]),                       # missing required
+            self._agentic_raw({"loai": "chuyen_huong"}),                   # enum value not in list
+            self._agentic_raw({"loai": "chuyen_khoan", "cot_ma": 1}),      # hallucinated field
+            "tôi không thể trả lời",                                       # no JSON at all
+            "",                                                            # empty
+        ]
+        for raw in bad:
+            self.assertEqual(vb_extract_function_call(raw, [self.FN]), "", f"leaked: {raw[:40]}")
+
+    def test_agentic_candidate_ordering(self):
+        good = self._agentic_raw({"loai": "chuyen_khoan"})
+        bad = self._agentic_raw({"loai": "khong_hop_le"})
+        # an invalid call earlier in the text does not block a later valid one
+        self.assertNotEqual(vb_extract_function_call(f"{bad} rồi {good}", [self.FN]), "")
+        # multi-call arrays ship the first element only
+        self.assertNotEqual(vb_extract_function_call(json.dumps([json.loads(good)[0], {"x": {}}]), [self.FN]), "")
+
+    def test_submission_rows_shape(self):
+        results = [
+            {"id": 9, "track": "mc", "answer": "C"},
+            {"id": 3, "track": "agentic", "answer": self._agentic_raw({"loai": "ung_tien"})},
+            {"id": 5, "track": "mc", "answer": ""},          # unparsed -> dropped, never guessed
+        ]
+        rows = vb_build_submission_rows(results)
+        self.assertEqual([r["id"] for r in rows], [3, 9])    # id-sorted
+        self.assertEqual(rows[0]["answer"], [{"tra_cuu_giao_dich": {"loai": "ung_tien"}}])  # real array
+        self.assertEqual(rows[1]["answer"], "C")
 
 
 class TestAnnotationWorkbooks(unittest.TestCase):
