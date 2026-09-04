@@ -46,6 +46,7 @@ from code_benchmark.run_vbench_eval import (
     classify_track as vb_classify_track,
     extract_mc_answer as vb_extract_mc_answer,
     extract_function_call as vb_extract_function_call,
+    build_agentic_prompt as vb_build_agentic_prompt,
     build_submission_rows as vb_build_submission_rows,
     diagnose_rejection as vb_diagnose_rejection,
     parse_choice as vb_parse_choice,
@@ -644,6 +645,18 @@ class TestVbenchRunner(unittest.TestCase):
         got = {r["id"]: r["answer"] for r in out}
         self.assertEqual(json.loads(got[5]), [{"tra_cuu_giao_dich": {"loai": "chuyen_khoan"}}])
         self.assertEqual(got[6], guided_ans)
+
+    def test_prompt_styles_minimal_vs_detailed(self):
+        q, fns = "Câu hỏi test XYZ?", [self.FN]
+        minimal = vb_build_agentic_prompt(q, fns, "minimal")
+        detailed = vb_build_agentic_prompt(q, fns, "detailed")
+        self.assertEqual(minimal.splitlines()[0], q)          # question comes FIRST, raw
+        self.assertIn("tra_cuu_giao_dich", minimal)           # row's own schema present
+        for leak in ("Bạn là trợ lý", "Quy tắc:", "tra_cuu_thoi_tiet", "Không giải thích"):
+            self.assertNotIn(leak, minimal)                   # no role/rules/example/CoT ban
+        self.assertIn("tra_cuu_thoi_tiet", detailed)          # detailed keeps the example
+        # default must be the honest condition
+        self.assertEqual(vb_build_agentic_prompt(q, fns), minimal)
 
 
 class TestAnnotationWorkbooks(unittest.TestCase):

@@ -137,8 +137,19 @@ def extract_mc_answer(raw_text: str, choices: list) -> str:
 
 # ── Agentic: prompt + validated function-call extraction ────────────────────
 
-def build_agentic_prompt(question: str, functions: list) -> str:
+def build_agentic_prompt(question: str, functions: list, style: str = "minimal") -> str:
+    """`minimal` (default) sends the question + the row's own function schema
+    plus ONLY the official answer-format line — no rule restatement, no
+    format example, no 'do not explain' instruction. Anything more measures
+    the prompt, not the model, and pre-empts the few-shot/CoT conditions we
+    want to ablate ourselves. `detailed` keeps the full-guidance variant as
+    an explicit comparison condition (used by the first full run)."""
     schema_json = json.dumps(functions, ensure_ascii=False, separators=(",", ":"))
+    if style == "minimal":
+        return (question
+                + "\n\nDanh sách hàm (JSON):\n" + schema_json
+                + "\n\nTrả lời duy nhất bằng JSON theo khuôn: "
+                  "[{\"<tên_hàm>\": {\"<tham_số>\": <giá_trị>}}]\n")
     return (
         "Bạn là trợ lý AI có khả năng gọi hàm. Chọn ĐÚNG MỘT hàm phù hợp nhất "
         "với yêu cầu dưới đây và điền đầy đủ tham số theo sơ đồ của hàm đó.\n"
@@ -487,6 +498,10 @@ def parse_args():
                         help="with --resume: re-ask agentic rows that have no valid answer as a "
                              "numbered interview (function, then one question per parameter); the "
                              "tool supplies JSON syntax only, the model makes every decision")
+    parser.add_argument("--prompt-style", choices=["minimal", "detailed"], default="minimal",
+                        help="agentic prompt condition: minimal = question + schema + official "
+                             "format line only (default); detailed = full-guidance variant. Use a "
+                             "distinct --model slug per condition to keep checkpoints separate")
 
     add_endpoint_args(parser,
                       max_tokens_default=512,
@@ -495,10 +510,10 @@ def parse_args():
     return parse_endpoint_args(parser)
 
 
-def prepare_prompt(item: dict) -> str:
+def prepare_prompt(item: dict, style: str = "minimal") -> str:
     if item["track"] == "mc":
         return build_prompt(item["question"], item["choices"])
-    return build_agentic_prompt(item["question"], item["function"])
+    return build_agentic_prompt(item["question"], item["function"], style)
 
 
 def parse_item(item: dict, raw_response: str) -> str:
@@ -563,7 +578,8 @@ def main():
     base_url, api_key, model = resolve_endpoint(args)
     sanitized_model = sanitize_model(model)
     setup_logging(Path("logs") / f"vbench_{sanitized_model}.log")
-    logging.info(f"Model: {model} | Base URL: {base_url} | workers: {args.workers}")
+    logging.info(f"Model: {model} | Base URL: {base_url} | workers: {args.workers} "
+                 f"| agentic prompt-style: {args.prompt_style}")
 
     data = load_vbench(args.file)
     if args.track != "all":
@@ -583,7 +599,7 @@ def main():
         return
 
     for item in data:
-        item["prompt"] = prepare_prompt(item)
+        item["prompt"] = prepare_prompt(item, args.prompt_style)
 
     client = build_client(base_url, api_key)
     logging.info("Verifying endpoint connectivity and credentials...")
