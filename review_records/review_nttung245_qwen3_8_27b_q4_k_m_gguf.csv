@@ -4,7 +4,7 @@ nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1435,comparison,reject,10,Liverpool,"Hỏ
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6077,add_sub,accept,"11,5 cm",,"Quả đại ~8 cm + mào lông đầu hạt ~3,5 cm = 11,5 cm."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3964,selection,accept,351,,Đoạn nêu Pháp tăng 351 ca tử vong so với một ngày trước.
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,980,comparison,accept,ngành xây dựng,,"Xây dựng đạt 99,09% — thấp nhất trong 5 ngành."
-nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3051,count,accept,4,,"4 mốc trữ lượng chứng minh: 100 (10/2007), 172 (2/2008), 211,17 (2009), 300,9 (2015)."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3051,count,reject,4,3,"Chỉ có 3 mốc được nêu rõ nhãn ""đã được chứng minh"": 100 tỷ thùng (10/2007), 12,4 tỷ thùng (10/2007 ở Faja del Orinoco), và 172 tỷ thùng (2/2008). Mốc 211,17 tỷ (2009) là dầu ""thông thường"", mốc 300,9 tỷ (2015) là ""ước tính"". Model trả lời 4 là sai."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9209,comparison,accept,Vào tháng 10 năm 2007,,100 tỷ thùng (10/2007) là mức thấp nhất được nêu.
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1039,add_sub,accept,"50,25%",,"Đoạn nêu đúng tăng 50,25% so với 2010-2015."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,8758,comparison,accept,tiếng Anh,,"90,5% nói tiếng Anh — ngôn ngữ đầu tiên phổ biến nhất."
@@ -29,7 +29,7 @@ nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,713,comparison,reject,1954,1952,"Viện t
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6593,add_sub,accept,95.000,,"Quân số tăng từ 135.000 (1952) lên 230.000 (1954), chênh lệch đúng 95.000 người."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2183,add_sub,accept,"0,40%",,"Tỷ lệ người Mỹ bản xứ 0,53% nhiều hơn người châu Á 0,13% đúng 0,40 điểm %."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,3916,comparison,accept,25-44,,"Nhóm 25-44 chiếm 27,80% là tỷ lệ cao nhất trong các nhóm tuổi, model chọn đúng."
-nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5493,comparison,accept,202%,,"Tỷ lệ tăng kim ngạch xuất khẩu 202% cao hơn tăng thu ngân sách 43% so với cùng kỳ, model chỉ đúng tỷ lệ cao nhất."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5493,comparison,reject,202%,tỷ lệ tăng kim ngạch xuất khẩu (202%),"XK tăng 202% > thu ngân sách tăng 43% nên 202% là số cao nhất, nhưng câu hỏi 'đâu là tỷ lệ' yêu cầu nêu tên tỷ lệ — model chỉ trả số trần (sai dạng; xem drop:9060, drop:6525). Đổi thành reject."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1652,count,accept,10,,"Đoạn văn liệt kê 10 loại tiền giấy: 2, 5, 10, 20, 50, 100, 500, 1.000, 5.000 và 10.000 afghani."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4026,other,accept,1.000 afghani,,"1.000 afghani gấp đôi 500 afghani, model chọn đúng mệnh giá lớn hơn."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,939,count,reject,8,9,"Đoạn văn nêu 9 công việc/khóa học riêng biệt (2 khóa học Gymnasium và Delft cộng 7 công việc: Deventer, Văn phòng Sáng chế, HĐND Rijswijk, lãnh đạo NVV, giám đốc đảng, tổng biên tập, HĐND Amsterdam); model đếm thiếu 1."
@@ -106,7 +106,7 @@ nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4112,count,reject,Klin,Một,"Hỏi 'bao 
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,253,add_sub,accept,5.864,,13.739 (1990) − 7.875 (1954) = 5.864 người.
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9213,comparison,accept,Bộ Tư pháp,,Bộ Tư pháp giam 1.649.804 tù nhân so với 650.000 của Bộ Công an — lớn hơn.
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9318,selection,reject,2,Một,"Hai giải đầu Carlsen bất bại (+2−0, +3−0); chỉ giải Na Uy có 1 trận thua trước So (−1)."
-nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,10085,other,reject,"33,25%","49,92%","5,99/12 = 49,92% giá gốc; 33,25% là MỨC GIẢM."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,10085,other,reject,"33,25%","49,92%","5,99/12 ≈ 49,92% giá gốc; mức giảm đúng là (12−5,99)/12 = 50,08%; con số 33,25% của model không khớp phép tính nào."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4498,comparison,reject,32 năm,Nhóm 25 đến 44 tuổi,"Tuổi trung bình 32 nằm trong nhóm 25-44; hỏi 'nhóm tuổi nào' phải trả tên nhóm, không lặp lại '32 năm'."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4531,other,reject,Thấp hơn,cao hơn,"Cơ Tiền trung bộ có 12 đội × 5 thuyền = 60 thuyền, cao hơn 4 đội × 5 = 20 thuyền của nhóm thủy quân."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4598,add_sub,accept,"0,61",,"3,28 − 2,67 = 0,61, đúng."
@@ -148,7 +148,7 @@ nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5511,count,accept,861,,"Đoạn văn ghi 
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,193,add_sub,reject,1.427.000,477.000 người,"Theo báo cáo chính thức, bị thương 1.797.000 và thiệt mạng 1.320.000 nên chênh lệch là 477.000; con số 1.427.000 của mô hình không tính ra được từ số liệu nào của đoạn văn."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,9134,selection,accept,"6,002 triệu đồng/tháng",,"Đoạn văn nêu Hà Nội 6,002 triệu đồng/tháng năm 2021, khớp đáp án."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,6525,comparison,reject,"22,80%","dưới độ tuổi 18 (22,80%)","Hỏi 'cái nào lớn hơn' → cần nêu nhóm tuổi, không trả trần con số."
-nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,444,add_sub,reject,311.755,Không tính được — Ý không nêu số ca nhiễm mới trong ngày,"Mỹ thêm 211.762 ca nhiễm mới và Ý tăng 23.225 ca (từ 23.225 lên 1,66 triệu), tổng là 234.987; mô hình dùng sai 993 ca tử vong của Ý nên ra 311.755."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,444,add_sub,reject,311.755,≈234.987,"Mỹ thêm 211.762 ca nhiễm mới và Ý tăng 23.225 ca (từ 23.225 lên 1,66 triệu), tổng cộng là ≈234.987 ca; mô hình trả lời 311.755 không có căn cứ từ dữ liệu."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5179,count,accept,4,,"Cả 4 quốc gia Anh, Italy, Pháp, Đức đều nêu số ca tử vong mới (428, 262, 351, 67), khớp đáp án 4."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2701,comparison,reject,25-44,"nhóm dưới 18 tuổi (27,00%)","So các nhóm 27,00% / 7,50% / 26,90% / 22,60% / 16,10% thì cao nhất là dưới 18 tuổi với 27,00%, chỉ nhỉnh hơn nhóm 25–44 (26,90%)."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,583,comparison,reject,Không thể so sánh,"Phòng không có 4 tiểu đoàn (13, 27, 31, 615), nhiều hơn Thiết giáp chỉ có 2 tiểu đoàn (13, 43)","Đoạn văn nêu đủ quân số tiểu đoàn của cả hai phần nên so sánh được, mô hình trả lời 'Không thể so sánh' là sai."
@@ -161,7 +161,7 @@ nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1105,count,reject,Quân đoàn bộ binh 
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1646,count,reject,10,9,"Sư đoàn bộ binh gồm 87, 206, 330 (quân đoàn 6), 35, 252, 342 (quân đoàn 9) và 85, 205, 233 (quân đoàn 43) là 9; 4 sư đoàn đổ bộ đường không không phải bộ binh."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1288,comparison,reject,Xã Lương Hòa,"Lớn nhất: xã Đa Lộc (714,8 ha); nhỏ nhất: xã Nguyệt Hóa (187,13 ha)","Trong ba xã sáp nhập vào thị xã Trà Vinh (Nguyệt Hóa 187,13 ha, Đa Lộc 714,8 ha, Lương Hòa 400,16 ha) thì Lương Hòa ở giữa, mô hình lại chỉ nêu một xã là thiếu và sai."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,1495,comparison,reject,137.221 người,quận Carcassonne,Câu hỏi 'quận nào nhiều hơn' cần tên quận (Carcassonne 137.221 người so với Limoux 42.247 người năm 1990); mô hình trả lời con số dân số là sai dạng đáp án.
-nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2741,count,reject,10,15,"Thiết giáp của Tập đoàn quân 21 có 4 lữ đoàn và 6 trung đoàn trong Quân đoàn xe tăng cận vệ 2 (3 lữ đoàn xe tăng + 1 lữ đoàn cơ giới + 2 trung đoàn pháo tự hành + 2 trung đoàn pháo chống tăng + 1 trung đoàn súng cối + 1 trung đoàn phòng không) cộng 1 lữ đoàn xe tăng cận vệ 23 và 4 trung đoàn (xe tăng 248, xe tăng cận vệ 64, pháo tự hành 1494, 1830) = 15; mô hình đếm 10 là bỏ 5 đơn vị ngoài quân đoàn."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2741,count,reject,10,17,"Gồm 2 đơn vị ở danh sách thiết giáp đầu đoạn (Lữ đoàn 153, Trung đoàn 119) + 4 lữ đoàn và 6 trung đoàn thuộc Quân đoàn xe tăng cận vệ 2 + 1 lữ đoàn 23 + 4 trung đoàn độc lập (248, 64, 1494, 1830) = tổng 17 đơn vị lữ đoàn và trung đoàn."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,5954,count,reject,3 quân đoàn và 7 sư đoàn,"2 quân đoàn (61, 69) và 7 sư đoàn","Đoạn văn chỉ nêu 2 quân đoàn bộ binh (61 và 69) với tổng cộng 7 sư đoàn, model đếm nhầm sư đoàn 63 thành quân đoàn thứ ba."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,4262,comparison,accept,18 đến 24,,"Nhóm 18-24 chỉ chiếm 9,10%, thấp nhất trong các nhóm tuổi (dưới 18: 24,7%; 25-44: 29,8%; 45-64: 22,5%; 65+: 14,0%)."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,drop,2216,count,reject,"1,9 triệu bản",2,"Hỏi số PHIÊN BẢN mở rộng: Opposing Force + Blue Shift = 2; '1,9 triệu' là số bản bán."
@@ -269,7 +269,7 @@ nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2742,mid-direct,accept,4 tháng 2 năm 2
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1982,mid-direct,accept,tất cả các tầng lớp xã hội Nhật Bản,,"Đoạn văn: 'Ikebana trở thành một môn nghệ thuật dành cho tất cả các tầng lớp xã hội Nhật Bản', span trung thành."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,1996,short-direct,accept,thịt lợn,,"Đoạn văn cho thịt bò xếp thứ ba 'sau thịt lợn và thịt gà (lần lượt là 38% và 30%)', vậy thịt lợn (38%) đứng đầu, suy luận đúng."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2629,long-direct,accept,7.662.000 tấn,,"Đoạn văn: '7.662.000 tấn chất nổ đã được Không quân Hoa Kỳ sử dụng', đúng con số gắn với Không quân (không nhầm với 15,35 triệu tấn của toàn quân đội)."
-nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2950,long-direct,accept,"cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải",,"Span trích đúng các cải cách trong đoạn văn (cải tạo kinh tế, văn hóa, giáo dục, bao cấp, quốc hữu hóa, xóa bỏ tư hữu); chỉ bị cắt ở cụm cuối 'học tập cải tạo' nhưng nội dung trả lời vẫn đầy đủ và trung thành."
+nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2950,long-direct,reject,"cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải","cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải tạo, rà soát lý lịch đối với tất cả những người từng phục vụ trong chính quyền cũ cùng với gia đình của họ",Model bị cắt cụt giữa chừng ở chữ 'học tập cải' (thiếu 'tạo' và thiếu hẳn cải cách cuối về rà soát lý lịch). Đổi thành reject và bổ sung đầy đủ span theo đoạn văn (nhất quán với squad:1140).
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2607,mid-direct,accept,Hồi giáo Shia,,"Đoạn văn: 'là một Grand Marja (lãnh tụ tôn giáo) của Hồi giáo Shia', đáp án đúng."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,458,short-direct,accept,15 tháng 5 năm 1935,,"Đoạn văn ghi mất ngày '15 tháng 5 năm 1935' tại Leningrad, đúng ngày mất."
 nttung245,Qwen3_8-27B-Q4_K_M_gguf,squad,2968,long-direct,accept,động cơ nhiệt,,"Câu đầu: 'Động cơ đốt trong ... là một loại động cơ nhiệt', trả lời đúng loại động cơ."
