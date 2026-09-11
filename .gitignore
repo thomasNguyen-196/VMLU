@@ -47,3 +47,6 @@ adjudication.csv
 review_state/
 # Contract-test scratch file for the Next app (written by TestNextContracts)
 web/.contract-test.ts
+# Generated report artifacts (dated HTML/PDF renders via tools/html2pdf_server.py)
+/report/
+/benchmark_dashboard.html
