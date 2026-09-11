@@ -1,13 +1,13 @@
-import { itemKey, type ItemState, type ReviewItem } from "./types.ts";
+import { itemKey, type Bucket, type ReviewItem } from "./types.ts";
 
 /** Pure selectors over the blob + a reviewer's in-memory bucket. No React,
  *  no I/O — the same maths the static fallback does imperatively in render. */
 
-export type StripState = "" | "accept" | "reject" | "flag";
+type StripState = "" | "accept" | "reject" | "flag";
 
 export function stateOf(
   items: ReviewItem[],
-  bucket: Record<string, ItemState>,
+  bucket: Bucket,
   index: number,
 ): StripState {
   const st = bucket[itemKey(items[index])];
@@ -26,7 +26,7 @@ export interface Stats {
   byStratum: Record<string, [number, number]>;
 }
 
-export function computeStats(items: ReviewItem[], bucket: Record<string, ItemState>): Stats {
+export function computeStats(items: ReviewItem[], bucket: Bucket): Stats {
   let reviewed = 0, accept = 0, reject = 0;
   const byDataset: Record<string, [number, number]> = {};
   const byStratum: Record<string, [number, number]> = {};
@@ -56,7 +56,7 @@ export function computeStats(items: ReviewItem[], bucket: Record<string, ItemSta
  *  the jump is the work queue, and a peer's item is not yours. */
 export function nextUnreviewed(
   items: ReviewItem[],
-  bucket: Record<string, ItemState>,
+  bucket: Bucket,
   from: number,
   locked: Record<string, unknown> = {},
 ): number | null {
@@ -94,11 +94,26 @@ export function passagePosition(groups: PassageGroup[], idx: number): Position {
   return { within: idx - g.first + 1, of: g.indices.length };
 }
 
-export function answerFor(
-  it: ReviewItem,
-  model: string,
-  extra: Record<string, Record<string, string>>,
-): string | null {
-  if (extra[model]) return extra[model][itemKey(it)] ?? null;
-  return it.answers[model] ?? null;
+/** The mirror-freshness rule, stated once (the server is never authoritative
+ *  over unflushed local edits):
+ *  - valid envelope on disk: replay the mirror only when it is STRICTLY newer
+ *    than disk; otherwise adopt disk (missing/empty disk timestamp counts as
+ *    not-newer — a fresh server file wins);
+ *  - disk explicitly empty: replay the mirror if there is one (work made
+ *    while the server was unreachable), else start clean;
+ *  - neither (unparseable response): start clean — never graft the mirror
+ *    onto a disk state we could not validate. */
+export type Adoption = "disk" | "mirror" | "empty";
+export function chooseBucketToAdopt(
+  diskValid: boolean,
+  diskEmpty: boolean,
+  diskSavedAt: string | null,
+  mirror: { savedAt: string } | null,
+): Adoption {
+  if (diskValid) {
+    if (mirror && diskSavedAt && mirror.savedAt > diskSavedAt) return "mirror";
+    return "disk";
+  }
+  if (diskEmpty && mirror) return "mirror";
+  return "empty";
 }

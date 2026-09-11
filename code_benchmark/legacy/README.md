@@ -25,4 +25,4 @@ Thư mục này lưu trữ các benchmark scripts cũ nhằm mục đích lưu t
      python legacy/test_prompt.py --llm "bigscience/bloom-1b7" --folder "./vmlu_v1.5/" --device "cuda"
      ```
 
-> **Khuyến nghị**: Sử dụng `code_benchmark/test_ollama.py` cho các lượt đánh giá mới với chuẩn hóa endpoint Ollama / OpenAI-compatible và dữ liệu `./vmlu/test.jsonl`.
+> **Khuyến nghị**: Sử dụng `code_benchmark/run_mc_eval.py` (nay đổi tên từ `test_ollama.py`) cho các lượt đánh giá mới với chuẩn hóa endpoint Ollama / OpenAI-compatible và dữ liệu `./vmlu/test.jsonl`.

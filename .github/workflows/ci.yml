@@ -58,12 +58,12 @@ jobs:
       - name: test_parsing.py (parity contract)
         run: python code_benchmark/test_parsing.py
 
-      # Imports code_benchmark.test_ollama as a package — must run from root.
+      # Imports the code_benchmark package modules — must run from root.
       - name: test_suite.py (unittest)
         run: python -m unittest code_benchmark.test_suite
 
 # Not gated on PRs (by design):
-#   - Actual benchmark runs (test_ollama.py): need a live OpenAI-compatible
+#   - Actual benchmark runs (run_mc_eval.py): need a live OpenAI-compatible
 #     endpoint + models; out of scope for a syntax/security gate.
 #   - legacy/ scripts: historical, need openai==0.28.0 + GPU stack; excluded
 #     from both linters' scope (see ruff.toml / .bandit.yml).

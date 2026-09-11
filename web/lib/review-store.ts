@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { ItemState } from "./types.ts";
+import type { Bucket } from "./types.ts";
 
 /** Persisted review session: reviewer identity, active model, current item
  *  position and the (reviewer × model) decision bucket — restored instantly on
@@ -12,17 +12,17 @@ import type { ItemState } from "./types.ts";
  *  skipHydration: SSR/initial render always uses the defaults so the server
  *  HTML and the client's first render agree; ReviewApp rehydrates once in an
  *  effect after mount. */
-export interface ReviewSessionStore {
+interface ReviewSessionStore {
   annotator: string | null; // null = gate open
   model: string;
   idx: number;
-  bucket: Record<string, ItemState>;
+  bucket: Bucket;
   /** ISO timestamp of the last local change (mirror-freshness vs disk). */
   savedAt: string;
   setAnnotator(a: string | null): void;
   setModel(m: string): void;
   setIdx(i: number): void;
-  setBucket(next: Record<string, ItemState>): void;
+  setBucket(next: Bucket): void;
 }
 
 export const useReviewStore = create<ReviewSessionStore>()(

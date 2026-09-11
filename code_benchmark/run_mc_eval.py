@@ -1,8 +1,22 @@
-import os
+"""VMLU multiple-choice evaluation runner (the frozen A-E pipeline).
+
+Formerly test_ollama.py — renamed because it is a runner, not a test file
+(the test_ prefix is a pytest landmine; it pairs with run_reading_eval.py).
+
+Consumes vmlu_mqa_v1.5-style JSONL ({id, question, choices[], answer?}) via
+any OpenAI-compatible endpoint; writes checkpoints + finals under
+all_res/ollama_result/ and submission.csv at the repo root. build_prompt /
+extract_answer below are BYTE-FROZEN contracts shared with the legacy scripts
+and the standalone parity reference (test_parsing.py) — never "deduplicate"
+them against each other.
+
+Run from repo root:
+  .venv/bin/python code_benchmark/run_mc_eval.py --folder ./vmlu_mqa_v1.5 --workers 4
+"""
+import re
 import sys
 import json
 import time
-import re
 import argparse
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,7 +25,17 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 from dotenv import load_dotenv
-from openai import OpenAI, AuthenticationError, PermissionDeniedError
+
+try:  # package run (repo root) or direct run (cwd == code_benchmark)
+    from code_benchmark.common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+                                       add_endpoint_args, parse_endpoint_args, setup_logging)
+    from code_benchmark.checkpoint import checkpoint_name, find_latest_checkpoint
+    from code_benchmark.llm import build_client, verify_credentials, call_model_with_retry
+except ImportError:
+    from common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+                        add_endpoint_args, parse_endpoint_args, setup_logging)
+    from checkpoint import checkpoint_name, find_latest_checkpoint
+    from llm import build_client, verify_credentials, call_model_with_retry
 
 load_dotenv()
 
@@ -122,21 +146,12 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Evaluate models via Ollama / OpenAI-compatible endpoint on VMLU benchmark.")
     parser.add_argument("--folder", type=str, default="./vmlu", help="Path to data folder containing test.jsonl (default: ./vmlu)")
     parser.add_argument("--file", type=str, default="test.jsonl", help="JSONL filename (default: test.jsonl)")
-    parser.add_argument("--temperature", type=float, default=0.0, help="Sampling temperature (default: 0.0)")
-    parser.add_argument("--seed", type=int, default=42, help="Seed for reproducibility (default: 42)")
-    parser.add_argument("--max-tokens", type=int, default=4, help="Max new tokens to generate (default: 4)")
-    parser.add_argument("--workers", type=int, default=4, help="Number of concurrent workers (default: 4)")
-    parser.add_argument("--limit", type=int, default=None, help="Limit number of questions to evaluate (must be > 0)")
-    parser.add_argument("--resume", action="store_true",
-                        help="Resume from the newest raw_result_<count>_<model>.csv checkpoint for THIS model in all_res/ollama_result/")
-    parser.add_argument("--model", type=str, default=None, help="Model name (overrides OPENAI_MODEL env var)")
-    parser.add_argument("--base-url", type=str, default=None, help="Base URL for OpenAI-compatible endpoint (overrides OPENAI_BASE_URL)")
-    parser.add_argument("--api-key", type=str, default=None, help="API key (overrides OPENAI_API_KEY)")
-    
-    args = parser.parse_args()
-    if args.limit is not None and args.limit <= 0:
-        parser.error("--limit must be an integer greater than 0.")
-    return args
+    add_endpoint_args(parser, max_tokens_default=4,
+                      max_tokens_help="Max new tokens to generate (default: 4)",
+                      resume_help="Resume from the newest raw_result_<count>_<model>.csv checkpoint for THIS model in all_res/ollama_result/")
+    parser.add_argument("--submission-out", type=str, default="submission.csv",
+                        help="Path of the final id,answer submission CSV (default: ./submission.csv)")
+    return parse_endpoint_args(parser)
 
 def build_prompt(question: str, choices: list) -> str:
     text_choice = '\n'.join(str(c) for c in choices)
@@ -177,108 +192,22 @@ def extract_answer(raw_text: str) -> str:
 
     return ""
 
-def call_model_with_retry(client: OpenAI, model: str, prompt: str, temperature: float, seed: int, max_tokens: int, max_retries: int = 30, sleep_sec: int = 30) -> str:
-    messages = [{"role": "user", "content": prompt}]
-    for attempt in range(1, max_retries + 1):
-        try:
-            kwargs = {
-                "model": model,
-                "messages": messages,
-                "temperature": temperature,
-                "max_tokens": max_tokens
-            }
-            if seed is not None:
-                kwargs["seed"] = seed
-
-            response = client.chat.completions.create(**kwargs)
-            content = response.choices[0].message.content
-            return content if content is not None else ""
-        except (AuthenticationError, PermissionDeniedError) as auth_err:
-            logging.error(f"Fatal authentication/permission error: {auth_err}")
-            raise auth_err
-        except Exception as e:
-            err_str = str(e).lower()
-            if "unauthorized" in err_str or "401" in err_str or "forbidden" in err_str or "403" in err_str:
-                logging.error(f"Fatal authentication error detected in response: {e}")
-                raise e
-            logging.warning(f"Error on attempt {attempt}/{max_retries}: {e}")
-            if attempt < max_retries:
-                time.sleep(sleep_sec)
-            else:
-                logging.error(f"Failed after {max_retries} attempts: {prompt[:100]}...")
-                return ""
-    return ""
-
-def verify_credentials(client: OpenAI, model: str):
-    """Probe endpoint with 1 test token to fail-fast on auth/model errors."""
-    try:
-        client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": "ping"}],
-            max_tokens=1,
-            temperature=0.0
-        )
-    except Exception as e:
-        print(f"\n[FATAL] Endpoint probe failed for model '{model}'.\nError: {e}\nPlease check OPENAI_BASE_URL, OPENAI_API_KEY, and OPENAI_MODEL.", file=sys.stderr)
-        sys.exit(1)
-
-def sanitize_model(model: str) -> str:
-    """Filename-safe model tag, shared by log files and checkpoints."""
-    return re.sub(r'[^a-zA-Z0-9_-]', '_', model)
-
-def checkpoint_name(model: str, count: int) -> str:
-    """Per-model checkpoint: raw_result_<count>_<model>.csv. The count alone
-    was a shared namespace, so a --resume run with a different model silently
-    reused the previous model's answers (this folder mixes several models)."""
-    return f"raw_result_{count}_{sanitize_model(model)}.csv"
-
-def find_latest_checkpoint(checkpoint_dir: Path, model: str) -> Path | None:
-    """Newest checkpoint for THIS model only. Legacy raw_result_<count>.csv
-    files carry no model identity and are never picked — guessing could graft
-    a different model's answers onto this run."""
-    files = list(checkpoint_dir.glob(f"raw_result_*_{sanitize_model(model)}.csv"))
-    if not files:
-        return None
-    def get_count(p: Path):
-        m = re.search(r'raw_result_(\d+)_', p.name)
-        return int(m.group(1)) if m else 0
-    return max(files, key=get_count)
-
 def main():
     args = parse_args()
 
-    api_key = args.api_key or os.environ.get("OPENAI_API_KEY") or "ollama"
-    base_url = args.base_url or os.environ.get("OPENAI_BASE_URL")
-    model = args.model or os.environ.get("OPENAI_MODEL")
+    base_url, api_key, model = resolve_endpoint(args)
 
-    if not base_url:
-        print("Error: OPENAI_BASE_URL is not set. Please provide --base-url or set OPENAI_BASE_URL in .env", file=sys.stderr)
-        sys.exit(1)
-
-    if not model:
-        print("Error: OPENAI_MODEL is not set. Please provide --model or set OPENAI_MODEL in .env", file=sys.stderr)
-        sys.exit(1)
-
-    os.makedirs("logs", exist_ok=True)
-    result_folder = Path("all_res/ollama_result")
+    result_folder = RESULTS_DIR
     result_folder.mkdir(parents=True, exist_ok=True)
 
     sanitized_model = sanitize_model(model)
-    log_file = f"logs/{sanitized_model}.log"
-    logging.basicConfig(
-        filename=log_file,
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s: %(message)s'
-    )
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
-    logging.getLogger('').addHandler(console)
+    setup_logging(Path("logs") / f"{sanitized_model}.log")
 
     logging.info(f"Model: {model}")
     logging.info(f"Base URL: {base_url}")
     logging.info(f"Concurrency: {args.workers} workers")
 
-    client = OpenAI(base_url=base_url, api_key=api_key)
+    client = build_client(base_url, api_key)
 
     # Fail-fast probe
     logging.info("Verifying endpoint connectivity and credentials...")
@@ -426,7 +355,7 @@ def main():
     df_all.to_csv(result_folder / f"full_evaluation_{sanitized_model}.csv", index=False)
 
     submission_df = df_all[["id", "answer"]]
-    submission_path = "submission.csv"
+    submission_path = args.submission_out
     submission_df.to_csv(submission_path, index=False)
     logging.info(f"Submission saved to {submission_path}")
 

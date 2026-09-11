@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     // corrupt/foreign file on disk: report it — never serve it as empty truth
     return NextResponse.json({ error, reviewer: id.r, model: id.m }, { status: 409 });
   }
-  if (!envelope) return NextResponse.json({ empty: true, reviewer: id.r, model: id.m });
-  return NextResponse.json(envelope);
+  if (!envelope) return NextResponse.json({ empty: true, reviewer: id.r, model: id.m }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(envelope, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(request: NextRequest) {

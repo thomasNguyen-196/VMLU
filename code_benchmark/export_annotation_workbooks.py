@@ -59,16 +59,21 @@ import unicodedata
 from pathlib import Path
 
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
+    from code_benchmark.common import (item_key, split_item_key, write_csv_atomic,
+                                       MANIFEST_COLS, MANIFEST_DEFAULT, SQUAD_DEFAULT,
+                                       DROP_DEFAULT, ANNOTATOR_A_DEFAULT)
     from code_benchmark.run_reading_eval import index_sources, join_manifest, load_manifest
 except ImportError:
+    from common import (item_key, split_item_key, write_csv_atomic,
+                        MANIFEST_COLS, MANIFEST_DEFAULT, SQUAD_DEFAULT,
+                        DROP_DEFAULT, ANNOTATOR_A_DEFAULT)
     from run_reading_eval import index_sources, join_manifest, load_manifest
 
 WORKBOOK_COLS = ["passage_key", "dataset", "item_id", "stratum", "question",
                  "context", "gold_answer", "note"]
-
-
-def key_of(row: dict) -> str:
-    return f"{row['dataset']}:{row['item_id']}"
+GOLD_COLS = ["dataset", "item_id", "gold_answer"]
+ADJUD_COLS = ["dataset", "item_id", "stratum", "reason", "answer_A", "answer_B",
+              "question", "context"]
 
 
 def workbook_rows(joined: list[dict]) -> list[dict]:
@@ -113,7 +118,7 @@ def merge_answers(a: dict[str, str], b: dict[str, str]) -> dict:
 
 def read_book(path: Path) -> dict[str, dict]:
     with open(path, encoding="utf-8") as f:
-        return {key_of(r): r for r in csv.DictReader(f)}
+        return {item_key(r): r for r in csv.DictReader(f)}
 
 
 def cmd_build(args):
@@ -151,15 +156,14 @@ def cmd_merge(args):
 
     with open(args.out_agreed, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["dataset", "item_id", "gold_answer"])
+        w.writerow(GOLD_COLS)
         for k, g in res["agreed"]:
-            ds, iid = k.split(":", 1)
-            w.writerow([ds, iid, g])
+            w.writerow([*split_item_key(k), g])
     with open(args.out_adjud, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["dataset", "item_id", "question", "context", "answer_A", "answer_B"])
         for k, ga, gb in res["disagreements"]:
-            ds, iid = k.split(":", 1)
+            ds, iid = split_item_key(k)
             src = a_book[k]
             w.writerow([ds, iid, src["question"], src["context"], ga, gb])
     print(f"agreed -> {args.out_agreed} | to adjudicate -> {args.out_adjud}")
@@ -179,16 +183,14 @@ def apply_gold(manifest_path: Path, gold_pairs: list[tuple[str, str]]) -> tuple[
     column, preserving column order. Shared by `merge --apply` and
     `review --apply`. Returns (filled, still_empty)."""
     rows = load_manifest(manifest_path)
-    by_key = {key_of(r): r for r in rows}
+    by_key = {item_key(r): r for r in rows}
     for k, g in gold_pairs:
         if k not in by_key:
             raise SystemExit(f"Error: gold key {k} not in manifest {manifest_path}")
         by_key[k]["gold_answer"] = g
-    with open(manifest_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["dataset", "item_id", "stratum",
-                                          "passage_id", "question", "gold_answer"])
-        w.writeheader()
-        w.writerows(rows)
+    # atomic: the manifest is the committed pre-registration record — a crash
+    # must never leave it half-written
+    write_csv_atomic(manifest_path, rows, MANIFEST_COLS)
     return len(gold_pairs), sum(1 for r in rows if not r["gold_answer"].strip())
 
 
@@ -216,10 +218,10 @@ def read_review(path: Path) -> tuple[dict, dict[str, dict]]:
     for r in rows:
         if r["decision"] not in ("", "accept", "reject"):
             raise SystemExit(f"Error: {path}: illegal decision {r['decision']!r} at "
-                             f"{key_of(r)} (hand-edited file?)")
+                             f"{item_key(r)} (hand-edited file?)")
         if r["decision"] == "reject" and not r["corrected_answer"].strip():
             blank += 1
-        k = key_of(r)
+        k = item_key(r)
         if k in out:
             raise SystemExit(f"Error: duplicate key {k} in {path}")
         out[k] = r
@@ -297,13 +299,40 @@ def review_stats(res: dict, annot_a: str, annot_b: str) -> str:
         f"decision agreement on both-reviewed: {res['decisions_agreed']}/{reviewed_both} = "
         f"{pct(res['decisions_agreed'], reviewed_both)} (raw IAA; formal kappa belongs to the reporting pass)",
         f"gold agreed: {len(res['gold_agreed'])}  |  adjudication: {len(res['adjudication'])}",
-    ]
+    ] + _tally_reasons(res["adjudication"])
+    return "\n".join(lines)
+
+
+def _tally_reasons(adjud: list[tuple]) -> list[str]:
+    """'adjudication reasons: k=v ...' stat lines (shared tail of both stats)."""
     reasons: dict[str, int] = {}
-    for _, r, _, _ in res["adjudication"]:
+    for _, r, _, _ in adjud:
         reasons[r] = reasons.get(r, 0) + 1
     if reasons:
-        lines.append("adjudication reasons: " + "  ".join(f"{k}={v}" for k, v in sorted(reasons.items())))
-    return "\n".join(lines)
+        return ["adjudication reasons: " + "  ".join(f"{k}={v}" for k, v in sorted(reasons.items()))]
+    return []
+
+
+def _write_gold_and_adjudication(out_gold: Path, out_adjud: Path,
+                                 gold: list[tuple[str, str]],
+                                 adjud: list[tuple[str, str, str, str]],
+                                 stratum_of, ctx: dict[str, dict]) -> None:
+    """Write the agreed-golds + adjudication sheets (shared by `review` and
+    `merge-split`: same 3-col/8-col headers, same key split, same workbook
+    re-join for question/context). stratum_of(key) -> str fills the stratum."""
+    with open(out_gold, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(GOLD_COLS)
+        for k, g in gold:
+            w.writerow([*split_item_key(k), g])
+    with open(out_adjud, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(ADJUD_COLS)
+        for k, reason, va, vb in adjud:
+            ds, iid = split_item_key(k)
+            wb = ctx.get(k, {})
+            w.writerow([ds, iid, stratum_of(k), reason, va, vb,
+                        wb.get("question", ""), wb.get("context", "")])
 
 
 def cmd_review(args):
@@ -329,21 +358,11 @@ def cmd_review(args):
     if args.workbook and args.workbook.exists():
         ctx = read_book(args.workbook)
 
-    with open(args.out_gold, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["dataset", "item_id", "gold_answer"])
-        for k, g in res["gold_agreed"]:
-            w.writerow([*k.split(":", 1), g])
-    with open(args.out_adjud, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["dataset", "item_id", "stratum", "reason", "answer_A", "answer_B",
-                    "question", "context"])
-        for k, reason, va, vb in res["adjudication"]:
-            ds, iid = k.split(":", 1)
-            src = a.get(k) or b.get(k) or {}
-            wb = ctx.get(k, {})
-            w.writerow([ds, iid, src.get("stratum", ""), reason, va, vb,
-                        wb.get("question", ""), wb.get("context", "")])
+    def stratum_of(k: str) -> str:
+        return (a.get(k) or b.get(k) or {}).get("stratum", "")
+
+    _write_gold_and_adjudication(args.out_gold, args.out_adjud,
+                                 res["gold_agreed"], res["adjudication"], stratum_of, ctx)
     print(f"agreed gold -> {args.out_gold} | adjudication -> {args.out_adjud}"
           + ("" if ctx else " (adjudication question/context blank: --workbook not found)"))
 
@@ -402,12 +421,7 @@ def split_stats(res: dict, n_items: int, annotators: list[str]) -> str:
         f"union coverage: {res['covered']}/{n_items} = {pct(res['covered'], n_items)}"
         f"  (not yet reviewed by anyone: {n_items - res['covered']})",
         f"gold: {len(res['gold_agreed'])}  |  adjudication: {len(res['adjudication'])}",
-    ]
-    reasons: dict[str, int] = {}
-    for _, r, _, _ in res["adjudication"]:
-        reasons[r] = reasons.get(r, 0) + 1
-    if reasons:
-        lines.append("adjudication reasons: " + "  ".join(f"{k}={v}" for k, v in sorted(reasons.items())))
+    ] + _tally_reasons(res["adjudication"])
     return "\n".join(lines)
 
 def cmd_merge_split(args):
@@ -445,20 +459,9 @@ def cmd_merge_split(args):
         for k, r in rows.items():
             src_by_key.setdefault(k, r)
 
-    with open(args.out_gold, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["dataset", "item_id", "gold_answer"])
-        for k, g in res["gold_agreed"]:
-            w.writerow([*k.split(":", 1), g])
-    with open(args.out_adjud, "w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(["dataset", "item_id", "stratum", "reason", "answer_A", "answer_B",
-                    "question", "context"])
-        for k, reason, va, vb in res["adjudication"]:
-            ds, iid = k.split(":", 1)
-            wb = ctx.get(k, {})
-            w.writerow([ds, iid, src_by_key.get(k, {}).get("stratum", ""), reason, va, vb,
-                        wb.get("question", ""), wb.get("context", "")])
+    _write_gold_and_adjudication(args.out_gold, args.out_adjud,
+                                 res["gold_agreed"], res["adjudication"],
+                                 lambda k: src_by_key.get(k, {}).get("stratum", ""), ctx)
     print(f"union gold -> {args.out_gold} | adjudication -> {args.out_adjud}"
           + ("" if ctx else " (adjudication question/context blank: --workbook not found)"))
 
@@ -471,18 +474,16 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     bp = sub.add_parser("build", help="write the two blind annotator workbooks")
-    bp.add_argument("--manifest", type=Path, default=Path("eval_set_manifest.csv"))
-    bp.add_argument("--squad-file", type=Path,
-                    default=Path("vmlu_squad_v1/vi_squad_benchmark_question_only.json"))
-    bp.add_argument("--drop-file", type=Path,
-                    default=Path("vmlu_drop_v1/vi_drop_benchmark_3309_question_only.json"))
+    bp.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
+    bp.add_argument("--squad-file", type=Path, default=SQUAD_DEFAULT)
+    bp.add_argument("--drop-file", type=Path, default=DROP_DEFAULT)
     bp.add_argument("--out-dir", type=Path, default=Path("annotation_workbooks"))
     bp.set_defaults(func=cmd_build)
 
     mp = sub.add_parser("merge", help="compare the two filled workbooks")
-    mp.add_argument("--a", type=Path, default=Path("annotation_workbooks/annotator_A.csv"))
+    mp.add_argument("--a", type=Path, default=ANNOTATOR_A_DEFAULT)
     mp.add_argument("--b", type=Path, default=Path("annotation_workbooks/annotator_B.csv"))
-    mp.add_argument("--manifest", type=Path, default=Path("eval_set_manifest.csv"))
+    mp.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
     mp.add_argument("--out-agreed", type=Path, default=Path("gold_agreed.csv"))
     mp.add_argument("--out-adjud", type=Path, default=Path("adjudication.csv"))
     mp.add_argument("--apply", action="store_true",
@@ -493,9 +494,9 @@ def main():
                         "(accept -> model answer gold; reject -> correction gold)")
     rp.add_argument("--a", type=Path, required=True)
     rp.add_argument("--b", type=Path, required=True)
-    rp.add_argument("--workbook", type=Path, default=Path("annotation_workbooks/annotator_A.csv"),
+    rp.add_argument("--workbook", type=Path, default=ANNOTATOR_A_DEFAULT,
                     help="enriches review_adjudication.csv rows with question + context")
-    rp.add_argument("--manifest", type=Path, default=Path("eval_set_manifest.csv"))
+    rp.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
     rp.add_argument("--out-gold", type=Path, default=Path("review_gold_agreed.csv"))
     rp.add_argument("--out-adjud", type=Path, default=Path("review_adjudication.csv"))
     rp.add_argument("--apply", action="store_true",
@@ -506,9 +507,9 @@ def main():
                         "(split workflow: each item needs ONE decision, not two)")
     sp.add_argument("files", type=Path, nargs="+",
                     help="review_*.csv files (review_records/review_<who>_<model>.csv)")
-    sp.add_argument("--workbook", type=Path, default=Path("annotation_workbooks/annotator_A.csv"),
+    sp.add_argument("--workbook", type=Path, default=ANNOTATOR_A_DEFAULT,
                     help="enriches adjudication rows with question + context")
-    sp.add_argument("--manifest", type=Path, default=Path("eval_set_manifest.csv"))
+    sp.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
     sp.add_argument("--out-gold", type=Path, default=Path("review_gold_agreed.csv"))
     sp.add_argument("--out-adjud", type=Path, default=Path("review_adjudication.csv"))
     sp.add_argument("--apply", action="store_true",

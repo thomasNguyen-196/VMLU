@@ -5,7 +5,7 @@ context: |
   Research repo: small open-weight LLMs (<=8B) for Vietnamese (see PROPOSAL.md).
   Tech stack: Python 3.12 (uv-managed .venv, no pip), openai SDK against any
   OpenAI-compatible endpoint (Ollama), pandas, tqdm. Single-script pipeline in
-  code_benchmark/test_ollama.py; legacy/ scripts are frozen historical records.
+  code_benchmark/run_mc_eval.py (ex test_ollama.py); legacy/ scripts are frozen historical records.
   Data: VMLU benchmark (58 subjects / 10,880 MC questions) unpacked from
   vmlu_datasets.zip into gitignored vmlu_* folders; ground truth for test.jsonl
   is withheld by design (leaderboard anti-contamination).

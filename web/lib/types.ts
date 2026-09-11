@@ -34,6 +34,11 @@ export interface ItemState {
   n: string;
 }
 
+/** A reviewer's working set for one (reviewer, model) bucket: itemKey -> decision.
+ *  The shape of StateEnvelope.items, of the zustand store's bucket, and of
+ *  every disk bucket under review_state/. */
+export type Bucket = Record<string, ItemState>;
+
 /** Envelope persisted per (reviewer, model) bucket — identical shape to the
  *  static UI's localStorage value and to state_*.json exports. */
 export interface StateEnvelope {
@@ -41,7 +46,7 @@ export interface StateEnvelope {
   annotator: string;
   model: string;
   saved_at: string;
-  items: Record<string, ItemState>; // key = `${dataset}:${item_id}`
+  items: Bucket; // key = `${dataset}:${item_id}`
 }
 
 export const itemKey = (it: Pick<ReviewItem, "dataset" | "item_id">): string =>

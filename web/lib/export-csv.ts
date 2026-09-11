@@ -13,7 +13,7 @@ export const REVIEW_COLS = [
 ] as const;
 
 /** RFC-4180 quoting, identical rule to the template's csvCell(). */
-export function csvCell(v: unknown): string {
+function csvCell(v: unknown): string {
   const s = String(v ?? "");
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }

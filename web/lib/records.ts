@@ -23,7 +23,7 @@ export interface PeerDecision {
 /** itemKey (`dataset:item_id`) -> the peer who decided it. */
 export type PeerMap = Record<string, PeerDecision>;
 
-export function recordsDir(): string {
+function recordsDir(): string {
   // repo root, one level above the Next app — same sibling logic as stateDir.
   return (
     process.env.VMLU_REVIEW_RECORDS_DIR ??
@@ -36,7 +36,7 @@ export function recordsDir(): string {
  *  strict authority — this parser only has to recognize locks, and it
  *  fails-open: an unparseable/ragged row is skipped, which can at worst let
  *  an item be reviewed twice, never hide a peer's finished work. */
-export function parseCsvRows(text: string): string[][] {
+function parseCsvRows(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = "";
@@ -70,14 +70,14 @@ export function parseCsvRows(text: string): string[][] {
   return rows;
 }
 
-export interface ParsedRecord {
+interface ParsedRecord {
   annotator: string;
   model: string;
   decided: PeerMap;
 }
 
 /** -> ParsedRecord, or throws on header drift (wrong file, schema changed). */
-export function parseReviewCsv(text: string): ParsedRecord {
+function parseReviewCsv(text: string): ParsedRecord {
   const rows = parseCsvRows(text.replace(/^﻿/, ""));
   const head = rows.shift() ?? [];
   if (head.join(",") !== REVIEW_COLS.join(",")) {
@@ -103,7 +103,7 @@ export interface RecordFileRow {
   error?: string;
 }
 
-export interface PeerScan {
+interface PeerScan {
   /** decisions by OTHER reviewers for `model`, `self` excluded by slug */
   peers: PeerMap;
   /** every CSV found, for the start panel + surfacing broken files */

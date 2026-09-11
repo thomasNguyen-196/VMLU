@@ -13,7 +13,9 @@ Doc languages vary by file: `README.md`, `AGENTS.md`, `PROPOSAL.md` are in Engli
 
 ## Commands
 
-**Interpreter**: use `.venv/bin/python` (uv-managed, Python 3.12, has `openai`/`pandas`/`python-dotenv`/`tqdm` installed). System `python3` is 3.14 with **no deps** — `test_ollama.py` and `test_suite.py` fail on import there. The only thing that runs on system `python3` is `test_parsing.py` (deliberately dependency-free). The venv has **no pip** — install with `uv pip install -r requirements.txt --python .venv/bin/python` (`uv` is on PATH).
+**Interpreter**: use `.venv/bin/python` (uv-managed, Python 3.12, has `openai`/`pandas`/`python-dotenv`/`tqdm` installed). System `python3` is 3.14 with **no deps** — the runners and `test_suite.py` fail on import there. `make_eval_sample.py` + `test_parsing.py` are the two dependency-free files that run on system `python3` too (they import only `code_benchmark/common.py`, which is stdlib-only by design). The venv has **no pip** — install with `uv pip install -r requirements.txt --python .venv/bin/python` (`uv` is on PATH).
+
+**Package layout** (`code_benchmark/` is a real package now, with `__init__.py`): `common.py` (stdlib shared kernel: slug, item-key, endpoint/logging/argparse, atomic CSV), `llm.py` (client + retry + probe), `checkpoint.py` (per-model checkpoint naming/lookup) are the extracted seams; `run_mc_eval.py` (ex `test_ollama.py`) and `run_reading_eval.py` are the two runners. `code_benchmark/legacy/` stays frozen.
 
 All `code_benchmark/` scripts are run **from the repo root or `code_benchmark/`**.
 
@@ -25,7 +27,7 @@ cp .env.example .env
 # string like "ollama"; OPENAI_MODEL is the model tag to evaluate.
 
 # 2. Run the benchmark (working dir can be repo root or code_benchmark/)
-.venv/bin/python code_benchmark/test_ollama.py --folder "./vmlu" --workers 4
+.venv/bin/python code_benchmark/run_mc_eval.py --folder "./vmlu" --workers 4
 # Quick sanity run:  --limit 20 --workers 4
 # Useful knobs: --file <jsonl name>, --temperature (default 0.0), --seed 42,
 #               --max-tokens (default 4 — raise it for regime C / thinking models)
@@ -60,7 +62,7 @@ cd web && npm install && npm run dev                                     # -> ht
 
 # 5. Tests
 .venv/bin/python code_benchmark/test_parsing.py   # standalone parity tests (also works on system python3)
-.venv/bin/python -m unittest code_benchmark.test_suite   # run from REPO ROOT: imports `code_benchmark.test_ollama` as a package
+.venv/bin/python -m unittest code_benchmark.test_suite   # run from REPO ROOT: imports the package modules
 
 # 6. Legacy scripts (historical only, need a venv pinned to openai==0.28.0)
 cd code_benchmark && GPT_KEY="<KEY>" python3 legacy/test_gpt.py
@@ -69,24 +71,24 @@ cd code_benchmark && python3 legacy/test_prompt.py --llm "bigscience/bloom-1b7" 
 
 ## Datasets on disk
 
-`vmlu_datasets.zip` (3.5 MB, untracked) unpacks into four gitignored folders at repo root, and **only one is directly consumable by `test_ollama.py`**:
+`vmlu_datasets.zip` (3.5 MB, untracked) unpacks into four gitignored folders at repo root, and **only one is directly consumable by `run_mc_eval.py`**:
 
 - `vmlu_mqa_v1.5/` — the classic MC format (`{id, question, choices[], answer}` JSONL): `test.jsonl` has all 10,880 questions, plus `dev.jsonl` (303) / `valid.jsonl` (744). Works with `--folder ./vmlu_mqa_v1.5 --file test.jsonl`.
-- `vmlu_drop_v1/`, `vmlu_squad_v1/`, `vmlu_dialog_v1/` — **"question_only" JSON** (one big `{__count__, data[]}` object; keys like `question_id/category/context/question`, `queries`), **no `choices`/`answer` fields** → the `test_ollama.py` loader will not accept them. They are for human/leaderboard-submission evaluation flows, not the MC pipeline.
+- `vmlu_drop_v1/`, `vmlu_squad_v1/`, `vmlu_dialog_v1/` — **"question_only" JSON** (one big `{__count__, data[]}` object; keys like `question_id/category/context/question`, `queries`), **no `choices`/`answer` fields** → the `run_mc_eval.py` loader will not accept them. They are consumed by the reading pipeline (`make_eval_sample.py` / `run_reading_eval.py`) and human/leaderboard-submission flows, not the MC pipeline.
 
-## Evaluation pipeline (`code_benchmark/test_ollama.py`)
+## Evaluation pipeline (`code_benchmark/run_mc_eval.py`)
 
-A single self-contained script, best understood as a pipeline:
+A single runner script over the shared package modules, best understood as a pipeline:
 
-1. **Config** — env vars (`OPENAI_BASE_URL`/`OPENAI_API_KEY`/`OPENAI_MODEL`) with CLI overrides (`--base-url`, `--api-key`, `--model`); missing base URL or model → clear error + `sys.exit(1)`. `--limit` must be a positive integer.
-2. **Fail-fast credential probe** — `verify_credentials()` sends a 1-token "ping" at startup; any failure exits before the workload starts.
+1. **Config** — `common.resolve_endpoint()`: env vars (`OPENAI_BASE_URL`/`OPENAI_API_KEY`/`OPENAI_MODEL`) with CLI overrides (`--base-url`, `--api-key`, `--model`) from the shared `add_endpoint_args` flag group; missing base URL or model → clear error + exit 1. `--limit` must be a positive integer.
+2. **Fail-fast credential probe** — `llm.verify_credentials()` sends a 1-token "ping" at startup; any failure exits before the workload starts.
 3. **Load** — reads `test.jsonl` (name overridable via `--file`) as `{id, question, choices[], answer}` per line from `--folder`; falls back to `../<folder>`; empty file → exit 1. Choices may be 4 or 5 options.
 4. **Prompt** — `build_prompt()` wraps the question + choices in a Vietnamese instruction asking for only the answer letter, ending `"Đáp án: "`. This string is a **contract with the legacy scripts** — keep it byte-identical.
-5. **Inference** — `call_model_with_retry()`: retries generic errors up to 30×30s, but **never retries** `AuthenticationError`/`PermissionDeniedError`/401/403 (re-raised to fail fast); returns `""` on exhaustion.
+5. **Inference** — `llm.call_model_with_retry()`: retries generic errors up to 30×30s, but **never retries** `AuthenticationError`/`PermissionDeniedError`/401/403 (re-raised to fail fast); returns `""` on exhaustion.
 6. **Parsing** — `extract_answer()`: 4-tier regex (exact letter → Vietnamese/English key phrases → standalone upper/lowercase letter). Always returns **uppercase A–E** to match the official submission format; returns `""` when no answer is found.
-7. **Concurrency & checkpointing** — `ThreadPoolExecutor(--workers)`; results indexed by original order; every 100 completions a thread-safe (lock) snapshot is written to `all_res/ollama_result/raw_result_<N>.csv`. `--resume` loads the checkpoint with the largest numeric suffix (see `find_latest_checkpoint()`) and skips already-answered ids.
+7. **Concurrency & checkpointing** — `ThreadPoolExecutor(--workers)`; results indexed by original order; every 100 completions a thread-safe (lock) snapshot is written to `all_res/ollama_result/raw_result_<N>_<model>.csv`. `--resume` loads the checkpoint with the largest numeric suffix for THIS model (see `checkpoint.find_latest_checkpoint()`) and skips already-answered ids.
 8. **Auto-scoring (gold inputs only)** — if EVERY loaded record has a non-empty `answer` (dev.jsonl/valid.jsonl), `detect_scorable()` enables scoring: end-of-run, `score_row()` adds `gold_answer` + `correct` columns (case-insensitive letter match; unparseable model answer = incorrect, still counted) and `build_accuracy_rows()` writes `all_res/ollama_result/accuracy_<model>.csv` (long format `level,name,n,correct,accuracy`: overall + per-category + per-subject) and logs overall % + category table. Mixed gold/no-gold input → warning + non-scorable. Inputs without gold (test.jsonl) keep the exact old behavior — scoring is computed from merged results so pre-scoring checkpoints remain resumable. Subject→category mapping lives in the `SUBJECTS` dict keyed by `id` prefix using the **official VMLU README numbering** — deliberately NOT `dataset_stat.csv`, whose ordering differs.
-9. **Outputs** (all gitignored): `all_res/ollama_result/full_evaluation_<model>.csv` (full results incl. raw responses, + the two scoring columns on gold inputs), `logs/<sanitized_model>.log`, and `submission.csv` — the final `id,answer` CSV written to the current working directory (identical schema in both modes).
+9. **Outputs** (all gitignored): `all_res/ollama_result/full_evaluation_<model>.csv` (full results incl. raw responses, + the two scoring columns on gold inputs), `logs/<sanitized_model>.log`, and `submission.csv` — the final `id,answer` CSV written to the current working directory (redirect with `--submission-out <path>`; identical schema in both modes).
 
 ### Key invariants & gotchas
 
@@ -95,7 +97,8 @@ A single self-contained script, best understood as a pipeline:
 - `test_parsing.py` deliberately **duplicates** `extract_answer`/`build_prompt` rather than importing them — it is the standalone parity reference. `test_suite.py` imports from the package and must run from the repo root.
 - The 30×30s retry cadence (15 min/case) is the default; auth errors are excluded from it deliberately — don't "fix" the retry loop back into touching auth errors.
 - Data/output paths gitignored: `vmlu/`, `all_res/`, `logs/`, `submission.csv`, `leaderboard.json`, `vmlu_v*`, `review_state/` (the review server's per-reviewer×model working buckets — private, never shared). The **`review_records/*.csv`** published-export folder and **`web/data/review-blob.json`** (the shared items+answers snapshot, so every reviewer's app serves the identical eval) are the durable, TRACKED records (root-level `review_*.csv`/`state_*.json`/`review_ui.html` are still gitignored via anchored `/*` patterns — keep those two un-ignored). `.env*` ignored except `.env.example`/templates — keep it that way.
-- `requirements.txt` is a **frozen env snapshot** and contains heavy leftovers (`torch==2.1.2`, `nvidia-*`, `transformers`). The only packages `test_ollama.py` actually needs are `openai>=1.0.0`, `python-dotenv>=1.0.0`, `pandas`, `tqdm`. The pinned GPU stack only matters for `legacy/test_prompt.py`.
+- `requirements.txt` is a **frozen env snapshot** and contains heavy leftovers (`torch==2.1.2`, `nvidia-*`, `transformers`). The only packages `run_mc_eval.py` actually needs are `openai>=1.0.0`, `python-dotenv>=1.0.0`, `pandas`, `tqdm`. The pinned GPU stack only matters for `legacy/test_prompt.py`.
+- `common.py` is **stdlib-only** (make_eval_sample/test_parsing run on the bare system python3 through it) — never add openai/pandas/dotenv imports there; endpoint-touching helpers live in `llm.py`.
 - Legacy scripts read old data paths (`vmlu_v2/`, `vmlu_v1.5/`) relative to `code_benchmark/`; `test_gpt.py` needs a venv with `openai==0.28.0` and the `GPT_KEY` env var.
 
 ## CI (light syntax + security review)
@@ -114,7 +117,7 @@ uvx --from bandit bandit -r code_benchmark -c .bandit.yml -q
 .venv/bin/python -m unittest code_benchmark.test_suite
 ```
 
-The gate deliberately does **not** run `test_ollama.py` (needs a live endpoint/models) and never lints `legacy/` (frozen `openai==0.28.0` scripts — their unused imports document the original research setup).
+The gate deliberately does **not** run the eval runners (`run_mc_eval.py` / `run_reading_eval.py` — they need a live endpoint/models) and never lints `legacy/` (frozen `openai==0.28.0` scripts — their unused imports document the original research setup).
 
 ## Agent skills
 

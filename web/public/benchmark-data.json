@@ -1,0 +1,3353 @@
+{
+  "model_info": {
+    "model_name": "Qwen3.8-27B-Q4_K_M (GGUF)",
+    "framework": "Ollama / vLLM OpenAI-compatible endpoint",
+    "parameters": "27B Dense",
+    "quantization": "Q4_K_M (4-bit Medium)",
+    "hardware": "Local Server (Ryzen 7 7730U / GPU Server)",
+    "inference_settings": "Temperature = 0, Seed = 42"
+  },
+  "vmlu": {
+    "benchmark_name": "VMLU (Vietnamese Multitask Language Understanding)",
+    "date": "2026-08-31",
+    "condition": "Zero-shot Multiple Choice (A-E)",
+    "overall": {
+      "n": 1047,
+      "correct": 768,
+      "accuracy": 73.35
+    },
+    "categories": [
+      {
+        "name": "STEM",
+        "n": 383,
+        "correct": 304,
+        "accuracy": 79.37
+      },
+      {
+        "name": "Social Science",
+        "n": 184,
+        "correct": 144,
+        "accuracy": 78.26
+      },
+      {
+        "name": "Humanity",
+        "n": 324,
+        "correct": 221,
+        "accuracy": 68.21
+      },
+      {
+        "name": "Other",
+        "n": 156,
+        "correct": 99,
+        "accuracy": 63.46
+      }
+    ],
+    "subjects": [
+      {
+        "code": "01",
+        "name": "Elementary Mathematics",
+        "full_name": "01 Elementary Mathematics",
+        "category": "STEM",
+        "n": 20,
+        "correct": 8,
+        "accuracy": 40.0
+      },
+      {
+        "code": "02",
+        "name": "Elementary Science",
+        "full_name": "02 Elementary Science",
+        "category": "STEM",
+        "n": 20,
+        "correct": 20,
+        "accuracy": 100.0
+      },
+      {
+        "code": "03",
+        "name": "Middle School Biology",
+        "full_name": "03 Middle School Biology",
+        "category": "STEM",
+        "n": 18,
+        "correct": 17,
+        "accuracy": 94.44
+      },
+      {
+        "code": "04",
+        "name": "Middle School Chemistry",
+        "full_name": "04 Middle School Chemistry",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "05",
+        "name": "Middle School Mathematics",
+        "full_name": "05 Middle School Mathematics",
+        "category": "STEM",
+        "n": 11,
+        "correct": 6,
+        "accuracy": 54.55
+      },
+      {
+        "code": "06",
+        "name": "Middle School Physics",
+        "full_name": "06 Middle School Physics",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "07",
+        "name": "High School Biology",
+        "full_name": "07 High School Biology",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "08",
+        "name": "High School Chemistry",
+        "full_name": "08 High School Chemistry",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "09",
+        "name": "High School Mathematics",
+        "full_name": "09 High School Mathematics",
+        "category": "STEM",
+        "n": 15,
+        "correct": 10,
+        "accuracy": 66.67
+      },
+      {
+        "code": "10",
+        "name": "High School Physics",
+        "full_name": "10 High School Physics",
+        "category": "STEM",
+        "n": 20,
+        "correct": 19,
+        "accuracy": 95.0
+      },
+      {
+        "code": "11",
+        "name": "Applied Informatics",
+        "full_name": "11 Applied Informatics",
+        "category": "STEM",
+        "n": 20,
+        "correct": 13,
+        "accuracy": 65.0
+      },
+      {
+        "code": "12",
+        "name": "Computer Architecture",
+        "full_name": "12 Computer Architecture",
+        "category": "STEM",
+        "n": 20,
+        "correct": 15,
+        "accuracy": 75.0
+      },
+      {
+        "code": "13",
+        "name": "Computer Network",
+        "full_name": "13 Computer Network",
+        "category": "STEM",
+        "n": 18,
+        "correct": 16,
+        "accuracy": 88.89
+      },
+      {
+        "code": "14",
+        "name": "Discrete Mathematics",
+        "full_name": "14 Discrete Mathematics",
+        "category": "STEM",
+        "n": 17,
+        "correct": 13,
+        "accuracy": 76.47
+      },
+      {
+        "code": "15",
+        "name": "Electrical Engineering",
+        "full_name": "15 Electrical Engineering",
+        "category": "STEM",
+        "n": 18,
+        "correct": 17,
+        "accuracy": 94.44
+      },
+      {
+        "code": "16",
+        "name": "Introduction to Chemistry",
+        "full_name": "16 Introduction to Chemistry",
+        "category": "STEM",
+        "n": 18,
+        "correct": 12,
+        "accuracy": 66.67
+      },
+      {
+        "code": "17",
+        "name": "Introduction to Physics",
+        "full_name": "17 Introduction to Physics",
+        "category": "STEM",
+        "n": 18,
+        "correct": 13,
+        "accuracy": 72.22
+      },
+      {
+        "code": "18",
+        "name": "Introduction to Programming",
+        "full_name": "18 Introduction to Programming",
+        "category": "STEM",
+        "n": 18,
+        "correct": 15,
+        "accuracy": 83.33
+      },
+      {
+        "code": "19",
+        "name": "Metrology Engineer",
+        "full_name": "19 Metrology Engineer",
+        "category": "STEM",
+        "n": 14,
+        "correct": 8,
+        "accuracy": 57.14
+      },
+      {
+        "code": "20",
+        "name": "Operating System",
+        "full_name": "20 Operating System",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "21",
+        "name": "Statistics and Probability",
+        "full_name": "21 Statistics and Probability",
+        "category": "STEM",
+        "n": 18,
+        "correct": 12,
+        "accuracy": 66.67
+      },
+      {
+        "code": "22",
+        "name": "Middle School Civil Education",
+        "full_name": "22 Middle School Civil Education",
+        "category": "Social Science",
+        "n": 18,
+        "correct": 15,
+        "accuracy": 83.33
+      },
+      {
+        "code": "23",
+        "name": "Middle School Geography",
+        "full_name": "23 Middle School Geography",
+        "category": "Social Science",
+        "n": 15,
+        "correct": 11,
+        "accuracy": 73.33
+      },
+      {
+        "code": "24",
+        "name": "High School Civil Education",
+        "full_name": "24 High School Civil Education",
+        "category": "Social Science",
+        "n": 20,
+        "correct": 19,
+        "accuracy": 95.0
+      },
+      {
+        "code": "25",
+        "name": "High School Geography",
+        "full_name": "25 High School Geography",
+        "category": "Social Science",
+        "n": 17,
+        "correct": 13,
+        "accuracy": 76.47
+      },
+      {
+        "code": "26",
+        "name": "Business Administration",
+        "full_name": "26 Business Administration",
+        "category": "Social Science",
+        "n": 18,
+        "correct": 14,
+        "accuracy": 77.78
+      },
+      {
+        "code": "27",
+        "name": "Ho Chi Minh Ideology",
+        "full_name": "27 Ho Chi Minh Ideology",
+        "category": "Social Science",
+        "n": 18,
+        "correct": 14,
+        "accuracy": 77.78
+      },
+      {
+        "code": "28",
+        "name": "Macroeconomics",
+        "full_name": "28 Macroeconomics",
+        "category": "Social Science",
+        "n": 20,
+        "correct": 14,
+        "accuracy": 70.0
+      },
+      {
+        "code": "29",
+        "name": "Microeconomics",
+        "full_name": "29 Microeconomics",
+        "category": "Social Science",
+        "n": 20,
+        "correct": 12,
+        "accuracy": 60.0
+      },
+      {
+        "code": "30",
+        "name": "Principles of Marxism and Leninism",
+        "full_name": "30 Principles of Marxism and Leninism",
+        "category": "Social Science",
+        "n": 20,
+        "correct": 16,
+        "accuracy": 80.0
+      },
+      {
+        "code": "31",
+        "name": "Sociology",
+        "full_name": "31 Sociology",
+        "category": "Social Science",
+        "n": 18,
+        "correct": 16,
+        "accuracy": 88.89
+      },
+      {
+        "code": "32",
+        "name": "Elementary History",
+        "full_name": "32 Elementary History",
+        "category": "Humanity",
+        "n": 18,
+        "correct": 15,
+        "accuracy": 83.33
+      },
+      {
+        "code": "33",
+        "name": "Middle School History",
+        "full_name": "33 Middle School History",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "34",
+        "name": "Middle School Literature",
+        "full_name": "34 Middle School Literature",
+        "category": "Humanity",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      },
+      {
+        "code": "35",
+        "name": "High School History",
+        "full_name": "35 High School History",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 17,
+        "accuracy": 85.0
+      },
+      {
+        "code": "36",
+        "name": "High School Literature",
+        "full_name": "36 High School Literature",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 8,
+        "accuracy": 40.0
+      },
+      {
+        "code": "37",
+        "name": "Administrative Law",
+        "full_name": "37 Administrative Law",
+        "category": "Humanity",
+        "n": 10,
+        "correct": 3,
+        "accuracy": 30.0
+      },
+      {
+        "code": "38",
+        "name": "Business Law",
+        "full_name": "38 Business Law",
+        "category": "Humanity",
+        "n": 18,
+        "correct": 14,
+        "accuracy": 77.78
+      },
+      {
+        "code": "39",
+        "name": "Civil Law",
+        "full_name": "39 Civil Law",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 12,
+        "accuracy": 60.0
+      },
+      {
+        "code": "40",
+        "name": "Criminal Law",
+        "full_name": "40 Criminal Law",
+        "category": "Humanity",
+        "n": 17,
+        "correct": 12,
+        "accuracy": 70.59
+      },
+      {
+        "code": "41",
+        "name": "Economic Law",
+        "full_name": "41 Economic Law",
+        "category": "Humanity",
+        "n": 17,
+        "correct": 8,
+        "accuracy": 47.06
+      },
+      {
+        "code": "42",
+        "name": "Education Law",
+        "full_name": "42 Education Law",
+        "category": "Humanity",
+        "n": 17,
+        "correct": 12,
+        "accuracy": 70.59
+      },
+      {
+        "code": "43",
+        "name": "History of World Civilization",
+        "full_name": "43 History of World Civilization",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 16,
+        "accuracy": 80.0
+      },
+      {
+        "code": "44",
+        "name": "Idealogical and Moral Cultivation",
+        "full_name": "44 Idealogical and Moral Cultivation",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "45",
+        "name": "Introduction to Laws",
+        "full_name": "45 Introduction to Laws",
+        "category": "Humanity",
+        "n": 13,
+        "correct": 11,
+        "accuracy": 84.62
+      },
+      {
+        "code": "46",
+        "name": "Introduction to Vietnam Culture",
+        "full_name": "46 Introduction to Vietnam Culture",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 14,
+        "accuracy": 70.0
+      },
+      {
+        "code": "47",
+        "name": "Logic",
+        "full_name": "47 Logic",
+        "category": "Humanity",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      },
+      {
+        "code": "48",
+        "name": "Revolutionary Policy of the Vietnamese Commununist Part",
+        "full_name": "48 Revolutionary Policy of the Vietnamese Commununist Part",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 13,
+        "accuracy": 65.0
+      },
+      {
+        "code": "49",
+        "name": "Vietnamese Language and Literature",
+        "full_name": "49 Vietnamese Language and Literature",
+        "category": "Humanity",
+        "n": 18,
+        "correct": 12,
+        "accuracy": 66.67
+      },
+      {
+        "code": "50",
+        "name": "Accountant",
+        "full_name": "50 Accountant",
+        "category": "Other",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      },
+      {
+        "code": "51",
+        "name": "Clinical Pharmacology",
+        "full_name": "51 Clinical Pharmacology",
+        "category": "Other",
+        "n": 20,
+        "correct": 16,
+        "accuracy": 80.0
+      },
+      {
+        "code": "52",
+        "name": "Environmental Engineering",
+        "full_name": "52 Environmental Engineering",
+        "category": "Other",
+        "n": 18,
+        "correct": 14,
+        "accuracy": 77.78
+      },
+      {
+        "code": "53",
+        "name": "Internal Basic Medicine",
+        "full_name": "53 Internal Basic Medicine",
+        "category": "Other",
+        "n": 18,
+        "correct": 14,
+        "accuracy": 77.78
+      },
+      {
+        "code": "54",
+        "name": "Preschool Pedagogy",
+        "full_name": "54 Preschool Pedagogy",
+        "category": "Other",
+        "n": 10,
+        "correct": 3,
+        "accuracy": 30.0
+      },
+      {
+        "code": "55",
+        "name": "Tax Accountant",
+        "full_name": "55 Tax Accountant",
+        "category": "Other",
+        "n": 18,
+        "correct": 11,
+        "accuracy": 61.11
+      },
+      {
+        "code": "56",
+        "name": "Tax Civil Servant",
+        "full_name": "56 Tax Civil Servant",
+        "category": "Other",
+        "n": 18,
+        "correct": 6,
+        "accuracy": 33.33
+      },
+      {
+        "code": "57",
+        "name": "Civil Servant",
+        "full_name": "57 Civil Servant",
+        "category": "Other",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      },
+      {
+        "code": "58",
+        "name": "Driving License Certificate",
+        "full_name": "58 Driving License Certificate",
+        "category": "Other",
+        "n": 18,
+        "correct": 17,
+        "accuracy": 94.44
+      }
+    ],
+    "weakest_subjects": [
+      {
+        "code": "37",
+        "name": "Administrative Law",
+        "full_name": "37 Administrative Law",
+        "category": "Humanity",
+        "n": 10,
+        "correct": 3,
+        "accuracy": 30.0
+      },
+      {
+        "code": "54",
+        "name": "Preschool Pedagogy",
+        "full_name": "54 Preschool Pedagogy",
+        "category": "Other",
+        "n": 10,
+        "correct": 3,
+        "accuracy": 30.0
+      },
+      {
+        "code": "56",
+        "name": "Tax Civil Servant",
+        "full_name": "56 Tax Civil Servant",
+        "category": "Other",
+        "n": 18,
+        "correct": 6,
+        "accuracy": 33.33
+      },
+      {
+        "code": "01",
+        "name": "Elementary Mathematics",
+        "full_name": "01 Elementary Mathematics",
+        "category": "STEM",
+        "n": 20,
+        "correct": 8,
+        "accuracy": 40.0
+      },
+      {
+        "code": "36",
+        "name": "High School Literature",
+        "full_name": "36 High School Literature",
+        "category": "Humanity",
+        "n": 20,
+        "correct": 8,
+        "accuracy": 40.0
+      },
+      {
+        "code": "41",
+        "name": "Economic Law",
+        "full_name": "41 Economic Law",
+        "category": "Humanity",
+        "n": 17,
+        "correct": 8,
+        "accuracy": 47.06
+      },
+      {
+        "code": "34",
+        "name": "Middle School Literature",
+        "full_name": "34 Middle School Literature",
+        "category": "Humanity",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      },
+      {
+        "code": "47",
+        "name": "Logic",
+        "full_name": "47 Logic",
+        "category": "Humanity",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      },
+      {
+        "code": "50",
+        "name": "Accountant",
+        "full_name": "50 Accountant",
+        "category": "Other",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      },
+      {
+        "code": "57",
+        "name": "Civil Servant",
+        "full_name": "57 Civil Servant",
+        "category": "Other",
+        "n": 18,
+        "correct": 9,
+        "accuracy": 50.0
+      }
+    ],
+    "strongest_subjects": [
+      {
+        "code": "02",
+        "name": "Elementary Science",
+        "full_name": "02 Elementary Science",
+        "category": "STEM",
+        "n": 20,
+        "correct": 20,
+        "accuracy": 100.0
+      },
+      {
+        "code": "10",
+        "name": "High School Physics",
+        "full_name": "10 High School Physics",
+        "category": "STEM",
+        "n": 20,
+        "correct": 19,
+        "accuracy": 95.0
+      },
+      {
+        "code": "24",
+        "name": "High School Civil Education",
+        "full_name": "24 High School Civil Education",
+        "category": "Social Science",
+        "n": 20,
+        "correct": 19,
+        "accuracy": 95.0
+      },
+      {
+        "code": "03",
+        "name": "Middle School Biology",
+        "full_name": "03 Middle School Biology",
+        "category": "STEM",
+        "n": 18,
+        "correct": 17,
+        "accuracy": 94.44
+      },
+      {
+        "code": "15",
+        "name": "Electrical Engineering",
+        "full_name": "15 Electrical Engineering",
+        "category": "STEM",
+        "n": 18,
+        "correct": 17,
+        "accuracy": 94.44
+      },
+      {
+        "code": "58",
+        "name": "Driving License Certificate",
+        "full_name": "58 Driving License Certificate",
+        "category": "Other",
+        "n": 18,
+        "correct": 17,
+        "accuracy": 94.44
+      },
+      {
+        "code": "04",
+        "name": "Middle School Chemistry",
+        "full_name": "04 Middle School Chemistry",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "06",
+        "name": "Middle School Physics",
+        "full_name": "06 Middle School Physics",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "07",
+        "name": "High School Biology",
+        "full_name": "07 High School Biology",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      },
+      {
+        "code": "08",
+        "name": "High School Chemistry",
+        "full_name": "08 High School Chemistry",
+        "category": "STEM",
+        "n": 20,
+        "correct": 18,
+        "accuracy": 90.0
+      }
+    ],
+    "questions_sample": [
+      {
+        "id": "28-0007",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Hoạt động nào sau đây của ngân hàng Trung Ương sẽ làm tăng cơ sở tiền tệ",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nHoạt động nào sau đây của ngân hàng Trung Ương sẽ làm tăng cơ sở tiền tệ\n\nA. Bán ngoại tệ trên thị trường ngoại hối\nB. Cho các ngân hàng thương mại vay\nC. Hạ tỷ lệ dự trữ bắt buộc đối với các ngân hàng thương mại\nD. Tăng lãi suất chiết khấu\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "28-0008",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Những yếu tố nào sau đây có thể dẫn đến thâm hụt cán cân thương mại của một nước:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNhững yếu tố nào sau đây có thể dẫn đến thâm hụt cán cân thương mại của một nước:\n\nA. Đồng nội tệ xuống giá so với đồng ngoại tệ\nB. Sự gia tăng của đầu tư trực tiếp nước ngoài\nC. Thu nhập của các nước đối tác mậu dịch chủ yếu tăng\nD. Các lựa chọn đều sai\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "28-0009",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Những yếu tố nào sau đây có ảnh hưởng đến tổng cung dài hạn:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNhững yếu tố nào sau đây có ảnh hưởng đến tổng cung dài hạn:\n\nA. Thu nhập quốc gia tăng\nB. Xuất khẩu tăng\nC. Tiền lương tăng\nD. Đổi mới công nghệ\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "28-0010",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Những trường hợp nào sau đây có thể tạo ra những áp lực lạm phát",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNhững trường hợp nào sau đây có thể tạo ra những áp lực lạm phát\n\nA. Cán cân thanh toán thặng dư trong một thời gian dài\nB. Giá của các nguyên liệu nhập khẩu chủ yếu gia tăng nhiều\nC. Một phần lớn các thâm hụt ngân sách được tài trợ bởi ngân hàng trung ương\nD. Các lựa chọn đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "28-0011",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "GDP thực và GDP danh nghĩa của một năm bằng nhau nếu:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nGDP thực và GDP danh nghĩa của một năm bằng nhau nếu:\n\nA. Tỷ lệ lạm phát của năm hiện hành bằng tỷ lệ lạm phát của năm trước\nB. Tỷ lệ lạm phát của năm hiện hành bằng tỷ lệ lạm phát của năm gốc\nC. Chỉ số giá của năm hiện hành bằng chỉ số giá của năm trước\nD. Chỉ số giá của năm hiện hành bằng chỉ số giá của năm gốc\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "28-0012",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Nếu NHTƯ giảm tỷ lệ dự trữ bắt buộc và tăng lãi suất chiết khấu thì khối lượng tiền tệ sẽ:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNếu NHTƯ giảm tỷ lệ dự trữ bắt buộc và tăng lãi suất chiết khấu thì khối lượng tiền tệ sẽ:\n\nA. Tăng\nB. Giảm\nC. Không đổi\nD. Không thể kết luận\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "D",
+        "correct": false
+      },
+      {
+        "id": "28-0013",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Trên đồ thị, trục hoành ghi sản lượng quốc gia, trục tung ghi mức giá chung, đường tổng cầu AD dịch sang phải khi:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrên đồ thị, trục hoành ghi sản lượng quốc gia, trục tung ghi mức giá chung, đường tổng cầu AD dịch sang phải khi:\n\nA. Nhập khẩu và xuất khẩu tăng\nB. Chính phủ tăng chi tiêu cho quốc phòng\nC. Chính phủ cắt giảm các khoản trợ cấp và giảm thuế\nD. Các lựa chọn đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "28-0014",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Trên đồ thị, trục hoành ghi sản lượng quốc gia, trục tung ghi mức giá chung, đường tổng cung AS  dịch chuyển khi:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrên đồ thị, trục hoành ghi sản lượng quốc gia, trục tung ghi mức giá chung, đường tổng cung AS  dịch chuyển khi:\n\nA. Mức giá chung thay đổi\nB. Chính phủ thay đổi các khoản chi ngân sách\nC. Thu nhập quốc gia không đổi\nD. Công nghệ sản xuất có những thay đổi đáng kể\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "28-0015",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Trong cơ chế tỷ giá hối đoái thả nổi hoàn toàn:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong cơ chế tỷ giá hối đoái thả nổi hoàn toàn:\n\nA. Dự trữ ngoại tệ của quốc gia thay đổi tùy theo diễn biến trên thị trường ngoại hối\nB. Dự trữ ngoại tệ của quốc gia tăng khi tỷ giá hối đoái giảm\nC. Dự trữ ngoại tệ của quốc gia không thay đổi, bất luận diễn biến trên thị trường ngoại hối\nD. Dự trữ ngoại tệ của quốc gia giảm khi tỷ giá hối đoái tăng\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "28-0016",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Nếu tỷ giá hối đoái danh nghĩa không thay đổi đáng kể, tốc độ tăng giá trong nước tăng nhanh hơn giá thế giới, sức cạnh tranh của hàng hóa trong nước sẽ:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNếu tỷ giá hối đoái danh nghĩa không thay đổi đáng kể, tốc độ tăng giá trong nước tăng nhanh hơn giá thế giới, sức cạnh tranh của hàng hóa trong nước sẽ:\n\nA. Tăng\nB. Giảm\nC. Không thay đổi\nD. Không thể kết luận\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "28-0017",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Khi đầu tư nước ngoài vào Việt Nam tăng, nếu các yếu tố khác không đổi, Việt Nam sẽ:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nKhi đầu tư nước ngoài vào Việt Nam tăng, nếu các yếu tố khác không đổi, Việt Nam sẽ:\n\nA. Thặng dư hoặc thâm hụt cán cân thanh toán\nB. Tăng xuất khẩu ròng\nC. Tăng Thu nhập ròng từ tài sản nước ngoài\nD. Các lựa chọn đều đúng\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "D",
+        "correct": false
+      },
+      {
+        "id": "28-0018",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Nếu các yếu tố khác không đổi, lãi suất tăng thì sản lượng cân bằng sẽ:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNếu các yếu tố khác không đổi, lãi suất tăng thì sản lượng cân bằng sẽ:\n\nA. Tăng\nB. Giảm\nC. Không thay đổi\nD. Không thể thay đổi\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "28-0019",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Nền kinh tế đang ở mức toàn dụng. Giả sử lãi suất, giá cả và tỷ giá hối đoái không đổi, nếu chính phủ giảm chi tiêu và giảm thuế một lượng bằng nhau,  trạng thái của nền kinh tế sẽ thay đổi:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNền kinh tế đang ở mức toàn dụng. Giả sử lãi suất, giá cả và tỷ giá hối đoái không đổi, nếu chính phủ giảm chi tiêu và giảm thuế một lượng bằng nhau,  trạng thái của nền kinh tế sẽ thay đổi:\n\nA. Từ suy thoái sang lạm phát\nB. Từ suy thoái sang ổn định\nC. Từ ổn định sang lạm phát\nD. Từ ổn định sang suy thoái\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "28-0020",
+        "subject_code": "28",
+        "category": "Social Science",
+        "question": "Tác động ngắn hạn của chính sách nới lỏng tiền tệ  trong nền kinh tế mở với cơ chế tỷ giá hối đoái thả nổi là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTác động ngắn hạn của chính sách nới lỏng tiền tệ  trong nền kinh tế mở với cơ chế tỷ giá hối đoái thả nổi là:\n\nA. Sản lượng tăng\nB. Thặng dư hoặc giảm thâm hụt cán cân thương mại\nC. Đồng nội tệ giảm giá\nD. Các lựa chọn đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "24-0007",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Theo yêu cầu của quy luật giá trị, tổng giá cả hàng hóa sau khi bán so với tổng giá trị hàng hóa được\ntạo ra trong quá trình sản xuất phải",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo yêu cầu của quy luật giá trị, tổng giá cả hàng hóa sau khi bán so với tổng giá trị hàng hóa được\ntạo ra trong quá trình sản xuất phải\n\nA. Tăng lên\nB. Bằng nhau\nC. Thấp hơn\nD. Khác biệt\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "24-0008",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Một trong những mục đích của việc áp dụng trách nhiệm pháp lý đối với người vi phạm pháp luật là",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột trong những mục đích của việc áp dụng trách nhiệm pháp lý đối với người vi phạm pháp luật là\n\nA. Triệt tiêu mọi quan điểm bất đồng\nB. Bộc lộ danh tính của người tố cáo\nC. Giáo dục ý thức tôn trọng pháp luật\nD. Chấm dứt tất cả các quan hệ xã hội\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "24-0009",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Việc chính quyền xã tổ chức lấy ý kiến của người dân về chủ trương xây dựng công trình phúc lợi\ncông cộng là bảo đảm quyền tham gia quản lý nhà nước và xã hội của công dân ở phạm vi",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nViệc chính quyền xã tổ chức lấy ý kiến của người dân về chủ trương xây dựng công trình phúc lợi\ncông cộng là bảo đảm quyền tham gia quản lý nhà nước và xã hội của công dân ở phạm vi\n\nA. Lãnh thổ\nB. Toàn quốc\nC. Cả nước\nD. Cơ sở\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "24-0010",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Một trong những nội dung của quyền bình đẳng trong lao động là mọi công dân đều được thực hiện\nquyền lao động thông qua",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột trong những nội dung của quyền bình đẳng trong lao động là mọi công dân đều được thực hiện\nquyền lao động thông qua\n\nA. Nội dung thông cáo báo chí\nB. Lựa chọn việc làm phù hợp\nC. Kế hoạch điều tra nhân lực\nD. Chiến lược phân bố dân cư\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "24-0011",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Một trong những nội dung của quyền bình đẳng trong hôn nhân và gia đình là vợ, chồng có quyền và\nnghĩa vụ ngang nhau trong việc",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột trong những nội dung của quyền bình đẳng trong hôn nhân và gia đình là vợ, chồng có quyền và\nnghĩa vụ ngang nhau trong việc\n\nA. Tôn trọng danh dự của nhau\nB. Áp đặt quan điểm cá nhân\nC. Chiếm hữu tài sản công cộng\nD. Che giấu hành vi bạo lực\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "24-0012",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Theo quy định của pháp luật, công dân có thể thực hiện quyền ứng cử bằng hình thức tự ứng cử hoặc được",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo quy định của pháp luật, công dân có thể thực hiện quyền ứng cử bằng hình thức tự ứng cử hoặc được\n\nA. Bí mật tranh cử\nB. Vận động tranh cử\nC. Giới thiệu ứng cử\nD. Ủy quyền ứng cử\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "24-0013",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Cá nhân, tổ chức thực hiện đầy đủ các nghĩa vụ, chủ động làm những gì mà pháp luật quy định phải\nlàm là thực hiện pháp luật theo hình thức nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCá nhân, tổ chức thực hiện đầy đủ các nghĩa vụ, chủ động làm những gì mà pháp luật quy định phải\nlàm là thực hiện pháp luật theo hình thức nào sau đây?\n\nA. Tuyên truyền pháp luật\nB. Phổ biến pháp luật\nC. Thi hành pháp luật\nD. Điều chỉnh pháp luật\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "24-0014",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Theo quy định của pháp luật, một trong những nội dung của quyền được phát triển là mọi công dân\nđều được",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo quy định của pháp luật, một trong những nội dung của quyền được phát triển là mọi công dân\nđều được\n\nA. Chăm sóc sức khỏe ban đầu\nB. Hưởng chế độ phụ cấp khu vực\nC. Phê duyệt hồ sơ tín dụng\nD. Phân bổ ngân sách quốc gia\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "24-0015",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Bình đẳng về trách nhiệm pháp lí là bất kì công dân nào vi phạm pháp luật đều phải.",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nBình đẳng về trách nhiệm pháp lí là bất kì công dân nào vi phạm pháp luật đều phải.\n\nA. Chấm dứt mọi quan hệ dân sự\nB. Tổ chức phục dựng hiện trường\nC. Tạo lập bằng chứng ngoại phạm\nD. Bị xử lí theo quy định của pháp luật\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "24-0016",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Trong sản xuất và lưu thông hàng hóa, khi giá cả thị trường giảm xuống thì các doanh nghiệp thường\ncó xu hướng",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong sản xuất và lưu thông hàng hóa, khi giá cả thị trường giảm xuống thì các doanh nghiệp thường\ncó xu hướng\n\nA. Tăng giá trị cá biệt của hàng hóa\nB. Mở rộng quy mô sản xuất\nC. Tăng khối lượng cung hàng hóa\nD. Thu hẹp quy mô sản xuất\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "24-0017",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Theo quy định của pháp luật, khi tiến hành kinh doanh, mọi doanh nghiệp đều phải thực hiện nghĩa vụ",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo quy định của pháp luật, khi tiến hành kinh doanh, mọi doanh nghiệp đều phải thực hiện nghĩa vụ\n\nA. Tổ chức hội nghị khách hàng\nB. Nộp thuế đúng thời hạn\nC. Quản lí nhân sự trực tuyến\nD. Thực hiện cổ phần hóa\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "24-0018",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Theo quy định của pháp luật, việc bắt người trong trường hợp khẩn cấp được tiến hành khi có căn cứ\ncho rằng người đó đang chuẩn bị thực hiện",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo quy định của pháp luật, việc bắt người trong trường hợp khẩn cấp được tiến hành khi có căn cứ\ncho rằng người đó đang chuẩn bị thực hiện\n\nA. Kế hoạch phản biện xã hội\nB. Tội phạm rất nghiêm trọng\nC. Hồ sơ thế chấp tài sản riêng\nD. Phương án độc chiếm thị trường\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "24-0019",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Toàn bộ những năng lực thể chất và tinh thần của con người được vận dụng vào quá trình sản xuất là",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nToàn bộ những năng lực thể chất và tinh thần của con người được vận dụng vào quá trình sản xuất là\n\nA. Sức lao động\nB. Tư liệu tiêu dùng\nC. Bối cảnh xã hội\nD. Cách hợp tác\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "24-0020",
+        "subject_code": "24",
+        "category": "Social Science",
+        "question": "Theo quy định của pháp luật, một trong những nội dung của quyền học tập là mọi công dân đều được",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo quy định của pháp luật, một trong những nội dung của quyền học tập là mọi công dân đều được\n\nA. Học không hạn chế\nB. Hưởng mọi ưu đãi\nC. Miễn, giảm học phí\nD. Cộng điểm khu vực\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "22-0006",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Hoạt động nào sau đây là hoạt động kinh doanh.?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nHoạt động nào sau đây là hoạt động kinh doanh.?\n\nA. Hoạt động trao đổi hàng hóa và liên kết sản xuất\nB. Hoạt động dịch vụ và trao đổi hàng hóa\nC. Hoạt động sản xuất, dịch vụ và trao đổi hàng hóa\nD. Hoạt động dịch vụ, trao đổi hàng hóa và liên kết sản xuất\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "D",
+        "correct": false
+      },
+      {
+        "id": "22-0007",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Hành vi nào sau đây thực hiện đúng quyền tự do kinh doanh?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nHành vi nào sau đây thực hiện đúng quyền tự do kinh doanh?\n\nA. Trong kinh doanh chỉ cần nộp thuế là đủ\nB. Kinh doanh nhỏ thì không phải kê khai\nC. Kinh Doanh hàng hóa không rõ nguồn gốc\nD. Kinh doanh đúng mặt hàng, đúng ngành đã kê khai\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "22-0008",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Một cửa hàng kinh doanh điện tử điện lạnh không phải đóng loại thuế nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột cửa hàng kinh doanh điện tử điện lạnh không phải đóng loại thuế nào sau đây?\n\nA. Thuế nhà đất\nB. Thuế môn bài\nC. Thuế thu nhập cá nhân\nD. Thuế giá trị gia tăng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "22-0009",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Quyền tự do kinh doanh của công dân có nghĩa là công dân có quyền",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nQuyền tự do kinh doanh của công dân có nghĩa là công dân có quyền\n\nA. Kinh doanh bất cứ mặt hàng nào\nB. Làm mọi cách để có lợi nhuận cao\nC. Kinh doanh không cần phải xin phép\nD. Tự do lựa chọn mặt hàng kinh doanh theo quy định của pháp luật\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "22-0010",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Trong hóa đơn thanh toán tiền điện hàng tháng của gia đình em, có một khoản thuế phải đóng, đó là thuế gì?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong hóa đơn thanh toán tiền điện hàng tháng của gia đình em, có một khoản thuế phải đóng, đó là thuế gì?\n\nA. Thuế tiêu thụ đặc biệt\nB. Thuế giá trị gia tăng\nC. Thuế thu nhập cá nhân\nD. Thuế nhập khẩu\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "22-0011",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Trong các quyền sau đây quyền nào là quyền lao động?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong các quyền sau đây quyền nào là quyền lao động?\n\nA. Quyền sử dụng đất\nB. Quyền sở hữu tài sản\nC. Quyền được thuê mướn lao động\nD. Quyền tự do lựa chọn hình thức kinh doanh\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "22-0012",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Pháp luật nghiêm cấm chủ doanh nghiệp thuê mướn người chưa đủ bao nhiêu tuổi vào làm việc?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nPháp luật nghiêm cấm chủ doanh nghiệp thuê mướn người chưa đủ bao nhiêu tuổi vào làm việc?\n\nA. 15 tuổi\nB. 16 tuổi\nC. 17 tuổi\nD. 18 tuổi\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "22-0013",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Các bạn học sinh lớp 9A trao đổi với nhau về quyền và nghĩa vụ lao động, có nhiều ý kiến khác nhau. Em đồng ý với ý kiến nào dưới đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác bạn học sinh lớp 9A trao đổi với nhau về quyền và nghĩa vụ lao động, có nhiều ý kiến khác nhau. Em đồng ý với ý kiến nào dưới đây?\n\nA. Lao động là việc làm của người lớn, học sinh lớp 9 chỉ có nghĩa vụ học tập, không nên lao động chân tay\nB. Học sinh lớp 9 cần tham gia lao động tuỳ theo sức của mình\nC. Chỉ có học sinh nhà nghèo tham gia lao động, cũng học sinh nhà giàu thì không cần\nD. Học nhiều cũng không bằng nghỉ học để kiếm nhiều tiền\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "22-0014",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Huệ 15 tuổi đang học lớp 9. Muốn có việc làm có tiền để giúp gia đình, Huệ phải làm cách nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nHuệ 15 tuổi đang học lớp 9. Muốn có việc làm có tiền để giúp gia đình, Huệ phải làm cách nào sau đây?\n\nA. Xin làm hợp đồng dài hạn trong cơ quan Nhà nước\nB. Xin làm hợp đồng ở Công ty\nC. Mở xưởng sản xuất, thuê người lao động\nD. Nhận hàng may mặc về gia công\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "22-0015",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Theo em trong các ý kiến sau, ý kiến nào đúng?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo em trong các ý kiến sau, ý kiến nào đúng?\n\nA. Lao động trí óc quan trọng hơn lao động chân tay\nB. Mọi hoạt động kiếm ra tiền đều được nhà nước khuyến khích\nC. Những nghề có thu nhập cao đáng được tôn trọng hơn những nghề có thu nhập thấp\nD. Người lao động trong tất cả các ngành nghề đều phải tuân theo quy định của luật lao động\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "22-0020",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Tuổi pháp luật cho phép kết hôn:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTuổi pháp luật cho phép kết hôn:\n\nA. Tộc, nữ đủ 18 tuổi trở lên\nB. Tộc, nữ đủ 20 tuổi trở lên\nC. Tộc từ đủ 18 tuổi, nữ từ đủ 20 tuổi trở lên\nD. Nữ từ đủ 18 tuổi, tộc từ đủ 20 tuổi trở lên\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "22-0021",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Thế nào là kết hôn đúng pháp luật?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nThế nào là kết hôn đúng pháp luật?\n\nA. Việc kết hôn được nhà thờ cho phép và tổ chức tại nhà thờ\nB. Việc kết hôn do hai bên gia đình đồng ý và tổ chức kết hôn tại gia đình\nC. Việc kết hôn do hai bên tộc, nữ đồng ý và tổ chức kết hôn tại gia đình\nD. Việc kết hôn do tộc, nữ tự nguyện và được đăng ký tại Ủy ban nhân dân xã\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "22-0022",
+        "subject_code": "22",
+        "category": "Social Science",
+        "question": "Pháp luật không cấm kết hôn trong trường hợp nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nPháp luật không cấm kết hôn trong trường hợp nào sau đây?\n\nA. Giữa những người có họ trong phạm vi ba đời\nB. Giữa những người có cùng dòng máu trực hệ\nC. Giữa những người đang có vợ hoặc có chồng\nD. Giữa những người có họ trong phạm vi 5 đời\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "31-0006",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Các loại chuẩn mực xã hội bất thành văn?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác loại chuẩn mực xã hội bất thành văn?\n\nA. Tất cả các phương án đều đúng\nB. Chuẩn mực phong tục tập quán\nC. Chuẩn mực thẩm mỹ\nD. Chuẩn mực đạo đức\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "31-0007",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Các nhân tố ảnh hưởng đến tính cơ động xã hội?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác nhân tố ảnh hưởng đến tính cơ động xã hội?\n\nA. Tất cả các phương án đều đúng\nB. Giới tính\nC. Thâm niên nghề nghiệp\nD. Trình độ học vấn\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "31-0008",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Các nhân tố qui định những nét đặc thù của lối sống đô thị Việt Nam hiện nay:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác nhân tố qui định những nét đặc thù của lối sống đô thị Việt Nam hiện nay:\n\nA. Tất cả các phương án đều đúng\nB. Là sự biến đổi cơ cấu xã hội – nghề nghiệp của cư dân đô thị\nC. Sự chuyển đổi định hướng giá trị của các nhóm xã hội\nD. Điều kiện kinh tế xã hội\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "31-0009",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Các phương pháp thu thập thông tin trong điều tra xã hội học là?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác phương pháp thu thập thông tin trong điều tra xã hội học là?\n\nA. Tất cả các phương án đều đúng\nB. Phương pháp phân tích tài liệu\nC. Phương pháp điều tra bằng bảng hỏi\nD. Phương pháp quan sát\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "31-0010",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Các yếu tố ảnh hưởng tới sự hình thành lối sống nông thôn",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác yếu tố ảnh hưởng tới sự hình thành lối sống nông thôn\n\nA. Lao động đặc thù\nB. Cách thức sử dụng thời gian nhàn rỗi\nC. Địa bàn cư trú nông thôn\nD. Khoa học, kỹ thuật\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "31-0011",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Các yếu tố cấu thành đô thị?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác yếu tố cấu thành đô thị?\n\nA. Yếu tố không gian vật chất\nB. Môi trường xã hội đô thị\nC. Kinh tế, xã hội\nD. A và C\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "31-0012",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Câu hỏi đóng trong quá trình xây dựng bảng câu hỏi trong điều tra xã hội học?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCâu hỏi đóng trong quá trình xây dựng bảng câu hỏi trong điều tra xã hội học?\n\nA. Là câu hỏi là loại câu hỏi đưa ra nội dung cụ thể để nhằm kiểm tra tính trung thực của người được hỏi\nB. Là câu hỏi mà người hỏi phát phiếu để cho người được hỏi trả lời\nC. Là câu hỏi đã liệt kê sẵn phương án trả lời để cho người được hỏi lựa chọn\nD. Là câu hỏi chưa có phương án trả lời, người được hỏi phải tự đưa ra ý kiến riêng của mình\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "31-0013",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Câu hỏi mở khi xây dựng bảng câu hỏi trong điều tra xã hội học?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCâu hỏi mở khi xây dựng bảng câu hỏi trong điều tra xã hội học?\n\nA. Là loại câu hỏi được đưa ra nội dung và có gợi ý trả lời\nB. Là loại câu hỏi chưa có phương án trả lời, người hỏi phải đưa ra phương án riêng của mình\nC. Là loại câu hỏi có liệt kê sẵn các phương án trả lời khác nhau để người trả lời tự lựa chọn phương án riêng của mình\nD. Là loại câu hỏi đã liệt kê sẵn phương án trả lời\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "31-0014",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Chủ thể của dư luận xã hội là?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChủ thể của dư luận xã hội là?\n\nA. Là ý kiến của cá nhân\nB. Là cộng đồng người lớn, nhỏ khác nhau\nC. Là cộng đồng người hay nhóm người mang dư luận xã hội\nD. Là các giai cấp tầng lớp khác nhau, đối lập nhau về lợi ích\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "31-0015",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Chức năng cơ bản của xã hội học là?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChức năng cơ bản của xã hội học là?\n\nA. Tất cả các phương án đều đúng\nB. Chức năng dự báo\nC. Chức năng nhận thức\nD. Chức năng nhận thức và thực tiễn\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "31-0016",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Chức năng của dư luận xã hội?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChức năng của dư luận xã hội?\n\nA. Giám sát hoạt động của các cơ quan nhà nước và các tổ chức xã hội\nB. Giáo dục cá nhân\nC. Điều hòa các mối quan hệ\nD. Tất cả các phương án đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "31-0017",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Chức năng của xã hội học pháp luật là?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChức năng của xã hội học pháp luật là?\n\nA. Điều hòa, giải quyết các xung đột\nB. Chức năng bảo vệ\nC. Chức năng giáo dục\nD. Tất cả các phương án đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "31-0018",
+        "subject_code": "31",
+        "category": "Social Science",
+        "question": "Đâu không phải là chức năng của xã hội học pháp luật?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐâu không phải là chức năng của xã hội học pháp luật?\n\nA. Điều hòa, giải quyết các xung đột\nB. Giám sát và tư vấn\nC. Chức năng bảo vệ\nD. Chức năng giáo dục\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "25-0007",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 19, cho biết tỉnh nào có diện tích trồng cây công nghiệp lâu năm hơn trồng cây công nghiệp hàng năm trong số các tỉnh sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 19, cho biết tỉnh nào có diện tích trồng cây công nghiệp lâu năm hơn trồng cây công nghiệp hàng năm trong số các tỉnh sau đây?\n\nA. Phú Yên\nB. Nghệ An\nC. Hà Tĩnh\nD. Gia Lai\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "25-0008",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 9, cho biết trong các trạm khí tượng sau đây, trạm nào có chênh lệch nhiệt độ giữa tháng I và tháng VII thấp nhất?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 9, cho biết trong các trạm khí tượng sau đây, trạm nào có chênh lệch nhiệt độ giữa tháng I và tháng VII thấp nhất?\n\nA. Cà Mau\nB. Thanh Hóa\nC. Lạng Sơn\nD. Sa Pa\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "25-0009",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 29, cho biết trung tâm công nghiệp nào sau đây nằm ở ven biển?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 29, cho biết trung tâm công nghiệp nào sau đây nằm ở ven biển?\n\nA. Cần Thơ\nB. Biên Hòa\nC. Rạch Giá\nD. Long Xuyên\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "25-0010",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 4-5, cho biết thành phố nào sau đây là tỉnh lị của Phú Thọ?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 4-5, cho biết thành phố nào sau đây là tỉnh lị của Phú Thọ?\n\nA. Hạ Long\nB. Phủ Lý\nC. Việt Trì\nD. Phú Yên\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "25-0011",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 10, cho biết trạm thủy văn Cần Thơ ở lưu vực hệ thống sông nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 10, cho biết trạm thủy văn Cần Thơ ở lưu vực hệ thống sông nào sau đây?\n\nA. Sông Cửu Long\nB. Sông Mã\nC. Sông Đồng Nai\nD. Sông Thu Bồn\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "25-0012",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 26, cho biết trung tâm công nghiệp nào sau đây có ngành đóng dầu?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 26, cho biết trung tâm công nghiệp nào sau đây có ngành đóng dầu?\n\nA. Việt Trì\nB. Hải Phòng\nC. Bắc Ninh\nD. Thái Nguyên\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "25-0013",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 22, cho biết nhà máy điện nào có công suất lớn nhất trong số các nhà máy sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 22, cho biết nhà máy điện nào có công suất lớn nhất trong số các nhà máy sau đây?\n\nA. Hòa Bình\nB. Na Dương\nC. Uông Bí\nD. Nậm Mu\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "25-0014",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lí Việt Nam trang 28, cho biết khu kinh tế ven biển Dung Quốc thuộc tỉnh nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lí Việt Nam trang 28, cho biết khu kinh tế ven biển Dung Quốc thuộc tỉnh nào sau đây?\n\nA. Bình Định\nB. Phú Yên\nC. Quảng Nam\nD. Quảng Ngãi\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "25-0016",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Biện pháp hạn chế thiệt hại do bão gây ra ở vùng đồng bằng nước ta là",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nBiện pháp hạn chế thiệt hại do bão gây ra ở vùng đồng bằng nước ta là\n\nA. Sơ tán dân\nB. Xây hồ thủy điện\nC. Mở rộng đô thị\nD. Chống hạn mặn\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "25-0017",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lý Việt Nam trang 23, cho biết đường số 24 và 14 gặp nhau ở địa điểm nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lý Việt Nam trang 23, cho biết đường số 24 và 14 gặp nhau ở địa điểm nào sau đây?\n\nA. Gia Nghĩa\nB. Kon Tum\nC. Pleiku\nD. Buôn Ma Thuột\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "25-0018",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lý Việt Nam trang 15 cho biết đô thị nào sau đây thuộc tỉnh Lâm Đồng?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lý Việt Nam trang 15 cho biết đô thị nào sau đây thuộc tỉnh Lâm Đồng?\n\nA. Gia Nghĩa\nB. Kon Tum\nC. Pleiku\nD. Đà Lạt\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "25-0019",
+        "subject_code": "25",
+        "category": "Social Science",
+        "question": "Căn cứ vào Atlat địa lý Việt Nam trang 14, cho biết núi nào sau đây nằm ở cao nguyên Đak Lak?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCăn cứ vào Atlat địa lý Việt Nam trang 14, cho biết núi nào sau đây nằm ở cao nguyên Đak Lak?\n\nA. Nam Decbri\nB. Braian\nC. Lang Bian\nD. Chư Pha\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "23-0006",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Đông Nam Bộ KHÔNG giáp vùng kinh tế nào sau đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐông Nam Bộ KHÔNG giáp vùng kinh tế nào sau đây?\n\nA. Tây Nguyên\nB. Bắc Trung Bộ\nC. Duyên hải nam Trung bộ\nD. Đồng bằng sông Cửu Long\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "23-0007",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Đặc điểm địa hình đặc trưng của Đông Nam Bộ là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐặc điểm địa hình đặc trưng của Đông Nam Bộ là:\n\nA. Dốc, bị cắt xẻ mạnh\nB. Thoải, khá bằng phẳng\nC. Thấp trũng, chia cắt mạnh\nD. Cao đồ sộ, độ dốc lớn\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "23-0008",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Đặc điểm khí hậu nổi bật của vùng Đông Nam Bộ là",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐặc điểm khí hậu nổi bật của vùng Đông Nam Bộ là\n\nA. Nhiệt đới ẩm gió mùa\nB. Cận nhiệt đới gió mùa\nC. Cận xích đạo nóng ẩm\nD. Ôn đới lục địa\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "23-0009",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Hai loại đất chiếm diện tích lớn nhất ở Đông Nam Bộ là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nHai loại đất chiếm diện tích lớn nhất ở Đông Nam Bộ là:\n\nA. Đất xám và đất phù sa\nB. Đất badan và đất feralit\nC. Đất phù sa và đất feralit\nD. Đất badan và đất xám\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "23-0010",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Đặc điểm dân cư KHÔNG ĐÚNG với vùng Đông Nam Bộ là",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐặc điểm dân cư KHÔNG ĐÚNG với vùng Đông Nam Bộ là\n\nA. Là vùng đông dân\nB. Mật độ dân số cao nhất cả nước\nC. Người dân năng động, sáng tạo\nD. Có nhiều di tích lịch sử, văn hóa\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "23-0011",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Các ngành công nghiệp hiện đại đã hình thành và phát triển ở Đông Nam Bộ là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác ngành công nghiệp hiện đại đã hình thành và phát triển ở Đông Nam Bộ là:\n\nA. Dệt­ may, da­ giầy, gốm sứ\nB. Dầu khí, phân bón, năng lượng\nC. Chế biến lương thực­ thực phẩm, cơ khí\nD. Dầu khí, điện tử, công nghệ cao\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "23-0012",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Cây công nghiệp lâu năm được trồng nhiều nhất ở Đông Nam Bộ là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCây công nghiệp lâu năm được trồng nhiều nhất ở Đông Nam Bộ là:\n\nA. Điều\nB. Cà phê\nC. Cao su\nD. Hồ tiêu\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "23-0014",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Đầu mối giao thông vận tải hàng đầu của Đông Nam Bộ và cả nước là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐầu mối giao thông vận tải hàng đầu của Đông Nam Bộ và cả nước là:\n\nA. Vũng Tàu\nB. TP Hồ Chí Minh\nC. Đà Lạt\nD. Nha Trang\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "23-0015",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Mặt hàng KHÔNG PHẢI là sản phẩm xuất khẩu hàng đầu của Đông Nam Bộ là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMặt hàng KHÔNG PHẢI là sản phẩm xuất khẩu hàng đầu của Đông Nam Bộ là:\n\nA. Dầu thô\nB. Thực phẩm chế biến\nC. Than đá\nD. Hàng nông sản\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "23-0016",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Đặc điểm nổi bật về vị trí của Đồng bằng Sông Cửu Long là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐặc điểm nổi bật về vị trí của Đồng bằng Sông Cửu Long là:\n\nA. Toàn bộ diện tích là đồng bằng\nB. Hai mặt giáp biển\nC. Nằm ở cực tộc tổ quốc\nD. Rộng lớn nhất cả nước\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "23-0017",
+        "subject_code": "23",
+        "category": "Social Science",
+        "question": "Đặc điểm nào sau đây KHÔNG ĐÚNG với vị trí địa lí, giới hạn lãnh thổ vùng đồng bằng sông Cửu Long?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐặc điểm nào sau đây KHÔNG ĐÚNG với vị trí địa lí, giới hạn lãnh thổ vùng đồng bằng sông Cửu Long?\n\nA. Bao gồm 13 tỉnh/thành phố trực thuộc Trung ương\nB. Là đồng bằng châu thổ lớn nhất nước ta\nC. Tiếp giáp với Biển Đông ở phía Đông Nam và vịnh Thái Lan ở phía Tây Nam\nD. Tiếp giáp với Campuchia và Lào ở phía bắc\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "30-0007",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Trong các câu nói sau đây đâu là cách diễn đạt mặt thứ nhất của vấn đề cơ bản của triết học?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong các câu nói sau đây đâu là cách diễn đạt mặt thứ nhất của vấn đề cơ bản của triết học?\n\nA. Cảm giác của con người là hình ảnh chân thực, sinh động về sự vật\nB. Khái niệm và cảm giác có quan hệ biện chứng với nhau\nC. Giữa vật chất và ý thức cái nào có trước, cái nào có sau? cái nào quyết định cái nào?\nD. Cả A, B và C\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "30-0008",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Trong các câu sau, đâu là cách diễn đạt về mặt thứ hai của vấn đề cơ bản của triết học?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong các câu sau, đâu là cách diễn đạt về mặt thứ hai của vấn đề cơ bản của triết học?\n\nA. Thế giới vật chất tồn tại khách quan độc lập với ý thức, quyết định sự tồn tại của ý thức\nB. Các sự vật trong thế giới liên hệ với nhau và luôn vận động phát triển\nC. Con người có thể nhận thức được thế giới hay không?\nD. Nhận thức cảm tính có những hình thức cơ bản là cảm giác, tri giác, và biểu tượng\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "30-0009",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Chủ nghĩa duy tâm chủ quan là ?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChủ nghĩa duy tâm chủ quan là ?\n\nA. Thừa nhận vật chất tồn tại độc lập\nB. Thừa nhận thực thể tinh thần tồn tại độc lập và quy định sự tồn tại của vật chất\nC. Cho rằng cảm giác và ý thức của con người là cái có trước và tồn tại sẵn có trong con người, mọi sự vật hay thế giới vật chất chỉ là kết quả của sự phức hợp của cảm giác mà thôi\nD. Cả A, B và C\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "30-0010",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Vị mặn của muối là do cảm giác của con người quy định. Luận điểm đó thuộc quan điểm của trào lưu triết học nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nVị mặn của muối là do cảm giác của con người quy định. Luận điểm đó thuộc quan điểm của trào lưu triết học nào?\n\nA. CNDVSH\nB. CNDVBC\nC. CNDT chủ quan\nD. CNDT khách quan\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "30-0011",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Không thể khẳng định một vật tồn tại khi không cảm nhận được nó. Đó là quan điểm của:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nKhông thể khẳng định một vật tồn tại khi không cảm nhận được nó. Đó là quan điểm của:\n\nA. CNDV SH\nB. CNDVBC\nC. CNDT khách quan\nD. CNDT chủ quan\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "30-0012",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Đâu là quan điểm của chủ nghĩa duy vật",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐâu là quan điểm của chủ nghĩa duy vật\n\nA. Vật chất là tính thứ nhất, ý thức là tính thứ hai\nB. Vật chất có trước, ý thức có sau, vật chất quyết định ý thức\nC. Ý thức tồn tại độc lập, không phụ thuộc vào vật chất\nD. Phương án A và B\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "30-0013",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Chủ nghĩa duy vật có những hình thức cơ bản nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChủ nghĩa duy vật có những hình thức cơ bản nào?\n\nA. Chủ nghĩa duy vật ngây thơ, chất phác\nB. Chủ nghĩa duy vật siêu hình, máy móc\nC. Chủ nghĩa duy vật biện chứng\nD. Cả A, B và C\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "30-0014",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Triết học nào dưới đây thuộc các hình thức cơ bản của chủ nghĩa duy vật",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTriết học nào dưới đây thuộc các hình thức cơ bản của chủ nghĩa duy vật\n\nA. Chủ nghĩa duy vật siêu hình\nB. Chủ nghĩa duy vật tầm thường\nC. Chủ nghĩa duy vật biện chứng\nD. Phương án A và C\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "30-0015",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Trường phái triết học nào cho ý thức là tính thứ nhất quyết định sự tồn tại của vật chất?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrường phái triết học nào cho ý thức là tính thứ nhất quyết định sự tồn tại của vật chất?\n\nA. CNDT chủ quan\nB. CNDT khách quan\nC. CNDV\nD. Phương án A và B\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "30-0016",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Đâu là triết học nhất nguyên?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐâu là triết học nhất nguyên?\n\nA. Vật chất là tính thứ nhất, quyết định sự tồn tại của ý thức\nB. Vật chất và ý thức song song tồn tại, không cái nào quyết định cái nào\nC. Ý thức là tính thứ nhất, quyết định sự tồn tại của vật chất\nD. A và C\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "30-0017",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Vấn đề cơ bản của triết học là vấn đề nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nVấn đề cơ bản của triết học là vấn đề nào?\n\nA. Vấn đề quan hệ giữa tư duy và tồn tại\nB. Vấn đề quan hệ giữa tự nhiên và xã hội\nC. Vấn đề quan hệ giữa con người và môi trường tự nhiên\nD. Cả A, B và C\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "30-0018",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Tại sao vấn đề quan hệ giữa tư duy và tồn tại là vấn đề cơ bản của triết học?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTại sao vấn đề quan hệ giữa tư duy và tồn tại là vấn đề cơ bản của triết học?\n\nA. Vì nó là nền tảng và điểm xuất phát để giải quyết các vấn đề triết học khác\nB. Vì Các nhà triết học quy ước với nhau như vậy\nC. Vì đó là vấn đề xuất hiện ngay khi triết học ra đời\nD. Cả A, B và C\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "30-0019",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Có mấy vấn đề cơ bản của triết học?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCó mấy vấn đề cơ bản của triết học?\n\nA. Một\nB. Hai\nC. Ba\nD. Bốn\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "30-0020",
+        "subject_code": "30",
+        "category": "Social Science",
+        "question": "Vấn đề cơ bản của triết học gồm mấy mặt?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nVấn đề cơ bản của triết học gồm mấy mặt?\n\nA. Ba mặt, đó là: 1) vật chất là gì; 2) ý thức là gì; 3) khả năng nhận thức của con người như thế nào\nB. Hai mặt, đó là: 1) vật chất quyết định ý thức, hay ngược lai; 2) khả năng nhận thức của con người\nC. Hai mặt\nD. Cả A, B và C\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "29-0007",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Một người tiêu thụ dành một số tiền nhất định để chi tiêu cho 2 sản phẩm X và Y. Nếu X là loại hàng xa xỉ thì khi giá của X tăng lên và các yếu tố khác không đổi thì lượng hàng hóa của Y được mua sẽ:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột người tiêu thụ dành một số tiền nhất định để chi tiêu cho 2 sản phẩm X và Y. Nếu X là loại hàng xa xỉ thì khi giá của X tăng lên và các yếu tố khác không đổi thì lượng hàng hóa của Y được mua sẽ:\n\nA. Tăng\nB. Giảm\nC. Không thay đổi\nD. Không xác định được\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "29-0008",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Đường tiêu thụ giá cả là đường biểu thị mối quan hệ giữa:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐường tiêu thụ giá cả là đường biểu thị mối quan hệ giữa:\n\nA. Giá của sản phẩm này và lượng của sản phẩm bổ sung cho nó\nB. Thu nhập và số lượng sản phẩm được mua\nC. Giá sản phẩm và thu nhập của người tiêu thụ\nD. Giá sản phẩm và số lượng sản phẩm được mua\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "29-0009",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Một người tiêu dùng dành một khoản tiền là 2000$ để mua hai sản phẩm X và Y, với P_{X} = 200$/sp và P_{Y}=500$/sp. Phương trình đường ngân sách có dạng:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột người tiêu dùng dành một khoản tiền là 2000$ để mua hai sản phẩm X và Y, với P_{X} = 200$/sp và P_{Y}=500$/sp. Phương trình đường ngân sách có dạng:\n\nA. Y=10-(\\frac{2}{5})X\nB. Y=4-(\\frac{2}{5})X\nC. Y=10-2,5X\nD. Y=4-2,5 X\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "29-0010",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Giả sử người tiêu dùng dành hết thu nhập I để mua 2 loại hàng hoá X, Y với đơn giá là P_{X}, P_{Y} và số lượng là x, y và đạt được lợi ích tối đa có:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nGiả sử người tiêu dùng dành hết thu nhập I để mua 2 loại hàng hoá X, Y với đơn giá là P_{X}, P_{Y} và số lượng là x, y và đạt được lợi ích tối đa có:\n\nA. MU_{X}/P_{X} = MU_{Y}/P_{Y}\nB. MRS_{xy} = P_{x}/P_{y}\nC. MU_{X}/ MU_{Y} = P_{x}/P_{Y}\nD. Các câu trên đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "29-0011",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Đường biểu diễn các phối hợp khác nhau về số lượng của hai sản phẩm cùng đem lại cho một mức lợi ích như nhau cho người tiêu dùng được gọi là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐường biểu diễn các phối hợp khác nhau về số lượng của hai sản phẩm cùng đem lại cho một mức lợi ích như nhau cho người tiêu dùng được gọi là:\n\nA. Đường đẳng lượng\nB. Đường đẳng ích\nC. Đường cầu\nD. Đường ngân sách\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "29-0012",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Đường ngân sách có dạng: X = 30 - 2Y. Nếu P_{x} = 10 thì:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐường ngân sách có dạng: X = 30 - 2Y. Nếu P_{x} = 10 thì:\n\nA. P_{y} = 10 và I = 300\nB. P_{y} = 20 và I = 600\nC. P_{y} = 10 và I = 900\nD. P_{y} = 20 và I = 300\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "29-0013",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Trong thị trường độc quyền hoàn toàn: MR = \\frac{-Q}{10}+1000; MC =\\frac{Q}{10}+ 400. Nếu chính phủ quy định mức giá, buộc doanh nghiệp phải gia tăng sản lượng cao nhất, vậy mức giá đó là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong thị trường độc quyền hoàn toàn: MR = \\frac{-Q}{10}+1000; MC =\\frac{Q}{10}+ 400. Nếu chính phủ quy định mức giá, buộc doanh nghiệp phải gia tăng sản lượng cao nhất, vậy mức giá đó là:\n\nA. P = 800\nB. P = 600\nC. P = 400\nD. Tất cả đều sai\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "29-0014",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Trong thị trường độc quyền hoàn toàn, chính phủ đánh thuế không theo sản lượng sẽ ảnh hưởng:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong thị trường độc quyền hoàn toàn, chính phủ đánh thuế không theo sản lượng sẽ ảnh hưởng:\n\nA. Thuế người tiêu dùng và người sản xuất cùng gánh\nB. P tăng\nC. Q giảm\nD. Tất cả các câu trên đều sai\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "29-0015",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Một doanh nghiệp độc quyền hoàn toàn có hàm số cầu thị trường có dạng: P = - Q + 2400. Ở mức sản lượng tối đa hóa lợi nhuận có hệ số co giãn của cầu theo giá là -3, chi phí biên là 10. Vậy giá bán ở mức sản lượng tối đa hóa lợi nhuận:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột doanh nghiệp độc quyền hoàn toàn có hàm số cầu thị trường có dạng: P = - Q + 2400. Ở mức sản lượng tối đa hóa lợi nhuận có hệ số co giãn của cầu theo giá là -3, chi phí biên là 10. Vậy giá bán ở mức sản lượng tối đa hóa lợi nhuận:\n\nA. 20\nB. 15\nC. 10\nD. Các câu trên đều sai\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "29-0016",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Khi chính phủ đánh thuế..........vào doanh nghiệp độc quyền thì người tiêu dùng sẽ trả một mức giá.................",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nKhi chính phủ đánh thuế..........vào doanh nghiệp độc quyền thì người tiêu dùng sẽ trả một mức giá.................\n\nA. Theo sản lượng..........không đổi\nB. Khoán ................cao hơn\nC. Theo sản lượng..........thấp hơn\nD. Các câu trên đều sai\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "D",
+        "correct": false
+      },
+      {
+        "id": "29-0017",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Một doanh nghiệp độc quyền hoàn toàn có hàm chi phí: TC = \\frac{Q^{2}}{10} + 400Q + 3.000.000, hàm số cầu thị trường có dạng: P =\\frac{-Q}{20}+2200. Nếu chính phủ đánh thuế là 150đ/sp thì lợi nhuận tối đa của doanh nghiệp này đạt được là :",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột doanh nghiệp độc quyền hoàn toàn có hàm chi phí: TC = \\frac{Q^{2}}{10} + 400Q + 3.000.000, hàm số cầu thị trường có dạng: P =\\frac{-Q}{20}+2200. Nếu chính phủ đánh thuế là 150đ/sp thì lợi nhuận tối đa của doanh nghiệp này đạt được là :\n\nA. 2.362.500\nB. 1.537.500\nC. 2.400.000\nD. Các câu trên đều sai\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "29-0018",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Một xí nghiệp độc quyền hoàn toàn tối đa hóa lợi nhuận ở mức giá là 20, có hệ số co giãn cầu theo giá là -2, vậy mức sản lượng tối đa hóa lợi nhuận tại đó có MC :",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột xí nghiệp độc quyền hoàn toàn tối đa hóa lợi nhuận ở mức giá là 20, có hệ số co giãn cầu theo giá là -2, vậy mức sản lượng tối đa hóa lợi nhuận tại đó có MC :\n\nA. 10\nB. 20\nC. 40\nD. Các câu trên đều sai\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "29-0019",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Một doanh nghiệp độc quyền hoàn toàn có hàm số cầu thị trường có dạng: P = - Q + 2400. Tổng doanh thu tối đa của doanh nghiệp là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nMột doanh nghiệp độc quyền hoàn toàn có hàm số cầu thị trường có dạng: P = - Q + 2400. Tổng doanh thu tối đa của doanh nghiệp là:\n\nA. 144000\nB. 1.440.000\nC. 14.400.000\nD. Các câu trên đều sai\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "29-0020",
+        "subject_code": "29",
+        "category": "Social Science",
+        "question": "Trong ngắn hạn của thị trường độc quyền hoàn toàn, câu nào sau đây chưa thể khẳng định:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrong ngắn hạn của thị trường độc quyền hoàn toàn, câu nào sau đây chưa thể khẳng định:\n\nA. Doanh thu cực đại khi MR = 0\nB. Doanh nghiệp kinh doanh luôn có lợi nhuận\nC. Đường MC luôn luôn cắt AC tại AC min\nD. Để có lợi nhuận tối đa luôn cung ứng tại mức sản lượng có cầu co giãn nhiều\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "27-0006",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Tìm một điểm nhầm lẫn trong đoạn viết sau đây: Một trong những nguồn gốc của tư tưởng Hồ Chí Minh là tiếp văn hóa phương Đông. Cụ thể là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTìm một điểm nhầm lẫn trong đoạn viết sau đây: Một trong những nguồn gốc của tư tưởng Hồ Chí Minh là tiếp văn hóa phương Đông. Cụ thể là:\n\nA. Những mặt tích cực của Nho giáo\nB. Tư tưởng vị tha của Phật giáo\nC. Tư tưởng của Khổng Tử về một xã hội bình yên không bao giờ thay đổi\nD. Tư tưởng Tam dân của Tôn Trung Sơn\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "27-0007",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Hồ Chí Minh đã từng dạy học bá ngôi trường nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Hồ Chí Minh đã từng dạy học bá ngôi trường nào?\n\nA. Trường tiểu học Pháp - Việt ở Vinh\nB. Trường tiểu học Đông Ba ở Huế\nC. Trường Quốc học Huế\nD. Trường Dục Thanh ở Phan Thiết\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "27-0008",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Tác phẩm Bản án chế độ thực dân Pháp của Nguyễn Ái Quốc được xuất bản lần đầu tiên vào năm nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Tác phẩm Bản án chế độ thực dân Pháp của Nguyễn Ái Quốc được xuất bản lần đầu tiên vào năm nào?\n\nA. 1920\nB. 1922\nC. 1925\nD. 1927\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "27-0009",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Tác phẩm Đường kách mệnh của Nguyễn Ái Quốc được xuất bản lần đầu tiên vào năm nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Tác phẩm Đường kách mệnh của Nguyễn Ái Quốc được xuất bản lần đầu tiên vào năm nào?\n\nA. 1920\nB. 1925\nC. 1927\nD. 1930\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "27-0010",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Thuật ngữ Tư tưởng Hồ Chí Minh được Đảng ta chính thức sử dụng bắt đầu từ bao giờ?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Thuật ngữ Tư tưởng Hồ Chí Minh được Đảng ta chính thức sử dụng bắt đầu từ bao giờ?\n\nA. Từ năm 1969\nB. Từ năm 1990\nC. Từ năm 1986\nD. Từ năm 1991\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "27-0011",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Tư tưởng Hồ Chí Minh được hình thành từ những nguồn gốc nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Tư tưởng Hồ Chí Minh được hình thành từ những nguồn gốc nào?\n\nA. Giá trị truyền thống của dân tộc Việt Nam\nB. Tinh hoa văn hóa nhân loại (trong đó có chủ nghĩa Mác – Lênin)\nC. Những phẩm chất chủ quan của Hồ Chí Minh\nD. Cả ba đáp án còn lại đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "27-0012",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng nhất về tư tưởng Hồ Chí Minh:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng nhất về tư tưởng Hồ Chí Minh:\n\nA. Tư tưởng Hồ Chí Minh là kết quả của sự vận dụng sáng tạo chủ nghĩa Mác - Lênin vào điều kiện thực tế của nước ta\nB. Tư tưởng Hồ Chí Minh là kết quả của sự vận dụng và phát triển sáng tạo chủ nghĩa Mác - Lênin vào điều kiện cụ thể của nước ta\nC. Tư tưởng Hồ Chí Minh là kết quả của sự phát triển sáng tạo chủ nghĩa Mác - Lênin vào điều kiện thực tế của nước ta\nD. Tư tưởng Hồ Chí Minh là chủ nghĩa Mác – Lênin ở Việt Nam\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "27-0013",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Hồ Chí Minh rời Tổ quốc đi tìm đường cứu nước vào năm nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Hồ Chí Minh rời Tổ quốc đi tìm đường cứu nước vào năm nào?\n\nA. Năm 1905\nB. Năm 1908\nC. Năm 1911\nD. Năm 1912\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "27-0014",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Từ năm 1920 đến năm 1945, Hồ Chí Minh bị địch bắt và giam giữ mấy lần?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Từ năm 1920 đến năm 1945, Hồ Chí Minh bị địch bắt và giam giữ mấy lần?\n\nA. 2 lần\nB. 3 lần\nC. 4 lần\nD. 1 lần\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "27-0015",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Hồ Chí Minh bắt đầu viết bản Di chúc lịch sử vào thời gian nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Hồ Chí Minh bắt đầu viết bản Di chúc lịch sử vào thời gian nào?\n\nA. Năm 1960\nB. Năm 1965\nC. Năm 1968\nD. Năm 1969\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "27-0016",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Nguyễn Sinh Cung là người con thứ mấy trong gia đình?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Nguyễn Sinh Cung là người con thứ mấy trong gia đình?\n\nA. 1\nB. 2\nC. 3\nD. 4\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "27-0017",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Lần đầu tiên Nguyễn Tất Thành đặt chân lên đất Pháp tại địa danh nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Lần đầu tiên Nguyễn Tất Thành đặt chân lên đất Pháp tại địa danh nào?\n\nA. Mác xây\nB. Lơ Havrơ\nC. Noóc măng đi\nD. Thủ đô Pari\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "27-0018",
+        "subject_code": "27",
+        "category": "Social Science",
+        "question": "Chọn đáp án trả lời đúng cho câu hỏi: Nguyễn Tất Thành từ Anh trả lại Pháp vào năm nào?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChọn đáp án trả lời đúng cho câu hỏi: Nguyễn Tất Thành từ Anh trả lại Pháp vào năm nào?\n\nA. Cuối năm 1915\nB. Cuối năm 1916\nC. Cuối năm 1917\nD. Cuối năm 1918\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "26-0006",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Ghép sao cho đúng giải thích về vai trò của quản trị doanh nghiệp hoạt động quản trị kinh doanh: “giúp cho doanh nghiệp xác định được nên sản xuất cái gì số lượng bao nhiêu bằng cách nào và sản xuất cho ai …”",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nGhép sao cho đúng giải thích về vai trò của quản trị doanh nghiệp hoạt động quản trị kinh doanh: “giúp cho doanh nghiệp xác định được nên sản xuất cái gì số lượng bao nhiêu bằng cách nào và sản xuất cho ai …”\n\nA. Giúp cho doanh nghiệp không ngừng hạ thấp chi phí góp phần nâng cao lợi nhuận của doanh nghiệp\nB. Để phát huy hết khả năng của tất cả các thành viên phát minh sáng kiến và cải tiến kỹ thuật góp phần nâng cao hiệu quả sản xuất kinh doanh cho doanh nghiệp\nC. Bởi vì việc xác định đúng nhiệm vụ kinh doanh là một trong những yếu tố đưa sự nghiệp kinh doanh của doanh nghiệp đến thành công\nD. Nhằm tận dụng cơ hội và hạn chế những tác động tiêu cực từ môi trường\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "26-0007",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Ghép sao cho đúng giải thích về vai trò của quản trị kinh doanh: “quản trị kinh doanh có vai trò quan trọng trong việc sử dụng tối ưu các nguồn lực sẵn có và tận dụng mọi cơ hội tốt nhất trong quá trình sản xuất kinh doanh…”",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nGhép sao cho đúng giải thích về vai trò của quản trị kinh doanh: “quản trị kinh doanh có vai trò quan trọng trong việc sử dụng tối ưu các nguồn lực sẵn có và tận dụng mọi cơ hội tốt nhất trong quá trình sản xuất kinh doanh…”\n\nA. Bởi vì việc xác định đúng nhiệm vụ kinh doanh là một trong những yếu tố đưa sự nghiệp kinh doanh của doanh nghiệp đến thành công\nB. Nhằm tận dụng cơ hội và hạn chế những tác động tiêu cực từ môi trường\nC. Giúp cho doanh nghiệp không ngừng hạ thấp chi phí góp phần nâng cao lợi nhuận của doanh nghiệp\nD. Để phát huy hết khả năng của tất cả các thành viên phát minh sáng kiến và cả tiến kỹ thuật góp phần nâng cao hiệu quả sản xuất kinh doanh cho doanh nghiệp\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "26-0008",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Điền vào chỗ trống về các chức năng của quản trị kinh doanh: “….là quá trình xác định các mục tiêu của doanh nghiệp và đề ra các giải pháp tốt nhất để đạt được mục tiêu đó.”",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐiền vào chỗ trống về các chức năng của quản trị kinh doanh: “….là quá trình xác định các mục tiêu của doanh nghiệp và đề ra các giải pháp tốt nhất để đạt được mục tiêu đó.”\n\nA. Hoạch định\nB. Tổ chức\nC. Điều khiển\nD. Kiểm tra\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "26-0010",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Nhà quản trị cấp cao tương xứng với chức danh nào dưới đây?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNhà quản trị cấp cao tương xứng với chức danh nào dưới đây?\n\nA. Giám đốc nhân sự\nB. Giám đốc dự án\nC. Giám đốc điều hành\nD. Giám đốc tài chính\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "26-0011",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Đây là quan điểm chủ yếu của trường phái lý thuyết quản trị kinh doanh nào? “… trong các tình huống khác nhau thì phải áp dụng các phương pháp quản trị khác nhau và các phương pháp quản trị phải phù hợp với các biến số quan trọng.”",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐây là quan điểm chủ yếu của trường phái lý thuyết quản trị kinh doanh nào? “… trong các tình huống khác nhau thì phải áp dụng các phương pháp quản trị khác nhau và các phương pháp quản trị phải phù hợp với các biến số quan trọng.”\n\nA. Trường phái quản trị hành vi\nB. Trường phái quản trị hệ thống\nC. Trường phái quản trị theo tình huống\nD. Trường phái quản trị theo định lượng\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "26-0012",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Nhà quản trị tiến hành các hoạt động nhằm thiết lập mối quan hệ chặt chẽ giữa doanh nghiệp với các cơ quan nhà nước. ” Đó là vai trò gì của nhà quản trị doanh nghiệp?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNhà quản trị tiến hành các hoạt động nhằm thiết lập mối quan hệ chặt chẽ giữa doanh nghiệp với các cơ quan nhà nước. ” Đó là vai trò gì của nhà quản trị doanh nghiệp?\n\nA. Vai trò người điều khiển\nB. Vai trò người phát ngôn\nC. Vai trò liên kết\nD. Vai trò người phổ biến thông tin\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "26-0013",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Phát biểu nào chưa đúng về các kỹ năng quản trị cần thiết?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nPhát biểu nào chưa đúng về các kỹ năng quản trị cần thiết?\n\nA. Mức độ của mỗi kỹ năng tùy thuộc vào cấp bậc, trách nhiệm và vai trò các nhà quản trị đảm nhận\nB. Các nhà quản trị ở cấp càng cao thì đòi hỏi càng phải nhấn mạnh đến các kỹ năng tư duy\nC. Các nhà quản trị không cần thiết phải có đầy đủ 3 loại kỹ năng kỹ thuật, nhân sự và tư duy\nD. Các nhà quản trị ở cấp càng thấp thì có sự chú trọng vào kỹ năng kỹ thuật nhiều hơn so với các nhà quản trị cấp cao hơn\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "26-0014",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Điền vào chỗ trống về các chức năng của quản trị kinh doanh “… là quá trình gắn kết phân công và phối hợp nhiều người vào làm việc cùng nhau nhằm thực hiện mục tiêu chung của doanh nghiệp”",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐiền vào chỗ trống về các chức năng của quản trị kinh doanh “… là quá trình gắn kết phân công và phối hợp nhiều người vào làm việc cùng nhau nhằm thực hiện mục tiêu chung của doanh nghiệp”\n\nA. Tổ chức\nB. Kiểm tra\nC. Điều kiện\nD. Hoạch định\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "26-0016",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Ghép tên các cấp bậc quản trị trong doanh nghiệp (1,2,3) với tên các chức danh trong doanh nghiệp \n1. nhà quản trị cấp cao \n2. nhà quản trị cấp trung gian \n3. nhà quản trị cấp cơ sở \na. Tổ trưởng, trưởng nhóm, trưởng ca\nb. Trưởng phó các phòng ban quản đốc phân xưởng giám đốc dự án\nb. Chủ tịch, ủy viên HĐQT, tổng GĐ, phó tổng GĐ,…",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nGhép tên các cấp bậc quản trị trong doanh nghiệp (1,2,3) với tên các chức danh trong doanh nghiệp \n1. nhà quản trị cấp cao \n2. nhà quản trị cấp trung gian \n3. nhà quản trị cấp cơ sở \na. Tổ trưởng, trưởng nhóm, trưởng ca\nb. Trưởng phó các phòng ban quản đốc phân xưởng giám đốc dự án\nb. Chủ tịch, ủy viên HĐQT, tổng GĐ, phó tổng GĐ,…\n\nA. 1-c, 2-b, 3-a\nB. 1-c, 2-a, 3-b\nC. 1-b, 2-c, 3-a\nD. 1-a, 2-c, 3-b\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "26-0017",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "“Tính quy luật các quan hệ quản trị trong quá trình hoạt động của doanh nghiệp bao gồm những quy luật về kinh tế kinh doanh kỹ thuật xã hội phản ánh đặc điểm nào của quản trị kinh doanh”",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \n“Tính quy luật các quan hệ quản trị trong quá trình hoạt động của doanh nghiệp bao gồm những quy luật về kinh tế kinh doanh kỹ thuật xã hội phản ánh đặc điểm nào của quản trị kinh doanh”\n\nA. Quản trị kinh doanh mang tính khoa học\nB. Quản trị kinh doanh là một nghề\nC. Quản trị kinh doanh mang tính nghệ thuật\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "26-0018",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Nhà khoa học nào là đại diện tiêu biểu của trường phái quản trị hành chính?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNhà khoa học nào là đại diện tiêu biểu của trường phái quản trị hành chính?\n\nA. Frederick W.Taylor\nB. Douglas McGregor\nC. Henry Fayol\nD. Mary Parker Follett\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "26-0019",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "“Nhà quản trị đóng vai trò giải quyết những vấn đề khó khăn sự biến động xáo trộn trong doanh nghiệp”. Đó là vai trò gì của nhà quản trị doanh nghiệp?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \n“Nhà quản trị đóng vai trò giải quyết những vấn đề khó khăn sự biến động xáo trộn trong doanh nghiệp”. Đó là vai trò gì của nhà quản trị doanh nghiệp?\n\nA. Vai trò người điều khiển\nB. Vai trò người sáng tạo\nC. Vai trò điều phối các nguồn lực trong doanh nghiệp\nD. Vai trò của người lãnh đạo\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "26-0020",
+        "subject_code": "26",
+        "category": "Social Science",
+        "question": "Nhận định nào CHƯA ĐÚNG về các chức năng quản trị kinh doanh?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nNhận định nào CHƯA ĐÚNG về các chức năng quản trị kinh doanh?\n\nA. Nhà quản trị cấp cao cao dành phần lớn thời gian cho công tác hoạch định và tổ chức\nB. Các chức năng quản trị kinh doanh có mối quan hệ chặt chẽ với nhau và sự phối hợp thời gian công sức ở các cấp quản trị là tương đương nhau\nC. Nhà quản trị cấp cơ sở dành phần lớn thời gian cho việc chỉ đạo hướng dẫn nhân viên dưới quyền\nD. Nhà quản trị ở mọi cấp quản trị đều phải thực hiện tất cả các chức năng quản trị\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "50-0008",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Khoản mục “ Tiền người mua trả trước “ thuộc về:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nKhoản mục “ Tiền người mua trả trước “ thuộc về:\n\nA. Tài sản ngắn hạn\nB. Nợ phải trả\nC. Nguồn vốn chủ sở hữu\nD. Tất cả đều sai\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "50-0009",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Khi xác định tổng giá trị tài sản trên bảng cân đối kế toán thì khoản mục “Hao mòn tài sản cố định”:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nKhi xác định tổng giá trị tài sản trên bảng cân đối kế toán thì khoản mục “Hao mòn tài sản cố định”:\n\nA. Được cộng vào\nB. Được trừ đi\nC. Không liên quan\nD. Tất cả đều sai\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "50-0010",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Bảng cân đối kế toán ngày 1/1/05 gồm : Tiền mặt 300, nợ người bán 100, người mua nợ 200 và vốn chủ sở hữu. Sau nghiệp vụ kinh tế phát sinh “vay ngắn hạn ngân hàng để mua hàng hóa 100” thì vốn chủ sở hữu và tổng tài sản sẽ là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nBảng cân đối kế toán ngày 1/1/05 gồm : Tiền mặt 300, nợ người bán 100, người mua nợ 200 và vốn chủ sở hữu. Sau nghiệp vụ kinh tế phát sinh “vay ngắn hạn ngân hàng để mua hàng hóa 100” thì vốn chủ sở hữu và tổng tài sản sẽ là:\n\nA. 400 và 500\nB. 400 và 600\nC. 500 và 600\nD. 500 và 500\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "50-0011",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Trường hợp nào sau đây không làm thay đổi số tổng cộng cuối  cùng của Bảng cân đối kế toán",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrường hợp nào sau đây không làm thay đổi số tổng cộng cuối  cùng của Bảng cân đối kế toán\n\nA. Vay ngắn hạn ngân hàng để trả nợ người bán 300\nB. Mua hàng hóa chưa thanh toán 200\nC. Xuất quỹ tiền mặt trả nợ vay ngân hàng 700\nD. Tất cả các trường hợp trên\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "50-0012",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Trường hợp nào sau đây làm thay đổi tỷ trọng của tất cả các khoản mục trong Bảng cân đối kế toán.",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTrường hợp nào sau đây làm thay đổi tỷ trọng của tất cả các khoản mục trong Bảng cân đối kế toán.\n\nA. Nguồn vốn tăng, nguồn vốn giảm\nB. Tài sản tăng, tài sản giảm\nC. Hai trường hợp trên\nD. Không có trường hợp nào\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "D",
+        "correct": false
+      },
+      {
+        "id": "50-0013",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Chênh lệch giữa lợi nhuận gộp và doanh thu thuần là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nChênh lệch giữa lợi nhuận gộp và doanh thu thuần là:\n\nA. Hàng bán bị trả lại và giảm giá hàng bán\nB. Giá vốn hàng bán\nC. Chiết khấu thương mại\nD. Chi phí bán hàng và chi phí quản lý doanh nghiệp\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "B",
+        "correct": true
+      },
+      {
+        "id": "50-0015",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Các tài khoản nào sau đây là tài khoản điều chỉnh?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nCác tài khoản nào sau đây là tài khoản điều chỉnh?\n\nA. TK Hao mòn TSCĐ (214)\nB. TK Hàng bán bị trả lại (531)\nC. TK Dự phòng giảm giá đầu tư ngắn hạn\nD. (129) Các câu trên đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "50-0016",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Việc sử dụng tài khoản 214 là để đảm bảo",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nViệc sử dụng tài khoản 214 là để đảm bảo\n\nA. Nguyên tắc giá gốc\nB. Nguyên tắc thận trọng\nC. Nguyên tắc tương xứng\nD. Cả A, B, C đều đúng\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "50-0017",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Khi doanh nghiệp ứng trước tiền cho người bán, kế toán định khoản:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nKhi doanh nghiệp ứng trước tiền cho người bán, kế toán định khoản:\n\nA. Nợ TK 131 / Có TK 111\nB. Nợ TK 141 / Có TK 111\nC. Nợ TK 331 / Có TK 111\nD. Cả 3 đều sai\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "50-0018",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Quan hệ giữa tài khoản tổng hợp và tài khoản chi tiết là:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nQuan hệ giữa tài khoản tổng hợp và tài khoản chi tiết là:\n\nA. Tổng dư Nợ bằng Tổng dư Có\nB. Tổng phát sinh Nợ = Tổng phát sinh Có\nC. Cả A, B đều đúng\nD. Cả A, B đều sai\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "D",
+        "correct": false
+      },
+      {
+        "id": "50-0019",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Để kiểm tra, đối chiếu số liệu giữa kế toán tổng hợp và kế toán chi tiết, kế toán lập:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nĐể kiểm tra, đối chiếu số liệu giữa kế toán tổng hợp và kế toán chi tiết, kế toán lập:\n\nA. Bảng cân đối tài khoản\nB. Tài khoản cấp 2\nC. Các sổ chi tiết\nD. Bảng tổng hợp chi tiết\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "D",
+        "correct": true
+      },
+      {
+        "id": "50-0020",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "Tài khoản nào là tài khoản trung gian (tạm thời):",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTài khoản nào là tài khoản trung gian (tạm thời):\n\nA. Phải thu của khách hàng\nB. Chi phí quản lý doanh nghiệp\nC. Phải trả cho công nhân viên\nD. Lợi nhuận chưa phân phối\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "B",
+        "correct": false
+      },
+      {
+        "id": "50-0021",
+        "subject_code": "50",
+        "category": "Other",
+        "question": "“Ghi sổ kép” nghĩa là",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \n“Ghi sổ kép” nghĩa là\n\nA. Khi nghiệp vụ kinh tế phát sinh, ghi vào bên nợ thì phải ghi vào bên có với số tiền bằng nhau\nB. Khi nghiệp vụ kinh tế phát sinh, ghi vào bên tài sản thì phải ghi vào bên nguồn vốn với số tiền bằng nhau\nC. Khi nghiệp vụ kinh tế phát sinh, ghi vào chi phí thì phải ghi vào bên doanh thu với số tiền bằng nhau\nD. Tất cả các câu đều đúng\nĐáp án: ",
+        "raw_response": "A",
+        "answer": "A",
+        "gold_answer": "A",
+        "correct": true
+      },
+      {
+        "id": "56-0006",
+        "subject_code": "56",
+        "category": "Other",
+        "question": "Theo Nghị định 30/2020/NĐ-CP của Chính phủ ngày 5/3/2020 về công tác văn thư. Xác định phương án sai về công tác văn thư?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Nghị định 30/2020/NĐ-CP của Chính phủ ngày 5/3/2020 về công tác văn thư. Xác định phương án sai về công tác văn thư?\n\nA. Quản lý và sử dụng con dấu, thiết bị lưu khóa bí mật trong công tác văn thư\nB. Soạn thảo, ký ban hành văn bản; quản lý văn bản\nC. Quản lý nhà nước về công tác văn thư\nD. Lập hồ sơ và nộp lưu hồ sơ, tài liệu vào Lưu trữ cơ quan\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "56-0007",
+        "subject_code": "56",
+        "category": "Other",
+        "question": "Thực hiện cấp phát, quyết toán hoá đơn ấn chỉ thuế thuộc quản lý của Cục Thuế; theo dõi giám sát việc cấp bán các loại ấn chỉ theo quy định là nhiệm vụ của:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nThực hiện cấp phát, quyết toán hoá đơn ấn chỉ thuế thuộc quản lý của Cục Thuế; theo dõi giám sát việc cấp bán các loại ấn chỉ theo quy định là nhiệm vụ của:\n\nA. Phòng Tuyên truyền - Hỗ trợ người nộp thuế\nB. Phòng Kê khai và Kế toán thuế\nC. Phòng Quản lý nợ và cưỡng chế nợ thuế\nD. Phòng Kiểm tra nội bộ\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "56-0008",
+        "subject_code": "56",
+        "category": "Other",
+        "question": "Theo Nghị định 101/2020/NĐ-CP sửa đổi, bổ sung một số điều của Nghị định số 123/2016/NĐ-CP ngày 01 tháng 9 năm 2016 của Chính phủ, cơ cấu tổ chức của tổng cục, gồm:",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Nghị định 101/2020/NĐ-CP sửa đổi, bổ sung một số điều của Nghị định số 123/2016/NĐ-CP ngày 01 tháng 9 năm 2016 của Chính phủ, cơ cấu tổ chức của tổng cục, gồm:\n\nA. Vụ, Văn phòng, Cục (nếu có)\nB. Vụ, Văn phòng, Cục (nếu có), Thanh tra (nếu có)\nC. Vụ, Văn phòng, Cục (nếu có), Thanh tra (nếu có), Đơn vị sự nghiệp công lập (nếu có)\nD. Tất cả các phương án đều sai\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "C",
+        "correct": true
+      },
+      {
+        "id": "56-0009",
+        "subject_code": "56",
+        "category": "Other",
+        "question": "Theo Luật Tổ chức chính quyền địa phương năm 2015, tổ chức, cá nhân nào có thẩm quyền quyết định biên chế công chức trong cơ quan của HĐND, UBND trên địa bàn thành phố trực thuộc Trung ương theo chỉ tiêu biên chế được Chính phủ giao?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Luật Tổ chức chính quyền địa phương năm 2015, tổ chức, cá nhân nào có thẩm quyền quyết định biên chế công chức trong cơ quan của HĐND, UBND trên địa bàn thành phố trực thuộc Trung ương theo chỉ tiêu biên chế được Chính phủ giao?\n\nA. Thường trực Hội đồng nhân dân thành phố\nB. Chủ tịch ủy ban nhân dân thành phố\nC. Hội đồng nhân dân thành phố\nD. Ủy ban nhân dân thành phố\nĐáp án: ",
+        "raw_response": "D",
+        "answer": "D",
+        "gold_answer": "C",
+        "correct": false
+      },
+      {
+        "id": "56-0010",
+        "subject_code": "56",
+        "category": "Other",
+        "question": "Theo Luật tổ chức Chính phủ 2015; sửa đổi 2019. Xác định phương án đúng “Quyết định việc thành lập, sáp nhập, giải thể cơ quan thuộc Chính phủ” là nhiệm vụ và quyền hạn của?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Luật tổ chức Chính phủ 2015; sửa đổi 2019. Xác định phương án đúng “Quyết định việc thành lập, sáp nhập, giải thể cơ quan thuộc Chính phủ” là nhiệm vụ và quyền hạn của?\n\nA. Chính phủ\nB. Bộ trưởng, Thủ trưởng cơ quan ngang bộ\nC. Thủ tướng chính phủ\nD. Trách nhiệm của Thủ tướng Chính phủ\nĐáp án: ",
+        "raw_response": "C",
+        "answer": "C",
+        "gold_answer": "A",
+        "correct": false
+      },
+      {
+        "id": "56-0011",
+        "subject_code": "56",
+        "category": "Other",
+        "question": "Theo Nghị định 112/2020/NĐ-CP; 18/9/2020. \"Cán bộ, công chức, viên chức đang trong thời gian nghỉ nào được cấp có thẩm quyền cho phép\" thì chưa xem xét xử lý kỷ luật?",
+        "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Nghị định 112/2020/NĐ-CP; 18/9/2020. \"Cán bộ, công chức, viên chức đang trong thời gian nghỉ nào được cấp có thẩm quyền cho phép\" thì chưa xem xét xử lý kỷ luật?\n\nA. Nghỉ hàng năm, nghỉ theo chế độ, nghỉ việc riêng\nB. Nghỉ hàng năm, nghỉ theo chế độ\nC. Nghỉ theo chế độ, nghỉ việc riêng\nD. Nghỉ hàng năm, nghỉ việc riêng\nĐáp án: ",
+        "raw_response": "B",
+        "answer": "B",
+        "gold_answer": "A",
+        "correct": false
+      }
+    ],
+    "total_questions_count": 1047
+  },
+  "vbench": {
+    "benchmark_name": "V-Bench Public Test (v2026.03.28)",
+    "date": "2026-09-04",
+    "condition": "Minimal Prompt (Honest baseline, no CoT)",
+    "macro_score": 44.97,
+    "micro_accuracy": 45.46,
+    "total_items": 5141,
+    "total_correct": 2337,
+    "tracks": {
+      "multiple_choice": {
+        "total": 4141,
+        "correct": 1946,
+        "accuracy": 47.0
+      },
+      "agentic": {
+        "total": 1000,
+        "correct": 391,
+        "accuracy": 39.1
+      }
+    },
+    "domains": [
+      {
+        "domain": "computer_science",
+        "name": "Khoa học Máy tính (CS)",
+        "track": "multiple-choice",
+        "score": 70.21,
+        "correct": 132,
+        "total": 188,
+        "category": "STEM",
+        "icon": "💻"
+      },
+      {
+        "domain": "philosophy",
+        "name": "Triết học (Philosophy)",
+        "track": "multiple-choice",
+        "score": 64.64,
+        "correct": 170,
+        "total": 263,
+        "category": "Humanity",
+        "icon": "🏛️"
+      },
+      {
+        "domain": "laws",
+        "name": "Pháp luật (Laws)",
+        "track": "multiple-choice",
+        "score": 60.73,
+        "correct": 116,
+        "total": 191,
+        "category": "Social",
+        "icon": "⚖️"
+      },
+      {
+        "domain": "dialect",
+        "name": "Phương ngữ Việt (Dialect)",
+        "track": "multiple-choice",
+        "score": 59.96,
+        "correct": 337,
+        "total": 562,
+        "category": "Linguistics",
+        "icon": "🗣️"
+      },
+      {
+        "domain": "psychology",
+        "name": "Tâm lý học (Psychology)",
+        "track": "multiple-choice",
+        "score": 49.75,
+        "correct": 397,
+        "total": 798,
+        "category": "Social",
+        "icon": "🧠"
+      },
+      {
+        "domain": "culture",
+        "name": "Văn hóa Việt Nam (Culture)",
+        "track": "multiple-choice",
+        "score": 47.47,
+        "correct": 103,
+        "total": 217,
+        "category": "Humanity",
+        "icon": "🏮"
+      },
+      {
+        "domain": "literature",
+        "name": "Văn học (Literature)",
+        "track": "multiple-choice",
+        "score": 40.77,
+        "correct": 245,
+        "total": 601,
+        "category": "Humanity",
+        "icon": "📚"
+      },
+      {
+        "domain": "chemistry",
+        "name": "Hóa học (Chemistry)",
+        "track": "multiple-choice",
+        "score": 40.12,
+        "correct": 134,
+        "total": 334,
+        "category": "STEM",
+        "icon": "🧪"
+      },
+      {
+        "domain": "agentic",
+        "name": "Gọi hàm Agentic (Tool Use)",
+        "track": "function-calling",
+        "score": 39.1,
+        "correct": 391,
+        "total": 1000,
+        "category": "Agentic",
+        "icon": "🤖"
+      },
+      {
+        "domain": "medicine",
+        "name": "Y học & Dược (Medicine)",
+        "track": "multiple-choice",
+        "score": 38.78,
+        "correct": 190,
+        "total": 490,
+        "category": "Life Sciences",
+        "icon": "🩺"
+      },
+      {
+        "domain": "physics",
+        "name": "Vật lý (Physics)",
+        "track": "multiple-choice",
+        "score": 29.93,
+        "correct": 44,
+        "total": 147,
+        "category": "STEM",
+        "icon": "⚡"
+      },
+      {
+        "domain": "logics",
+        "name": "Tư duy & Logic",
+        "track": "multiple-choice",
+        "score": 24.0,
+        "correct": 54,
+        "total": 225,
+        "category": "Reasoning",
+        "icon": "🧩"
+      },
+      {
+        "domain": "mathematics",
+        "name": "Toán học (Mathematics)",
+        "track": "multiple-choice",
+        "score": 19.2,
+        "correct": 24,
+        "total": 125,
+        "category": "Reasoning",
+        "icon": "📐"
+      }
+    ],
+    "failure_summary": [
+      {
+        "class": "A. Tràn Token Budget (Overthinking)",
+        "count": 4,
+        "desc": "Mô hình suy nghĩ quá dài dòng (>512 tokens), bị cắt cụt giữa chừng.",
+        "examples": "8195, 8480, 8873, 8919"
+      },
+      {
+        "class": "B. Sai chính tả / Dấu gạch Enum (Near-miss)",
+        "count": 5,
+        "desc": "Trả lời đúng ý nhưng sai quy ước gạch dưới '_' hoặc dấu tiếng Việt.",
+        "examples": "8422, 8724, 8811, 8970, 9045"
+      },
+      {
+        "class": "C. Nhân đôi hậu tố hash hàm",
+        "count": 2,
+        "desc": "Tự động nhân đôi đuôi mã hóa hàm (vd verify_..._63bb4_63bb4).",
+        "examples": "8747, 8955"
+      },
+      {
+        "class": "D. Thiếu tham số / Bịa tham số",
+        "count": 2,
+        "desc": "Bỏ sót required key hoặc bịa thêm thuộc tính ngoài schema.",
+        "examples": "8556, 9112"
+      },
+      {
+        "class": "E. Lỗi Schema từ phía Benchmark",
+        "count": 1,
+        "desc": "Schema V-Bench bắt buộc tham số nhưng không khai báo trong properties.",
+        "examples": "8574"
+      },
+      {
+        "class": "F. Từ chối gọi tool có lý do",
+        "count": 1,
+        "desc": "Mô hình biện luận rằng không có hàm nào thỏa mãn tất cả điều kiện.",
+        "examples": "8203"
+      }
+    ],
+    "rejected_items": [
+      {
+        "id": 8195,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "truncated_output",
+        "failure_class": "A. Tràn Token Budget (>512 tokens do Overthinking)",
+        "raw_response": "[{\"getRareEarthMineReport_38aa5\": {\"region\": \"Tay Bac\", \"mineralTypes\": [\"Monazite\", \"Xenotime\"], \"includeGeoCoordinates\": true, \"includeChemicalComposition\": true, \"includeAcidProcessing\": true, \"environmentalStandard\": \"QCVN 40:2011/BTNMT\", \"outputStructure\": {\"mineId\": \"MINE-NW-001\", \"geoLocation\": {\"latitude\": 21.8273, \"longitude\": 106.6297, \"province\": \"Lào Cai\"}, \"chemicalElements\": [{\"elementSymbol\": \"La\", \"elementName\": \"Lanthanum\", \"percentageContent\": 12.5}, {\"elementSymbol\": \"Ce\", \"elementName\": \"Cerium\", \"percentageContent\": 28.3}, {\"elementSymbol\": \"Nd\", \"elementName\": \"Neodymium\", \"percentageContent\": 15.7}, {\"elementSymbol\": \"Th\", \"elementName\": \"Thorium\", \"percentageContent\": 4.2}, {\"elementSymbol\": \"U\", \"elementName\": \"Uranium\", \"percentageContent\": 0.8}], \"acidProcessing\": {\"method\": \"Acid Leaching with HCl/H2SO4\", \"acidType\": \"Hydrochloric Acid / Sulfuric Acid\", \"temperatureRange\": \"80-95°C\", \"safetyIndicators\": {\"phLimit\": 2.5, \"heavyMetalThreshold\": 0.5, \"complianceStatus\": true}}, \"mineId\": \"MINE-NW-002\", \"geoLocation\": {\"latitude\": 21.3959, \"longitude\": 103.4583, \"province\": \"Lai Châu\"}, \"chemicalElements\": [{\"elementSymbol\": \"Y\", \"elementName\": \"Yttrium\", \"percentageContent\": 18.2}, {\"elementSymbol\": \"Dy\", \"elementName\": \"Dysprosium\", \"percentageContent\": 14.1}, {\"elementSymbol\": \"Ho\", \"elementName\": \"Holmium\", \"percentageContent\": 3.5}, {\"elementSymbol\": \"Er\", \"elementName\": \"Erbium\", \"percentageContent\": 2.9}], \"acidProcessing\": {\"method"
+      },
+      {
+        "id": 8203,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "no_call_shape_found",
+        "failure_class": "F. Phản biện từ chối gọi tool (Reasoned Refusal)",
+        "raw_response": "Không thể trả lời bằng JSON theo khuôn mẫu yêu cầu vì thiếu các tham số bắt buộc (như `customerId`, `accountNumbers`, `accountAccessCode`, v.v.) cần thiết để thực thi bất kỳ hàm nào trong danh sách đã cung cấp. Ngoài ra, các hàm có sẵn không hỗ trợ trực tiếp lọc theo \"tỷ giá mua vào ban ngày\" cụ thể mà thường dùng tỷ giá trung tâm hoặc nội bộ, và không có hàm nào kết hợp đầy đủ tất cả các điều kiện phức tạp (Premium, Hà Nội/TP.HCM, BIDV/VCB, trừ phong tỏa, quy đổi >50 triệu) trong một cú gọi duy nhất mà không cần dữ liệu đầu vào cụ thể.\n\nĐể thực hiện yêu cầu này, vui lòng cung cấp:\n1. Mã khách hàng nội bộ (`customerId`).\n2. Danh sách số tài khoản hoặc mã định danh tài khoản cụ thể.\n3. Mã truy cập bảo mật (nếu dùng hàm `kiemTraSoDuKetNoiVietnam_HangLoat_c9a3e_f28e8`).\n4. Xác nhận tỷ giá cụ thể muốn áp dụng (vì hệ thống thường dùng tỷ giá thời điểm thực thi)."
+      },
+      {
+        "id": 8422,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "off_enum_value",
+        "failure_class": "B. Sai chính tả / Dấu gạch dưới Enum (Near-miss)",
+        "raw_response": "[{\"search_active_mines_b6b06\": {\"region\": \"Tây Bắc\", \"provinces\": [\"Lào Cai\", \"Yên Bái\"], \"mineral_types\": [\"đất hiếm\", \"apatit\"], \"min_reserve_volume\": 5, \"min_depth\": 200, \"operational_status\": \"đang hoạt động\", \"return_fields\": [\"tên_mỏ\", \"trạng_tại_pháp_lý\", \"sản_lượng_hàng_năm\"]}}]"
+      },
+      {
+        "id": 8480,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "truncated_output",
+        "failure_class": "A. Tràn Token Budget (>512 tokens do Overthinking)",
+        "raw_response": "[{\"simulateQKDNetworkOptimization_66d3d\": {\"simulationType\": \"qkd_optimization\", \"shoppingEvent\": \"11.11\", \"networkLatencyMultiplier\": 3.0, \"relayStations\": [{\"stationId\": \"HN-001\", \"stationName\": \"Hà Nội\", \"geoCoordinates\": [21.0285, 105.8542], \"priorityLevel\": \"cao\", \"quantumConfig\": {\"decoherenceRate\": 0.05, \"entanglementFidelityThreshold\": 0.98, \"keyGenerationRate\": 1000, \"errorCorrectionThreshold\": 0.01}, \"backupRoutes\": [{\"routeId\": \"HN-BG-01\", \"connectedProvince\": \"Bắc Giang\", \"distanceKm\": 50, \"bandwidthMbps\": 100}, {\"routeId\": \"HN-HB-01\", \"connectedProvince\": \"Hòa Bình\", \"distanceKm\": 80, \"bandwidthMbps\": 80}]}, {\"stationId\": \"HCM-002\", \"stationName\": \"Thành phố Hồ Chí Minh\", \"geoCoordinates\": [10.8231, 106.6297], \"priorityLevel\": \"cao\", \"quantumConfig\": {\"decoherenceRate\": 0.06, \"entanglementFidelityThreshold\": 0.97, \"keyGenerationRate\": 1200, \"errorCorrectionThreshold\": 0.02}, \"backupRoutes\": [{\"routeId\": \"HCM-DN-01\", \"connectedProvince\": \"Đồng Nai\", \"distanceKm\": 120, \"bandwidthMbps\": 150}, {\"routeId\": \"HCM-BR-01\", \"connectedProvince\": \"Bà Rịa Vũng Tàu\", \"distanceKm\": 100, \"bandwidthMbps\": 120}]}, {\"stationId\": \"DN-003\", \"stationName\": \"Đà Nẵng\", \"geoCoordinates\": [16.0544, 108.2022], \"priorityLevel\": \"trung_binh\", \"quantumConfig\": {\"decoherenceRate\": 0.07, \"entanglementFidelityThreshold\": 0.96, \"keyGenerationRate"
+      },
+      {
+        "id": 8556,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "missing_required_arg",
+        "failure_class": "D. Thiếu tham số bắt buộc / Bịa tham số",
+        "raw_response": "[{\"facebook_ad_content_generator_3e0ef\": {\"product_name\": \"Set Quà Tết Cao Cấp\", \"platform\": \"facebook\", \"target_city\": \"Hà Nội\", \"promo_district\": \"Quận Cầu Giấy\", \"audience_age_min\": 30, \"audience_age_max\": 45, \"content_tone\": \"sang trọng nhưng truyền cảm hứng gia đình\", \"max_word_count\": 200, \"discount_percentage\": 20, \"hashtag_count\": 3, \"hashtag_theme\": \"văn hóa ẩm thực miền Bắc\", \"legal_compliance_type\": \"luật bảo vệ quyền lợi người tiêu dùng\"}}]"
+      },
+      {
+        "id": 8574,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "hallucinated_arg",
+        "failure_class": "D. Thiếu tham số bắt buộc / Bịa tham số",
+        "raw_response": "{\"tra_cuu_tien_vnd_ghi_nhanh_45616\": {\"amount_crypto\": 1.5, \"crypto_currency\": \"Bitcoin\", \"exchange_platform\": \"Remitano\", \"destination_bank\": \"Vietcombank\", \"location_city\": \"Hồ Chí Minh\", \"account_verification_code\": \"REQUIRED\"}}"
+      },
+      {
+        "id": 8724,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "off_enum_value",
+        "failure_class": "B. Sai chính tả / Dấu gạch dưới Enum (Near-miss)",
+        "raw_response": "[{\"search_vietnam_ecommerce_os_requirements_36b45\": {\"data_regulation_year\": \"2024-2025\", \"cloud_providers\": [\"Viettel IDC\", \"VNPT\", \"FPT Cloud\"], \"payment_gateways\": [\"VNPay\", \"MoMo\", \"ZaloPay\"], \"user_scale\": 50000}}]"
+      },
+      {
+        "id": 8747,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "unknown_function_name",
+        "failure_class": "C. Nhân đôi hậu tố hash hàm (_hash_hash)",
+        "raw_response": "[{\"verify_planting_area_license_07b64_07b64\": {\"province\": \"Đắk Lắk\", \"regulatory_body\": \"Cục Bảo vệ thực vật\", \"export_market_type\": \"Thị trường khó tính\", \"crop_type\": \"Sầu riêng\"}, \"process_import_shipment_bd418_bd418\": {\"product_name\": \"Sầu riêng Ri6\", \"origin_province\": \"Đắk Lắk\", \"import_time\": \"Tuần trước\", \"reference_protocol\": \"Vải thiều Bắc Giang\"}}]"
+      },
+      {
+        "id": 8811,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "off_enum_value",
+        "failure_class": "B. Sai chính tả / Dấu gạch dưới Enum (Near-miss)",
+        "raw_response": "[{\"analyze_gmo_crop_trial_feasibility_81696\": {\"crop_type\": \"lúa\", \"genetic_modification_method\": \"CRISPR-Cas9\", \"target_region\": \"Đồng bằng sông Cửu Long\", \"regulatory_body\": \"Bộ Nông nghiệp và Phát triển Nông thôn\", \"assessment_types\": [\"rủi_ro_sinh_học\", \"khả_thi_pháp_lý\", \"tác_động_sinh_thái\", \"đa_dạng_sinh_học\"], \"stress_tolerance_trait\": \"chống_chịu_mặn\"}}]"
+      },
+      {
+        "id": 8873,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "truncated_output",
+        "failure_class": "A. Tràn Token Budget (>512 tokens do Overthinking)",
+        "raw_response": "[{\"createStructuredNutritionJournal_e4fc6\": {\"location\": \"Đà Lạt\", \"holidayPeriod\": \"30/4\", \"meals\": [{\"day\": \"Ngày 1\", \"restaurant\": \"Quán Ánh Sáng\", \"dishName\": \"Lẩu gà lá é\", \"mainIngredients\": [{\"name\": \"Gà ta\", \"weightInGrams\": 400}, {\"name\": \"Lá é\", \"weightInGrams\": 150}, {\"name\": \"Nấm rơm\", \"weightInGrams\": 100}], \"calories\": 650, \"allergens\": [\"không có\"], \"isVerified\": true}, {\"day\": \"Ngày 1\", \"restaurant\": \"Bếp Đà Lạt\", \"dishName\": \"Bánh căn\", \"mainIngredients\": [{\"name\": \"Bột gạo\", \"weightInGrams\": 80}, {\"name\": \"Trứng gà\", \"weightInGrams\": 40}, {\"name\": \"Tôm sú\", \"weightInGrams\": 20}], \"calories\": 280, \"allergens\": [\"trứng\", \"hải sản\"], \"isVerified\": true}, {\"day\": \"Ngày 1\", \"restaurant\": \"Villa Chef\", \"dishName\": \"Nem nướng\", \"mainIngredients\": [{\"name\": \"Thịt heo xay\", \"weightInGrams\": 120}, {\"name\": \"Bánh tráng\", \"weightInGrams\": 30}, {\"name\": \"Rau sống\", \"weightInGrams\": 50}], \"calories\": 320, \"allergens\": [\"không có\"], \"isVerified\": false}, {\"day\": \"Ngày 1\", \"restaurant\": \"Quán Vỉa Hè\", \"dishName\": \"Cơm lam\", \"mainIngredients\": [{\"name\": \"Gạo nếp\", \"weightInGrams\": 150}, {\"name\": \"Lá dong\", \"weightInGrams\": 20}], \"calories\": 210, \"allergens\": [\"không có\"], \"isVerified\": false}, {\"day\": \"Ngày 1\", \"restaurant\": \"Homestay\", \"dishName\": \"Gà nướng mật ong\", \"mainIngredients\": [{\"name\": \"Gà nguyên con\", \"weightInGrams\": 500"
+      },
+      {
+        "id": 8919,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "truncated_output",
+        "failure_class": "A. Tràn Token Budget (>512 tokens do Overthinking)",
+        "raw_response": "[{\"suggestWinePairing_ccfb1\": {\"eventLocation\": \"Quận 2\", \"eventType\": \"tiệc tất niên\", \"menuCourses\": [{\"courseName\": \"Salad rong biển\", \"courseType\": \"khai vị\", \"cuisineStyle\": \"Á\", \"allergens\": [\"không có\"]}, {\"courseName\": \"Súp bí đỏ hạt dẻ\", \"courseType\": \"súp\", \"cuisineStyle\": \"Âu\", \"allergens\": [\"sữa\"]}, {\"courseName\": \"Cá chẽm sốt tiêu xanh\", \"courseType\": \"món chính\", \"cuisineStyle\": \"Á-Âu\", \"allergens\": [\"cá\"]}, {\"courseName\": \"Thịt bò hầm rượu vang\", \"courseType\": \"món chính\", \"cuisineStyle\": \"Âu\", \"allergens\": [\"không có\"]}, {\"courseName\": \"Kem sầu riêng\", \"courseType\": \"tráng miệng\", \"cuisineStyle\": \"Á\", \"allergens\": [\"sữa\"]}], \"guestGroups\": [{\"groupId\": \"Group_A\", \"guestCount\": 5, \"dietaryRestrictions\": [\"ăn chay trường\", \"không cồn\"], \"winePreference\": {\"wineType\": \"non-alcoholic\", \"wineRegion\": \"không yêu cầu\"}, \"budgetLimit\": {\"minBudget\": 0, \"maxBudget\": 0}}, {\"groupId\": \"Group_B\", \"guestCount\": 10, \"dietaryRestrictions\": [\"không yêu cầu\"], \"winePreference\": {\"wineType\": \"rượu đỏ\", \"wineRegion\": \"Tân Thế Giới\"}, \"budgetLimit\": {\"minBudget\": 0, \"maxBudget\": 800000}}, {\"groupId\": \"Group_C\", \"guestCount\": 3, \"dietaryRestrictions\": [\"không yêu cầu\"], \"winePreference\": {\"wineType\": \"rượu đỏ\", \"wineRegion\": \"Pháp Bordeaux\"}, \"budgetLimit\": {\"minBudget\": 5000000, \"maxBudget\": 10000000}}}]}, {\"validateWineSupplyChainAuth_98d2f\": {\"supplierCertificationId\": \"CERT-VN-2024-A\", \"deliveryZone\": \"Quận 2\", \"productClass\": \"cao cấp\", \"auditStandard\": \"HACCP"
+      },
+      {
+        "id": 8955,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "unknown_function_name",
+        "failure_class": "C. Nhân đôi hậu tố hash hàm (_hash_hash)",
+        "raw_response": "[{\"verify_biosafety_regulations_63bb4_63bb4\": {\"cell_type\": \"human_adipose_mesenchymal_stem_cells\", \"district\": \"Quan_5\", \"city\": \"TP_HCM\", \"regulatory_authority\": \"Bo_Y_Te\", \"activity_purpose\": \"research\"}}]"
+      },
+      {
+        "id": 8970,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "off_enum_value",
+        "failure_class": "B. Sai chính tả / Dấu gạch dưới Enum (Near-miss)",
+        "raw_response": "[{\"evaluate_credit_card_eligibility_a6b49\": {\"employment_type\": \"hợp_đồng_dài_hạn\", \"workplace_location\": \"Khu công nghệ cao Hòa Lạc\", \"residence_district\": \"Cầu Giấy\", \"residence_city\": \"Hà Nội\", \"residence_status\": \"tạm_trú\", \"monthly_income_average\": 32, \"monthly_income_min\": 28, \"monthly_income_max\": 35, \"income_proof_type\": \"chuyển_khoản_ngân_hàng\", \"credit_history_status\": \"tốt\", \"existing_loans\": [\"không_có\"], \"monthly_spending_need\": 15, \"card_usage_purpose\": [\"chi_tiêu_gia_đình\", \"du_lịch_quốc_tế\", \"tích_điểm_thưởng\"], \"preferred_benefits\": [\"miễn_phí_thường_niên\", \"hoàn_tiền_cao\", \"tích_điểm_dặm_bay\"], \"target_destination\": \"Nhật Bản\"}}]"
+      },
+      {
+        "id": 9045,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "off_enum_value",
+        "failure_class": "B. Sai chính tả / Dấu gạch dưới Enum (Near-miss)",
+        "raw_response": "[{\"tinh_toan_co_so_thue_quy_doi_nt7_42887\": {\"transactions\": [{\"currency_code\": \"USD\", \"amount\": 45000}, {\"currency_code\": \"EUR\", \"amount\": 20000}], \"border_gate\": \"Mộc Bài\", \"rate_source\": \"big4_state_owned_avg\", \"rate_type\": \"transfer_sell\", \"time_slot\": \"morning\", \"tax_regulation_version\": \"QĐ_123_2023\"}}]"
+      },
+      {
+        "id": 9112,
+        "domain": "agentic",
+        "track": "agentic",
+        "reason": "hallucinated_arg",
+        "failure_class": "D. Thiếu tham số bắt buộc / Bịa tham số",
+        "raw_response": "[{\"generateDietaryPlan_2f3ed\": {\"durationWeeks\": 3, \"healthGoal\": \"weight_loss\", \"regionalPreference\": \"south\", \"budgetLimit\": 3500000, \"currency\": \"VND\", \"allergenList\": [\"eggs\", \"cashews\", \"peanuts\"], \"excludedIngredients\": [\"monosodium glutamate\", \"sugar\"], \"cookingSchedule\": {\"weekdayLimitMinutes\": 40, \"weekendFlexibility\": true, \"activeDays\": [\"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\"]}, \"shoppingPreferences\": {\"categorizeItems\": true, \"categories\": [\"thịt\", \"rau\", \"gia vị\", \"đồ khô\", \"đông lạnh\", \"trái cây\"], \"preferredStores\": [\"Co.opmart\", \"Saigon Food\"]}}}]}"
+      }
+    ],
+    "samples": [
+      {
+        "id": "4",
+        "domain": "literature",
+        "track": "mc",
+        "question": "Trong quá trình biên soạn và dịch thuật văn bản chữ Hán từ tập 'Thiên Nam dư hạ tập', các dịch giả (B.V.N) đã tạm thời điền thêm chữ gì vào câu thơ thứ 7 của bài 'Anh Hiền Thu' để đảm bảo ý nghĩa?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "7",
+        "domain": "psychology",
+        "track": "mc",
+        "question": "Dựa trên các xu hướng về kỳ vọng của giáo viên đối với nhóm học sinh nữ, nhận định nào phản ánh chính xác sự phân biệt đối xử mang tính giao thoa (intersectionality) giữa sắc tộc và giới tính?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "8",
+        "domain": "psychology",
+        "track": "mc",
+        "question": "Theo quan điểm của Bemporad và Ratey, vai trò của người cha trong gia đình có con gái mắc chứng chán ăn tâm thần thường mang đặc điểm vi mô nào sau đây?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "9",
+        "domain": "culture",
+        "track": "mc",
+        "question": "Theo các tư liệu lịch sử về dòng tộc Tây Sơn Tam Kiệt, tổ tiên 5 đời của Nguyễn Nhạc là Hồ Sỹ Anh và tổ 4 đời là Hồ Thế Viêm vốn có gốc gác từ địa phương nào trước khi bị bắt vào Đàng Trong khai hoang?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "10",
+        "domain": "medicine",
+        "track": "mc",
+        "question": "Bài thuốc Nhân trần chi tử thang dùng chủ trị chứng Hoàng đản có biểu hiện toàn thân, mắt, mặt đều vàng như giấy vàng, yêu cầu kỹ thuật bào chế và sử dụng vị thuốc Thạch cao như thế nào?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "12",
+        "domain": "chemistry",
+        "track": "mc",
+        "question": "Loại Hemoglobin nào sau đây có độ nhạy cảm mạnh nhất đối với khí Carbon Monoxide ($CO$)?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "13",
+        "domain": "laws",
+        "track": "mc",
+        "question": "Khoảng thời gian kể từ khi người lao động đã thôi tiếp xúc với yếu tố có hại đến thời điểm vẫn còn khả năng phát bệnh do yếu tố có hại đó được gọi là gì?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "14",
+        "domain": "mathematics",
+        "track": "mc",
+        "question": "Cho tam giác $ABC$ có hai đường cao $BD, CE$. Khẳng định nào sau đây là đúng?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "17",
+        "domain": "psychology",
+        "track": "mc",
+        "question": "Lazarus phê phán việc sử dụng các thiết kế nghiên cứu cắt ngang (cross-sectional) hoặc đo lường bề mặt trong tâm lý học vì chúng thường bỏ lỡ khả năng phân biệt giữa hai khái niệm cốt lõi nào?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "19",
+        "domain": "chemistry",
+        "track": "mc",
+        "question": "Phương pháp thử nghiệm nào sau đây được xem là hiệu quả nhất trong việc thực hiện sàng lọc để tìm kiếm các chất dẫn đầu?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "29",
+        "domain": "dialect",
+        "track": "mc",
+        "question": "Trong câu nói 'Tết ni mệ gởi cho con mấy ổ bánh tổ Quảng Nam làm quà, nhớ ăn cho hết nghe con', từ 'bánh tổ' được dùng để chỉ loại thực phẩm nào?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "31",
+        "domain": "dialect",
+        "track": "mc",
+        "question": "Dựa trên việc sử dụng cụm từ 'quẹo cu láp' trong câu 'Trời đất ơi, thằng nhỏ mới chạy bộ có một vòng sân mà đã mệt tới mức quẹo cu láp nằm một đống đằng kia kìa', bạn hãy xác định xem người nói đang sử dụng phương ngữ của vùng miền nào tại Việt Nam?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "33",
+        "domain": "logics",
+        "track": "mc",
+        "question": "Bảy người bạn, Ánh, Thức, Quân, Thanh, An, Phát và Quang ngồi trong một hàng rào VIP của sân vận động để xem một trận bóng đá. Các ghế tạo thành ma trận 3 x 3, tức là 3 hàng (trước, giữa và cuối) với 3 ghế ở mỗi hàng.\n• Quân ngồi ngay cạnh Thanh.\n• Thanh ngồi ngay sau hàng mà Ánh đang ngồi.\n• Một bên của Quân sẽ không có ai ngồi.\n• Không ai trong số An hoặc Quang ngồi ngay bên cạnh Ánh.\n• Thức ngồi ở hàng cuối cùng.\nNếu An và Quang không ngồi cùng một hàng, điều nào sau đây có thể đúng?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "34",
+        "domain": "literature",
+        "track": "mc",
+        "question": "Khi viên quan họ Hoàng bị bệnh điên cuồng, một người thầy thuốc 'khăn cũ giầy rách' đã đến khám và kê đơn thuốc gì để đánh lừa sự chú ý của yêu quái?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "35",
+        "domain": "psychology",
+        "track": "mc",
+        "question": "Khi xem xét các mô hình an toàn trong gắn bó ở người trưởng thành, khái niệm 'an toàn đạt được' (earned-security) thường được so sánh với 'an toàn liên tục' (continuous-security). Theo nghiên cứu của Pearson và cộng sự (1994), hai nhóm này thể hiện sự khác biệt rõ rệt nhất trong khía cạnh nào?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "36",
+        "domain": "philosophy",
+        "track": "mc",
+        "question": "Đâu là một trong những điểm bất đồng giữa các nhà nữ quyền khi bàn về bình đẳng giới?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "40",
+        "domain": "psychology",
+        "track": "mc",
+        "question": "Cơ chế bảo vệ tự thân (built-in protection) giúp nhà trị liệu tránh khỏi việc giải tỏa phản chuyển di không phù hợp (countertransference acting-out) trong bối cảnh nhóm là gì?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "42",
+        "domain": "literature",
+        "track": "mc",
+        "question": "Trong bài thơ 'Đề Tam hữu đồ' của Lý Tử Tấn, tác giả đã sử dụng triết lý nào trong sách Luận ngữ để ví von với tính cách của người quân tử?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "44",
+        "domain": "physics",
+        "track": "mc",
+        "question": "Một bình bằng thép dung tích $30$ $l$ chứa khí $H_2$ ở áp suất $6$ MPa và nhiệt độ $37^\\circ C$. Dùng bình này bơm bóng bay, biết dung tích mỗi quả sau khi bơm là $1,5$ $l$, áp suất và nhiệt độ khí trong mỗi quả bóng là $1,05.10^5$ Pa và $12^\\circ C$. Số quả bóng bơm được là",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "46",
+        "domain": "dialect",
+        "track": "mc",
+        "question": "Trong câu nói: 'Sáng sớm ra anh vào vía cho em thế này thì hy vọng cả ngày hôm nay em buôn may bán đắt, khách khứa nườm nượp.', từ ngữ 'vào vía' thường được sử dụng phổ biến nhất bởi người dân ở vùng miền nào của Việt Nam?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "50",
+        "domain": "literature",
+        "track": "mc",
+        "question": "Điểm khác biệt đặc trưng trong việc sử dụng nguồn văn bản làm cơ sở cho hai tác phẩm 'Thiên đường đã mất' và 'Thiên đường trở lại' của J. Milton là gì?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "51",
+        "domain": "literature",
+        "track": "mc",
+        "question": "Trong cuộc tranh luận về việc sử dụng điển tích, Đầu-Tiếp đã dẫn lại một chi tiết trong sách 'Thủy Kinh' của Trung Quốc để minh họa cho sự sáng tạo của Lý Bạch. Chi tiết đó mô tả hiện tượng gì của loài cá gáy?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "54",
+        "domain": "literature",
+        "track": "mc",
+        "question": "Tập thơ 'Cửu Đài' của Nguyễn Húc, một tác phẩm mà Lê Quý Đôn từng lầm tưởng là đã thất lạc, chủ yếu được sáng tác vào khoảng thời gian nào?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "55",
+        "domain": "culture",
+        "track": "mc",
+        "question": "Trong sơ đồ tổ chức hành chính Kinh thành Thăng Long năm 1748 dưới thời Trịnh Doanh, đơn vị quản lý nào được thiết lập để cai quản các khu vực?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "58",
+        "domain": "medicine",
+        "track": "mc",
+        "question": "Trong hội chứng bệnh lý của phủ Vị, triệu chứng 'đau lâm râm dưới mỏ ác, đau liên tục, mửa nước trong, lưỡi trắng, môi thâm nhợt' chỉ điểm cho tình trạng nào sau đây?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "61",
+        "domain": "laws",
+        "track": "mc",
+        "question": "Ông Lê Văn Nam qua đời vào tháng 3 năm 2025 không để lại di chúc. Trên thửa đất gia đình có xây dựng nhà thờ tổ thuộc chi tộc họ Lê. Người con trai thứ tư đang quản lý di sản có ý định bán toàn bộ đất, bao gồm phần dùng làm nơi thờ cúng. Hành vi này có vi phạm pháp luật không?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "65",
+        "domain": "psychology",
+        "track": "mc",
+        "question": "Dựa trên mô hình tương tác giữa bản năng sống và bản năng chết, yếu tố nào đóng vai trò là 'chất xúc tác' (stimulus) thúc đẩy sự tăng trưởng của đời sống tình dục cá nhân trong giai đoạn đầu đời?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "66",
+        "domain": "medicine",
+        "track": "mc",
+        "question": "Trong phương pháp bào chế và sử dụng bài thuốc Tiên địa hoàng hoàn, bột thuốc sau khi tán mịn được luyện với tá dược gì và áo bằng vị thuốc nào?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "68",
+        "domain": "computer_science",
+        "track": "mc",
+        "question": "Thuật ngữ nào sau đây được sử dụng tại lớp mạng (Network Layer) ở phía thiết bị nhận nhằm mục đích phản hồi cho một chỉ báo (Indication) đã nhận được trước đó?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "70",
+        "domain": "philosophy",
+        "track": "mc",
+        "question": "Tại sao việc nhanh chóng bác bỏ thuyết khoái lạc (hedonism) chỉ dựa trên một xem xét sơ lược về phản bác 'cỗ máy trải nghiệm' (experience machine) lại là một sai lầm về mặt phương pháp luận?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "73",
+        "domain": "chemistry",
+        "track": "mc",
+        "question": "Muối Mohr là một dạng muối kép có tác dụng chống lại quá trình oxi hóa bằng không khí. Muối Mohr được tạo thành từ hỗn hợp **E** cùng số mol gồm sắt (II) sunfat ngậm 7 phân tử nước và amoni sunfat khan. Biết rằng để làm mất màu hoàn toàn 125 ml dung dịch $\\text{KMnO}_4$ 0,3M trong môi trường axit cần 73,5 gam muối Mohr. Cho biết độ tan muối Mohr ở $20^\\circ\\text{C}$ là 27 gam. Từ m gam **E** người ta điều chế muối Mohr với hiệu suất 65\\%; hòa tan muối Mohr này vào nước thu được dung dịch **F**. Hạ dần nhiệt độ **F** xuống $20^\\circ\\text{C}$ thu được 101,48 gam dung dịch và 31,2 gam muối Mohr kết tinh. Giá trị của m là",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "74",
+        "domain": "dialect",
+        "track": "mc",
+        "question": "Trong câu 'Cái mồm dẻo như kẹo mạch nha, nói xằng nói xiên chả ai tin đâu mờ', người nói muốn ám chỉ điều gì thông qua cụm từ 'nói xằng nói xiên'?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "77",
+        "domain": "medicine",
+        "track": "mc",
+        "question": "Một nữ giới 23 tuổi đến khám với tình trạng thiếu máu, vàng da trong 2 năm, xét nghiệm phết máu ngoại vi thấy hồng cầu hình cầu (spherocytes), xét nghiệm tốt nhất cần thực hiện là",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "82",
+        "domain": "philosophy",
+        "track": "mc",
+        "question": "Theo quan điểm hiệu đính các chức danh lịch sử trong tư tưởng Nho giáo, tại sao việc gọi Khổng Tử là 'Đại Tư Khấu' nước Lỗ bị xem là một sự sai lầm về mặt danh định?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "84",
+        "domain": "medicine",
+        "track": "mc",
+        "question": "Trong điều trị loét giác mạc do trực khuẩn mủ xanh (thường do chấn thương từ rơm rạ), phương pháp sử dụng bài thuốc Ngư tinh thảo thang được quy định như thế nào?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "87",
+        "domain": "culture",
+        "track": "mc",
+        "question": "Trong nghi lễ đầy tháng (lễ cúng bà Mụ) cho trẻ nhỏ tại Việt Nam, loại thực phẩm nào thường được yêu cầu phải nhuộm hoặc làm thành màu xanh đỏ?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "88",
+        "domain": "dialect",
+        "track": "mc",
+        "question": "Trong câu nói: 'Trời đất ơi, cái thứ máy móc hạch bà đù này mới mua có mấy bữa mà đã hư lên hư xuống rồi, bực cả mình!', cụm từ 'hạch bà đù' mang ý nghĩa biểu đạt gì?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "89",
+        "domain": "culture",
+        "track": "mc",
+        "question": "Theo số liệu thống kê của chính quyền thực dân Pháp về y tế tại Việt Nam tính đến năm 1943, tình trạng khan hiếm nhân lực y tế được thể hiện qua chỉ số bình quân nào?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "92",
+        "domain": "chemistry",
+        "track": "mc",
+        "question": "Để phân biệt Morphin và Cocain, người ta có thể sử dụng loại thuốc thử nào sau đây?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "94",
+        "domain": "dialect",
+        "track": "mc",
+        "question": "Trong câu 'Tự nhiên mới nhắc tới chuyện cũ có chút xíu mà ông làm gì nổi thầu lậu lên dữ vậy nè?', nếu người nói muốn chuyển sang ngôn ngữ phổ thông để ai cũng hiểu được sắc thái của cụm từ 'nổi thầu lậu' thì câu đó nên được viết lại như thế nào?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "95",
+        "domain": "laws",
+        "track": "mc",
+        "question": "Trẻ sơ sinh không được tiêm vắc xin viêm gan B trong vòng 24 giờ sau sinh phải được tiêm liều sơ sinh trong thời hạn tối đa là bao lâu theo quy định pháp luật?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "96",
+        "domain": "chemistry",
+        "track": "mc",
+        "question": "Cho các dữ kiện của nguyên tố $T$ và nguyên tố $X$ như sau: $T^{2+}$: có $30$ neutron, $26$ electron; $X^-$: có $35$ electron, số khối $78$. Phát biểu nào sau đây là sai?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "97",
+        "domain": "logics",
+        "track": "mc",
+        "question": "Cho các phát biểu: ('Ông ấy đã đoạt lấy tia sét từ Thiên đường và vương trượng từ những kẻ Bạo chúa hoặc ai đó đang cầm một chiếc ô màu hồng trước một tòa nhà, William đã thêm một kết luận không liên quan rằng khí độc thần kinh là mối đe dọa đối với con cái chúng ta hơn là sự nóng lên toàn cầu. Nếu một cô bé cúi xuống để tạt nước ở đài phun nước, thì một cặp đôi trẻ đang bắt đầu chơi Jenga trên bàn cà phê trong phòng khách. Một cặp đôi trẻ đang bắt đầu chơi Jenga trên bàn cà phê trong phòng khách. Một khi người đó đang mong đợi mưa, thì bây giờ Joseph và Madison thừa nhận rằng Joseph và Madison đã sai. Khuôn mặt của người y tá được bao quanh bởi mái tóc đỏ đồng khi bây giờ Joseph và Madison thừa nhận rằng Joseph và Madison đã sai.\n\nDựa trên các phát biểu đã cho, kết luận nào ít có cơ sở nhất?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "98",
+        "domain": "philosophy",
+        "track": "mc",
+        "question": "Mối quan hệ giữa các phân hoạch (partitions) và một loại ý nghĩa câu hỏi tìm tòi (inquisitive question meanings) cụ thể là gì?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "101",
+        "domain": "medicine",
+        "track": "mc",
+        "question": "Bài thuốc Tiêu thực thang dùng cho phụ nữ có thai ăn phải đồ sống lạnh gây thương thực, đau bụng trên dữ dội sử dụng vị thuốc Ô khương với liều lượng và cách chế biến cụ thể như thế nào?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "104",
+        "domain": "laws",
+        "track": "mc",
+        "question": "Cộng tác viên sức khỏe cộng đồng tại Thành phố Hồ Chí Minh được hưởng mức chi hỗ trợ tối đa là bao nhiêu theo Nghị quyết 72/2025/NQ-HĐND?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "108",
+        "domain": "physics",
+        "track": "mc",
+        "question": "Trong mạch dao động $LC$, biểu thức nào sau đây là đúng về mối quan hệ giữa cường độ dòng điện tức thời $i$ và điện áp tức thời $u$ giữa hai bản tụ điện?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "109",
+        "domain": "chemistry",
+        "track": "mc",
+        "question": "Khi một người bị ngộ độc nhẹ Cocain, những triệu chứng nào sau đây thường xuất hiện?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "110",
+        "domain": "computer_science",
+        "track": "mc",
+        "question": "Phương pháp đệm nào sau đây có thể không đáp ứng đủ nhu cầu xử lý nếu một tiến trình thực hiện các đợt nhập/xuất (I/O) dồn dập và liên tục?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "111",
+        "domain": "philosophy",
+        "track": "mc",
+        "question": "Nguyên nhân chủ chốt nào dẫn đến việc phái Tung Hoành gia bị mai một nhanh chóng và không được coi là một học thuyết đủ điều kiện so với các phái như Nho, Mặc, Đạo?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "116",
+        "domain": "mathematics",
+        "track": "mc",
+        "question": "Có bao nhiêu giá trị nguyên $y \\le 2024$ để ứng với mỗi $y$ tồn tại hai số thực $x$ thỏa mãn bất phương trình $e^{x^2} + (y + \\ln x).e^{y + \\ln x} \\le (x^3 + x)e^y$?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "121",
+        "domain": "logics",
+        "track": "mc",
+        "question": "Tại một bữa tiệc gồm có 4 người, một cặp thanh niên nam là Hùng nữ là Duyên, và hai đứa trẻ cũng một nam một nữ, bé trai là Hải và bé gái là Thư. Một trong bốn người này đã sát hại một trong số họ. Thành viên thứ ba là nhân chứng (chứng kiến tội ác) và thành viên thứ tư là người bao che (người biết sự việc nhưng không tố giác). Thông tin cơ quan điều tra thu thập được như sau.\n1) Người lớn tuổi nhất và nhân chứng là hai người khác giới.\n2) Người bao che và nhân chứng là người khác giới.\n3) “Người bao che” nhiều tuổi hơn nạn nhân.\n4) Thanh niên Hùng là người lớn tuổi nhất.\n5) Nạn nhân không phải người nhỏ tuổi nhất.\nHỏi có bao nhiêu người có khả năng là nạn nhân",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "131",
+        "domain": "logics",
+        "track": "mc",
+        "question": "Một cặp đôi trong trang phục công sở ngồi tại một quán cà phê góc phố có không gian ngoài trời. Người quản gia mặc bộ đồ bảo hộ màu xanh lá cây không đổ rác tại một trung tâm mua sắm. Một con ngựa kéo một cỗ xe phía sau với rất nhiều trẻ em bên trong, nếu không phải trường hợp cả cặp đôi trong trang phục công sở ngồi tại quán cà phê góc phố có không gian ngoài trời và một người đàn ông trên xe máy lái xe qua địa hình đầm lầy đều xảy ra. Một người đàn ông trên xe máy lái xe qua địa hình đầm lầy nếu không phải trường hợp cả người mặc đồ bảo hộ màu xanh lá cây đổ rác tại trung tâm mua sắm và một nhân viên điều khiển âm thanh đang chăm sóc âm thanh tại một sự kiện đều xảy ra. Một người đàn ông trên xe máy lái xe qua địa hình đầm lầy.\n\nHãy xác định kết luận là kết quả hợp lệ từ thông tin đã cung cấp.",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "133",
+        "domain": "culture",
+        "track": "mc",
+        "question": "Trong hệ thống các tiểu vùng văn hóa thuộc châu thổ Bắc Bộ theo phân loại của PGS. TS. Ngô Đức Thịnh, địa danh nào sau đây được xếp chung một nhóm tiểu vùng với Hưng Yên?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "149",
+        "domain": "philosophy",
+        "track": "mc",
+        "question": "Trong hệ thống văn bản của Tuân Tử, sự khác biệt về thể tài giữa hai thiên Thành Tương, Phú Thiên so với các thiên nghị luận dài được giải thích như thế nào?",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "154",
+        "domain": "logics",
+        "track": "mc",
+        "question": "Từng là một nghệ sĩ đường phố chơi đàn xylophone, người đàn ông mặc áo sơ mi trắng và đeo kính đang nấu ăn tại nhà. Một nghệ sĩ đường phố không chơi đàn xylophone. Một người nam đang mặc quần áo. Một thanh niên nấu món gì đó trong bếp khi người đàn ông mặc áo sơ mi trắng đang khuấy thứ gì đó trong nồi trên bếp hoặc một người đàn ông với cây đàn guitar và micro đứng trên sân khấu. Người đàn ông mặc áo sơ mi trắng không khuấy thứ gì đó trong nồi trên bếp.\n\nKết luận nào được rút ra một cách logic từ thông tin đã cho?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "160",
+        "domain": "logics",
+        "track": "mc",
+        "question": "Trong trường hợp một con chó đang nhảy ra khỏi nước trong một hồ nước, thì một đứa trẻ mới biết đi đang thưởng thức chiếc bánh sinh nhật của mình. Cho biết một người đang ngồi trước máy tính hoặc một người đàn ông trong văn phòng đang làm việc trên máy tính, thì một đứa trẻ mới biết đi đang thưởng thức chiếc bánh sinh nhật của mình. Một con chó trắng đang té nước. Một người không ngồi trước máy tính. Trong trường hợp một con chó màu nâu vàng nhảy xuống nước, kéo theo việc một con chó nhảy ra khỏi nước. Một con chó nhảy ra khỏi nước là điều kiện đủ cho trường hợp một con chó không bị khô. Tóm lại, khi một con chó ở trong hồ, một người đàn ông trong văn phòng không làm việc trên máy tính.\n\nTiền đề nào hoàn thiện lập luận và làm cho kết luận trở nên hợp lệ?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "167",
+        "domain": "computer_science",
+        "track": "mc",
+        "question": "Trong ma trận nhầm lẫn (Confusion Matrix), giá trị tại phần tử nằm ở hàng i và cột j cho biết thông tin nào sau đây?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "185",
+        "domain": "laws",
+        "track": "mc",
+        "question": "Trong vụ ly hôn tháng 5/2021, người mẹ là dược sĩ thu nhập 11 triệu đồng/tháng, người cha thu nhập 5-6 triệu đồng/tháng, có hai con 15 và 13 tuổi. Cả hai đều mong muốn sống cùng mẹ. Theo quy định pháp luật, quyền nuôi con sau ly hôn sẽ được quyết định như thế nào?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "189",
+        "domain": "laws",
+        "track": "mc",
+        "question": "Trong các vụ tai nạn giao thông đặc biệt nghiêm trọng, mức hỗ trợ tối đa cho mỗi người bị tử vong được quy định là bao nhiêu?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "197",
+        "domain": "culture",
+        "track": "mc",
+        "question": "Lễ hội tại các làng dọc sông Tranh và sông Lục diễn ra vào giữa tháng Hai Âm lịch hàng năm nhằm tưởng niệm sự kiện lịch sử nào?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "210",
+        "domain": "mathematics",
+        "track": "mc",
+        "question": "Trong hệ trục tọa độ $Oxyz$ (đơn vị mét), ròng rọc tại $A(-1,2; 0; 1,8)$ và $B(1,2; 0; 1,8)$. Tay cầm tại $D(0; 0,7; 1,1)$. Lực căng mỗi dây là $350$ N. Có bao nhiêu phát biểu đúng trong các phát biểu sau?\na) Chiều dài đoạn dây cáp $AD$ bằng $1,56$ m.\nb) Vectơ hợp lực tác dụng lên tay Mạnh có phương song song với trục $Oz$.\nc) Để giữ yên hai tay tại $D$ thì Mạnh phải tác dụng lực giữ có độ lớn $445,45$ N.\nd) Nếu $z_D = 1,1$ m và góc giữa hai dây cáp bằng $90^\\circ$ thì $y_D = 0,97$ m.",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "233",
+        "domain": "computer_science",
+        "track": "mc",
+        "question": "Trong các loại bảng quyết định (Decision Table), loại bảng nào chứa các điều kiện được sử dụng để cấp phép dự thi dựa trên các tiêu chí về sự chuyên cần và trạng thái đóng học phí?",
+        "raw_response": "A",
+        "answer": "A"
+      },
+      {
+        "id": "240",
+        "domain": "physics",
+        "track": "mc",
+        "question": "Một bóng đèn có thể tích $V = 1$ lít ở nhiệt độ $20^\\circ\\text{C}$, chứa khí $\\text{H}_2$ ở áp suất $p = 10^{-4} \\text{ mmHg}$. Ở thời điểm $t = 0$, dây tóc có diện tích mặt ngoài $0,2 \\text{ cm}^2$ được đốt nóng đỏ, ở điều kiện đó, phân tử $\\text{H}_2$ đập vào dây tóc bị phân li thành các nguyên tử $\\text{H}$ và dính vào thành ống thủy tinh của bóng đèn sau va chạm. Tìm áp suất khí $\\text{H}_2$ trong đèn ở thời điểm $t$. Bỏ qua sự thay đổi nhiệt độ khí do bị đốt nóng.",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "330",
+        "domain": "mathematics",
+        "track": "mc",
+        "question": "Trong không gian, cho hình lăng trụ $ABCD.MNPQ$ có tất cả các cạnh bằng $\\sqrt{3}$, đáy $ABCD$ là hình thoi và $\\widehat{BAD} = 60^\\circ$. Các mặt phẳng $(ADQM), (ABNM)$ cùng tạo với đáy của lăng trụ góc $\\alpha$ thỏa mãn $\\tan \\alpha = 2\\sqrt{11}$ và hình chiếu vuông góc của điểm $A$ lên mặt phẳng $(MNPQ)$ nằm bên trong hình thoi này. Gọi $O$ là điểm cách đều bốn đỉnh tứ diện $AMNQ$. Biết thể tích khối chóp $O.ABM$ có giá trị bằng $V$. $V^2 = \\frac{a}{b}, a, b$ là số tự nhiên, phân số $\\frac{a}{b}$ tối giản. Tìm $a+b$.",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "334",
+        "domain": "computer_science",
+        "track": "mc",
+        "question": "Sự khác biệt cơ bản giữa thiết bị di động và thiết bị đeo (wearable device) về phương thức nhập liệu từ người dùng là gì?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "346",
+        "domain": "physics",
+        "track": "mc",
+        "question": "Cho nhiệt dung riêng của nước đá $2100$ J/kg.K; nhiệt nóng chảy nước đá là $3,36.10^5$ J/kg; nhiệt dung riêng của nước $4200$ J/kg.K; nhiệt hóa hơi riêng của nước là $2,25.10^6$ J/kg. Lượng nhiệt cần thiết để chuyển hóa $1,00$ kg nước đá ở $-10^\\circ\\text{C}$ chuyển hoàn toàn thành hơi nước ở $100^\\circ\\text{C}$ (ở điều kiện áp suất bình thường) là $30,3.10^x$ (J). $x$ có giá trị là bao nhiêu?",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "362",
+        "domain": "computer_science",
+        "track": "mc",
+        "question": "Máy tính mini (Minicomputers) được định nghĩa là loại máy tính có đặc điểm nào sau đây?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "377",
+        "domain": "mathematics",
+        "track": "mc",
+        "question": "Cho hàm số $y=f(x)=x^3+ax^2+bx-3, a, b$ là các tham số thực thỏa mãn $\\begin{cases} a+b-2 > 0 \\\\ 24+3(3a+b) < 0 \\end{cases}$. \nHỏi phương trình $2.f(x).f''(x) = [f'(x)]^2$ có bao nhiêu nghiệm?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "459",
+        "domain": "physics",
+        "track": "mc",
+        "question": "Khi bơm xe đạp, ta thường thấy thân ống bơm nóng lên. Hiện tượng này xảy ra nguyên nhân chủ yếu là do",
+        "raw_response": "B",
+        "answer": "B"
+      },
+      {
+        "id": "478",
+        "domain": "mathematics",
+        "track": "mc",
+        "question": "Gọi $S$ là tập hợp các số tự nhiên gồm 3 chữ số đôi một khác nhau. Chọn ngẫu nhiên 2 phần tử thuộc tập $S$, xác suất để chọn được 2 số có ít nhất 2 chữ số giống nhau là $\\frac{m}{n}$ với $m, n$ là các số nguyên dương, phân số $\\frac{m}{n}$ tối giản. Tính $m + n$.",
+        "raw_response": "C",
+        "answer": "C"
+      },
+      {
+        "id": "493",
+        "domain": "physics",
+        "track": "mc",
+        "question": "Một đám mây dông bị phân thành hai tầng, tầng trên mang điện dương cách xa tầng dưới mang điện âm khoảng $0,7$ km. Điện trường trong khoảng giữa hai tầng của đám mây dông đó gần đều và hiệu điện thế giữa hai tầng mây là $581$ kV, điện tích của tầng phía trên ước tính được bằng $1,24$ C. Phát biểu nào sau đây là đúng?",
+        "raw_response": "D",
+        "answer": "D"
+      },
+      {
+        "id": "8142",
+        "domain": "agentic",
+        "track": "agentic",
+        "question": "Trong bối cảnh giao thông tại Hà Nội vào những ngày mưa lớn, tôi cần xác định giới hạn an toàn khi điều khiển xe máy chở hàng hóa tổng khối lượng 150 kg (bao gồm cả người lái) đi qua một khúc cua tròn trên cầu vượt có bán kính 50 mét. Mặt đường được thiết kế nghiêng một góc 10 độ so với phương ngang để hỗ trợ lực hướng tâm, nhưng do thời tiết xấu, hệ số ma sát nghỉ cực đại giữa lốp xe và mặt đường ẩm ướt giảm xuống còn 0.4. Với gia tốc trọng trường tiêu chuẩn 9.8 m/s², hãy tính toán chính xác vận tốc dài lớn nhất cho phép để xe không bị trượt văng ra khỏi quỹ đạo cong khi qua khúc cua này.",
+        "raw_response": "[\"calculate_max_safe_velocity_banked_curve_e9cca\": {\"mass_kg\": 150, \"radius_meters\": 50, \"bank_angle_degrees\": 10, \"friction_coefficient\": 0.4, \"gravity_m_s2\": 9.8}]",
+        "answer": "[{\"calculate_max_safe_velocity_banked_curve_e9cca\":{\"mass_kg\":150,\"radius_meters\":50,\"bank_angle_degrees\":10,\"friction_coefficient\":0.4,\"gravity_m_s2\":9.8}}]"
+      },
+      {
+        "id": "8143",
+        "domain": "agentic",
+        "track": "agentic",
+        "question": "Chán thật sự, sáng nay tôi vật lộn với cái đơn hàng quần áo trên Shopee giao sai kích thước, xong lại phải xuống ủy ban phường ở Đống Đa để làm giấy xác nhận cư trú cho việc thừa kế mảnh đất tổ tiên để lại ở Hải Dương. Đầu óc căng thẳng quá. Mà này, vợ chồng tôi đang dự định sinh thêm bé nữa, nhưng thằng lớn nhà tôi hay bị bầm tím không rõ lý do. Bên nội chồng tôi ở Thái Bình có vài người bị bệnh máu khó đông, còn bên ngoại tôi ở Thanh Hóa thì nhiều người bị thiếu máu mạn tính. Tôi nghe bảo giờ có công nghệ nào phân tích được nguy cơ di truyền chỉ dựa trên tiền sử gia đình và đặc điểm vùng miền mà chưa cần làm xét nghiệm gen phức tạp không? Bạn tính toán giúp tôi xem khả năng đứa trẻ sắp tới gặp phải các vấn đề về máu di truyền nặng nề là bao nhiêu phần trăm, dựa trên những mô tả triệu chứng và quê quán hai bên này nhé.",
+        "raw_response": "[\"estimate_genetic_disorder_probability_adv_063cf\": {\"child_current_symptoms\": \"easy_bruising\", \"father_side_history\": \"hemophilia\", \"father_origin_zone\": \"Thai_Binh\", \"mother_side_history\": \"chronic_anemia\", \"mother_origin_zone\": \"Thanh_Hoa\", \"parental_blood_relation_level\": \"unrelated\"}]",
+        "answer": "[{\"estimate_genetic_disorder_probability_adv_063cf\":{\"child_current_symptoms\":\"easy_bruising\",\"father_side_history\":\"hemophilia\",\"father_origin_zone\":\"Thai_Binh\",\"mother_side_history\":\"chronic_anemia\",\"mother_origin_zone\":\"Thanh_Hoa\",\"parental_blood_relation_level\":\"unrelated\"}}]"
+      },
+      {
+        "id": "8144",
+        "domain": "agentic",
+        "track": "agentic",
+        "question": "Hãy tìm kiếm và tổng hợp các đánh giá đã được xác minh từ những khách hàng nam giới trong độ tuổi từ 25 đến 40 sinh sống tại khu vực Miền Trung, cụ thể là Đà Nẵng và Huế, trong khoảng thời gian 3 tháng gần đây nhất đối với dòng sản phẩm giày thể thao chống trượt, yêu cầu chỉ hiển thị các phản hồi có xếp hạng từ 4 sao trở lên, có đính kèm hình ảnh thực tế khi sử dụng, và nội dung bình luận bắt buộc phải đề cập đến khả năng bám đường tốt hoặc độ bền khi di chuyển trong điều kiện mưa bão.",
+        "raw_response": "[\"fetch_certified_buyer_reviews_with_filters_4e5e8\": {\"gender\": \"male\", \"age_min\": 25, \"age_max\": 40, \"region\": \"mien_trung\", \"cities\": [\"da_nang\", \"hue\"], \"time_period_months\": 3, \"product_category\": \"giay_the_thao\", \"min_rating\": 4, \"require_photos\": true, \"required_keywords\": [\"bam_duong_tot\", \"do_ben\"], \"campaign_verification_code\": \"MONSOON_SALE\"}]",
+        "answer": "[{\"fetch_certified_buyer_reviews_with_filters_4e5e8\":{\"gender\":\"male\",\"age_min\":25,\"age_max\":40,\"region\":\"mien_trung\",\"cities\":[\"da_nang\",\"hue\"],\"time_period_months\":3,\"product_category\":\"giay_the_thao\",\"min_rating\":4,\"require_photos\":true,\"required_keywords\":[\"bam_duong_tot\",\"do_ben\"],\"campaign_verification_code\":\"MONSOON_SALE\"}}]"
+      },
+      {
+        "id": "8145",
+        "domain": "agentic",
+        "track": "agentic",
+        "question": "Hãy giúp tôi xây dựng một kịch bản mô phỏng chi tiết về tác động của quy chế dân chủ ở cơ sở đối với hoạt động thương mại điện tử tại các vùng nông thôn thuộc đồng bằng sông Cửu Long, trong đó cần phân tích cụ thể mối liên hệ giữa mức độ minh bạch trong quản lý hành chính xã/phường và tốc độ tăng trưởng doanh thu của các hộ kinh doanh cá thể, đồng thời liệt kê các rào cản pháp lý tiềm ẩn theo từng nhóm đối tượng tham gia thị trường và đề xuất giải pháp khắc phục dựa trên bối cảnh văn hóa địa phương.",
+        "raw_response": "[\"generatePolicyImpactSimulation_20a1f\": {\"region\": \"dongBangSongCuuLong\", \"stakeholderGroups\": [\"hoKinhDoanhCaThe\", \"doanhNghiepNho\", \"nguoiTieuDung\", \"chinhQuyenDiaPhuong\", \"toChucXaHoi\"], \"transparencyLevel\": \"trungBinh\", \"analysisMetrics\": [{\"metricName\": \"revenueGrowthRate\", \"targetValue\": 15.5}, {\"metricName\": \"administrativeEfficiency\", \"targetValue\": 85}], \"culturalContext\": {\"localTraditi",
+        "answer": "[{\"generatePolicyImpactSimulation_20a1f\":{\"region\":\"dongBangSongCuuLong\",\"stakeholderGroups\":[\"hoKinhDoanhCaThe\",\"doanhNghiepNho\",\"nguoiTieuDung\",\"chinhQuyenDiaPhuong\",\"toChucXaHoi\"],\"transparencyLevel\":\"trungBinh\",\"analysisMetrics\":[{\"metricName\":\"revenueGrowthRate\",\"targetValue\":15.5},{\"metricName\":\"administrativeEfficiency\",\"targetValue\":85}],\"culturalContext\":{\"localTraditions\":[\"hopTacXa\",\"tinNghiaLangGieng\",\"tuongThanTuAi\",\"tonTrongNguoiLon\",\"sinhHoatCongDong\"],\"communityStructure\":\"honHop\"},\"legalBarriers\":[{\"barrierType\":\"giayPhepKinhDoanh\",\"affectedGroup\":\"hoKinhDoanhCaThe\",\"severityLevel\":\"nang\"},{\"barrierType\":\"thueVaPhi\",\"affectedGroup\":\"doanhNghiepNho\",\"severityLevel\":\"trungBinh\"},{\"barrierType\":\"baoVeNguoiTieuDung\",\"affectedGroup\":\"nguoiTieuDung\",\"severityLevel\":\"nhe\"}]}}]"
+      },
+      {
+        "id": "8146",
+        "domain": "agentic",
+        "track": "agentic",
+        "question": "Tôi đang quản lý một hợp tác xã nông nghiệp hữu cơ tại huyện Đắk Song, tỉnh Đắk Nông do phụ nữ làm giám đốc, với 70% thành viên là nữ dân tộc Ê-đê và đã hoạt động liên tục từ 2021. Hãy giúp tôi đối chiếu xem cơ sở này có đáp ứng đầy đủ các tiêu chí khắt khe để được xét duyệt vào danh sách nhận hỗ trợ chi phí chuyển đổi số theo Đề án quốc gia về bình đẳng giới giai đoạn hiện hành, dựa trên quy định về tỷ lệ lao động nữ thiểu số và thâm niên hoạt động tối thiểu không?",
+        "raw_response": "[\"check_gender_equality_support_eligibility_b0d2e\": {\"organization_type\": \"hợp_tác_xã\", \"location_district\": \"Đắk_Song\", \"location_province\": \"Đắk_Nông\", \"female_director\": true, \"female_member_percentage\": 70, \"ethnic_minority_female_percentage\": 70, \"operation_start_year\": 2021, \"support_program\": \"chuyển_đổi_số\"}]",
+        "answer": "[{\"check_gender_equality_support_eligibility_b0d2e\":{\"organization_type\":\"hợp_tác_xã\",\"location_district\":\"Đắk_Song\",\"location_province\":\"Đắk_Nông\",\"female_director\":true,\"female_member_percentage\":70,\"ethnic_minority_female_percentage\":70,\"operation_start_year\":2021,\"support_program\":\"chuyển_đổi_số\"}}]"
+      },
+      {
+        "id": "8147",
+        "domain": "agentic",
+        "track": "agentic",
+        "question": "Tối nay tôi cần tổ chức một bữa tiệc gia đình cực kỳ quan trọng tại quận 1, TP.HCM để mừng thọ ông bà, thực đơn chủ yếu là các món Huế cay nồng như bún bò, nem lụi và thịt heo quay. Tôi cần bạn tìm giúp một loại rượu vang phù hợp nhất để cân bằng vị giác, lưu ý là khách mời lớn tuổi nên độ cồn không quá 13%, ngân sách tối đa 3 triệu đồng/chai, và đặc biệt chai rượu phải còn hàng sẵn để ship hỏa tốc trong vòng 1 tiếng nữa vì tiệc bắt đầu sớm. Ngoài ra, nhãn rượu phải có ý nghĩa phong thủy tốt về sức khỏe và trường thọ để biếu ông bà, hãy tính toán tất cả các điều kiện khắt khe này và cho tôi biết lựa chọn chính xác nhất hiện có.",
+        "raw_response": "[\"find_optimal_wine_a30be\": {\"location\": \"Quận 1 - TP.HCM\", \"cuisine_type\": \"Ẩm thực Huế\", \"dishes\": [\"bún bò\", \"nem lụi\", \"thịt heo quay\"], \"max_alcohol_percentage\": 13, \"max_budget\": 3000000, \"delivery_time_limit\": 60, \"occasion\": \"Mừng thọ\", \"symbolic_meaning\": \"Sức khỏe và Trường thọ\"}]",
+        "answer": "[{\"find_optimal_wine_a30be\":{\"location\":\"Quận 1 - TP.HCM\",\"cuisine_type\":\"Ẩm thực Huế\",\"dishes\":[\"bún bò\",\"nem lụi\",\"thịt heo quay\"],\"max_alcohol_percentage\":13,\"max_budget\":3000000,\"delivery_time_limit\":60,\"occasion\":\"Mừng thọ\",\"symbolic_meaning\":\"Sức khỏe và Trường thọ\"}}]"
+      }
+    ],
+    "ablation_finding": {
+      "comparison": "Minimal vs. Detailed Prompt on Agentic Track",
+      "answers_changed_pct": 42.2,
+      "answers_changed_count": "415 / 983",
+      "function_changed_count": 213,
+      "insight": "Prompt engineering giúp giảm 11 lỗi cú pháp nhưng 42.2% câu trả lời bị xáo trộn. Cần tách bạch năng lực mô hình và kỹ thuật prompt."
+    }
+  }
+}

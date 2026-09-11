@@ -24,11 +24,17 @@ Stdlib-only (runs on system python3 too). Output schema:
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import random
 from collections import defaultdict
 from pathlib import Path
+
+try:  # package run (repo root) or direct run (cwd == code_benchmark)
+    from code_benchmark.common import (MANIFEST_COLS, MANIFEST_DEFAULT, SQUAD_DEFAULT,
+                                       DROP_DEFAULT, write_csv_atomic)
+except ImportError:
+    from common import (MANIFEST_COLS, MANIFEST_DEFAULT, SQUAD_DEFAULT,
+                        DROP_DEFAULT, write_csv_atomic)
 
 SEED = 42
 N_PER_DATASET = 200
@@ -177,11 +183,10 @@ def build_manifest(squad: list[dict], drop: list[dict], seed: int,
                               allocate(sq_weights, n_each, pinned=sq_pinned),
                               squad_stratum, rng,
                               passage_cap=PASSAGE_CAP, pid=sq_pid)
-    dr_fn = lambda it: primary_category(it["category"])  # noqa: E731
     dr_picked = sample_strata(drop,
-                              allocate({k: len(v) for k, v in group_by(drop, dr_fn).items()},
+                              allocate({k: len(v) for k, v in group_by(drop, drop_stratum).items()},
                                        n_each, pinned=DROP_PINNED),
-                              dr_fn, rng)
+                              drop_stratum, rng)
 
     rows = []
     for it in sorted(sq_picked, key=lambda x: x["id"]):
@@ -190,7 +195,7 @@ def build_manifest(squad: list[dict], drop: list[dict], seed: int,
                      "question": it["question"], "gold_answer": ""})
     for it in sorted(dr_picked, key=lambda x: x["question_id"]):
         rows.append({"dataset": "drop", "item_id": it["question_id"],
-                     "stratum": dr_fn(it), "passage_id": dr_pid[str(it["context"])],
+                     "stratum": drop_stratum(it), "passage_id": dr_pid[str(it["context"])],
                      "question": it["question"], "gold_answer": ""})
     return rows
 
@@ -206,11 +211,9 @@ def load_json(path: Path) -> list[dict]:
 
 def main():
     ap = argparse.ArgumentParser(description="Build the 400-question eval-set manifest (issue #3).")
-    ap.add_argument("--squad-file", type=Path,
-                    default=Path("vmlu_squad_v1/vi_squad_benchmark_question_only.json"))
-    ap.add_argument("--drop-file", type=Path,
-                    default=Path("vmlu_drop_v1/vi_drop_benchmark_3309_question_only.json"))
-    ap.add_argument("--out", type=Path, default=Path("eval_set_manifest.csv"))
+    ap.add_argument("--squad-file", type=Path, default=SQUAD_DEFAULT)
+    ap.add_argument("--drop-file", type=Path, default=DROP_DEFAULT)
+    ap.add_argument("--out", type=Path, default=MANIFEST_DEFAULT)
     ap.add_argument("--seed", type=int, default=SEED)
     ap.add_argument("--n", type=int, default=N_PER_DATASET,
                     help="questions per dataset (default 200, per issue #3)")
@@ -220,11 +223,7 @@ def main():
                           args.seed, args.n)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["dataset", "item_id", "stratum",
-                                          "passage_id", "question", "gold_answer"])
-        w.writeheader()
-        w.writerows(rows)
+    write_csv_atomic(args.out, rows, MANIFEST_COLS)
 
     by_ds = group_by(rows, lambda r: r["dataset"])
     print(f"seed={args.seed}  wrote {len(rows)} rows -> {args.out}")
