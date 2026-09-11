@@ -33,6 +33,10 @@ v_bench/
 /sample_submission.jsonl
 /submission_vbench_*.jsonl
 
+# Independent Vietnamese legal benchmarks (HF downloads; re-fetchable, hashes in its README)
+# VLSP2025-LegalSML/Public-Test + ntphuc149/ViBidLQA_v1
+v_legal_slsp/
+
 
 # Annotation workbooks (local human artifacts; the filled manifest is the committed record)
 annotation_workbooks/
