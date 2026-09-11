@@ -74,14 +74,16 @@ Mục 4  Bốn thứ ta CHƯA đo — ghi rõ là chưa đo, đừng gọi là n
 - **Vấn đề:** 80,25% là **tỷ lệ một người duyệt bấm accept**, không phải độ chính xác của model.
 - **Làm gì:** Trong bảng biểu và phần tóm tắt (abstract), chỉ được gọi nó là **accept-rate**, và phải ghi rõ nó là *tạm tính, do một người duyệt*. Muốn nói "độ chính xác" thì phải dùng **EM hoặc char-F1**.
 - **Xong khi:** Không còn câu nào trong báo cáo chính đánh đồng accept-rate với độ chính xác đọc hiểu.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** Báo cáo VMLU: abstract + Bảng 2 đã gọi đúng là **accept-rate**; thêm **Bảng 2b** cho EM/char-F1.
 
 ### 0.2 — Chấm lại 400 câu đã chốt bằng EM và char-F1
 
 - **Vấn đề:** 400 câu này chưa có điểm EM/F1. Có gold thì mới chấm được.
 - **Làm gì:** Dùng gold độc lập (đáp án đã hiệu đính, cộng với gold gốc nếu còn giữ) để chấm EM và char-F1. Tách riêng kết quả Vi-SQuAD và Vi-DROP.
 - **Xong khi:** Có bảng đọc hiểu (RC) với đủ 3 cột: EM, char-F1, và số câu n — tách theo từng nguồn.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** `code_benchmark/score_reading_eval.py` — EM **80,25%** / char-F1 **86,55%** (Vi-SQuAD 200 + Vi-DROP 200).
 
 ### 0.3 — Bẻ 74 câu Vi-DROP bị bác thành đúng 3 cụm
 
@@ -89,7 +91,8 @@ Mục 4  Bốn thứ ta CHƯA đo — ghi rõ là chưa đo, đừng gọi là n
 - **Làm gì:** Chia thành đúng 3 cụm: **(a) cộng/trừ hai thành phần**, **(b) so sánh**, **(c) đếm**. Mỗi cụm phải có số lượng và ví dụ cụ thể.
 - **Lưu ý:** 3 cụm này chỉ phủ 66/74 câu. 8 câu còn lại (`selection` 3, `other` 5) chưa biết xếp vào đâu — cần chốt cách xử lý.
 - **Xong khi:** Có 3 con số đếm + ví dụ minh hoạ, không còn nhãn "reasoning" chung chung.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** `docs/agents/vidrop-cluster-breakdown.md` — `add_sub 23 · comparison 22 · count 21` (66/74) + 8 câu ngoài cụm.
 
 ### 0.4 — Nhờ người thứ hai duyệt lại
 
@@ -97,20 +100,23 @@ Mục 4  Bốn thứ ta CHƯA đo — ghi rõ là chưa đo, đừng gọi là n
 - **Làm gì:** Nhờ một người thứ hai duyệt lại **toàn bộ 79 câu bị bác**, cộng thêm **một mẫu của các câu được chấp nhận**. Ghi lại mức đồng thuận (IAA).
 - **Nếu không tìm được người thứ hai:** thì trong phần hạn chế của báo cáo phải ghi rõ dòng *"single-rater, chưa có IAA"*.
 - **Xong khi:** Có hệ số IAA, **hoặc** có dòng ghi chú "single-rater, chưa IAA" trong phần limitations.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** **Nhánh dự phòng:** chưa có người duyệt thứ hai. Đã ghi "single-rater, chưa có IAA" (`docs/agents/measurement-gaps.md` mục 6 + mục 4 báo cáo VMLU).
 
 ### 0.5 — Chạy nốt Vi-Dialog
 
 - **Làm gì:** Chạy bộ Vi-Dialog cùng model, cùng cách phục vụ (serving), cùng seed như các lần trước.
 - **Nếu không chạy:** thì phải ghi rõ một mục *"out of scope / chưa chạy"* trong báo cáo. Không được để trống.
 - **Xong khi:** Có điểm Vi-Dialog, **hoặc** có mục ghi rõ "chưa chạy".
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** **Nhánh dự phòng:** chưa chạy. Đã ghi mục "chưa chạy" (`docs/agents/measurement-gaps.md` mục 5).
 
 ### 0.6 — Gom cả mục 0 thành một bảng đọc hiểu sạch
 
 - **Làm gì:** Gom lại thành một bảng duy nhất, có EM/F1 + số câu n + số đếm thô. Con số accept-rate bị đẩy xuống phụ lục.
 - **Xong khi:** Bảng chính có đủ EM/F1 + n + raw count; accept-rate chỉ còn trong phụ lục.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** `docs/agents/reading-results-table.md` — bảng chính có EM/F1 + n + exact-raw; accept-rate xuống Phụ lục A.
 
 ---
 
@@ -122,14 +128,16 @@ Mục 4  Bốn thứ ta CHƯA đo — ghi rõ là chưa đo, đừng gọi là n
 
 - **Làm gì:** Một file ghi đủ các thông tin sau cho mỗi lần chạy: model id, mức lượng tử hoá (Q4_K_M), endpoint, temperature (0), seed (42), ngân sách token, cách hỏi (`minimal` hay `detailed`), có dùng CoT hay không, và ngày chạy.
 - **Xong khi:** File có trong repo, và **mọi báo cáo viết sau đó đều trích dẫn file này**.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** `measurement_card.md` — card MC-1…MC-4 + quy tắc dùng. Có ghi cả sự kiện model rời endpoint.
 
 ### 1.2 — Cấm gộp điểm `minimal` với điểm `detailed`
 
 - **Vì sao:** Thực nghiệm cho thấy đổi cách hỏi làm **42,2% câu đổi đáp án**. Gộp hai điều kiện lại là trộn hai phép đo khác nhau.
 - **Làm gì:** Mỗi điều kiện là một hàng điểm riêng. Không được có cột kiểu "best of" (lấy điểm cao nhất trong hai).
 - **Xong khi:** Mỗi điều kiện một hàng, không có cột "best of".
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** Quy tắc chốt trong `measurement_card.md` ("Cấm gộp MC-2 với MC-2b"); không bảng nào có cột "best of".
 
 ### 1.3 — Tách "gọi tool đúng cú pháp" khỏi "trả lời đúng nội dung"
 
@@ -142,7 +150,8 @@ Mục 4  Bốn thứ ta CHƯA đo — ghi rõ là chưa đo, đừng gọi là n
 
 - **Làm gì:** Output của mỗi lần chạy có thêm field `measurement_card_hash`.
 - **Xong khi:** Field `measurement_card_hash` xuất hiện trong output.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** `measurement_card_hash` có trong mọi dòng `reading_summary_*.csv`; script thoát nếu thiếu card.
 
 ---
 
@@ -233,7 +242,8 @@ Mục 4  Bốn thứ ta CHƯA đo — ghi rõ là chưa đo, đừng gọi là n
 - **Làm gì:** Viết một đoạn ghi nhận **khoảng trống** này trong báo cáo.
 - **Cấm:** Không được tự dựng vài chục câu rồi gọi đó là một benchmark.
 - **Xong khi:** Có đoạn gap trong báo cáo, và **không có** mục "điểm sycophancy" tự chế.
-- [ ] Chưa làm
+- [x] Đã làm
+  - **Bằng chứng:** `docs/agents/measurement-gaps.md` mục 1 — ghi gap, không tự chế suite.
 
 ---
 

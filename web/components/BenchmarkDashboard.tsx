@@ -45,6 +45,36 @@ interface VbenchFailure {
   raw_response: string;
 }
 
+interface ReadingStratum {
+  stratum: string;
+  label: string;
+  n: number;
+  em_count: number;
+  em: number;
+  char_f1: number;
+}
+
+interface ReadingSource {
+  label: string;
+  n: number;
+  em_count: number;
+  em: number;
+  char_f1: number;
+  reject_count: number;
+  strata: ReadingStratum[];
+}
+
+interface ReadingBlock {
+  benchmark_name: string;
+  date: string;
+  condition: string;
+  measurement_card_hash: string;
+  overall: { n: number; em_count: number; em: number; char_f1: number; label: string };
+  sources: ReadingSource[];
+  caveat: string;
+  scorer: string;
+}
+
 interface BenchmarkData {
   model_info: {
     model_name: string;
@@ -89,6 +119,7 @@ interface BenchmarkData {
       insight: string;
     };
   };
+  reading: ReadingBlock;
 }
 
 export function BenchmarkDashboard({
@@ -98,7 +129,7 @@ export function BenchmarkDashboard({
   data: BenchmarkData;
   questions: VmluQuestion[];
 }) {
-  const [tab, setTab] = useState<"vmlu" | "vbench" | "synthesis">("vmlu");
+  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "synthesis">("vmlu");
 
   // VMLU filters
   const [vmluCat, setVmluCat] = useState<string>("ALL");
@@ -214,6 +245,20 @@ export function BenchmarkDashboard({
               <span>🚀 V-Bench (13 Domains)</span>
               <span className="px-1.5 py-0.5 rounded text-xs bg-slate-100 text-slate-700 font-mono font-bold">
                 44.97
+              </span>
+            </button>
+
+            <button
+              onClick={() => setTab("reading")}
+              className={`px-4 py-2.5 text-sm font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+                tab === "reading"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <span>📖 Đọc hiểu (400 câu)</span>
+              <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700 font-mono font-bold">
+                EM {data.reading.overall.em}%
               </span>
             </button>
 
@@ -824,7 +869,113 @@ export function BenchmarkDashboard({
         )}
 
         {/* ========================================================== */}
-        {/* TAB 3: CROSS-BENCHMARK SYNTHESIS */}
+        {/* TAB 3: READING COMPREHENSION (400 pre-registered) */}
+        {/* ========================================================== */}
+        {tab === "reading" && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
+              <div className="space-y-3 max-w-3xl">
+                <div className="flex items-center gap-2 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
+                  <span>Tiền đăng ký · seed 42 · 200 Vi-SQuAD + 200 Vi-DROP</span>
+                </div>
+                <h2 className="text-2xl font-bold">Bài kiểm tra Đọc hiểu — {data.reading.overall.n} câu</h2>
+                <p className="text-sm text-emerald-100/80 leading-relaxed">
+                  {data.reading.condition}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Số câu (n)</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.reading.overall.n}</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">EM</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.reading.overall.em}%</div>
+                  <div className="text-[11px] text-emerald-200/70 font-mono">
+                    {data.reading.overall.em_count}/{data.reading.overall.n}
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">char-F1</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.reading.overall.char_f1}%</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Chênh EM→F1</div>
+                  <div className="text-2xl font-black font-mono mt-1 text-amber-300">
+                    {(data.reading.overall.char_f1 - data.reading.overall.em).toFixed(2)}
+                  </div>
+                  <div className="text-[11px] text-emerald-200/70">điểm</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Per-source cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {data.reading.sources.map((src) => (
+                <div key={src.label} className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+                  <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-slate-900">{src.label}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        n = {src.n} · {src.reject_count} câu bị người duyệt bác
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-black font-mono text-emerald-600">{src.em}%</div>
+                      <div className="text-[11px] text-slate-500 font-mono">EM · F1 {src.char_f1}%</div>
+                    </div>
+                  </div>
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-slate-100 text-slate-700 font-semibold">
+                      <tr>
+                        <th className="py-2 px-4">Dạng câu hỏi</th>
+                        <th className="py-2 px-3 text-right">n</th>
+                        <th className="py-2 px-3 text-right">EM (%)</th>
+                        <th className="py-2 px-3 text-right">char-F1 (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {[...src.strata]
+                        .sort((a, b) => a.em - b.em)
+                        .map((st) => (
+                          <tr key={st.stratum}>
+                            <td className="py-2 px-4">{st.label}</td>
+                            <td className="py-2 px-3 text-right font-mono">{st.n}</td>
+                            <td
+                              className={`py-2 px-3 text-right font-mono font-bold ${
+                                st.em < 60 ? "text-rose-600" : st.em < 80 ? "text-amber-600" : "text-emerald-600"
+                              }`}
+                            >
+                              {st.em.toFixed(2)}
+                            </td>
+                            <td className="py-2 px-3 text-right font-mono text-slate-600">
+                              {st.char_f1.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+
+            {/* Caveat box — the honest reading of these numbers */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+              </div>
+              <p className="text-xs text-amber-900/90 leading-relaxed">{data.reading.caveat}</p>
+              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+                scorer: {data.reading.scorer} · card {data.reading.measurement_card_hash.slice(0, 12)}…
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================== */}
+        {/* TAB 4: CROSS-BENCHMARK SYNTHESIS */}
         {/* ========================================================== */}
         {tab === "synthesis" && (
           <div className="space-y-6">

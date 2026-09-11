@@ -3349,5 +3349,130 @@
       "function_changed_count": 213,
       "insight": "Prompt engineering giúp giảm 11 lỗi cú pháp nhưng 42.2% câu trả lời bị xáo trộn. Cần tách bạch năng lực mô hình và kỹ thuật prompt."
     }
+  },
+  "reading": {
+    "benchmark_name": "Reading comprehension — 400 câu tiền đăng ký (Vi-SQuAD + Vi-DROP)",
+    "date": "2026-09-12",
+    "condition": "open-book · zero-shot · no-CoT · 48 token · seed 42 · temperature 0 — card MC-3",
+    "measurement_card_hash": "56743eb19d1764d07832af7cb250a1601fe7f74b83937e678a3fe06e63cf633e",
+    "overall": {
+      "n": 400,
+      "em_count": 321,
+      "em": 80.25,
+      "char_f1": 86.55,
+      "label": "Tổng"
+    },
+    "sources": [
+      {
+        "n": 200,
+        "em_count": 195,
+        "em": 97.5,
+        "char_f1": 98.61,
+        "label": "Vi-SQuAD",
+        "reject_count": 5,
+        "strata": [
+          {
+            "n": 92,
+            "em_count": 88,
+            "em": 95.65,
+            "char_f1": 97.24,
+            "stratum": "short-direct",
+            "label": "Ngắn — trả lời trực tiếp"
+          },
+          {
+            "n": 47,
+            "em_count": 47,
+            "em": 100.0,
+            "char_f1": 100.0,
+            "stratum": "mid-direct",
+            "label": "Trung bình — trả lời trực tiếp"
+          },
+          {
+            "n": 46,
+            "em_count": 45,
+            "em": 97.83,
+            "char_f1": 99.48,
+            "stratum": "long-direct",
+            "label": "Dài — trả lời trực tiếp"
+          },
+          {
+            "n": 5,
+            "em_count": 5,
+            "em": 100.0,
+            "char_f1": 100.0,
+            "stratum": "short-infer",
+            "label": "Ngắn — phải suy luận"
+          },
+          {
+            "n": 5,
+            "em_count": 5,
+            "em": 100.0,
+            "char_f1": 100.0,
+            "stratum": "mid-infer",
+            "label": "Trung bình — phải suy luận"
+          },
+          {
+            "n": 5,
+            "em_count": 5,
+            "em": 100.0,
+            "char_f1": 100.0,
+            "stratum": "long-infer",
+            "label": "Dài — phải suy luận"
+          }
+        ]
+      },
+      {
+        "n": 200,
+        "em_count": 126,
+        "em": 63.0,
+        "char_f1": 74.49,
+        "label": "Vi-DROP",
+        "reject_count": 74,
+        "strata": [
+          {
+            "n": 40,
+            "em_count": 19,
+            "em": 47.5,
+            "char_f1": 56.28,
+            "stratum": "count",
+            "label": "Đếm"
+          },
+          {
+            "n": 41,
+            "em_count": 38,
+            "em": 92.68,
+            "char_f1": 94.35,
+            "stratum": "selection",
+            "label": "Chọn thông tin"
+          },
+          {
+            "n": 57,
+            "em_count": 35,
+            "em": 61.4,
+            "char_f1": 72.02,
+            "stratum": "comparison",
+            "label": "So sánh"
+          },
+          {
+            "n": 55,
+            "em_count": 32,
+            "em": 58.18,
+            "char_f1": 77.28,
+            "stratum": "add_sub",
+            "label": "Cộng / trừ hai thành phần"
+          },
+          {
+            "n": 7,
+            "em_count": 2,
+            "em": 28.57,
+            "char_f1": 60.48,
+            "stratum": "other",
+            "label": "Khác"
+          }
+        ]
+      }
+    ],
+    "caveat": "Đáp án tham chiếu của 321/400 câu được kế thừa từ chính câu trả lời của mô hình (người duyệt bấm chấp nhận). Vì vậy EM/char-F1 ở đây là cận trên có thiên lệch thuận, không phải điểm năng lực. Con số accept-rate nằm ở phụ lục của docs/agents/reading-results-table.md.",
+    "scorer": "code_benchmark/score_reading_eval.py"
   }
 }
