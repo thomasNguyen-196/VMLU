@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { itemKey, type ItemState, type ReviewBlob } from "@/lib/types.ts";
+import Link from "next/link";
 import { useReviewStore } from "@/lib/review-store.ts";
 import { computeStats, nextUnreviewed, passageGroups, passagePosition } from "@/lib/review-logic.ts";
 import { Filmstrip } from "./Filmstrip.tsx";
@@ -200,6 +201,12 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
           <Stat label="accept %" value={stats.acceptPct === null ? "—" : stats.acceptPct.toFixed(1)} tone="accept" />
           <Stat label="đã review" value={`${stats.reviewed}/${stats.total}`} />
           <Stat label="reject" value={String(stats.reject)} tone="reject" />
+          <Link
+            href="/benchmark"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50/70 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-colors shadow-2xs"
+          >
+            <span>📊 Dashboard Benchmark (V-Bench & VMLU)</span>
+          </Link>
           <div className="min-w-2 flex-1" />
           <label className="flex items-center gap-2">
             <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">Model</span>
