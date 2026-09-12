@@ -15,7 +15,7 @@ python3 code_benchmark/run_mc_eval.py \
   --file test.jsonl \
   --workers 4 \
   --resume \
-  --submission-out submission_mqa_qwen3_8_27b.csv
+  --submission-out data/submission_mqa_qwen3_8_27b.csv
 
 # 2. VMLU Reading Vi-SQuAD Full (3,310 questions)
 echo "=== [$(date)] 2/4: Running Vi-SQuAD Full (3,310 items) ==="
