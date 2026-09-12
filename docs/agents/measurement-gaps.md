@@ -59,7 +59,7 @@ rồi mới chạy. Đây là một đề tài riêng, không phải một mục
 ### Tình trạng
 
 Bộ V-Bench public test có **9.141 dòng**, nhưng chỉ **5.141 dòng** nằm trong
-`sample_submission.jsonl` (tập được chấm điểm). 4.000 dòng còn lại **không thể chấm**:
+`data/sample_submission.jsonl` (tập được chấm điểm). 4.000 dòng còn lại **không thể chấm**:
 
 | Domain | n | `choices` | `function` |
 | --- | --- | --- | --- |

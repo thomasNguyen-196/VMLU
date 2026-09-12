@@ -6,6 +6,10 @@
 
 Yêu cầu của thầy: bẻ 74 câu Vi-DROP bị bác thành **đúng 3 cụm**, không gộp chung là "reasoning".
 
+> **Đơn vị:** cột `Bị bác` và `n` là **số nguyên** (đếm câu). Cột `EM` / `char-F1` là **tỉ lệ phần trăm
+> trên cả cụm** — EM vẫn chỉ tính 0/1 cho mỗi câu, phần thập phân (`58,18`) đến từ phép chia
+> `32/55`. Ví dụ cụm A: EM `58,18` ⇔ **32/55 câu đúng**, không phải "trung bình 0,58 điểm/câu".
+
 ---
 
 ## Ba cụm chính

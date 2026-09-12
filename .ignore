@@ -8,8 +8,16 @@
 # Large benchmark data & dataset folders
 vmlu/**
 /vmlu_v*/**
-/data/**
 /datasets/**
+# data/: tracked contracts (manifest, dataset_stat, example_submission) stay searchable;
+# hide the bulky/derived artifacts only
+/data/sample_submission.jsonl
+/data/submission*.csv
+/data/submission*.jsonl
+/data/gold_agreed.csv
+/data/adjudication.csv
+/data/review_gold_agreed.csv
+/data/review_adjudication.csv
 
 # Benchmark outputs, logs, and evaluation dumps
 /logs/**

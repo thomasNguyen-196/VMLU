@@ -207,7 +207,7 @@ python run_mc_eval.py --folder "./vmlu" --workers 4
 
 
 ## How to submit
-You need to first prepare a UTF-8 encoded CSV file with the following format, please refer to example_submission.csv for details.
+You need to first prepare a UTF-8 encoded CSV file with the following format, please refer to data/example_submission.csv for details.
 
 ```
 ## key within each subject is the "id" field from the dataset

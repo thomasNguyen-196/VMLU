@@ -34,7 +34,7 @@ cp .env.example .env
 # Resume after interruption:  --resume   (auto-picks newest raw_result_*.csv)
 
 # 3. Build the 400-question reading-comprehension eval manifest (issue #3)
-.venv/bin/python code_benchmark/make_eval_sample.py   # -> eval_set_manifest.csv (200 SQuAD + 200 DROP, seed 42)
+.venv/bin/python code_benchmark/make_eval_sample.py   # -> data/eval_set_manifest.csv (200 SQuAD + 200 DROP, seed 42)
 # Stdlib-only (runs on system python3 too). DROP: proportional by primary category
 # with `count` pinned to 40 (oversample). SQuAD: context-length x direct/infer cells,
 # *-infer pinned to 5 each, max PASSAGE_CAP questions per passage. gold_answer ships
@@ -92,7 +92,7 @@ A single runner script over the shared package modules, best understood as a pip
 
 ### Key invariants & gotchas
 
-- **Submission answers must be uppercase `{A,B,C,D,E,''}`** — matches `example_submission.csv` and the vmlu.ai submission portal. Answers are uppercased in `extract_answer`.
+- **Submission answers must be uppercase `{A,B,C,D,E,''}`** — matches `data/example_submission.csv` and the vmlu.ai submission portal. Answers are uppercased in `extract_answer`.
 - `extract_answer` uses unicode word boundaries (`(?<!\w)([A-E])(?!\w)`) so Vietnamese words containing ASCII letters (e.g. `các`, `bói`) are never misread as options.
 - `test_parsing.py` deliberately **duplicates** `extract_answer`/`build_prompt` rather than importing them — it is the standalone parity reference. `test_suite.py` imports from the package and must run from the repo root.
 - The 30×30s retry cadence (15 min/case) is the default; auth errors are excluded from it deliberately — don't "fix" the retry loop back into touching auth errors.
