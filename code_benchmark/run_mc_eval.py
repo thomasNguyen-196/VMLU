@@ -149,8 +149,8 @@ def parse_args():
     add_endpoint_args(parser, max_tokens_default=4,
                       max_tokens_help="Max new tokens to generate (default: 4)",
                       resume_help="Resume from the newest raw_result_<count>_<model>.csv checkpoint for THIS model in all_res/ollama_result/")
-    parser.add_argument("--submission-out", type=str, default="submission.csv",
-                        help="Path of the final id,answer submission CSV (default: ./submission.csv)")
+    parser.add_argument("--submission-out", type=str, default="data/submission.csv",
+                        help="Path of the final id,answer submission CSV (default: ./data/submission.csv)")
     return parse_endpoint_args(parser)
 
 def build_prompt(question: str, choices: list) -> str:

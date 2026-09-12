@@ -21,7 +21,7 @@ from pathlib import Path
 
 # ── Shared path defaults (were 3-5 hand-copied literals each) ──────────────
 RESULTS_DIR = Path("all_res/ollama_result")
-MANIFEST_DEFAULT = Path("eval_set_manifest.csv")
+MANIFEST_DEFAULT = Path("data/eval_set_manifest.csv")
 SQUAD_DEFAULT = Path("vmlu_squad_v1/vi_squad_benchmark_question_only.json")
 DROP_DEFAULT = Path("vmlu_drop_v1/vi_drop_benchmark_3309_question_only.json")
 ANNOTATOR_A_DEFAULT = Path("annotation_workbooks/annotator_A.csv")
@@ -143,7 +143,7 @@ def read_csv_checked(path: Path, *, required: set[str] | None = None,
 def write_csv_atomic(path: str | Path, rows: list[dict], fieldnames: list[str]) -> None:
     """tmp + rename so a crash mid-write never truncates an existing file —
     the pattern build_review_ui pioneered for the blob, now also for the
-    TRACKED eval_set_manifest.csv that apply_gold rewrites in place."""
+    TRACKED data/eval_set_manifest.csv that apply_gold rewrites in place."""
     path = Path(path)
     tmp = path.with_suffix(path.suffix + ".tmp")
     with open(tmp, "w", newline="", encoding="utf-8") as f:

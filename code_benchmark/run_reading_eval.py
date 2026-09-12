@@ -1,6 +1,6 @@
 """Inference runner for the 400-question reading-comprehension eval set (issue #3).
 
-Consumes `eval_set_manifest.csv` (from make_eval_sample.py) plus the two
+Consumes `data/eval_set_manifest.csv` (from make_eval_sample.py) plus the two
 question_only source JSONs, calls the model on each {context, question} pair,
 and writes per-item free-text answers:
 

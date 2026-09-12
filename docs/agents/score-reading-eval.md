@@ -1,7 +1,7 @@
 # Runner mới: `score_reading_eval.py`
 
 Chấm điểm bài đọc hiểu 400 câu bằng **EM** và **char-F1** trên gold đã chốt trong
-`review_gold_agreed.csv`. Thay thế cách nói "tỉ lệ chấp nhận" trong báo cáo.
+`data/review_gold_agreed.csv`. Thay thế cách nói "tỉ lệ chấp nhận" trong báo cáo.
 
 ## Vì sao cần
 
@@ -24,31 +24,51 @@ Accept-rate chuyển xuống phụ lục.
 # chỉ định rõ file
 .venv/bin/python code_benchmark/score_reading_eval.py \
     --answers all_res/ollama_result/reading_answers_<model>.csv \
-    --gold review_gold_agreed.csv
+    --gold data/review_gold_agreed.csv
 ```
 
 ## Vào / ra
 
 | | |
 | --- | --- |
-| Vào | `all_res/ollama_result/reading_answers_<model>.csv` + `review_gold_agreed.csv` |
+| Vào | `all_res/ollama_result/reading_answers_<model>.csv` + `data/review_gold_agreed.csv` |
 | Ra | `reading_scores_<model>.csv` (từng câu) · `reading_summary_<model>.csv` (tổng hợp) |
 | Bắt buộc | `measurement_card.md` phải tồn tại — thiếu thì script dừng |
 
 Mọi dòng trong file tổng hợp đều mang `measurement_card_hash` (sha256 của card)
 để truy vết về đúng điều kiện đo.
 
+### Đơn vị — đọc trước khi trích số
+
+Tên `em` mang **hai nghĩa khác nhau** ở hai file, đây là chỗ dễ trích sai nhất:
+
+| File | Cột | Đơn vị | Miền giá trị |
+| --- | --- | --- | --- |
+| `reading_scores_*.csv` (từng câu) | `em` | **0 hoặc 1** | `{0, 1}` — không có giá trị nào khác |
+| `reading_scores_*.csv` (từng câu) | `f1` | điểm bộ phận | `[0, 1]` liên tục |
+| `reading_summary_*.csv` | `em_count` | **số câu đúng** (số nguyên) | `0 … n` |
+| `reading_summary_*.csv` | `em` | **phần trăm** | `0 … 100` |
+| `reading_summary_*.csv` | `char_f1` | **phần trăm** | `0 … 100` |
+
+> ⚠️ **EM là nhị phân ở tầng từng câu.** Giá trị `em` lẻ trong `reading_scores_*.csv` là **bug**.
+> Con số `80.25` trong file tổng hợp **không phải điểm của một câu** — nó là `321/400 × 100`.
+> Muốn kiểm tra tay thì dùng `em_count` (số nguyên), đừng dùng `em`.
+> Với `n = 400`, bước nhảy nhỏ nhất của cột `em` là `1/400 = 0,25`; phân tầng lẻ (n = 41, 55 …)
+> cho phần thập phân lẻ hơn — vẫn là hệ quả của phép chia, **không phải** điểm bộ phận.
+
+Công thức đầy đủ và bảng ví dụ: [`em-char-f1.md`](em-char-f1.md).
+
 ### Tái tạo gold nếu chưa có
 
-`review_gold_agreed.csv` **không được commit** (khớp quy ước `/review_*.csv` trong `.gitignore`).
+`data/review_gold_agreed.csv` **không được commit** (derived — xem `.gitignore` mục `data/`).
 Nó là file dẫn xuất từ `review_records/` — bản ghi đã được track. Sinh lại bằng:
 
 ```bash
 .venv/bin/python code_benchmark/export_annotation_workbooks.py merge-split review_records/*.csv
 ```
 
-Lệnh này **không** ghi vào `eval_set_manifest.csv` (không có `--apply`), chỉ tạo hai file
-`review_gold_agreed.csv` và `review_adjudication.csv` ở gốc repo. Muốn chấm điểm thì chỉ cần
+Lệnh này **không** ghi vào `data/eval_set_manifest.csv` (không có `--apply`), chỉ tạo hai file
+`data/review_gold_agreed.csv` và `data/review_adjudication.csv`. Muốn chấm điểm thì chỉ cần
 file thứ nhất.
 
 ## Kết quả (model Qwen3.8-27B-Q4_K_M, card `MC-3`)

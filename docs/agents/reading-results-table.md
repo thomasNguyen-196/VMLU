@@ -9,6 +9,11 @@
 
 ## Bảng chính
 
+> **Đơn vị của hai cột điểm:** cả EM và char-F1 đều là **tỉ lệ phần trăm trên cả nhóm**, không phải
+> điểm của một câu. **EM ở tầng từng câu chỉ có 0 hoặc 1**; phần thập phân của `97,50` sinh ra từ
+> phép chia `195/200`, không phải từ điểm bộ phận. Cột `n trả lời đúng nguyên văn` mới là **số đếm thô**
+> (số nguyên) — dùng nó để kiểm tra tay. Công thức đầy đủ: [`em-char-f1.md`](em-char-f1.md) §0.0.
+
 | Nguồn | n | EM | char-F1 | n trả lời đúng nguyên văn |
 | --- | --- | --- | --- | --- |
 | Vi-SQuAD | 200 | **97,50%** | **98,61%** | 195 |
@@ -17,6 +22,13 @@
 
 `n trả lời đúng nguyên văn` = số câu model phát ra **đúng chuỗi** đáp án tham chiếu (đã chuẩn hoá).
 Con số này **trùng khít** với số câu được người duyệt bấm "chấp nhận" (321).
+
+**Kiểm tra tay được với EM, không kiểm tra tay được với char-F1:**
+
+```
+EM  = 321 / 400 * 100 = 80,25      ← tử số là số nguyên đếm được
+F1  = trung bình của 400 số thực   ← phải chạy máy mới có
+```
 
 ---
 
@@ -35,7 +47,7 @@ Vì vậy đây là ước lượng **cận trên, thiên lệch thuận** (opti
 điểm năng lực. Nhưng khác với "accept-rate" ở chỗ: đây là **EM/char-F1 đo trên một tập tham chiếu
 đã cố định**, nên **so sánh được giữa các lần chạy** — miễn là giữ nguyên tập gold này.
 
-**Điều kiện để con số này có nghĩa:** gold phải đứng yên. Từ nay `review_gold_agreed.csv`
+**Điều kiện để con số này có nghĩa:** gold phải đứng yên. Từ nay `data/review_gold_agreed.csv`
 là tập tham chiếu đóng băng. Chạy lại model khác thì chấm trên **đúng file này**.
 
 ---
@@ -117,7 +129,7 @@ all_res/ollama_result/reading_answers_Qwen3_8-27B-Q4_K_M_gguf.csv   # câu trả
 all_res/ollama_result/reading_scores_Qwen3_8-27B-Q4_K_M_gguf.csv    # điểm từng câu (script sinh)
 all_res/ollama_result/reading_summary_Qwen3_8-27B-Q4_K_M_gguf.csv   # bảng tổng hợp
 review_records/review_nttung245_qwen3_8_27b_q4_k_m_gguf.csv         # quyết định duyệt
-review_gold_agreed.csv                                              # gold đóng băng (400 câu)
+data/review_gold_agreed.csv                                         # gold đóng băng (400 câu)
 ```
 
 Sinh lại bằng:

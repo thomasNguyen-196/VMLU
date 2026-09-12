@@ -2,13 +2,26 @@
 
 Consumes the gold published by the review pass and the model answers:
 
-  review_gold_agreed.csv                            (dataset, item_id, gold_answer)
+  data/review_gold_agreed.csv                       (dataset, item_id, gold_answer)
   all_res/ollama_result/reading_answers_<model>.csv (dataset, item_id, raw_response)
 
 and writes per-item scores plus a summary table:
 
   all_res/ollama_result/reading_scores_<model>.csv
   all_res/ollama_result/reading_summary_<model>.csv
+
+UNITS — the same name `em` means two different things, do not mix them up when
+reading the outputs:
+
+  per-item  em   : {0, 1}         binary per question — a fractional value here is a BUG
+  per-item  f1   : [0, 1]         partial credit (character F1)
+  summary   em_count : int        NUMBER OF CORRECT QUESTIONS — the number to check by hand
+  summary   em   : 0..100 (%)     em_count / n * 100 — a RATE, not a per-item score
+  summary   char_f1 : 0..100 (%)  mean of the per-item f1 values
+
+So the summary `em` of 80.25 is 321/400*100, not an average of partial scores.
+EM stays binary per item; only the division introduces decimals. With n=400 the
+smallest step of summary `em` is 1/400 = 0.25.
 
 WHY THIS EXISTS: the review UI reports an "accept rate" — the share of model
 answers a single reviewer confirmed as the reference. That is NOT accuracy: the
@@ -37,7 +50,7 @@ except ImportError:
     from common import write_csv_atomic, setup_logging, item_key
 
 RESULTS_DIR = Path("all_res/ollama_result")
-GOLD_DEFAULT = Path("review_gold_agreed.csv")
+GOLD_DEFAULT = Path("data/review_gold_agreed.csv")
 
 SCORE_COLS = ["dataset", "item_id", "stratum", "gold_answer", "raw_response",
               "prediction", "em", "f1", "exact_raw"]

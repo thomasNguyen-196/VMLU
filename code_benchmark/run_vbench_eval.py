@@ -487,7 +487,7 @@ def parse_args():
     parser.add_argument("--track", choices=["all", "mc", "agentic"], default="all",
                         help="subset of scorable tracks to run (default: all)")
     parser.add_argument("--submission-out", type=Path, default=None,
-                        help="submission jsonl path (default: submission_vbench_<model>.jsonl)")
+                        help="submission jsonl path (default: data/submission_vbench_<model>.jsonl)")
     parser.add_argument("--submission-only", action="store_true",
                         help="skip inference; rebuild submission + stats from the latest checkpoint")
     parser.add_argument("--retry-unparsed", action="store_true",
@@ -557,7 +557,7 @@ def load_checkpoint(path: Path, by_id: dict[int, dict] | None = None) -> list[di
 
 def write_final_outputs(args, model, results, result_folder, by_id):
     sanitized = sanitize_model(model)
-    out_path = args.submission_out or Path(f"submission_vbench_{sanitized}.jsonl")
+    out_path = args.submission_out or Path(f"data/submission_vbench_{sanitized}.jsonl")
     rows = build_submission_rows(results)
     write_submission_jsonl(out_path, rows)
     logging.info(f"Submission written to {out_path} ({len(rows)} rows)")
