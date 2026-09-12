@@ -22,8 +22,12 @@
 - **Vi-DROP Full (3.309 câu)**: Sinh đáp án suy luận/tính toán số học đầy đủ.
 - **Vi-Dialog Full (210 đoạn hội thoại)**: Sinh phản hồi hội thoại đa lượt đầy đủ.
 
-### C. V-Bench Public Test (Nếu có sẵn dữ liệu)
-- 4.141 câu Multiple-Choice + 1.000 câu Agentic Function Calling (Minimal prompt condition).
+### C. V-Bench Public Test (đã có dữ liệu — 13/09/2026)
+- **Dataset**: `v_bench/public-test.jsonl` (gitignored, release v2026.03.28, 9.141 dòng).
+- **Đã validate bằng loader của `run_vbench_eval.py`**: 5.141 câu scorable (4.141 MC + 1.000 Agentic Function Calling) — khớp chính xác `VB_SCORED_EXPECTED`; 4.000 câu safety bị skip (không chấm trong release này).
+- **Điều kiện chạy**: sau khi Vi-Dialog hoàn tất (chạy tuần tự, tránh tranh chấp GPU trên endpoint Kaggle).
+- **Lệnh**: `.venv/bin/python code_benchmark/run_vbench_eval.py --track all --workers 4 --resume` (checkpoint `all_res/ollama_result/vbench_result_<n>_<model>.csv`; submission `data/submission_vbench_<model>.jsonl`).
+- **Đối soát**: macro/micro tổng và track agentic của `report_vbench.pdf` (macro 44,97 / micro 45,46% / agentic 39,10%) — báo cáo gốc chạy trên tập có chọn lọc; đối soát trong phạm vi báo cáo cho phép.
 
 ---
 
