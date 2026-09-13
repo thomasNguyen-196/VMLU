@@ -1,0 +1,58 @@
+id,domain,track,reason,raw_response
+8480,agentic,agentic,truncated_output,"```json
+[
+  {
+    ""simulateQKDNetworkOptimization_66d3d"": {
+      ""simulationType"": ""qkd_optimization"",
+      ""shoppingEvent"": ""11.11"",
+      ""networkLatencyMultiplier"": 4.0,
+      ""relayStations"": [
+        {
+          ""stationId"": ""HN-QKD-001"",
+          ""stationName"": ""Hà Nội"",
+          ""geoCoordinates"": [
+            21.0245,
+            105.8412
+          ],
+          ""priorityLevel"": ""cao"",
+          ""quantumConfig"": {
+            ""decoherenceRate"": 0.05,
+            ""entanglementFidelityThreshold"": 0.95,
+            ""keyGenerationRate"": 1000,
+            ""errorCorrectionThreshold"": 0.1
+          },
+          ""backupRoutes"": [
+            {
+              ""routeId"": ""HN-BG-01"",
+              ""connectedProvince"": ""Bắc Giang"",
+              ""distanceKm"": 80,
+              ""bandwidthMbps"": 1000
+            },
+            {
+              ""routeId"": ""HN-HB-01"",
+              ""connectedProvince"": ""Hòa Bình"",
+              ""distanceKm"": 120,
+              ""bandwidthMbps"": 500
+            }
+          ]
+        },
+        {
+          ""stationId"": ""HCM-QKD-002"",
+          ""stationName"": ""Thành phố Hồ Chí Minh"",
+          ""geoCoordinates"": [
+            10.7626,
+            106.6957
+          ],
+          ""priorityLevel"": ""cao"",
+          ""quantumConfig"": {
+            ""decoherenceRate"": 0.08,
+            ""entanglementFidelityThreshold"": 0.92,
+            ""keyGenerationRate"": 1500,
+            ""errorCorrectionThreshold"": 0.15
+          },
+          ""backupRoutes"": [
+            {
+              ""routeId"": ""HCM-DN-01"",
+              ""connectedProvince"": ""Đồng Nai"",
+              ""distanceKm"": 40,
+              ""bandwidthMbps"": 2"

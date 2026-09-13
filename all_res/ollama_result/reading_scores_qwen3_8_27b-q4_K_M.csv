@@ -1,0 +1,401 @@
+dataset,item_id,stratum,gold_answer,raw_response,prediction,em,f1,exact_raw
+squad,0,short-direct,New England Sports Ventures,New England Sports Ventures,New England Sports Ventures,1,1.000000,1
+squad,5,short-direct,1916,1916,1916,1,1.000000,1
+squad,24,short-direct,tổng hợp hạt nhân và phân rã phóng xạ,tổng hợp hạt nhân và phân rã phóng xạ,tổng hợp hạt nhân và phân rã phóng xạ,1,1.000000,1
+squad,25,short-direct,giải Oscar,giải Oscar,giải Oscar,1,1.000000,1
+squad,38,mid-direct,3 định luật,3 định luật,3 định luật,1,1.000000,1
+squad,58,short-direct,Vietnam General Confederation of Labor,Vietnam General Confederation of Labor,Vietnam General Confederation of Labor,1,1.000000,1
+squad,68,mid-direct,một chuỗi kết hợp các công đoạn khác nhau,một chuỗi kết hợp các công đoạn khác nhau,một chuỗi kết hợp các công đoạn khác nhau,1,1.000000,1
+squad,74,short-direct,0.5 đến 1.2,từ 0.5 đến 1.2,từ 0.5 đến 1.2,0,0.880000,0
+squad,83,long-direct,1999,1999,1999,1,1.000000,1
+squad,90,short-infer,'Touring','Touring','Touring',1,1.000000,1
+squad,92,short-direct,đầu thập niên 50,đầu thập niên 50,đầu thập niên 50,1,1.000000,1
+squad,104,short-direct,1768,1768,1768,1,1.000000,1
+squad,109,mid-direct,điểm ở mặt đất ngay phía trên chấn tiêu,điểm ở mặt đất ngay phía trên chấn tiêu,điểm ở mặt đất ngay phía trên chấn tiêu,1,1.000000,1
+squad,118,short-infer,thông qua các lò phản ứng hạt nhân có kiểm soát,thông qua các lò phản ứng hạt nhân có kiểm soát,thông qua các lò phản ứng hạt nhân có kiểm soát,1,1.000000,1
+squad,133,short-direct,2 tỉ người,khoảng 2 tỉ người,khoảng 2 tỉ người,0,0.740741,0
+squad,145,mid-direct,"53rd Street, giữa Fifth và Sixth Avenue","53rd Street, giữa Fifth và Sixth Avenue","53rd Street, giữa Fifth và Sixth Avenue",1,1.000000,1
+squad,151,mid-direct,Điện tiền chỉ huy sứ,Điện tiền chỉ huy sứ,Điện tiền chỉ huy sứ,1,1.000000,1
+squad,162,short-direct,quá trình một nguyên tử hay phân tử tích một điện tích âm hay dương bằng cách nhận thêm hay mất đi electron để tạo thành các ion,một nguyên tử hay phân tử tích một điện tích âm hay dương bằng cách nhận thêm hay mất đi electron để tạo thành các ion,một nguyên tử hay phân tử tích một điện tích âm hay dương bằng cách nhận thêm hay mất đi electron để tạo thành các ion,0,0.959350,0
+squad,173,short-direct,trạng thái cân bằng nhiệt động lực học với môi trường xung quanh,trạng thái cân bằng nhiệt động lực học,trạng thái cân bằng nhiệt động lực học,0,0.745098,0
+squad,206,mid-infer,"do tỷ lệ tăng dân số hàng năm là 2,2%","do tỷ lệ tăng dân số hàng năm là 2,2%","do tỷ lệ tăng dân số hàng năm là 2,2%",1,1.000000,1
+squad,221,long-direct,do có sự hiện diện của một số cơ sở giáo dục nổi tiếng trong thành phố,do có sự hiện diện của một số cơ sở giáo dục nổi tiếng trong thành phố,do có sự hiện diện của một số cơ sở giáo dục nổi tiếng trong thành phố,1,1.000000,1
+squad,227,short-direct,"""bản Tuyên ngôn độc lập đầu tiên""",“bản Tuyên ngôn độc lập đầu tiên”,“bản Tuyên ngôn độc lập đầu tiên”,0,0.968750,0
+squad,316,short-direct,bệnh viêm đặc hiệu,bệnh tự miễn khá điển hình,bệnh tự miễn khá điển hình,0,0.545455,0
+squad,322,mid-direct,ba,ba tàu vận tải,ba tàu vận tải,0,0.250000,0
+squad,332,long-direct,28 tháng 10 năm 1955,28 tháng 10 năm 1955,28 tháng 10 năm 1955,1,1.000000,1
+squad,339,short-direct,1999,1999,1999,1,1.000000,1
+squad,367,mid-direct,thành phần hóa học của Trái Đất,thành phần hóa học của Trái Đất,thành phần hóa học của Trái Đất,1,1.000000,1
+squad,374,short-direct,Djokovic,Djokovic,Djokovic,1,1.000000,1
+squad,394,short-direct,Düsseldorf,Düsseldorf,Düsseldorf,1,1.000000,1
+squad,396,mid-direct,Thư ký Hội đồng,Thư ký Hội đồng,Thư ký Hội đồng,1,1.000000,1
+squad,406,long-direct,Hoàng thái tử Akihito,Hoàng thái tử Akihito,Hoàng thái tử Akihito,1,1.000000,1
+squad,436,short-direct,"tại Paris, Pháp","Paris, Pháp","Paris, Pháp",0,0.846154,0
+squad,458,short-direct,15 tháng 5 năm 1935,15 tháng 5 năm 1935,15 tháng 5 năm 1935,1,1.000000,1
+squad,474,short-direct,Tây Nam Á,Tây Nam Á,Tây Nam Á,1,1.000000,1
+squad,493,short-direct,ít nghe tiếng tăm,ít nghe tiếng tăm,ít nghe tiếng tăm,1,1.000000,1
+squad,520,mid-direct,trầm tích sông ngòi,trầm tích sông ngòi,trầm tích sông ngòi,1,1.000000,1
+squad,541,mid-direct,từ những năm 1970,từ những năm 1970,từ những năm 1970,1,1.000000,1
+squad,581,mid-direct,"1,1×10 −40 J.s.","1,1×10 −40 J.s","1,1×10 −40 J.s",1,1.000000,1
+squad,636,short-direct,VW,VW,VW,1,1.000000,1
+squad,655,mid-direct,F=ma,F=ma,F=ma,1,1.000000,1
+squad,665,short-direct,"All England Club ở Wimbledon, Luân Đôn","All England Clubở Wimbledon, Luân Đôn","All England Clubở Wimbledon, Luân Đôn",0,0.986667,0
+squad,682,mid-direct,Dish Network,Dish Network,Dish Network,1,1.000000,1
+squad,683,long-direct,18,18 danh hiệu,18 danh hiệu,0,0.285714,0
+squad,720,short-direct,Đoạn văn không nêu đặc điểm của chiến khu Dương Minh Châu,Đoạn văn không cung cấp thông tin,Đoạn văn không cung cấp thông tin,0,0.600000,0
+squad,734,short-direct,Sóc Trăng,Sóc Trăng,Sóc Trăng,1,1.000000,1
+squad,755,short-direct,làm xoăn,làm xoăn,làm xoăn,1,1.000000,1
+squad,758,short-direct,H.265 và MPEG-H Phần 2,H.265 và MPEG-H Phần 2,H.265 và MPEG-H Phần 2,1,1.000000,1
+squad,773,long-direct,"6.340,5 km²","6.340,5 km²","6.340,5 km²",1,1.000000,1
+squad,774,short-direct,"xe ô tô, xe buýt, xe tải","xe ô tô, xe buýt, xe tải","xe ô tô, xe buýt, xe tải",1,1.000000,1
+squad,779,long-direct,8 tháng 11 năm 2019,8 tháng 11 năm 2019,8 tháng 11 năm 2019,1,1.000000,1
+squad,790,short-direct,Thủ tướng Chính phủ,Thủ tướng Chính phủ,Thủ tướng Chính phủ,1,1.000000,1
+squad,799,mid-direct,Museum of Modern Art,Museum of Modern Art,Museum of Modern Art,1,1.000000,1
+squad,803,mid-direct,Hệ thống tên lửa chống tên lửa đạn đạo A-35,Hệ thống tên lửa chống tên lửa đạn đạo A-35,Hệ thống tên lửa chống tên lửa đạn đạo A-35,1,1.000000,1
+squad,832,short-direct,những năm 1960,những năm 1960,những năm 1960,1,1.000000,1
+squad,868,long-direct,cuối thế kỷ XV,cuối thế kỷ XV,cuối thế kỷ XV,1,1.000000,1
+squad,884,mid-direct,32 knot (hay 37 hải lý/giờ),32 knot,32 knot,0,0.424242,0
+squad,898,long-direct,Không có thông tin,Đoạn văn không cung cấp thông tin,Đoạn văn không cung cấp thông tin,0,0.666667,0
+squad,916,long-direct,Vua Bọ cạp,Kings of the Road,Kings of the Road,0,0.222222,0
+squad,939,long-direct,"thực phẩm, sợi, nhiên liệu, và nguyên liệu","thực phẩm, sợi, nhiên liệu, và nguyên liệu","thực phẩm, sợi, nhiên liệu, và nguyên liệu",1,1.000000,1
+squad,950,mid-direct,truyện ngắn,truyện ngắn,truyện ngắn,1,1.000000,1
+squad,952,long-direct,nguyên liệu đầu vào vật chất và phi vật chất,các loại nguyên liệu đầu vào vật chất và phi vật chất,các loại nguyên liệu đầu vào vật chất và phi vật chất,0,0.907216,0
+squad,963,short-direct,1999,1999,1999,1,1.000000,1
+squad,972,short-direct,quân đội cách mạng Cuba,quân đội cách mạng Cuba,quân đội cách mạng Cuba,1,1.000000,1
+squad,975,short-infer,"được đặc trưng có những vùng của dạ dày-ruột bị dày lên, có viêm lan ra tất cả các lớp, loét sâu, lớp viêm mạc nứt nẻ và sự có mặt của u hạt","được đặc trưng có những vùng của dạ dày-ruột bị dày lên, có viêm lan ra tất cả các lớp, loét sâu, lớp viêm mạc nứt nẻ và sự có mặt của u hạt","được đặc trưng có những vùng của dạ dày-ruột bị dày lên, có viêm lan ra tất cả các lớp, loét sâu, lớp viêm mạc nứt nẻ và sự có mặt của u hạt",1,1.000000,1
+squad,982,mid-direct,100 - 160 km,100 - 160 km,100 - 160 km,1,1.000000,1
+squad,1025,mid-direct,Thành phố vườn quốc gia,Thành phố vườn quốc gia,Thành phố vườn quốc gia,1,1.000000,1
+squad,1028,mid-direct,tháng 12/1941,tháng 12 /1941,tháng 12 /1941,0,0.962963,0
+squad,1032,short-direct,suất ăn trưa,ăn trưa,ăn trưa,0,0.736842,0
+squad,1040,mid-direct,Anh Quốc,Anh Quốc,Anh Quốc,1,1.000000,1
+squad,1072,short-direct,31 tháng 7 năm 1958,31 tháng 7 năm 1958,31 tháng 7 năm 1958,1,1.000000,1
+squad,1107,mid-infer,sử dụng các phân tử polyme trong thiết kế vũ khí và việc sử dụng một thanh ray dùng để gắn đèn pin trên súng ngắn,sử dụng các phân tử polyme trong thiết kế vũ khí và việc sử dụng một thanh ray dùng để gắn đèn pin trên súng ngắn,sử dụng các phân tử polyme trong thiết kế vũ khí và việc sử dụng một thanh ray dùng để gắn đèn pin trên súng ngắn,1,1.000000,1
+squad,1114,long-direct,thứ tư,thứ tư,thứ tư,1,1.000000,1
+squad,1140,short-direct,"nhấn mạnh vai trò của văn học trong việc phát triển sự hiểu biết lẫn nhau và (hiểu biết) văn hóa thế giới, đấu tranh cho quyền tự do ngôn luận, và hành động như là một tiếng nói mạnh mẽ đại diện cho các nhà văn bị sách nhiễu, bị cầm tù và đôi khi bị giết vì quan điểm của mình","nhấn mạnh vai trò của văn học trong việc phát triển sự hiểu biết lẫn nhau và (hiểu biết) văn hóa thế giới, đấu tranh cho quyền tự do ngôn luận, và hành động như là một tiếng nói mạnh mẽ đại","nhấn mạnh vai trò của văn học trong việc phát triển sự hiểu biết lẫn nhau và (hiểu biết) văn hóa thế giới, đấu tranh cho quyền tự do ngôn luận, và hành động như là một tiếng nói mạnh mẽ đại",0,0.812903,0
+squad,1191,long-direct,ba,ba,ba,1,1.000000,1
+squad,1192,mid-infer,một nguyên tử liên kết với 4 phối tử (nguyên tử hoặc nhóm nguyên tử) hay nhóm thế trong một cấu trúc không gian mà cấu trúc này không thể chồng khít lên hình ảnh phản chiếu qua gương của nó,một trung tâm lập thể bao gồm một nguyên tử liên kết với 4 phối tử (nguyên tử hoặc nhóm nguyên tử) hay nhóm thế trong một cấu trúc không gian mà cấu trúc này không thể chồng khít lên hình ảnh phản,một trung tâm lập thể bao gồm một nguyên tử liên kết với 4 phối tử (nguyên tử hoặc nhóm nguyên tử) hay nhóm thế trong một cấu trúc không gian mà cấu trúc này không thể chồng khít lên hình ảnh phản,0,0.919481,0
+squad,1234,short-direct,31 tập,31 tập,31 tập,1,1.000000,1
+squad,1265,short-infer,nơi mà nghệ thuật Batik đạt đến đỉnh cao,nơi mà nghệ thuật Batik đạt đến đỉnh cao,nơi mà nghệ thuật Batik đạt đến đỉnh cao,1,1.000000,1
+squad,1306,short-direct,7 tháng 8 năm 1912,7 tháng 8 năm 1912,7 tháng 8 năm 1912,1,1.000000,1
+squad,1307,short-direct,Việt Nam,Việt Nam,Việt Nam,1,1.000000,1
+squad,1308,mid-direct,Hồ Chí Minh,Hồ Chí Minh,Hồ Chí Minh,1,1.000000,1
+squad,1319,short-direct,công chúa,công chúa nhà Hậu Lê,công chúa nhà Hậu Lê,0,0.620690,0
+squad,1351,long-infer,bằng cách nghiền các hạt hay đun sôi trong nước hoặc dầu,nghiền các hạt hay đun sôi trong nước hoặc dầu,nghiền các hạt hay đun sôi trong nước hoặc dầu,0,0.901961,0
+squad,1356,short-direct,tiếng Hy Lạp,tiếng Hy Lạp,tiếng Hy Lạp,1,1.000000,1
+squad,1397,mid-direct,vật lý hạt,vật lý hạt,vật lý hạt,1,1.000000,1
+squad,1400,short-direct,Imperatorskaya Akademiya Khudozhestv,Học viện Nghệ thuật Nga,Học viện Nghệ thuật Nga,0,0.338983,0
+squad,1415,long-direct,Khổng Tử,Khổng Tử,Khổng Tử,1,1.000000,1
+squad,1416,short-direct,1942,1942,1942,1,1.000000,1
+squad,1434,short-direct,một nghìn tỷ phép tính/giây,một nghìn tỷ,một nghìn tỷ,0,0.615385,0
+squad,1446,mid-direct,"hoá lí, hoá phân tích, hoá học hữu cơ, hoá sinh, hoá dược","hoá lí, hoá phân tích, hoá học hữu cơ, hoá sinh, hoá dược","hoá lí, hoá phân tích, hoá học hữu cơ, hoá sinh, hoá dược",1,1.000000,1
+squad,1470,short-direct,8 đề cử Oscar,8 đề cử Oscar,8 đề cử Oscar,1,1.000000,1
+squad,1489,long-direct,FISA,FISA,FISA,1,1.000000,1
+squad,1494,long-direct,không thể nắm bắt,không thể nắm bắt,không thể nắm bắt,1,1.000000,1
+squad,1502,mid-infer,khiến tôi nhận ra rằng họ sợ nhất là hoa nhài,khiến tôi nhận ra rằng họ sợ nhất là hoa nhài,khiến tôi nhận ra rằng họ sợ nhất là hoa nhài,1,1.000000,1
+squad,1521,long-direct,Anne Hathaway,Anne Hathaway,Anne Hathaway,1,1.000000,1
+squad,1548,long-direct,13 bang và ba lãnh thổ liên bang,13 bang và ba lãnh thổ liên bang,13 bang và ba lãnh thổ liên bang,1,1.000000,1
+squad,1549,short-direct,50%,khoảng 50%,khoảng 50%,0,0.461538,0
+squad,1563,short-direct,"Không quân Hoa Kỳ, Hải quân Hoa Kỳ, Không quân Ý, và Không quân Hoàng gia Anh.","Không quân Hoa Kỳ, Hải quân Hoa Kỳ, Không quân Ý, và Không quân Hoàng gia Anh","Không quân Hoa Kỳ, Hải quân Hoa Kỳ, Không quân Ý, và Không quân Hoàng gia Anh",1,1.000000,1
+squad,1570,short-direct,8:00. ET/ PT,8:00,8:00,0,0.500000,0
+squad,1619,long-direct,thứ bảy,thứ bảy,thứ bảy,1,1.000000,1
+squad,1632,mid-direct,2004,2004,2004,1,1.000000,1
+squad,1642,short-direct,an toàn,an toàn,an toàn,1,1.000000,1
+squad,1648,short-direct,Không có thông tin cụ thể,Đoạn văn không cung cấp thông tin,Đoạn văn không cung cấp thông tin,0,0.689655,0
+squad,1686,long-direct,Kim Jong-nam,Kim Jong-nam,Kim Jong-nam,1,1.000000,1
+squad,1691,short-direct,Tiếng Anh,Tiếng Anh,Tiếng Anh,1,1.000000,1
+squad,1697,mid-direct,240 cm,240 cm,240 cm,1,1.000000,1
+squad,1718,short-direct,Sân bay quốc tế Galeão - Antônio Carlos Jobim,Sân bay quốc tế Galeão - Antônio Carlos Jobim,Sân bay quốc tế Galeão - Antônio Carlos Jobim,1,1.000000,1
+squad,1723,short-direct,Nelumbo nucifera,Nelumbo nucifera,Nelumbo nucifera,1,1.000000,1
+squad,1735,long-direct,Thomas Newcomen vào năm 1712,"Thomas Newcomen, năm 1712","Thomas Newcomen, năm 1712",0,0.905660,0
+squad,1747,short-direct,triết lý Vệ Đà,Vệ Đà,Vệ Đà,0,0.526316,0
+squad,1750,long-direct,10 tháng 11 năm 2015,10 tháng 11 năm 2015,10 tháng 11 năm 2015,1,1.000000,1
+squad,1767,long-direct,"4,46 triệu km²","4,46 triệu km²","4,46 triệu km²",1,1.000000,1
+squad,1774,short-direct,Đoạn văn không nêu vị trí của nhà máy Dingolfing,Đoạn văn không cung cấp thông tin,Đoạn văn không cung cấp thông tin,0,0.691358,0
+squad,1777,short-direct,Doctors Without Borders,Doctors Without Borders,Doctors Without Borders,1,1.000000,1
+squad,1797,short-direct,"môi trường sông, biển, nước lợ","sông, biển, nước lợ","sông, biển, nước lợ",0,0.775510,0
+squad,1803,long-direct,Không được đề cập trong đoạn văn.,Không có thông tin,Không có thông tin,0,0.520000,0
+squad,1829,mid-direct,Robinhood và Webull,Robinhood và Webull,Robinhood và Webull,1,1.000000,1
+squad,1830,mid-direct,thứ 3,thứ 3,thứ 3,1,1.000000,1
+squad,1855,long-direct,Những sai số trong việc đo đạc các số liệu đầu vào và sự hiểu biết chưa hoàn thiện về các hoạt động của khí quyển,Những sai số trong việc đo đạc các số liệu đầu vào và sự hiểu biết chưa hoàn thiện về các hoạt động của khí quyển,Những sai số trong việc đo đạc các số liệu đầu vào và sự hiểu biết chưa hoàn thiện về các hoạt động của khí quyển,1,1.000000,1
+squad,1861,short-direct,"2,13 tỷ USD","2,13 tỷ USD","2,13 tỷ USD",1,1.000000,1
+squad,1865,mid-direct,nem cuốn,nem cuốn,nem cuốn,1,1.000000,1
+squad,1877,short-direct,"43,7 triệu dân","43,7 triệu dân","43,7 triệu dân",1,1.000000,1
+squad,1881,short-direct,thuốc chống viêm non-steroid,thuốc chống viêm non-steroid,thuốc chống viêm non-steroid,1,1.000000,1
+squad,1884,short-direct,người đầu tiên,người đầu tiên,người đầu tiên,1,1.000000,1
+squad,1902,mid-direct,cơ học lượng tử,cơ học lượng tử,cơ học lượng tử,1,1.000000,1
+squad,1973,short-direct,Thông tin không có trong đoạn văn.,Đoạn văn không cung cấp thông tin,Đoạn văn không cung cấp thông tin,0,0.878788,0
+squad,1982,mid-direct,tất cả các tầng lớp xã hội Nhật Bản,tất cả các tầng lớp xã hội Nhật Bản,tất cả các tầng lớp xã hội Nhật Bản,1,1.000000,1
+squad,1996,short-direct,thịt lợn,thịt lợn,thịt lợn,1,1.000000,1
+squad,2017,short-direct,Georges Braque,Georges Braque,Georges Braque,1,1.000000,1
+squad,2031,long-direct,1966,Năm 1966,Năm 1966,0,0.666667,0
+squad,2041,mid-direct,Bombay,Bombay,Bombay,1,1.000000,1
+squad,2061,short-direct,khoai tây và pho mát,khoai tây và pho mát,khoai tây và pho mát,1,1.000000,1
+squad,2071,short-direct,Assisi,Assisi,Assisi,1,1.000000,1
+squad,2090,mid-direct,1899,1899,1899,1,1.000000,1
+squad,2134,long-infer,"bằng cách sử dụng quần áo, giày dép, lối sống, phụ kiện, cách trang điểm, kiểu tóc và tỷ lệ cơ thể","bằng cách sử dụng quần áo, giày dép, lối sống, phụ kiện, cách trang điểm, kiểu tóc và tỷ lệ cơ thể","bằng cách sử dụng quần áo, giày dép, lối sống, phụ kiện, cách trang điểm, kiểu tóc và tỷ lệ cơ thể",1,1.000000,1
+squad,2174,mid-direct,Hai,hai,hai,1,1.000000,1
+squad,2196,short-direct,Quyền Anh và Cờ Vua,Đoạn văn không cung cấp thông tin,Đoạn văn không cung cấp thông tin,0,0.384615,0
+squad,2250,long-infer,"giải quyết vấn đề "" quá tải thông tin ""","giải quyết vấn đề "" quá tải thông tin ""","giải quyết vấn đề "" quá tải thông tin """,1,1.000000,1
+squad,2251,mid-direct,Biểu tượng toàn cầu,Biểu tượng toàn cầu,Biểu tượng toàn cầu,1,1.000000,1
+squad,2276,short-direct,Hoa Kỳ,Hoa Kỳ,Hoa Kỳ,1,1.000000,1
+squad,2288,mid-direct,1983,1983,1983,1,1.000000,1
+squad,2347,short-direct,Luân Đôn,Luân Đôn,Luân Đôn,1,1.000000,1
+squad,2370,short-direct,một nhà lãnh đạo quân sự và chính trị gia người Việt Nam,một nhà lãnh đạo quân sự và chính trị gia người Việt Nam,một nhà lãnh đạo quân sự và chính trị gia người Việt Nam,1,1.000000,1
+squad,2371,short-direct,"trường THPT chuyên Phan Bội Châu, Nghệ An",THPT chuyên Phan Bội Châu,THPT chuyên Phan Bội Châu,0,0.757576,0
+squad,2372,long-direct,cấp độ nguyên tử hay ở hạt hạ nguyên tử,cấp độ nguyên tử hay ở hạt hạ nguyên tử,cấp độ nguyên tử hay ở hạt hạ nguyên tử,1,1.000000,1
+squad,2399,mid-direct,thứ hai,lớn thứ hai,lớn thứ hai,0,0.777778,0
+squad,2422,long-direct,thời Đế quốc La Mã,Đế quốc La Mã,Đế quốc La Mã,0,0.838710,0
+squad,2435,long-direct,633–656,633–656,633–656,1,1.000000,1
+squad,2437,short-direct,Nguyễn Huệ,Nguyễn Huệ,Nguyễn Huệ,1,1.000000,1
+squad,2461,short-direct,"Bắc Mỹ, Châu Âu và Úc","Bắc Mỹ, Châu Âu và Úc","Bắc Mỹ, Châu Âu và Úc",1,1.000000,1
+squad,2480,short-direct,đau ngực dữ dội,đau ngực dữ dội,đau ngực dữ dội,1,1.000000,1
+squad,2501,mid-infer,vì hoán đổi vị trí hai nhóm khác nhau bất kỳ sẽ tạo ra đồng phân lập thể,hoán đổi vị trí hai nhóm khác nhau bất kỳ sẽ tạo ra đồng phân lập thể,hoán đổi vị trí hai nhóm khác nhau bất kỳ sẽ tạo ra đồng phân lập thể,0,0.978723,0
+squad,2539,mid-direct,Stephen Hawking,Stephen Hawking,Stephen Hawking,1,1.000000,1
+squad,2579,short-direct,"Tư lệnh Lực lượng Đặc biệt Việt Nam Cộng hòa, kiêm Chỉ huy trưởng Lữ đoàn Liên binh Phòng vệ Phủ Tổng thống","Tư lệnh Lực lượng Đặc biệt Việt Nam Cộng hòa, kiêm Chỉ huy trưởng Lữ đoàn Liên binh Phòng vệ Phủ Tổng thống","Tư lệnh Lực lượng Đặc biệt Việt Nam Cộng hòa, kiêm Chỉ huy trưởng Lữ đoàn Liên binh Phòng vệ Phủ Tổng thống",1,1.000000,1
+squad,2595,long-direct,4,4 giải Brit Awards,4 giải Brit Awards,0,0.105263,0
+squad,2600,short-direct,Thể chế tự trị giáo đoàn,thể chế tự trị giáo đoàn,thể chế tự trị giáo đoàn,1,1.000000,1
+squad,2607,mid-direct,Hồi giáo Shia,Hồi giáo Shia,Hồi giáo Shia,1,1.000000,1
+squad,2611,long-direct,"Columbia, Challenger, Discovery, và Atlantis","Columbia, Challenger, Discovery, và Atlantis","Columbia, Challenger, Discovery, và Atlantis",1,1.000000,1
+squad,2629,long-direct,7.662.000 tấn,7.662.000 tấn,7.662.000 tấn,1,1.000000,1
+squad,2635,short-direct,Archelaus,Archelaus,Archelaus,1,1.000000,1
+squad,2641,short-direct,4 hiệp,4 hiệp,4 hiệp,1,1.000000,1
+squad,2666,mid-direct,"John Hus, hay John Huss","John Hus, hay John Huss","John Hus, hay John Huss",1,1.000000,1
+squad,2698,mid-direct,"một món ăn bao gồm một con gà được lấy xương ra hết, nhồi vào một con vịt, rồi sau đó nhồi tiếp vào một con gà tây","một món ăn bao gồm một con gà được lấy xương ra hết, nhồi vào một con vịt, rồi sau đó nhồi tiếp vào một con gà tây","một món ăn bao gồm một con gà được lấy xương ra hết, nhồi vào một con vịt, rồi sau đó nhồi tiếp vào một con gà tây",1,1.000000,1
+squad,2708,long-direct,Toronto,Toronto,Toronto,1,1.000000,1
+squad,2738,short-direct,phụ nữ Việt Nam,phụ nữ Việt Nam,phụ nữ Việt Nam,1,1.000000,1
+squad,2741,long-direct,1516,1516,1516,1,1.000000,1
+squad,2742,mid-direct,4 tháng 2 năm 2004,4 tháng 2 năm 2004,4 tháng 2 năm 2004,1,1.000000,1
+squad,2792,short-direct,Việt Nam,Việt Nam,Việt Nam,1,1.000000,1
+squad,2799,long-direct,Đại Nam,Đại Nam,Đại Nam,1,1.000000,1
+squad,2805,long-direct,7 tháng 5 năm 1840,7 tháng 5 năm 1840,7 tháng 5 năm 1840,1,1.000000,1
+squad,2816,short-direct,Bến tàu Valongo,Bến tàu Valongo,Bến tàu Valongo,1,1.000000,1
+squad,2817,short-direct,Hãn quốc Kim Trướng,Hãn quốc Kim Trướng,Hãn quốc Kim Trướng,1,1.000000,1
+squad,2841,mid-direct,3 tháng 1 năm 1969,3 tháng 1 năm 1969,3 tháng 1 năm 1969,1,1.000000,1
+squad,2850,short-direct,Có,Có,Có,1,1.000000,1
+squad,2856,short-direct,Đoạn văn không nêu số môn thi đấu chính thức của Thế vận hội Mùa hè,Đoạn văn không cung cấp thông tin này,Đoạn văn không cung cấp thông tin này,0,0.615385,0
+squad,2866,short-direct,75 ngày,75 ngày,75 ngày,1,1.000000,1
+squad,2886,short-direct,tỉnh An Huy,An Huy,An Huy,0,0.705882,0
+squad,2902,short-direct,một người giữ vai trò quan trọng trong Đảng ở thời kỳ đầu,một người giữ vai trò quan trọng,một người giữ vai trò quan trọng,0,0.719101,0
+squad,2921,long-infer,"giáo dục tuổi ấu thơ, giáo dục tiểu học, giáo dục trung học, và giáo dục đại học","giáo dục tuổi ấu thơ, giáo dục tiểu học, giáo dục trung học, và giáo dục đại học","giáo dục tuổi ấu thơ, giáo dục tiểu học, giáo dục trung học, và giáo dục đại học",1,1.000000,1
+squad,2941,long-infer,một Hoàng đế tài giỏi,một Hoàng đế tài giỏi,một Hoàng đế tài giỏi,1,1.000000,1
+squad,2950,long-direct,"cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải tạo, rà soát lý lịch đối với tất cả những người từng phục vụ trong chính quyền cũ cùng với gia đình của họ","cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải","cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải",0,0.759551,0
+squad,2968,long-direct,động cơ nhiệt,động cơ nhiệt,động cơ nhiệt,1,1.000000,1
+squad,2971,mid-direct,"hầu hết toàn bộ Mexico, Trung Mỹ và Nam Mỹ, ngoại trừ các lãnh thổ nói tiếng Anh hoặc tiếng Hà Lan","hầu hết toàn bộ Mexico, Trung Mỹ và Nam Mỹ","hầu hết toàn bộ Mexico, Trung Mỹ và Nam Mỹ",0,0.600000,0
+squad,3004,long-direct,hơn 585 triệu USD,hơn 585 triệu USD,hơn 585 triệu USD,1,1.000000,1
+squad,3031,short-direct,đại hội kết tập kinh điển Phật giáo lần thứ nhất,đại hội kết tập kinh điển Phật giáo lần thứ nhất,đại hội kết tập kinh điển Phật giáo lần thứ nhất,1,1.000000,1
+squad,3035,long-direct,khoảng năm 1860,vào khoảng năm 1860,vào khoảng năm 1860,0,0.882353,0
+squad,3037,long-direct,nửa đầu thế kỷ 19,nửa đầu thế kỷ 19,nửa đầu thế kỷ 19,1,1.000000,1
+squad,3038,long-direct,1995,1995,1995,1,1.000000,1
+squad,3041,short-direct,19 tháng 1 năm 1946,19 tháng 1 năm 1946,19 tháng 1 năm 1946,1,1.000000,1
+squad,3048,short-direct,công ty OpenAI,công ty OpenAI,công ty OpenAI,1,1.000000,1
+squad,3083,mid-direct,"nhà hóa học, nhà hóa sinh, nhà hoạt động vì hòa bình, tác giả và nhà giáo dục người Mỹ",người Mỹ,người Mỹ,0,0.170213,0
+squad,3110,short-direct,Auto Union và NSU Motorenwerke AG,Auto Union và NSU Motorenwerke AG (NSU),Auto Union và NSU Motorenwerke AG (NSU),0,0.929577,0
+squad,3116,short-direct,2 năm,2 năm,2 năm,1,1.000000,1
+squad,3144,long-direct,Phòng thí nghiệm Vật lý Quốc gia,Phòng thí nghiệm Vật lý Quốc gia,Phòng thí nghiệm Vật lý Quốc gia,1,1.000000,1
+squad,3166,mid-direct,M1140,M1140,M1140,1,1.000000,1
+squad,3223,short-direct,"Giang Tô, Trung Quốc","Giang Tô, Trung Quốc","Giang Tô, Trung Quốc",1,1.000000,1
+squad,3249,mid-direct,"nhiệt độ, áp suất, và thành phần của khối đá","Những thay đổi về nhiệt độ, áp suất, và thành phần của khối đá","Những thay đổi về nhiệt độ, áp suất, và thành phần của khối đá",0,0.830189,0
+squad,3250,long-direct,Ulysses,tiểu thuyết bước ngoặt Ulysses,tiểu thuyết bước ngoặt Ulysses,0,0.378378,0
+squad,3268,short-direct,Sergey Brin,Sergey Brin,Sergey Brin,1,1.000000,1
+squad,3292,short-infer,bằng cách điều khiển cường độ ánh sáng điểm ảnh riêng lẻ,bằng cách điều khiển cường độ ánh sáng điểm ảnh riêng lẻ,bằng cách điều khiển cường độ ánh sáng điểm ảnh riêng lẻ,1,1.000000,1
+squad,3300,long-direct,15 tháng 1 năm 1128,15 tháng 1 năm 1128,15 tháng 1 năm 1128,1,1.000000,1
+drop,30,count,13,13,13,1,1.000000,1
+drop,60,count,8,8,8,1,1.000000,1
+drop,138,selection,"2,60","2,60","2,60",1,1.000000,1
+drop,174,comparison,"11,60% (nhóm từ 18 đến 24)","11,60%","11,60%",0,0.387097,0
+drop,193,add_sub,477.000 người,1.320.000 người,1.320.000 người,0,0.714286,0
+drop,200,selection,63.664,63.664,63.664,1,1.000000,1
+drop,253,add_sub,5.864,5.864,5.864,1,1.000000,1
+drop,273,count,4,4,4,1,1.000000,1
+drop,301,comparison,thấp hơn,cao,cao,0,0.000000,0
+drop,316,comparison,nhiều hơn,nhiều hơn,nhiều hơn,1,1.000000,1
+drop,357,selection,"4,8%","4,8%","4,8%",1,1.000000,1
+drop,385,comparison,José Altafini,José Altafini,José Altafini,1,1.000000,1
+drop,420,selection,"5,12%","5,12%","5,12%",1,1.000000,1
+drop,444,add_sub,≈234.987,213.427,213.427,0,0.666667,0
+drop,514,selection,3 kênh,3 kênh,3 kênh,1,1.000000,1
+drop,583,comparison,"Phòng không có 4 tiểu đoàn (13, 27, 31, 615), nhiều hơn Thiết giáp chỉ có 2 tiểu đoàn (13, 43)",Phòng không: 4; Thiết giáp: 2,Phòng không: 4; Thiết giáp: 2,0,0.426230,0
+drop,713,comparison,1952,1952,1952,1,1.000000,1
+drop,726,selection,nhỏ hơn,nhỏ hơn,nhỏ hơn,1,1.000000,1
+drop,939,count,9,8,8,0,0.000000,0
+drop,980,comparison,ngành xây dựng,ngành xây dựng,ngành xây dựng,1,1.000000,1
+drop,989,add_sub,19-31 cm,15-25 cm,15-25 cm,0,0.625000,0
+drop,1039,add_sub,"50,25%","50,25%","50,25%",1,1.000000,1
+drop,1105,count,"Bằng nhau, mỗi quân đoàn có 3 sư đoàn",Cả hai đều có 3 sư đoàn,Cả hai đều có 3 sư đoàn,0,0.666667,0
+drop,1137,count,5,5 chiếc,5 chiếc,0,0.250000,0
+drop,1288,comparison,"Lớn nhất: xã Đa Lộc (714,8 ha); nhỏ nhất: xã Nguyệt Hóa (187,13 ha)",Đa Lộc; Nguyệt Hóa,Đa Lộc; Nguyệt Hóa,0,0.428571,0
+drop,1435,comparison,Liverpool,Liverpool,Liverpool,1,1.000000,1
+drop,1467,comparison,SF-2U,SF-2U,SF-2U,1,1.000000,1
+drop,1495,comparison,quận Carcassonne,quận Carcassonne,quận Carcassonne,1,1.000000,1
+drop,1512,count,2,2,2,1,1.000000,1
+drop,1573,comparison,tàu phóng lôi và tuần tiễu,tàu phóng lôi và tuần tiễu,tàu phóng lôi và tuần tiễu,1,1.000000,1
+drop,1598,count,4,4,4,1,1.000000,1
+drop,1646,count,9,9,9,1,1.000000,1
+drop,1652,count,10,10,10,1,1.000000,1
+drop,1689,count,13,13,13,1,1.000000,1
+drop,1699,add_sub,70,70 người,70 người,0,0.400000,0
+drop,1706,add_sub,44.789,"44,789","44,789",1,0.833333,0
+drop,1723,count,Năm,Bốn,Bốn,0,0.333333,0
+drop,1753,comparison,2,2,2,1,1.000000,1
+drop,1865,comparison,2013,năm 2013,năm 2013,0,0.666667,0
+drop,1870,add_sub,553 ca tử vong,553,553,0,0.352941,0
+drop,1962,count,9,1,1,0,0.000000,0
+drop,1986,comparison,người da trắng,người da trắng,người da trắng,1,1.000000,1
+drop,2052,add_sub,49.000,49.000 ca,49.000 ca,0,0.800000,0
+drop,2166,selection,1,1,1,1,1.000000,1
+drop,2183,add_sub,"0,40%","0,4%","0,4%",1,0.888889,0
+drop,2216,count,2,"1,9 triệu bản","1,9 triệu bản",0,0.000000,0
+drop,2270,selection,5 chiếc,5 chiếc,5 chiếc,1,1.000000,1
+drop,2276,selection,Hải Dương,Hải Dương,Hải Dương,1,1.000000,1
+drop,2295,comparison,Cỡ gia đình trung bình,cỡ gia đình trung bình,cỡ gia đình trung bình,1,1.000000,1
+drop,2331,count,4,4,4,1,1.000000,1
+drop,2395,add_sub,700.000 đơn vị,700.000,700.000,0,0.666667,0
+drop,2430,comparison,cao hơn,cao hơn,cao hơn,1,1.000000,1
+drop,2462,add_sub,"6,01 USD","6,01 USD","6,01 USD",1,1.000000,1
+drop,2522,selection,"20,9%","20,9%","20,9%",1,1.000000,1
+drop,2531,selection,5.068,5.068,5.068,1,1.000000,1
+drop,2662,add_sub,40,35 quả,35 quả,0,0.000000,0
+drop,2701,comparison,"nhóm dưới 18 tuổi (27,00%)",25-44,25-44,0,0.066667,0
+drop,2741,count,17,1,1,0,0.666667,0
+drop,2837,selection,255.984,255.984 phiếu,255.984 phiếu,0,0.700000,0
+drop,2989,comparison,Zulu,Zulu,Zulu,1,1.000000,1
+drop,3008,add_sub,"31,4%","31,44%","31,44%",0,0.909091,0
+drop,3051,count,3,5,5,0,0.000000,0
+drop,3069,comparison,Iran,Iran,Iran,1,1.000000,1
+drop,3101,selection,66%,66%,66%,1,1.000000,1
+drop,3166,comparison,thị trấn Vân Du,thị trấn Vân Du,thị trấn Vân Du,1,1.000000,1
+drop,3174,comparison,Không,Không,Không,1,1.000000,1
+drop,3224,selection,Mauro Tassotti,Mauro Tassotti,Mauro Tassotti,1,1.000000,1
+drop,3298,add_sub,150,150 km/h,150 km/h,0,0.545455,0
+drop,3355,comparison,lớn hơn,lớn hơn,lớn hơn,1,1.000000,1
+drop,3394,selection,31.381,16945,16945,0,0.181818,0
+drop,3411,add_sub,6,6,6,1,1.000000,1
+drop,3415,comparison,Phần 1,Phần 1,Phần 1,1,1.000000,1
+drop,3493,count,Ba,2,2,0,0.000000,0
+drop,3520,add_sub,44,44,44,1,1.000000,1
+drop,3815,add_sub,"Quận Limoux, giảm 758 người","Quận Limoux, 758 người","Quận Limoux, 758 người",0,0.897959,0
+drop,3916,comparison,25-44,"27,80%","27,80%",0,0.181818,0
+drop,3964,selection,351,351 ca,351 ca,0,0.666667,0
+drop,4022,add_sub,"4,8","4,80%","4,80%",1,0.750000,0
+drop,4026,other,1.000 afghani,1.000,1.000,0,0.555556,0
+drop,4091,add_sub,"9.060,05 ha","9.060,05 ha","9.060,05 ha",1,1.000000,1
+drop,4112,count,Một,Klin,Klin,0,0.000000,0
+drop,4199,selection,1920,1920,1920,1,1.000000,1
+drop,4229,add_sub,nhiều,nhiều,nhiều,1,1.000000,1
+drop,4262,comparison,18 đến 24,"9,10%","9,10%",0,0.142857,0
+drop,4365,add_sub,"1,2","1,2%","1,2%",1,0.857143,0
+drop,4402,selection,"0,48%","0,48%","0,48%",1,1.000000,1
+drop,4408,comparison,Không,Không,Không,1,1.000000,1
+drop,4498,comparison,Nhóm 25 đến 44 tuổi,32 năm,32 năm,0,0.320000,0
+drop,4531,other,cao hơn,thấp hơn,thấp hơn,0,0.533333,0
+drop,4566,comparison,từ 25 đến 44,từ 25 đến 44,từ 25 đến 44,1,1.000000,1
+drop,4574,count,1,tập đoàn quân xe tăng 4,tập đoàn quân xe tăng 4,0,0.000000,0
+drop,4598,add_sub,"0,61","0,61","0,61",1,1.000000,1
+drop,4622,count,5,5,5,1,1.000000,1
+drop,4697,add_sub,846,846,846,1,1.000000,1
+drop,4698,selection,"9,5%","9,5%","9,5%",1,1.000000,1
+drop,4724,count,4,4,4,1,1.000000,1
+drop,4797,add_sub,48.331,48.331,48.331,1,1.000000,1
+drop,4857,add_sub,52,15,15,0,0.500000,0
+drop,5039,add_sub,"""Vai trò quân sự của các ống kính Frankish - đánh giá lại"" (75-116, 41 trang)","""Vai trò quân sự của các ống kính Frankish - đánh giá lại""","""Vai trò quân sự của các ống kính Frankish - đánh giá lại""",0,0.854962,0
+drop,5057,selection,"49,53%","49,53%","49,53%",1,1.000000,1
+drop,5135,comparison,hành tinh b,hành tinh b,hành tinh b,1,1.000000,1
+drop,5164,add_sub,Có,Có,Có,1,1.000000,1
+drop,5179,count,4,4,4,1,1.000000,1
+drop,5218,selection,Ngày 12 tháng 5 năm 2010,12 tháng 5 năm 2010,12 tháng 5 năm 2010,0,0.883721,0
+drop,5298,comparison,tăng dần,biến động lớn và có xu hướng tăng dần,biến động lớn và có xu hướng tăng dần,0,0.355556,0
+drop,5336,count,5,4,4,0,0.000000,0
+drop,5404,add_sub,"$1,100","$1,100","$1,100",1,1.000000,1
+drop,5493,comparison,tỷ lệ tăng kim ngạch xuất khẩu (202%),202%,202%,0,0.200000,0
+drop,5511,count,861,861,861,1,1.000000,1
+drop,5556,selection,"21,70%","21,70%","21,70%",1,1.000000,1
+drop,5699,add_sub,13.352,13.352 người,13.352 người,0,0.666667,0
+drop,5748,comparison,xã Thới Sơn,xã Thới Sơn,xã Thới Sơn,1,1.000000,1
+drop,5761,add_sub,28,28,28,1,1.000000,1
+drop,5868,selection,"12,88%","12,88%","12,88%",1,1.000000,1
+drop,5954,count,"2 quân đoàn (61, 69) và 7 sư đoàn","Các quân đoàn 61, 69 và sư đoàn 63","Các quân đoàn 61, 69 và sư đoàn 63",0,0.865672,0
+drop,5979,count,4,4,4,1,1.000000,1
+drop,6002,comparison,"Hai tổ máy có công suất bằng nhau (đều 37,5 MW)",Không có tổ máy nào có công suất lớn hơn,Không có tổ máy nào có công suất lớn hơn,0,0.674419,0
+drop,6073,add_sub,6 lần,6 lần,6 lần,1,1.000000,1
+drop,6077,add_sub,"11,5 cm","khoảng 8 cm × 5 mm, không lông. Hạt hình trứng-thuôn dài, khoảng 6 × 2 mm, có mép; mào lông đầu hạt khoảng 3,5 cm","khoảng 8 cm × 5 mm, không lông. Hạt hình trứng-thuôn dài, khoảng 6 × 2 mm, có mép; mào lông đầu hạt khoảng 3,5 cm",0,0.083333,0
+drop,6105,comparison,bọ nhảy,ve giáp,ve giáp,0,0.142857,0
+drop,6124,selection,28 ngày,28 ngày,28 ngày,1,1.000000,1
+drop,6133,add_sub,99,99,99,1,1.000000,1
+drop,6207,comparison,Phương diện quân Kalinin,Phương diện quân Kalinin,Phương diện quân Kalinin,1,1.000000,1
+drop,6283,add_sub,5,5 bàn thắng,5 bàn thắng,0,0.166667,0
+drop,6314,add_sub,khoảng 12.968 người,"19,5%","19,5%",0,0.166667,0
+drop,6383,add_sub,"2,57%","2,57%","2,57%",1,1.000000,1
+drop,6454,count,Ba,Ba,Ba,1,1.000000,1
+drop,6505,selection,"5,40%","5,40%","5,40%",1,1.000000,1
+drop,6525,comparison,"dưới độ tuổi 18 (22,80%)",dưới độ tuổi 18,dưới độ tuổi 18,0,0.789474,0
+drop,6527,comparison,Anh,Italy,Italy,0,0.250000,0
+drop,6579,count,5,5,5,1,1.000000,1
+drop,6593,add_sub,95.000,95.000 người,95.000 người,0,0.666667,0
+drop,6607,add_sub,32.100,32.100 chiếc,32.100 chiếc,0,0.666667,0
+drop,6643,add_sub,10,10,10,1,1.000000,1
+drop,6755,count,1,2,2,0,0.000000,0
+drop,6827,selection,"91,00","91,00","91,00",1,1.000000,1
+drop,6890,add_sub,19.425,19.425,19.425,1,1.000000,1
+drop,6977,selection,8,8 ghế,8 ghế,0,0.333333,0
+drop,7017,other,500 thăng thóc,3 quan,3 quan,0,0.200000,0
+drop,7048,add_sub,"89,4–99,5 kg","0,5-0,6 kg","0,5-0,6 kg",0,0.545455,0
+drop,7054,selection,2.880,2.880,2.880,1,1.000000,1
+drop,7055,comparison,Có,Có,Có,1,1.000000,1
+drop,7110,count,3,3,3,1,1.000000,1
+drop,7170,selection,Trung tá An ninh Nhà nước Isaak Ilyich Shapiro,Trung tá An ninh Nhà nước Isaak Ilyich Shapiro,Trung tá An ninh Nhà nước Isaak Ilyich Shapiro,1,1.000000,1
+drop,7429,comparison,lớn hơn,lớn hơn,lớn hơn,1,1.000000,1
+drop,7459,other,"27,1%",16.1%,16.1%,0,0.400000,0
+drop,7511,selection,"3,15%","3,15%","3,15%",1,1.000000,1
+drop,7531,selection,mạnh hơn hầu hết PC chạy Windows,mạnh hơn hầu hết PC chạy Windows,mạnh hơn hầu hết PC chạy Windows,1,1.000000,1
+drop,7539,add_sub,44.153,4.153,4.153,0,0.909091,0
+drop,7552,count,0,0,0,1,1.000000,1
+drop,7581,selection,ngày 3 tháng 5 năm 1972,ngày 3 tháng 5 năm 1972,ngày 3 tháng 5 năm 1972,1,1.000000,1
+drop,7624,count,5,6,6,0,0.000000,0
+drop,7684,selection,422 ha diện tích tự nhiên và 4.178 người,422 ha diện tích tự nhiên và 4.178 người,422 ha diện tích tự nhiên và 4.178 người,1,1.000000,1
+drop,7927,comparison,"Quận Ussel, 6.37%","Quận Ussel, 6.37%","Quận Ussel, 6.37%",1,1.000000,1
+drop,7950,comparison,Huân chương Lenin,Huân chương Lenin,Huân chương Lenin,1,1.000000,1
+drop,7970,add_sub,57.827,57.827 triệu đô-la Mỹ,57.827 triệu đô-la Mỹ,0,0.444444,0
+drop,8021,comparison,Pháp,Pháp,Pháp,1,1.000000,1
+drop,8024,count,6 người con,6 người con,6 người con,1,1.000000,1
+drop,8068,add_sub,"39,32 điểm phần trăm","39,32%","39,32%",0,0.384615,0
+drop,8087,comparison,"Cỡ gia đình trung bình (2,99 người) lớn hơn cỡ hộ trung bình (2,45 người)","2,45 người và 2,99 người","2,45 người và 2,99 người",0,0.458333,0
+drop,8105,selection,Ngày 19 tháng 3 năm 1973,Ngày 19 tháng 3 năm 1973,Ngày 19 tháng 3 năm 1973,1,1.000000,1
+drop,8213,add_sub,76,Không có thông tin,Không có thông tin,0,0.000000,0
+drop,8224,comparison,Nigeria,Nigeria,Nigeria,1,1.000000,1
+drop,8250,count,2,2,2,1,1.000000,1
+drop,8257,add_sub,1601,1601,1601,1,1.000000,1
+drop,8268,add_sub,20.281,20.281,20.281,1,1.000000,1
+drop,8335,add_sub,"96,56%","96,56%","96,56%",1,1.000000,1
+drop,8351,comparison,350.000 USD,350.000 USD,350.000 USD,1,1.000000,1
+drop,8405,other,5,"5,4 đạn","5,4 đạn",0,0.250000,0
+drop,8451,count,Một,2,2,0,0.000000,0
+drop,8492,add_sub,29.963 người,"3.912 người (8.2%) tuổi từ 18 đến 24, 10.496 người (22.0%) tuổi từ 25 đến 44, 15","3.912 người (8.2%) tuổi từ 18 đến 24, 10.496 người (22.0%) tuổi từ 25 đến 44, 15",0,0.260870,0
+drop,8704,comparison,Gent,Gent,Gent,1,1.000000,1
+drop,8716,count,5,4 xã,4 xã,0,0.000000,0
+drop,8750,add_sub,"48,1","54,4% - 6,3%","54,4% - 6,3%",0,0.250000,0
+drop,8758,comparison,tiếng Anh,tiếng Anh,tiếng Anh,1,1.000000,1
+drop,8786,add_sub,"44,3%","43,3%","43,3%",0,0.800000,0
+drop,8889,selection,12.690 hộ,12.690 hộ,12.690 hộ,1,1.000000,1
+drop,8891,count,9,10,10,0,0.000000,0
+drop,8895,comparison,thấp hơn,cao hơn,cao hơn,0,0.533333,0
+drop,8915,count,2 (Mỹ và Brazil),3,3,0,0.000000,0
+drop,9044,comparison,Số ca nhiễm mới (53.584) cao hơn số ca tử vong mới (1.052),số ca nhiễm mới,số ca nhiễm mới,0,0.416667,0
+drop,9046,count,4,5,5,0,0.000000,0
+drop,9053,add_sub,vòng chung kết (4 ngày),từ khi ban hành điều lệ đến bốc thăm,từ khi ban hành điều lệ đến bốc thăm,0,0.482759,0
+drop,9060,comparison,"Nhóm từ các chủng tộc khác (1,80%)",người Hispanic hoặc người Latin,người Hispanic hoặc người Latin,0,0.375000,0
+drop,9061,comparison,Không,Không,Không,1,1.000000,1
+drop,9062,selection,"0,13%","0,13%","0,13%",1,1.000000,1
+drop,9134,selection,"6,002 triệu đồng/tháng","6,002 triệu đồng/tháng","6,002 triệu đồng/tháng",1,1.000000,1
+drop,9209,comparison,Vào tháng 10 năm 2007,tháng 10 năm 2007,tháng 10 năm 2007,0,0.894737,0
+drop,9213,comparison,Bộ Tư pháp,Bộ Tư pháp,Bộ Tư pháp,1,1.000000,1
+drop,9295,other,"4,56","4,56","4,56",1,1.000000,1
+drop,9318,selection,Một,1,1,0,0.000000,0
+drop,9380,selection,69%,46% và 23%,46% và 23%,0,0.307692,0
+drop,9489,comparison,Đoạn văn không nêu riêng số căn nhà 167 (chỉ gộp 'trên 6800 căn nhà tình thương và nhà 167') nên không xác định được chênh lệch với gần 1.000 căn nhà tình nghĩa,gần 1.000 căn nhà tình nghĩa; trên 6800 căn nhà tình thương và nhà 167,gần 1.000 căn nhà tình nghĩa; trên 6800 căn nhà tình thương và nhà 167,0,0.600000,0
+drop,9689,selection,lá chét đầu cùng,lá chét đầu cùng,lá chét đầu cùng,1,1.000000,1
+drop,9750,comparison,nhiều hơn,ít,ít,0,0.000000,0
+drop,9893,comparison,người da đen hoặc người Mỹ gốc Phi,người da đen,người da đen,0,0.521739,0
+drop,9902,add_sub,"24,9%","24,9%","24,9%",1,1.000000,1
+drop,9928,selection,2.858,282.929,282.929,0,0.500000,0
+drop,10001,add_sub,"24,10%","24,10%","24,10%",1,1.000000,1
+drop,10085,other,"49,92%","5,99 USD","5,99 USD",0,0.428571,0

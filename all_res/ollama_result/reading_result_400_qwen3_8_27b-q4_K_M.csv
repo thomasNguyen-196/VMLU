@@ -1,0 +1,407 @@
+dataset,item_id,stratum,question,context_words,raw_response
+squad,0,short-direct,Công ty mẹ của Fenway Sports Group được gọi là gì ban đầu?,106,New England Sports Ventures
+squad,5,short-direct,BMW được thành lập vào năm nào?,190,1916
+squad,24,short-direct,Có những phương pháp nào khác có thể được sử dụng để tạo năng lượng hạt nhân?,156,tổng hợp hạt nhân và phân rã phóng xạ
+squad,25,short-direct,AMPAS được biết đến nhiều nhất thông qua giải thưởng nào?,215,giải Oscar
+squad,38,mid-direct,Các định luật Newton là hệ thống gồm bao nhiêu định luật?,308,3 định luật
+squad,58,short-direct,VGCL viết tắt cho cái gì?,142,Vietnam General Confederation of Labor
+squad,68,mid-direct,In 3D sử dụng các công đoạn nào để tạo ra một vật thể ba chiều?,275,một chuỗi kết hợp các công đoạn khác nhau
+squad,74,short-direct,Đường kính của viên bi ở đầu ống chứa mực khoảng bao nhiêu mm?,204,từ 0.5 đến 1.2
+squad,83,long-direct,Đức là thành viên của khu vực đồng Euro từ năm nào?,642,1999
+squad,90,short-infer,Dòng xe BMW G61 định vị như thế nào trên thị trường?,169,'Touring'
+squad,92,short-direct,Lê Quang Tung được huấn luyện ở Trường sĩ quan trừ bị mở ra ở miền Nam Việt Nam vào thời gian nào?,147,đầu thập niên 50
+squad,104,short-direct,Võ Tánh sinh năm bao nhiêu?,56,1768
+squad,109,mid-direct,Tâm chấn của trận động đất là gì?,276,điểm ở mặt đất ngay phía trên chấn tiêu
+squad,118,short-infer,Năng lượng hạt nhân được thiết kế như thế nào để tách năng lượng từ hạt nhân nguyên tử?,156,thông qua các lò phản ứng hạt nhân có kiểm soát
+squad,133,short-direct,Billy Graham đã giới thiệu phúc âm cho khoảng bao nhiêu người trên khắp thế giới?,215,khoảng 2 tỉ người
+squad,145,mid-direct,Bảo tàng Nghệ thuật Hiện đại được đặt tại địa chỉ nào?,237,"53rd Street, giữa Fifth và Sixth Avenue"
+squad,151,mid-direct,Trần Thủ Độ có chức vụ gì?,324,Điện tiền chỉ huy sứ
+squad,162,short-direct,Điện ly hay ion hóa là quá trình gì?,198,một nguyên tử hay phân tử tích một điện tích âm hay dương bằng cách nhận thêm hay mất đi electron để tạo thành các ion
+squad,173,short-direct,Vật đen phát ra bức xạ điện từ nhiệt trong trạng thái nào?,78,trạng thái cân bằng nhiệt động lực học
+squad,206,mid-infer,Tại sao vị trí của Mumbai ước tính có thể nhảy lên thứ 4 thế giới vào năm 2015?,314,"do tỷ lệ tăng dân số hàng năm là 2,2%"
+squad,221,long-direct,"Pune được gọi là ""Oxford về phương Đông"" vì lí do gì?",401,do có sự hiện diện của một số cơ sở giáo dục nổi tiếng trong thành phố
+squad,227,short-direct,"Bài thơ ""Nam quốc sơn hà"" được coi là gì trong sách Lịch sử Việt Nam?",174,“bản Tuyên ngôn độc lập đầu tiên”
+squad,316,short-direct,Bệnh viêm khớp dạng thấp là một loại bệnh nào?,159,bệnh tự miễn khá điển hình
+squad,322,mid-direct,Có bao nhiêu tàu vận tải của Hải quân Việt Nam bị mất trong xung đột?,386,ba tàu vận tải
+squad,332,long-direct,William Henry Gates III sinh ngày nào?,405,28 tháng 10 năm 1955
+squad,339,short-direct,Năm nào là lần đầu tiên giải thưởng MAMA được tổ chức tại Seoul?,162,1999
+squad,367,mid-direct,Điều gì tạo ra sự đa dạng và phong phú của các loại khoáng vật?,301,thành phần hóa học của Trái Đất
+squad,374,short-direct,Ai là đương kim vô địch của Giải quần vợt Roland-Garros?,184,Djokovic
+squad,394,short-direct,Một phiên bản thể nghiệm của tác phẩm được triển lãm ở thành phố nào?,111,Düsseldorf
+squad,396,mid-direct,Ai là người điều hành Hội đồng Kinh tế quốc gia trong thực tế?,379,Thư ký Hội đồng
+squad,406,long-direct,Ai lên nối ngôi sau Thiên hoàng Chiêu Hòa?,553,Hoàng thái tử Akihito
+squad,436,short-direct,Giải quần vợt Roland-Garros được tổ chức ở đâu?,184,"Paris, Pháp"
+squad,458,short-direct,Malevich mất vào ngày nào?,68,15 tháng 5 năm 1935
+squad,474,short-direct,Lựu có nguồn gốc từ đâu?,200,Tây Nam Á
+squad,493,short-direct,"Tính tới hiện tại, Ma giáo còn phổ biến hay không?",87,ít nghe tiếng tăm
+squad,520,mid-direct,Đồng bằng châu thổ là điển hình của quá trình trầm tích nào?,291,trầm tích sông ngòi
+squad,541,mid-direct,Các bộ vi xử lý đã bám sát định luật Moore từ khi nào?,349,từ những năm 1970
+squad,581,mid-direct,Sai số tuyệt đối trên giá trị của hằng số Planck h là bao nhiêu?,241,"1,1×10 −40 J.s"
+squad,636,short-direct,Volkswagen viết tắt là gì trong tiếng Đức?,128,VW
+squad,655,mid-direct,Định luật II được phát biểu dưới dạng phương trình nào?,308,F=ma
+squad,665,short-direct,Giải đấu quần vợt lâu đời và có uy tín nhất trên thế giới Wimbledon được tổ chức tại đâu?,207,"All England Clubở Wimbledon, Luân Đôn"
+squad,682,mid-direct,Ai đã mua lại 1.700 cửa hàng còn lại của Blockbuster?,307,Dish Network
+squad,683,long-direct,AC Milan đã dành được bao nhiêu danh hiệu FIFA và UEFA?,404,18 danh hiệu
+squad,720,short-direct,Chiến khu Dương Minh Châu có đặc điểm gì?,42,Đoạn văn không cung cấp thông tin
+squad,734,short-direct,"Vùng đất nào được gọi là ""Xứ Giồng""?",182,Sóc Trăng
+squad,755,short-direct,"Ý nghĩa của từ ""crêpe"" là gì?",116,làm xoăn
+squad,758,short-direct,Mã hóa video HEVC còn được gọi là gì?,158,H.265 và MPEG-H Phần 2
+squad,773,long-direct,Thượng Hải có diện tích bao nhiêu?,481,"6.340,5 km²"
+squad,774,short-direct,Mercedes-Benz là một trong những hãng sản xuất gì?,115,"xe ô tô, xe buýt, xe tải"
+squad,779,long-direct,Ngày phim Nhím Sonic ban đầu dự kiến phát hành tại Hoa Kỳ là ngày nào?,509,8 tháng 11 năm 2019
+squad,790,short-direct,Ai đã đã phê duyệt điều lệ LHCHVHNTVN?,104,Thủ tướng Chính phủ
+squad,799,mid-direct,MoMA được viết tắt từ cụm từ tiếng Anh nào?,237,Museum of Modern Art
+squad,803,mid-direct,Tên gọi đầy đủ của hệ thống tên lửa chống tên lửa đạn đạo A-35 là gì?,396,Hệ thống tên lửa chống tên lửa đạn đạo A-35
+squad,832,short-direct,Rocket M-210F được phát triển từ năm nào?,182,những năm 1960
+squad,868,long-direct,Khi nào người Anh và người Pháp thành lập các thuộc địa trên vùng duyên hải Đại Tây Dương của Canada?,626,cuối thế kỷ XV
+squad,884,mid-direct,Tốc độ tối đa mà tàu Liêu Ninh có thể di chuyển là bao nhiêu?,342,32 knot
+squad,898,long-direct,"Ngoài lực hấp dẫn, còn có bao nhiêu lực tác động trong vũ trụ?",568,Đoạn văn không cung cấp thông tin
+squad,916,long-direct,Vai diễn chính đầu tiên của Dwayne Johnson trong phim điện ảnh nào?,467,Kings of the Road
+squad,939,long-direct,Các nhóm chính của sản phẩm nông nghiệp có thể được chia thành những gì?,541,"thực phẩm, sợi, nhiên liệu, và nguyên liệu"
+squad,950,mid-direct,Anton Pavlovich Chekhov được coi là nhà văn chuyên viết thể loại gì?,341,truyện ngắn
+squad,952,long-direct,Sản xuất là sự kết hợp của những nguyên liệu gì?,761,các loại nguyên liệu đầu vào vật chất và phi vật chất
+squad,963,short-direct,Tổ chức Bác sĩ không biên giới được trao giải Nobel Hòa bình vào năm nào?,121,1999
+squad,972,short-direct,Quân đội nước nào đã đánh bại đội quân lưu vong trong sự kiện Vịnh Con Lợn?,192,quân đội cách mạng Cuba
+squad,975,short-infer,Biểu hiện của bệnh Crohn như thế nào?,135,"được đặc trưng có những vùng của dạ dày-ruột bị dày lên, có viêm lan ra tất cả các lớp, loét sâu, lớp viêm mạc nứt nẻ và sự có mặt của u hạt"
+squad,982,mid-direct,"Với sức công phá là 1 triệu tấn, vũ khí hạt nhân có thể phá hủy được vùng có bán kính bao nhiêu?",306,100 - 160 km
+squad,1025,mid-direct,"Trong năm 2001, Trường Xuân được trao tặng danh hiệu gì?",318,Thành phố vườn quốc gia
+squad,1028,mid-direct,Súng PPSh-41 được chấp nhận trang bị vào thời điểm nào?,314,tháng 12 /1941
+squad,1032,short-direct,Món bánh mì kẹp giăm bông là thành phần phổ biến của suất ăn gì?,139,ăn trưa
+squad,1040,mid-direct,Tỉnh Newfoundland và Labrador từng là thuộc địa của quốc gia nào trước khi gia nhập Canada?,256,Anh Quốc
+squad,1072,short-direct,Mark Cuban sinh vào ngày nào?,101,31 tháng 7 năm 1958
+squad,1107,mid-infer,Tại sao HK được công nhận là một công ty đổi mới trong chế tạo vũ khí?,386,sử dụng các phân tử polyme trong thiết kế vũ khí và việc sử dụng một thanh ray dùng để gắn đèn pin trên súng ngắn
+squad,1114,long-direct,BLEACH là bộ phim truyền hình anime thứ mấy phổ biến nhất tại Nhật Bản trong năm 2006?,514,thứ tư
+squad,1140,short-direct,Những vai trò mà Hội nhắm đến là gì?,206,"nhấn mạnh vai trò của văn học trong việc phát triển sự hiểu biết lẫn nhau và (hiểu biết) văn hóa thế giới, đấu tranh cho quyền tự do ngôn luận, và hành động như là một tiếng nói mạnh mẽ đại"
+squad,1191,long-direct,"Voyager 1 đã trải qua bao nhiêu ""làn sóng thần"" do sự phun trào nhật hoa từ Mặt Trời?",517,ba
+squad,1192,mid-infer,Thế nào là một trung tâm bất đối xứng?,251,một trung tâm lập thể bao gồm một nguyên tử liên kết với 4 phối tử (nguyên tử hoặc nhóm nguyên tử) hay nhóm thế trong một cấu trúc không gian mà cấu trúc này không thể chồng khít lên hình ảnh phản
+squad,1234,short-direct,Slam Dunk là bộ manga thể thao với bao nhiêu tập?,146,31 tập
+squad,1265,short-infer,Tại sao Indonesia được coi là quốc gia của Batik?,226,nơi mà nghệ thuật Batik đạt đến đỉnh cao
+squad,1306,short-direct,Võ Chí Công sinh vào ngày nào?,108,7 tháng 8 năm 1912
+squad,1307,short-direct,Quốc gia nào là một quốc gia đơn đảng?,135,Việt Nam
+squad,1308,mid-direct,Tên của cố Chủ tịch Việt Nam Dân chủ Cộng hoà là gì?,292,Hồ Chí Minh
+squad,1319,short-direct,Lê Ngọc Hân là thành viên nào của gia đình Hậu Lê?,151,công chúa nhà Hậu Lê
+squad,1351,long-infer,Làm thuốc nhuộm từ cây điều nhuộm như thế nào?,425,nghiền các hạt hay đun sôi trong nước hoặc dầu
+squad,1356,short-direct,"Từ ""cinématographie"" trong tiếng Pháp xuất phát từ đâu?",105,tiếng Hy Lạp
+squad,1397,mid-direct,Lĩnh vực khoa học nghiên cứu các hạt dưới nguyên tử là gì?,351,vật lý hạt
+squad,1400,short-direct,Tên chính thức của Học viện Nghệ thuật Sankt-Peterburg là gì?,63,Học viện Nghệ thuật Nga
+squad,1415,long-direct,Cổ cầm được liên kết với triết gia Trung Quốc cổ đại nào?,460,Khổng Tử
+squad,1416,short-direct,"Tác phẩm ""New York City"" của Piet Mondrian được hoàn thành vào năm nào?",111,1942
+squad,1434,short-direct,Một teraflop tương đương với hiệu suất bao nhiêu phép tính/giây?,122,một nghìn tỷ
+squad,1446,mid-direct,Hoá học phức chất đang phát triển rực rỡ và hội tụ những thành tựu của những ngành khoa học nào?,348,"hoá lí, hoá phân tích, hoá học hữu cơ, hoá sinh, hoá dược"
+squad,1470,short-direct,Bộ phim Moulin Rouge! nhận được bao nhiêu đề cử Oscar?,200,8 đề cử Oscar
+squad,1489,long-direct,Giải Vô địch đua thuyền Thế giới được tổ chức bởi ai?,506,FISA
+squad,1494,long-direct,Nghệ thuật trừu tượng có ý nghĩa gì trong một sự thể hiện hoàn hảo?,522,không thể nắm bắt
+squad,1502,mid-infer,"Tại sao Ngải Vị Vị đã nói ""những kẻ sợ hoa nhài đã thường xuyên đưa tin về nó""?",373,khiến tôi nhận ra rằng họ sợ nhất là hoa nhài
+squad,1521,long-direct,William Shakespeare kết hôn với ai?,530,Anne Hathaway
+squad,1548,long-direct,Malaysia có bao nhiêu bang và lãnh thổ liên bang?,669,13 bang và ba lãnh thổ liên bang
+squad,1549,short-direct,Kích thước không gian màu Adobe RGB (1998) bao gồm bao nhiêu phần trăm màu chỉ định bởi không gian màu CIELAB?,91,khoảng 50%
+squad,1563,short-direct,Máy bay UAV MQ-9 Reaper đã được đưa vào sử dụng trong những lực lượng nào?,46,"Không quân Hoa Kỳ, Hải quân Hoa Kỳ, Không quân Ý, và Không quân Hoàng gia Anh"
+squad,1570,short-direct,Chương trình The Amazing Race 17 được phát sóng vào thời gian nào trong các tối chủ nhật?,191,8:00
+squad,1619,long-direct,Warren Buffett được tạp chí Forbes xếp ở vị trí người giàu thế giới thứ mấy?,410,thứ bảy
+squad,1632,mid-direct,Hồ Ngọc Hà ra mắt album đầu tay vào năm nào?,317,2004
+squad,1642,short-direct,Lưỡi dao của máy cắt cỏ được gỡ bỏ trong cuộc đua máy cắt cỏ để đảm bảo điều gì?,78,an toàn
+squad,1648,short-direct,Rachael Yamagata có bài hát nào nổi tiếng?,104,Đoạn văn không cung cấp thông tin
+squad,1686,long-direct,Kim Jong-un bị nghi ngờ đã ra lệnh ám sát ai tại Malaysia vào tháng 2 năm 2017?,589,Kim Jong-nam
+squad,1691,short-direct,Những ngôn ngữ mà bốn quốc gia trong CANZUK sử dụng là gì?,132,Tiếng Anh
+squad,1697,mid-direct,Kính viễn vọng Hubble được trang bị hệ thống máy tính và gương thu ánh sáng có đường kính bao nhiêu?,241,240 cm
+squad,1718,short-direct,Sân bay nào kết nối thành phố Rio de Janeiro với các tuyến điểm trong và ngoài nước?,207,Sân bay quốc tế Galeão - Antônio Carlos Jobim
+squad,1723,short-direct,Loài sen nào là quốc hoa của Ấn Độ?,198,Nelumbo nucifera
+squad,1735,long-direct,Người đã phát triển động cơ thành công về mặt thương mại đầu tiên là ai và vào năm nào?,497,"Thomas Newcomen, năm 1712"
+squad,1747,short-direct,Sri Aurobindo là một trong những lãnh tụ tinh thần của triết lý nào?,205,Vệ Đà
+squad,1750,long-direct,Fallout 4 được phát hành vào ngày nào?,500,10 tháng 11 năm 2015
+squad,1767,long-direct,ASEAN có diện tích đất là bao nhiêu?,412,"4,46 triệu km²"
+squad,1774,short-direct,Xưởng sản xuất BMW Dingolfing nằm ở đâu?,169,Đoạn văn không cung cấp thông tin
+squad,1777,short-direct,Tổ chức Bác sĩ không biên giới có tiếng Anh là gì?,121,Doctors Without Borders
+squad,1797,short-direct,Họ Sò sống tập trung ở môi trường nào?,194,"sông, biển, nước lợ"
+squad,1803,long-direct,Chiếc máy bay Solar Impulse 2 bay vòng quanh thế giới trong bao lâu?,556,Không có thông tin
+squad,1829,mid-direct,Tại các ứng dụng giao dịch nào đã được sử dụng để xảy ra đợt bán non cổ phiếu GameStop Corp. (GME)?,322,Robinhood và Webull
+squad,1830,mid-direct,Atorvastatin là loại thuốc được kê đơn nhiều thứ mấy tại Hoa Kỳ vào năm 2016?,231,thứ 3
+squad,1855,long-direct,Những yếu tố nào dẫn đến việc công tác dự báo trở nên ít chính xác hơn?,401,Những sai số trong việc đo đạc các số liệu đầu vào và sự hiểu biết chưa hoàn thiện về các hoạt động của khí quyển
+squad,1861,short-direct,Doanh thu của bộ môn thể thao điện tử Free Fire trong năm 2020 là bao nhiêu?,209,"2,13 tỷ USD"
+squad,1865,mid-direct,Gỏi cuốn được gọi là gì trong phương ngữ Bắc bộ?,244,nem cuốn
+squad,1877,short-direct,Số dân của Liêu Ninh là bao nhiêu?,199,"43,7 triệu dân"
+squad,1881,short-direct,Aspirin thuộc nhóm thuốc nào?,85,thuốc chống viêm non-steroid
+squad,1884,short-direct,"Krzysztof Jerzy Wielicki là người thứ mấy leo lên cả 3 đỉnh Everest, Kangchenjunga và Lhotse trong cùng một mùa đông?",112,người đầu tiên
+squad,1902,mid-direct,Nguyên lý bất định là một nguyên lý quan trọng của lĩnh vực nào?,241,cơ học lượng tử
+squad,1973,short-direct,"Ai là người đạo diễn phim ""Cùng Ngắm Mưa Sao Băng""?",40,Đoạn văn không cung cấp thông tin
+squad,1982,mid-direct,Ikebana sau đó trở thành môn nghệ thuật dành cho ai?,344,tất cả các tầng lớp xã hội Nhật Bản
+squad,1996,short-direct,Thịt nào đứng đầu trong số các loại thịt được tiêu thụ nhiều nhất trên thế giới?,170,thịt lợn
+squad,2017,short-direct,Ai là người sáng lập trường phái lập thể trong hội họa và điêu khắc cùng với Picasso?,139,Georges Braque
+squad,2031,long-direct,"Năm nào, người Rapa Nui được cấp quyền công dân Chile?",460,Năm 1966
+squad,2041,mid-direct,Mumbai trước đây được gọi là gì?,314,Bombay
+squad,2061,short-direct,Những nguyên liệu đơn giản nào được sử dụng để làm món ăn truyền thống của Thụy Sĩ?,70,khoai tây và pho mát
+squad,2071,short-direct,Thánh Phanxicô thành Assisi sinh ở đâu?,85,Assisi
+squad,2090,mid-direct,Claude Monet bắt đầu vẽ hoa súng vào năm nào?,299,1899
+squad,2134,long-infer,Thời trang thể hiện thẩm mỹ như thế nào?,403,"bằng cách sử dụng quần áo, giày dép, lối sống, phụ kiện, cách trang điểm, kiểu tóc và tỷ lệ cơ thể"
+squad,2174,mid-direct,Có bao nhiêu phó thư ký trong Hội đồng Kinh tế quốc gia?,379,hai
+squad,2196,short-direct,Các vận động viên thi đấu theo luật nào trong Boxing Cờ vua?,98,Đoạn văn không cung cấp thông tin
+squad,2250,long-infer,PIM có thể giúp cá nhân và tổ chức làm việc hiệu quả như thế nào?,709,"giải quyết vấn đề "" quá tải thông tin """
+squad,2251,mid-direct,John Michael Osbourne nhận giải gì tại giải Âm nhạc châu Âu của MTV 2014?,397,Biểu tượng toàn cầu
+squad,2276,short-direct,Hệ thống giải thưởng Oscar thuộc quốc gia nào?,148,Hoa Kỳ
+squad,2288,mid-direct,Lê Diệu Tường gia nhập TVB vào năm nào?,293,1983
+squad,2347,short-direct,"Tác phẩm ""Quý bà cầm quạt"" được bán đấu giá ở đâu?",148,Luân Đôn
+squad,2370,short-direct,Võ Nguyên Giáp là ai?,173,một nhà lãnh đạo quân sự và chính trị gia người Việt Nam
+squad,2371,short-direct,Nguyễn Tất Nghĩa học ở trường nào?,166,THPT chuyên Phan Bội Châu
+squad,2372,long-direct,Cơ học lượng tử miêu tả các tính chất vật lý của tự nhiên ở cấp độ nào?,459,cấp độ nguyên tử hay ở hạt hạ nguyên tử
+squad,2399,mid-direct,Nam Kinh là thành phố trung tâm thương mại lớn thứ mấy ở Đông Trung Quốc?,365,lớn thứ hai
+squad,2422,long-direct,Loài sư tử đã được nuôi nhốt từ thời đại nào?,700,Đế quốc La Mã
+squad,2435,long-direct,Triều đại Sassanid của Ba Tư kết thúc sau cuộc chinh phạt của quân Hồi giáo vào năm nào?,636,633–656
+squad,2437,short-direct,Lê Ngọc Hân có tình yêu đẹp đẽ với ai?,151,Nguyễn Huệ
+squad,2461,short-direct,Trò chơi Just Dance được phát hành ở những khu vực nào?,51,"Bắc Mỹ, Châu Âu và Úc"
+squad,2480,short-direct,Hoại tử cơ tim gây ra triệu chứng gì?,76,đau ngực dữ dội
+squad,2501,mid-infer,Trung tâm lập thể là một yếu tố quan trọng trong phân tử hữu cơ vì sao?,251,hoán đổi vị trí hai nhóm khác nhau bất kỳ sẽ tạo ra đồng phân lập thể
+squad,2539,mid-direct,Bức xạ Hawking được đặt theo tên của ai?,382,Stephen Hawking
+squad,2579,short-direct,Lê Quang Tung từng giữ chức vụ nào?,147,"Tư lệnh Lực lượng Đặc biệt Việt Nam Cộng hòa, kiêm Chỉ huy trưởng Lữ đoàn Liên binh Phòng vệ Phủ Tổng thống"
+squad,2595,long-direct,Billie Eilish đã nhận được bao nhiêu giải Brit Awards?,492,4 giải Brit Awards
+squad,2600,short-direct,Cấu trúc tổ chức của Báp-tít tuân theo thể chế nào?,229,thể chế tự trị giáo đoàn
+squad,2607,mid-direct,Hussein-Ali Montazeri được biết đến như một Grand Marja của tôn giáo nào?,274,Hồi giáo Shia
+squad,2611,long-direct,Tên của các tàu vũ trụ đầu tiên được chế tạo cho chuyến bay vũ trụ là gì?,572,"Columbia, Challenger, Discovery, và Atlantis"
+squad,2629,long-direct,Con số chất nổ mà Không quân Hoa Kỳ đã sử dụng trong chiến tranh là bao nhiêu?,618,7.662.000 tấn
+squad,2635,short-direct,Vua cuối cùng của Cappadocia là ai?,103,Archelaus
+squad,2641,short-direct,Mỗi trận đấu bóng nước gồm bao nhiêu hiệp?,151,4 hiệp
+squad,2666,mid-direct,Jan Hus còn được gọi là gì?,264,"John Hus, hay John Huss"
+squad,2698,mid-direct,Turducken là gì?,245,"một món ăn bao gồm một con gà được lấy xương ra hết, nhồi vào một con vịt, rồi sau đó nhồi tiếp vào một con gà tây"
+squad,2708,long-direct,Ở đâu phim Siêu đại chiến được quay?,441,Toronto
+squad,2738,short-direct,"Hội Liên hiệp Phụ nữ Việt Nam là một tổ chức chính trị, xã hội của ai?",116,phụ nữ Việt Nam
+squad,2741,long-direct,Vị hoàng đế Lê Chiêu Tông nhậm chức vào năm nào?,533,1516
+squad,2742,mid-direct,Ngày nào Mark Zuckerberg tạo ra Facebook?,393,4 tháng 2 năm 2004
+squad,2792,short-direct,Đại hội Thể thao Đông Nam Á 2021 diễn ra ở đâu?,49,Việt Nam
+squad,2799,long-direct,Quốc gia Việt Nam đã được Minh Mạng đổi thành tên gì?,626,Đại Nam
+squad,2805,long-direct,Tchaikovsky sinh vào ngày nào?,639,7 tháng 5 năm 1840
+squad,2816,short-direct,Di sản mới nhất của Brasil được đưa vào danh sách là gì?,227,Bến tàu Valongo
+squad,2817,short-direct,Rus Kiev đã trở thành một phần của đế chế nào sau cuộc xâm lược của Mông Cổ?,227,Hãn quốc Kim Trướng
+squad,2841,mid-direct,Schumacher sinh ngày nào?,367,3 tháng 1 năm 1969
+squad,2850,short-direct,Chúng ta có vắc-xin phòng viêm gan A không?,112,Có
+squad,2856,short-direct,Có bao nhiêu môn thi đấu chính thức trong Thế vận hội Mùa hè?,128,Đoạn văn không cung cấp thông tin này
+squad,2866,short-direct,Tổng số ngày đàm phán để hình thành hiệp định là bao nhiêu ngày?,166,75 ngày
+squad,2886,short-direct,Hợp Phì là thành phố của tỉnh nào?,49,An Huy
+squad,2902,short-direct,Nguyễn Thị Minh Khai là gì trong Đảng?,70,một người giữ vai trò quan trọng
+squad,2921,long-infer,Giáo dục được chia thành các giai đoạn như thế nào?,460,"giáo dục tuổi ấu thơ, giáo dục tiểu học, giáo dục trung học, và giáo dục đại học"
+squad,2941,long-infer,Trần Thánh Tông được mô tả như thế nào trong sử sách?,515,một Hoàng đế tài giỏi
+squad,2950,long-direct,Chính quyền mới sau khi tái thống nhất Việt Nam đã tiến hành những cải cách gì?,618,"cải tạo kinh tế, văn hóa, thay đổi hệ thống giáo dục cũ, xây dựng bao cấp, quốc hữu hóa tư sản, xóa bỏ tư hữu cũng như kinh tế thị trường ở miền Nam, tổ chức học tập cải"
+squad,2968,long-direct,Động cơ đốt trong là loại động cơ gì?,534,động cơ nhiệt
+squad,2971,mid-direct,Vùng Mỹ Latinh bao gồm những khu vực nào?,336,"hầu hết toàn bộ Mexico, Trung Mỹ và Nam Mỹ"
+squad,3004,long-direct,"Tác phẩm ""Người Sắt"" thu về bao nhiêu tiền doanh thu?",607,hơn 585 triệu USD
+squad,3031,short-direct,Ma-ha-ca-diếp đã tổ chức sự kiện gì trong đạo Phật?,192,đại hội kết tập kinh điển Phật giáo lần thứ nhất
+squad,3035,long-direct,Động cơ đốt trong được ứng dụng thương mại vào thời gian nào?,534,vào khoảng năm 1860
+squad,3037,long-direct,Bach được công nhận là nhà soạn nhạc vĩ đại vào thời điểm nào?,416,nửa đầu thế kỷ 19
+squad,3038,long-direct,Led Zeppelin được xướng danh tại Đại sảnh Danh vọng Rock and Roll vào năm nào?,637,1995
+squad,3041,short-direct,Dolly Parton sinh vào ngày nào?,108,19 tháng 1 năm 1946
+squad,3048,short-direct,Ai đã phát triển ChatGPT?,139,công ty OpenAI
+squad,3083,mid-direct,Linus Carl Pauling là người gì?,267,người Mỹ
+squad,3110,short-direct,Tập đoàn Volkswagen AG mua lại tài sản của những công ty nào để tái sử dụng tên Audi?,167,Auto Union và NSU Motorenwerke AG (NSU)
+squad,3116,short-direct,Ông Võ Chí Công có thời gian làm chức vụ Bộ trưởng Bộ Nông nghiệp trong bao lâu?,108,2 năm
+squad,3144,long-direct,Alan Turing làm việc ở đâu sau Chiến tranh thế giới thứ hai?,673,Phòng thí nghiệm Vật lý Quốc gia
+squad,3166,mid-direct,Hệ thống HIMARS dựa trên khung gầm của xe tải nào?,397,M1140
+squad,3223,short-direct,Tiểu long bao là loại màn thầu hấp nổi tiếng ở đâu?,135,"Giang Tô, Trung Quốc"
+squad,3249,mid-direct,Những gì có thể làm thay đổi đặc điểm khoáng vật học của một loại đá?,301,"Những thay đổi về nhiệt độ, áp suất, và thành phần của khối đá"
+squad,3250,long-direct,Tác phẩm nổi tiếng nhất của James Joyce là gì?,530,tiểu thuyết bước ngoặt Ulysses
+squad,3268,short-direct,"Khi thành lập công cụ tìm kiếm Google, Lawrence Edward Page cùng với ai?",125,Sergey Brin
+squad,3292,short-infer,Công nghệ PµSL giúp kiểm soát các đặc tính vật liệu như thế nào?,131,bằng cách điều khiển cường độ ánh sáng điểm ảnh riêng lẻ
+squad,3300,long-direct,Lý Nhân Tông mất vào ngày nào?,459,15 tháng 1 năm 1128
+drop,30,count,"Năm 1301, tổng số chức vụ đặc biệt nhắc đến trong bộ Hộ là bao nhiêu (chỉ tính số chức vụ không tính số lượng)?",258,13
+drop,60,count,"Từ ngày 17 tháng 9 năm 1945 đến năm 1982, có bao nhiêu mệnh giá tiền giấy khác nhau được phát hành tại Nepal?",107,8
+drop,138,selection,Mỗi hộ trung bình có quy mô bao nhiêu?,171,"2,60"
+drop,174,comparison,"Trong các nhóm tuổi, nhóm nào có tỉ lệ thấp nhất?",144,"11,60%"
+drop,193,add_sub,số người thiệt mạng và bị thương của Quốc dân Cách mệnh Quân chênh lệch nhau bao nhiêu?,187,1.320.000 người
+drop,200,selection,Sự tăng trưởng dân số từ năm 2013 đến năm 2014 của South Carolina là bao nhiêu người?,106,63.664
+drop,253,add_sub,"Từ cuộc điều tra dân số đầu tiên vào năm 1954 đến cuộc điều tra thứ tư năm 1990, dân số người Pa Dí tăng thêm bao nhiêu người?",124,5.864
+drop,273,count,Có bao nhiêu nhóm tù nhân được đề cập trong số liệu?,124,4
+drop,301,comparison,tỷ lệ phần trăm người Mỹ bản xứ cao hay thấp hơn người Châu Á Thái Bình Dương?,119,cao
+drop,316,comparison,Số hộ gia đình nhiều hơn hay ít hơn số gia đình sống trong quận năm 2010?,148,nhiều hơn
+drop,357,selection,Số lượng người Israel là người Cơ Đốc giáo phi Ả Rập và người không tôn giáo theo đăng ký dân sự chiếm bao nhiêu phần trăm dân số nước này?,135,"4,8%"
+drop,385,comparison,"Trong số các cầu thủ được nêu, ai có số lượng mùa giải thi đấu cho A.C. Milan ít nhất?",132,José Altafini
+drop,420,selection,"Trong điều tra dân số năm 2000, tổng số người Hispanic hay Latino thuộc một chủng tộc nào chiếm bao nhiêu phần trăm so với tổng số dân cư trong quận?",119,"5,12%"
+drop,444,add_sub,"Khi cộng số ca nhiễm mới ghi nhận ở Mỹ và Ý, tổng số ca nhiễm mới là bao nhiêu?",127,213.427
+drop,514,selection,Có bao nhiêu kênh tắt sóng sau chương trình giao thừa?,142,3 kênh
+drop,583,comparison,So sánh tổng số lượng các tiểu đoàn trong Phòng không và Thiết giáp.,122,Phòng không: 4; Thiết giáp: 2
+drop,713,comparison,"Trong các năm từ 1952 đến 1954, năm nào Pháp viện trợ ít tiền nhất cho quân đội Quốc gia Việt Nam?",137,1952
+drop,726,selection,Diện tích tự nhiên của xã Sơn Bình so với diện tích tự nhiên còn lại của xã Sơn Kiên lớn hơn hay nhỏ hơn?,104,nhỏ hơn
+drop,939,count,Vos đã tham gia bao nhiêu công việc/khoá học khác nhau từ tháng 4 năm 1917 đến tháng 5 năm 1940?,221,8
+drop,980,comparison,Ngành nào đạt tỷ lệ hoàn thành kế hoạch thấp nhất trong năm 2018?,118,ngành xây dựng
+drop,989,add_sub,"Nếu cộng chiều dài trục cuống lá với chiều dài của cuống lá, tổng chiều dài này là bao nhiêu?",190,15-25 cm
+drop,1039,add_sub,Tổng giá trị sản xuất giai đoạn 2016-2020 có bao nhiêu phần trăm tăng so với giai đoạn 2010-2015?,113,"50,25%"
+drop,1105,count,"Quân đoàn bộ binh 6 so sánh với Quân đoàn bộ binh 43, quân đoàn nào có số sư đoàn đông hơn?",103,Cả hai đều có 3 sư đoàn
+drop,1137,count,Tổng số máy bay ông đã bắn hạ là bao nhiêu?,172,5 chiếc
+drop,1288,comparison,"""Xã nào có diện tích tự nhiên lớn nhất và nhỏ nhất trong số các xã được sáp nhập vào thị xã Trà Vinh?""",115,Đa Lộc; Nguyệt Hóa
+drop,1435,comparison,"Giữa 2 đội bóng Liverpool và Manchester City, đội nào có tỷ số cao nhất trong một trận đấu mà không phân biệt sân nhà hay sân khách?",113,Liverpool
+drop,1467,comparison,Tripolyphotphat natri có tỷ lệ cao hơn trong SF-2 hay SF-2U?,129,SF-2U
+drop,1495,comparison,"Năm 1990, dân số của quận Carcassonne hay quận Limoux nhiều hơn?",104,quận Carcassonne
+drop,1512,count,"Trước khi chuyển hợp phần BOT sang đầu tư công, có bao nhiêu dự án dự kiến thực hiện theo hình thức BOT?",116,2
+drop,1573,comparison,Loại tàu nào có nhiều nhất trong lực lượng hải quân Syria?,135,tàu phóng lôi và tuần tiễu
+drop,1598,count,Có tất cả bao nhiêu quốc gia được nhắc đến trong đoạn văn?,123,4
+drop,1646,count,Có bao nhiêu sư đoàn bộ binh được liệt kê trong đoạn văn?,103,9
+drop,1652,count,Có bao nhiêu loại tiền giấy được lưu hành từ năm 1925 đến năm 1993?,109,10
+drop,1689,count,"Năm 1301, bộ Hộ có bao nhiêu chức vụ đã dược nhắc đến?",258,13
+drop,1699,add_sub,Số lượng người nhiễm virus tăng thêm ghi nhận vào ngày 16 tháng 2 là bao nhiêu người?,158,70 người
+drop,1706,add_sub,"Chu vi trung bình Trái Đất lớn hơn chu vi từ 2 cực bao nhiêu mét?_x000D_
+_x000D_
+",172,"44,789"
+drop,1723,count,Có bao nhiêu ngôn ngữ được đề cập trong đoạn văn như được sử dụng tại gia đình?,113,Bốn
+drop,1753,comparison,Có bao nhiêu phường mới được thành lập có diện tích tự nhiên dưới 500 ha?,121,2
+drop,1865,comparison,"So sánh tỷ lệ tử vong mẹ liên quan đến sinh đẻ ở Mỹ ở  năm 2015 và năm 2013, thì năm nào cao hơn?",145,năm 2013
+drop,1870,add_sub,Tính tổng số ca tử vong được báo cáo ghi nhận thêm ở Tây Ban Nha và Italy theo đoạn văn,113,553
+drop,1962,count,Có bao nhiêu lễ hội được tổ chức trong tháng âm lịch?,130,1
+drop,1986,comparison,"Trong các chủng tộc, loại nào có phần trăm người sống chung cao nhất?",119,người da trắng
+drop,2052,add_sub,Sự khác biệt về số lượng ca mắc COVID-19 giữa Los Angeles và New York là bao nhiêu?,133,49.000 ca
+drop,2166,selection,Có bao nhiêu máy bay không người lái đã bị ông bắn hạ?,172,1
+drop,2183,add_sub,Tỷ lệ người Mỹ bản xứ ở quận nhiều hơn tỷ lệ người châu Á bao nhiêu phần trăm,122,"0,4%"
+drop,2216,count,Có bao nhiêu phiên bản mở rộng cho Half-Life đã được bán ra vào tháng 12 năm 2008?,238,"1,9 triệu bản"
+drop,2270,selection,"Trước năm 2006, nếu Aeroflot đã thuê 2 chiếc Boeing 767-300ER ,còn tính đến tháng 3 năm 2007 họ đã thuê bao nhiêu chiếc Boeing 767-300ER ?",145,5 chiếc
+drop,2276,selection,"Từ ngày 18/3 đến ngày 31/3, tỉnh nào điều chỉnh biện pháp chống dịch, thực hiện giãn cách xã hội theo chỉ thị số 19?",105,Hải Dương
+drop,2295,comparison,Cỡ hộ gia đình trung bình và cỡ gia đình trung bình cái nào lớn hơn?,144,cỡ gia đình trung bình
+drop,2331,count,Tổng số bàn thắng mà Osako ghi được trong các trận đấu đã được nêu là bao nhiêu?,123,4
+drop,2395,add_sub," Trong quý II năm 2013, số lượng đơn vị phần mềm bán ra ít hơn quý I bao nhiêu?
+
+",161,700.000
+drop,2430,comparison,diện tích tự nhiên ở thị xã Giá Rai cao hay thấp hơn ở phường 1 thuộc thị xã Giá Rai ?,102,cao hơn
+drop,2462,add_sub,Giá thuê mỗi tập phim sau cùng đã giảm bao nhiêu so với giá ban đầu?,116,"6,01 USD"
+drop,2522,selection,Có bao nhiêu phần trăm dân số Luân Đôn là người gốc Á và lai gốc Á?,151,"20,9%"
+drop,2531,selection,"Trong các xã liên quan tới quá trình thành lập thị trấn An Dương, xã có số dân lớn nhất là bao nhiêu người?",121,5.068
+drop,2662,add_sub,"Nếu một mái vịt Anh Đào đạt sản lượng trứng tối đa theo khảo sát, so với sản lượng trứng tối thiểu tại Việt Nam, số lượng trứng tăng thêm là bao nhiêu?",174,35 quả
+drop,2701,comparison,Dân số ở độ tuổi nào có tỉ lệ cao nhất trong quận?,149,25-44
+drop,2741,count,Bộ phận thiết giáp của Tập đoàn quân 21 có tổng cộng bao nhiêu đơn vị nếu tính cả lữ đoàn và trung đoàn?,175,1
+drop,2837,selection,Ông đã trúng cử đại biểu Quốc hội Việt Nam với bao nhiêu phiếu?,104,255.984 phiếu
+drop,2989,comparison,"So với các ngôn ngữ được dùng làm ngôn ngữ thứ hai tại gia đình, ngôn ngữ nào được chọn ít nhất?",113,Zulu
+drop,3008,add_sub,"So với giá chỉ thân máy, giá của bộ kit 24-105 f/4L IS II tăng bao nhiêu phần trăm?",124,"31,44%"
+drop,3051,count,Có bao nhiêu dữ liệu về trữ lượng dầu đã được chứng minh được cung cấp từ năm 2007 đến năm 2015?,128,5
+drop,3069,comparison,Quốc gia nào có số ca tử vong cao nhất được nêu trong đoạn văn?,107,Iran
+drop,3101,selection,"Tổng cộng, bao nhiêu phần trăm trực thăng của Lục quân Mỹ đã bị tổn thất trong chiến dịch nếu tính theo số lượng trực thăng được huy động?",160,66%
+drop,3166,comparison,"Trước khi sáp nhập, đơn vị hành chính nào có dân số thấp nhất?",140,thị trấn Vân Du
+drop,3174,comparison,tổng số người nói Tiếng Nga trên thế giới có vượt 300 triệu người hay không?,110,Không
+drop,3224,selection,Ai là cầu thủ có ít sự xuất hiện nhất cho A.C. Milan trong số những người được nêu?,132,Mauro Tassotti
+drop,3298,add_sub,Chênh lệch vận tốc giữa chuyến bay tạo kỷ lục thế giới 1000 km và chuyến bay 183 là bao nhiêu km/h?,139,150 km/h
+drop,3355,comparison,"Năm 2019, thị trấn Phố Lu có diện tích lớn hơn hay nhỏ hơn xã Phố Lu?",128,lớn hơn
+drop,3394,selection,Bao nhiêu hộ gia đình cư trú trong thành phố vào năm 2000?,104,16945
+drop,3411,add_sub,"Nếu mỗi năm lại có thêm 1 tổ dân phố, thì đến năm 2025, Hương Sơn sẽ có tổng cộng bao nhiêu tổ dân phố tăng thêm?",110,6
+drop,3415,comparison,"Khi so sánh ngày kết thúc của Phần 1 và Phần 2, phần nào kết thúc sớm hơn?",122,Phần 1
+drop,3493,count,Tổng cộng bao nhiêu đô thị đã được tách ra từ Hemne?,144,2
+drop,3520,add_sub,thứ hạng trong danh sách 100 người nổi tiếng của Forbes Trung Quốc năm 2019 và 2017 chênh lệch nhau bao nhiêu?,102,44
+drop,3815,add_sub,Quận nào có sự giảm dân số trong khoảng thời gian từ năm 1990 đến 1999 và giảm bao nhiêu người?,104,"Quận Limoux, 758 người"
+drop,3916,comparison,"Trong các nhóm tuổi, nhóm nào chiếm tỷ lệ cao nhất?",152,"27,80%"
+drop,3964,selection,Số ca tử vong ở Pháp tăng lên  bao nhiêu ca so với ngày trước đó?,123,351 ca
+drop,4022,add_sub,Số hộ không lập gia đình chiếm tỷ lệ lớn hơn số hộ gia đình đã được tạo ra từ các cá nhân bao nhiêu phần trăm?,140,"4,80%"
+drop,4026,other,"Nếu so sánh mệnh giá tiền giấy 500 afghani và 1.000 afghani, mệnh giá nào lớn gấp đôi mệnh giá kia?",109,1.000
+drop,4091,add_sub,Diện tích tổng cộng được điều chỉnh để thành lập xã Xuân Lao và xã Nặm Lịch là bao nhiêu?,130,"9.060,05 ha"
+drop,4112,count,"Trong quá trình chiến đấu, Tập đoàn quân 30 đã giải phóng được bao nhiêu địa điểm?",138,Klin
+drop,4199,selection,Murakumo Nichi'ei sống đến năm bao nhiêu?,96,1920
+drop,4229,add_sub,"Chaves đã sống ít hay nhiều hơn 90 năm? 
+
+",112,nhiều
+drop,4262,comparison,"Trong các nhóm tuổi, nhóm nào có tỷ lệ thấp nhất?",168,"9,10%"
+drop,4365,add_sub,"Theo Điều tra dân số Hoa Kỳ năm 2010, tỷ lệ người châu Á trong quận nhỏ hơn tỷ lệ người từ hai chủng tộc trở lên bao nhiêu phần trăm",148,"1,2%"
+drop,4402,selection,Có bao nhiêu phần trăm dân số là người Hispanic hay Latino?,119,"0,48%"
+drop,4408,comparison,Tỷ lệ thất nghiệp có cao hơn tỷ lệ người nước ngoài ở Mannheim vào năm 2005 không?,157,Không
+drop,4498,comparison,Độ tuổi trung bình của dân cư trong thành phố so với nhóm tuổi nào gần nhất?,137,32 năm
+drop,4531,other,"Số lượng thuyền ở Cơ Tiền trung bộ so với số lượng thuyền tổng cộng ở 4 đội Tiền thủy, Hậu thủy, Tả thủy, Hữu thủy cao hơn hay thấp hơn?",102,thấp hơn
+drop,4566,comparison,Độ tuổi nào có tỉ lệ cao nhất trong phân bố độ tuổi của cư dân sinh sống trong huyện?,171,từ 25 đến 44
+drop,4574,count,Bao nhiêu tập đoàn đã được tính toán tổn thất đến hết tháng 4 năm 1942?,149,tập đoàn quân xe tăng 4
+drop,4598,add_sub,quy mô hộ trung bình và quy mô gia đình trung bình chênh lệch bao nhiêu?,152,"0,61"
+drop,4622,count,"Hiện nay, xã Phú Hộ được chia thành bao nhiêu làng?",125,5
+drop,4697,add_sub,Đường hạ cất cánh dài hơn đường lăn song song bao nhiêu mét?,101,846
+drop,4698,selection,Số hộ có người sống một mình 65 tuổi trở lên là bao nhiêu phần trăm của tổng số hộ?,137,"9,5%"
+drop,4724,count,Có bao nhiêu phân đoạn độc lập của kênh đào được mô tả từ lối vào cho đến mức chính của kênh đào?,120,4
+drop,4797,add_sub,Italy có bao nhiêu ca tử vong ít hơn Mỹ?,121,48.331
+drop,4857,add_sub,Chênh lệch diện tích giữa nền phía trước và bệ giữa là bao nhiêu mét vuông?,106,15
+drop,5039,add_sub,Bài viết nào dài nhất theo số trang được đề cập?,122,"""Vai trò quân sự của các ống kính Frankish - đánh giá lại"""
+drop,5057,selection,Tỉ lệ người da trắng trong quận này là bao nhiêu phần trăm?,135,"49,53%"
+drop,5135,comparison,Trong 3 hành tinh quá cảnh được quan sát bởi tàu vũ trụ Kepler trong cuộc khảo sát K2 thì hành tinh b hay hành tinh c có khoảng thời gian ngắn hơn?,111,hành tinh b
+drop,5164,add_sub,Nghị quyết 16/21 được ban hành gần với quyết định 17/119 hơn so với Nghị quyết 5/1 so với quyết định 6/102 hay không?,109,Có
+drop,5179,count,Bao nhiêu quốc gia đã công bố số ca tử vong mới trong bản báo cáo?,123,4
+drop,5218,selection,Chuyến bay 771 của Afriqiyah Airways đã rơi khi đang hạ cánh tại sân bay quốc tế Tripoli vào ngày tháng năm nào?,103,12 tháng 5 năm 2010
+drop,5298,comparison,Sản lượng cá bạc má ở Bình Thuận năm 2005 có xu hướng thế nào so với năm 2003 và 2004?,168,biến động lớn và có xu hướng tăng dần
+drop,5336,count,Có bao nhiêu câu lạc bộ địa phương đã từng chơi các trận đấu tại sân này?,164,4
+drop,5404,add_sub,Giá bán khi chỉ mua thân máy và mua kèm kit 24-105 f/4L IS II chênh lệch bao nhiêu?,124,"$1,100"
+drop,5493,comparison,"Giữa tỷ lệ tăng giá trị xuất khẩu và tỷ lệ tăng thu ngân sách, đâu là tỷ lệ tăng cao nhất so với năm trước?",174,202%
+drop,5511,count,Số hiệu của sư đoàn không quân tiêm kích trong quân đoàn hỗn hợp 44 của Thượng tướng Pháo binh Maximilian de Angelis là bao nhiêu?,118,861
+drop,5556,selection,Có bao nhiêu phần trăm hộ gồm các cá nhân?,171,"21,70%"
+drop,5699,add_sub,Tổng dân số của thị trấn Cẩm Thủy và xã Cẩm Phong là bao nhiêu?,160,13.352 người
+drop,5748,comparison,"So sánh diện tích tự nhiên của xã Thới Sơn và xã Phước Thạnh, xã nào có diện tích lớn hơn?",156,xã Thới Sơn
+drop,5761,add_sub,Số lượng tàu container được đang đặt thêm nhiều hơn số lượng tàu được đặt thêm ở Dalian Yard (Trung Quốc) là bao nhiêu?,99,28
+drop,5868,selection,Có bao nhiêu tỷ lệ phần trăm dân số thuộc về người Hispanic hay Latino?,118,"12,88%"
+drop,5954,count,Bộ binh của Tập đoàn quân 21 bao gồm bao nhiêu quân đoàn và sư đoàn?,175,"Các quân đoàn 61, 69 và sư đoàn 63"
+drop,5979,count,"Từ tháng 4 đến tháng 12 năm 1999, có bao nhiêu tháng là điểm thời gian mà các sự kiện quan trọng của tuyến đường sắt/tàu điện ngầm được ghi nhận?",115,4
+drop,6002,comparison,"So sánh công suất của tổ máy tua bin khí được lắp đặt tại Thủ Đức trong tháng 2 năm 1992 với tổ máy tua bin khí được lắp đặt tại Nhà máy điện Bà Rịa trong tháng 1 năm 1993, tổ máy nào có công suất lớn hơn?",138,Không có tổ máy nào có công suất lớn hơn
+drop,6073,add_sub,Tính tổng số lần được trao tặng Huân chương Cờ đỏ và Huân chương Suvorov?,105,6 lần
+drop,6077,add_sub,Chiều dài tổng cộng của quả đại và mào lông đầu hạt là bao nhiêu?,182,"khoảng 8 cm × 5 mm, không lông. Hạt hình trứng-thuôn dài, khoảng 6 × 2 mm, có mép; mào lông đầu hạt khoảng 3,5 cm"
+drop,6105,comparison,"So sánh số loài bọ nhảy và ve giáp, loài nào được ghi nhận ít hơn?",120,ve giáp
+drop,6124,selection,Trứng vịt Anh Đào cần ấp trong bao nhiêu ngày?,174,28 ngày
+drop,6133,add_sub,Tổng số trường hợp nhiễm virus vào ngày 17 tháng 2 đã tăng lên bao nhiêu ca so với tổng số trường hợp nhiễm virus vào ngày 16 tháng 2? ,158,99
+drop,6207,comparison,Đại tướng G. K. Zhukov đảm nhận vị trí tư lệnh của phương diện quân nào trước khi Thượng tướng I. S. Koniev tiếp quản?,113,Phương diện quân Kalinin
+drop,6283,add_sub,Công Phượng đã ghi tổng cộng bao nhiêu bàn thắng?,114,5 bàn thắng
+drop,6314,add_sub,Sự chênh lệch về số lượng người giữa những người có tổ tiên là người Đức so với những người có tổ tiên là người Anh là bao nhiêu?,148,"19,5%"
+drop,6383,add_sub,Tổng số phần trăm người thuộc chủng tộc khác và từ hai hoặc nhiều chủng tộc là bao nhiêu?,149,"2,57%"
+drop,6454,count,Có bao nhiêu thử nghiệm close beta đã được tổ chức?,112,Ba
+drop,6505,selection,Bao nhiêu phần trăm hộ gia đình có người sống một mình từ 65 tuổi trở lên?,139,"5,40%"
+drop,6525,comparison,"So sánh tỷ lệ % dân số dưới độ tuổi 18 với tỷ lệ % dân số từ 65 tuổi trở lên, cái nào lớn hơn?",144,dưới độ tuổi 18
+drop,6527,comparison,Quốc gia nào có số ca tử vong trong ngày cao nhất?,123,Italy
+drop,6579,count,Có bao nhiêu làng được giới thiệu trong đoạn văn?,125,5
+drop,6593,add_sub,Sự tăng số quân trong quân đội Quốc gia từ năm 1952 đến năm 1954 là bao nhiêu người?,137,95.000 người
+drop,6607,add_sub,Số lượng Toyota Prius PHV bán ra ở Bắc Mỹ vượt quá tổng số bán ở châu Âu và các nước còn lại trên thế giới bao nhiêu chiếc?,153,32.100 chiếc
+drop,6643,add_sub,"So với giai đoạn trước, số pháo phòng không Kiểu 96 trên lớp tàu khu trục Mutsuki tăng thêm bao nhiêu khẩu vào tháng 6 năm 1944?",103,10
+drop,6755,count,Có bao nhiêu quyết định được đưa ra trong vòng 5 năm đầu tiên kể từ khi giải thưởng Lao động sáng tạo ra đời?,131,2
+drop,6827,selection,Mỗi 100 nữ thì có bao nhiêu nam giới từ độ tuổi 18 trở lên?,159,"91,00"
+drop,6890,add_sub,Tổng số đơn vị nhà ở và tổng số hộ gia đình cộng lại bằng bao nhiêu?,135,19.425
+drop,6977,selection,Có bao nhiêu ghế Collins Diamond trong khoang hạng thương gia trên Airbus A321neo ACF?,112,8 ghế
+drop,7017,other,Người dân sở hữu 5 mẫu ruộng phải chịu tổng tô thuế hàng năm là bao nhiêu thóc?,110,3 quan
+drop,7048,add_sub,Khối lượng của một con lợn đen Lũng Pù lúc sơ sinh và được nuôi thịt đến 10-12 tháng tăng thêm bao nhiêu kg?,118,"0,5-0,6 kg"
+drop,7054,selection,Số lượng hộ gia đình được tạo thành từ các cá nhân là bao nhiêu?,171,2.880
+drop,7055,comparison,Bầu cử Đại biểu Quốc hội khoá XV ở Việt Nam có diễn ra sau ngày bắt đầu của cuộc thi Eurovision Song 2021 không?,109,Có
+drop,7110,count,Có bao nhiêu Sư đoàn được nêu trong phần Phòng không?,122,3
+drop,7170,selection,Thư ký trọng yếu cuối cùng phục vụ trong Hội nghị Đặc biệt là ai?,102,Trung tá An ninh Nhà nước Isaak Ilyich Shapiro
+drop,7429,comparison,Ống tràng hoa có chiều dài lớn hơn hay nhỏ hơn chiều dài đài hoa?,346,lớn hơn
+drop,7459,other,Mức chênh lệch giữa tỉ lệ phần trăm cư dân từ 25 đến 64 tuổi và tổng số phần trăm người dưới độ tuổi 18 là bao nhiêu?,171,16.1%
+drop,7511,selection,Số người Hispanic hoặc người Latin thuộc bất cứ chủng tộc nào chiếm bao nhiêu phần trăm của tổng dân số?,135,"3,15%"
+drop,7531,selection,Hiệu năng của Apple A12Z Bionic so với hầu hết PC chạy Windows thì như thế nào theo nhà sản xuất?,113,mạnh hơn hầu hết PC chạy Windows
+drop,7539,add_sub,Quận Brive-la-Gaillarde của tỉnh Corrèze có số dân nhiều hơn số dân ở quận Tulle là bao nhiêu người vào năm 1999?,104,4.153
+drop,7552,count,Có bao nhiêu sự kiện cải nhiệm chức vụ của Tiêu Tông diễn ra trước năm 511?,162,0
+drop,7581,selection,Chỉ rõ ngày tháng năm Bắc Bình Định kết thúc?,100,ngày 3 tháng 5 năm 1972
+drop,7624,count,Có bao nhiêu thông số trọng lượng khác nhau được nhắc đến cho tất cả các phiên bản của Ki-61?,158,6
+drop,7684,selection,Diện tích tự nhiên và dân số của thị trấn Vân Du là bao nhiêu sau khi thành lập? ,140,422 ha diện tích tự nhiên và 4.178 người
+drop,7927,comparison,"Quận nào có tỷ lệ tăng trưởng dân số cao nhất từ năm 1990 đến năm 1999, và tỷ lệ đó là bao nhiêu phần trăm?",104,"Quận Ussel, 6.37%"
+drop,7950,comparison,"Huân chương nào được trao nhiều lần hơn, Huân chương Lenin hay Huân chương Cờ đỏ? ",105,Huân chương Lenin
+drop,7970,add_sub,Tổng doanh thu trong 17 ngày lớn hơn bao nhiêu đô-la Mỹ so với doanh thu của tuần lễ thứ hai?,115,57.827 triệu đô-la Mỹ
+drop,8021,comparison,Quốc gia nào là nguồn nhập khẩu lớn nhất của Trung Phi trong năm 2007?,123,Pháp
+drop,8024,count,Có bao nhiêu người con được nhắc đến trong gia đình của Franz Heinrich von Waldersee?,175,6 người con
+drop,8068,add_sub,"Trong 10 năm qua, từ năm 2009 đến năm 2019 tỷ lệ dân số tập trung ở khu vực thành thị nhiều hơn nông thôn bao nhiêu phần trăm?",146,"39,32%"
+drop,8087,comparison,So sánh cỡ hộ trung bình và cỡ gia đình trung bình.,123,"2,45 người và 2,99 người"
+drop,8105,selection,Tai nạn máy bay nào xảy ra đầu tiên trong năm 1973?,120,Ngày 19 tháng 3 năm 1973
+drop,8213,add_sub,Tổng cộng có bao nhiêu nhà truyền giáo ở tất cả các khu vực thêo sô liệu từ đoạn văn?,102,Không có thông tin
+drop,8224,comparison,Quốc tịch nào có số lượng thấp nhất trong số 5 nhóm ngoại kiều lớn nhất được ghi nhận ở Ireland năm 2011?,168,Nigeria
+drop,8250,count,iPad Pro 2020 có mấy phiên bản theo kích thước màn hình?,113,2
+drop,8257,add_sub,Tổng số lượt người tham dự trên các mùa giải từ 2013-14 đến 2018-19 là bao nhiêu?,101,1601
+drop,8268,add_sub,Số hộ gia đình sinh sống trong quận này nhiều hơn bao nhiêu so với số gia đình?,135,20.281
+drop,8335,add_sub,Tổng số phần trăm người da trắng và người Hispanic hay Latino thuộc một chủng tộc nào cộng lại là bao nhiêu phần trăm?,133,"96,56%"
+drop,8351,comparison,"Trong hai mức giá cho thuê A320neos năm 2018, mức giá nào cao nhất?",120,350.000 USD
+drop,8405,other,"Tấn công B-52 cần trung bình bao nhiêu quả đạn để bắn rơi một chiếc, dựa vào tổng số đạn đã bắn và số B-52 bị bắn rơi?",117,"5,4 đạn"
+drop,8451,count,Có bao nhiêu loại kích thước được sử dụng để mô tả nhật báo khổ rộng trong đoạn văn?,118,2
+drop,8492,add_sub,Nhóm tuổi từ 18 đến 64 có tổng cộng bao nhiêu người?,167,"3.912 người (8.2%) tuổi từ 18 đến 24, 10.496 người (22.0%) tuổi từ 25 đến 44, 15"
+drop,8704,comparison,"So sánh tỷ số chiến thắng giữa hai trận, trước Gent và Košice, thì chiến thắng trước đội nào nhiều hơn?",112,Gent
+drop,8716,count,Có bao nhiêu xã được tạo ra từ việc chia xã Sóc Sơn và điều chỉnh xã Sơn Kiên?,104,4 xã
+drop,8750,add_sub,Phần trăm người gốc Đức cao hơn phần trăm người gốc Ailen bao nhiêu phần trăm?,164,"54,4% - 6,3%"
+drop,8758,comparison,Ngôn ngữ nào được sử dụng nhiều nhất là ngôn ngữ đầu tiên của người dân quận vào năm 2000?,161,tiếng Anh
+drop,8786,add_sub,"Tổng tỉ lệ phần trăm của người gốc Đức, Ailen, Anh và gốc Ý chiếm bao nhiêu phần trăm dân số theo điều tra năm 2000?",148,"43,3%"
+drop,8889,selection,"Theo cuộc điều tra dân số năm 2000, số hộ sinh sống tại quận này là bao nhiêu?",135,12.690 hộ
+drop,8891,count,"Nếu kết hợp tất cả các sư đoàn và trung đoàn , pháo tự hành, pháo chống tăng, trinh sát cơ giới, trung đoàn súng cối,tiểu đoàn súng cối và phòng không cận vệ của quân đoàn kỵ binh tổng số đơn vị sẽ là bao nhiêu?",111,10
+drop,8895,comparison,"Số lượng nữ giới có độ tuổi 18 và lớn hơn so với số lượng nam giới tương ứng, tỉ lệ nam/nữ là cao hơn hay thấp hơn so với tỉ lệ tổng số nam/nữ?",169,cao hơn
+drop,8915,count,Bao nhiêu quốc gia được nhắc đến trong đoạn văn này?,108,3
+drop,9044,comparison,"Số ca tử vong mới của Mỹ so với số ca nhiễm mới vào ngày 5 tháng 9, con số nào cao hơn?",103,số ca nhiễm mới
+drop,9046,count,Mertens ghi được bao nhiêu bàn thắng tính từ tháng 1 năm 2014 đến tháng 5 năm 2014?,129,5
+drop,9053,add_sub,"Giai đoạn nào có thời gian ngắn nhất, từ khi ban hành điều lệ đến bốc thăm, lượt đi, lượt về, hay vòng chung kết?",130,từ khi ban hành điều lệ đến bốc thăm
+drop,9060,comparison,"Trong các chủng tộc ngoài người da trắng và người da đen hoặc người Mỹ gốc Phi, cái nào có phần trăm cao nhất?",135,người Hispanic hoặc người Latin
+drop,9061,comparison,"năm 2018, mật độ dân số thị trấn Vân Du có vượt 700 người/km2?",140,Không
+drop,9062,selection,Tỷ lệ người châu Á so với tổng dân số là bao nhiêu phần trăm?,162,"0,13%"
+drop,9134,selection,Thu nhập bình quân đầu người của Hà Nội năm 2021 là bao nhiêu?,168,"6,002 triệu đồng/tháng"
+drop,9209,comparison,Trữ lượng dầu chứng minh thấp nhất là vào thời điểm nào?,128,tháng 10 năm 2007
+drop,9213,comparison,"Số lượng tù nhân của Bộ Tư pháp so với Bộ Công an, bên nào có lượng giam giữ lớn nhất?",111,Bộ Tư pháp
+drop,9295,other,Số lượng người chết vượt qua số lượng người mất tích bao nhiêu lần từ tháng 3 năm 1942 đến tháng 3 năm 1943?,149,"4,56"
+drop,9318,selection,Có bao nhiêu trận mà Carlsen đã thua được đề cập trong đoạn văn?,145,1
+drop,9380,selection,Tỉ lệ phần trăm của số máy bay một động cơ và máy bay đa động cơ tại sân bay vào thời điểm đó là bao nhiêu?,149,46% và 23%
+drop,9489,comparison,Huyện đã xây dựng nhiều hơn nhà tình nghĩa hay nhà 167 cho người nghèo? Chênh lệch là bao nhiêu?,111,gần 1.000 căn nhà tình nghĩa; trên 6800 căn nhà tình thương và nhà 167
+drop,9689,selection, Phần nào của cây có chiều dài tối đa lớn nhất theo mô tả? ,256,lá chét đầu cùng
+drop,9750,comparison,Số lượng chiếc T-54 và T-55 được đưa vào biên chế năm 2003 ít hay nhiều hơn năm 2006?,220,ít
+drop,9893,comparison,"Theo Điều tra dân số Hoa Kỳ năm 2010, tỷ lệ người châu Á hay người da đen trong quận cao hơn",148,người da đen
+drop,9902,add_sub,Tính sự chênh lệch về phần trăm giữa dân số gốc Đức và gốc Na Uy theo điều tra năm 2000.,133,"24,9%"
+drop,9928,selection,Số ca tử vong ở Mỹ vào ngày 3/12 là bao nhiêu ca?,127,282.929
+drop,10001,add_sub,Chênh lệch tỉ lệ giữa số hộ dân có trẻ em dưới 18 tuổi sống chung với họ và hộ dân chỉ có đôi vợ chồng sống với nhau là bao nhiêu phần trăm?,146,"24,10%"
+drop,10085,other,Giá thuê mỗi tập phim sau khi giảm còn bao nhiêu phần trăm so với giá gốc?,116,"5,99 USD"

@@ -1,0 +1,64 @@
+level,name,n,correct,accuracy
+overall,overall,303,254,83.83
+category,STEM,111,100,90.09
+category,Social Science,53,49,92.45
+category,Humanity,95,76,80.0
+category,Other,44,29,65.91
+subject,01 Elementary Mathematics,6,3,50.0
+subject,02 Elementary Science,6,6,100.0
+subject,03 Middle School Biology,5,5,100.0
+subject,04 Middle School Chemistry,6,6,100.0
+subject,05 Middle School Mathematics,3,2,66.67
+subject,06 Middle School Physics,6,6,100.0
+subject,07 High School Biology,6,5,83.33
+subject,08 High School Chemistry,6,6,100.0
+subject,09 High School Mathematics,4,3,75.0
+subject,10 High School Physics,6,6,100.0
+subject,11 Applied Informatics,6,5,83.33
+subject,12 Computer Architecture,6,5,83.33
+subject,13 Computer Network,5,5,100.0
+subject,14 Discrete Mathematics,5,5,100.0
+subject,15 Electrical Engineering,5,4,80.0
+subject,16 Introduction to Chemistry,5,4,80.0
+subject,17 Introduction to Physics,5,5,100.0
+subject,18 Introduction to Programming,5,4,80.0
+subject,19 Metrology Engineer,4,4,100.0
+subject,20 Operating System,6,6,100.0
+subject,21 Statistics and Probability,5,5,100.0
+subject,22 Middle School Civil Education,5,5,100.0
+subject,23 Middle School Geography,4,4,100.0
+subject,24 High School Civil Education,6,6,100.0
+subject,25 High School Geography,5,5,100.0
+subject,26 Business Administration,5,5,100.0
+subject,27 Ho Chi Minh Ideology,5,5,100.0
+subject,28 Macroeconomics,6,5,83.33
+subject,29 Microeconomics,6,4,66.67
+subject,30 Principles of Marxism and Leninism,6,5,83.33
+subject,31 Sociology,5,5,100.0
+subject,32 Elementary History,5,4,80.0
+subject,33 Middle School History,6,6,100.0
+subject,34 Middle School Literature,5,4,80.0
+subject,35 High School History,6,6,100.0
+subject,36 High School Literature,6,3,50.0
+subject,37 Administrative Law,3,2,66.67
+subject,38 Business Law,5,5,100.0
+subject,39 Civil Law,6,5,83.33
+subject,40 Criminal Law,5,4,80.0
+subject,41 Economic Law,5,2,40.0
+subject,42 Education Law,5,5,100.0
+subject,43 History of World Civilization,6,5,83.33
+subject,44 Idealogical and Moral Cultivation,6,6,100.0
+subject,45 Introduction to Laws,4,4,100.0
+subject,46 Introduction to Vietnam Culture,6,4,66.67
+subject,47 Logic,5,3,60.0
+subject,48 Revolutionary Policy of the Vietnamese Commununist Part,6,5,83.33
+subject,49 Vietnamese Language and Literature,5,3,60.0
+subject,50 Accountant,5,3,60.0
+subject,51 Clinical Pharmacology,6,3,50.0
+subject,52 Environmental Engineering,5,3,60.0
+subject,53 Internal Basic Medicine,5,3,60.0
+subject,54 Preschool Pedagogy,3,3,100.0
+subject,55 Tax Accountant,5,3,60.0
+subject,56 Tax Civil Servant,5,4,80.0
+subject,57 Civil Servant,5,2,40.0
+subject,58 Driving License Certificate,5,5,100.0

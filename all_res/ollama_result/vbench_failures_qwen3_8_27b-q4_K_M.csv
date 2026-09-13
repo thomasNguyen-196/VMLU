@@ -1,0 +1,625 @@
+id,domain,track,reason,raw_response
+543,mathematics,mc,parse_failure,"Để giải quyết bài toán này, chúng ta cần phân tích cấu trúc hình bát diện đều và các ràng buộc về màu sắc và số hiệu.
+
+**1. Phân tích cấu trúc hình bát diện đều:**
+*   Hình bát diện đều có 6 đỉnh, 12 cạnh và 8 mặt (tấm bìa).
+*   Mỗi mặt là một tam giác đều.
+*   Mỗi đỉnh tiếp xúc với 4 mặt.
+*   Mỗi cạnh chung cho 2 mặt.
+*   Hai mặt chung đúng một đỉnh (không chung cạnh) là hai mặt đối diện nhau qua đỉnh đó? Không, trong bát diện, hai mặt bất kỳ hoặc chung cạnh, hoặc chung đỉnh, hoặc không chung gì (nhưng trong bát diện, mọi cặp mặt đều chung ít nhất một đỉnh hoặc cạnh? Không, có các cặp mặt không chung cạnh nhưng chung đỉnh).
+    *   Thực tế, đồ thị các mặt của bát diện là đồ thị bổ sung của đồ thị các đỉnh? Không.
+    *   Hãy xem xét các đỉnh. Gọi 6 đỉnh là $V_1, ..., V_6$.
+    *   Mỗi mặt được xác định bởi 3 đỉnh.
+    *   Ràng buộc 1: Hai mặt chung cạnh thì khác màu.
+    *   Ràng buộc 2: Hai mặt chung đúng một đỉnh thì khác số.
+
+**2. Phân tích Ràng buộc Màu sắc:**
+*   Có 3 màu: Xanh (X), Đỏ (Đ), Vàng (V).
+*   Mỗi màu có 4 tấm. Tổng cộng 12 tấm.
+*   Chúng ta chọn 8 tấm để dán lên 8 mặt.
+*   Ràng buộc: Hai mặt kề nhau (chung cạnh) phải khác màu.
+*   Đồ thị các mặt của bát diện: Mỗi mặt kề với 3 mặt khác (vì mỗi mặt là tam giác, có 3 cạnh, mỗi cạnh chung với một mặt khác).
+*   Vậy đồ thị các mặt là đồ thị 3-đều (3-regular graph) với 8 đỉnh.
+*   Đồ thị này chính là đồ thị của hình bát diện đối ngẫu? Không, đồ thị các mặt của bát diện là đồ thị của hình bát diện?
+    *   Số mặt = 8. Số cạnh mỗi mặt = 3. Tổng số cạnh mặt = $8 \times 3 / 2 = 12$. Đúng.
+    *"
+1466,mathematics,mc,parse_failure,"Để giải quyết bài toán này, chúng ta sẽ phân tích các điều kiện ràng buộc và tính toán số cách xếp chỗ.
+
+**1. Phân tích các nhân vật và điều kiện:**
+*   Tổng số người: 9.
+*   Các nhân vật đặc biệt: Trang (T), Nghiêm (N), Trọng (Tr), Nghĩa (Ng).
+*   5 người còn lại (gọi là nhóm X) không có ràng buộc đặc biệt.
+*   3 toa tàu: 1, 2, 3.
+*   Ràng buộc kích thước toa: Không toa nào chứa 5 hành khách. (Tức là số người trong mỗi toa $\le 4$).
+
+**2. Phân tích các điều kiện logic:**
+
+*   **Điều kiện 1 (về Trang):** Trang cùng toa với ít nhất một trong {Nghiêm, Trọng}.
+    *   $T \in \text{toa}(N) \cup \text{toa}(Tr)$
+*   **Điều kiện 2 (về Trang và Nghĩa):** Trang không cùng toa với Nghĩa.
+    *   $\text{toa}(T) \neq \text{toa}(Ng)$
+*   **Điều kiện 3 (về Nghĩa):** Nếu Nghĩa không cùng toa với Trọng, thì Nghĩa ở riêng 1 toa (toa đó chỉ có Nghĩa).
+    *   $\text{toa}(Ng) \neq \text{toa}(Tr) \implies \text{toa}(Ng) \text{ chỉ chứa } Ng$.
+
+**3. Xét các trường hợp dựa trên vị trí của Nghĩa (Ng) và Trọng (Tr):**
+
+Gọi $S_{Ng}$ là toa của Nghĩa, $S_{Tr}$ là toa của Trọng.
+
+**Trường hợp 1: Nghĩa cùng toa với Trọng ($S_{Ng} = S_{Tr}$)**
+*   Khi đó, điều kiện 3 không kích hoạt (vì giả thiết ""nếu không cùng toa"" là sai).
+*   Nghĩa và Trọng cùng toa. Gọi toa này là $K$.
+*   Vì $S_{Ng} = S_{Tr}$, ta cần xét điều kiện của Trang.
+    *   Trang không cùng toa với Nghĩa $\implies S_T \neq K$.
+    *   Trang cùng toa với ít nhất một trong {Nghiêm"
+2157,mathematics,mc,parse_failure,"Để giải quyết bài toán này, chúng ta cần xác định số lượng các đường đi hợp lệ của con mã (knight) trên bàn cờ vua, bắt đầu và kết thúc tại ô $d4$ sau 4 bước, với điều kiện 4 vị trí trung gian (điểm đặt mã) tạo thành một hình vuông.
+
+**Bước 1: Phân tích các bước đi của con mã từ $d4$**
+Con mã tại $d4$ có thể di chuyển đến 8 ô xung quanh (trong phạm vi bàn cờ chuẩn 8x8):
+1. $b3$
+2. $b5$
+3. $c2$
+4. $c6$
+5. $e2$
+6. $e6$
+7. $f3$
+8. $f5$
+
+Gọi tập hợp các ô này là $S_1$.
+
+**Bước 2: Phân tích điều kiện ""4 điểm đặt mã là 4 đỉnh của một hình vuông""**
+Gọi 4 vị trí trung gian là $P_1, P_2, P_3, P_4$.
+Đường đi là $d4 \to P_1 \to P_2 \to P_3 \to P_4 \to d4$.
+Điều kiện: $\{P_1, P_2, P_3, P_4\}$ là 4 đỉnh của một hình vuông.
+Lưu ý: Câu hỏi nói ""4 bước đi không trùng nhau"", điều này thường được hiểu là các vị trí trung gian $P_1, P_2, P_3, P_4$ là phân biệt (không lặp lại vị trí). Nếu các vị trí trùng nhau, chúng không thể tạo thành 4 đỉnh riêng biệt của một hình vuông.
+
+Vậy, chúng ta cần tìm các hình vuông có 4 đỉnh nằm trong tập hợp các ô mà con mã có thể đi đến từ $d4$ (hoặc các ô liên quan đến chuỗi di chuyển).
+Tuy nhiên, điều kiện quan trọng hơn là:
+- $P_1$ phải là ô mà mã đi từ $d4$ đến được.
+- $P_4$ phải là ô mà mã đi từ đó về $d4$ được.
+- $P_2$ phải là ô mà mã đi từ $P_1$ đến được.
+- $P_3$ phải là ô mà mã đi"
+2234,chemistry,mc,parse_failure,"Để giải quyết bài toán này, chúng ta cần tính khối lượng HDPE cần thiết cho một túi, sau đó tính tổng khối lượng HDPE cho đơn hàng, và cuối cùng tính khối lượng ethylene ban đầu dựa trên hiệu suất phản ứng.
+
+**Bước 1: Tính thể tích và khối lượng HDPE của một túi**
+
+Túi nylon hình chữ nhật có kích thước $20$ cm x $30$ cm.
+Diện tích bề mặt một mặt túi: $S = 20 \times 30 = 600 \text{ cm}^2$.
+Túi nylon thường có 2 mặt (mặt trước và mặt sau) và các mép hàn. Tuy nhiên, trong các bài toán hóa học cơ bản về vật liệu, thường tính theo diện tích bề mặt tổng cộng của vật liệu sử dụng.
+Nếu coi túi là một tấm phẳng gấp đôi (hoặc tính diện tích bề mặt tiếp xúc), diện tích vật liệu cần dùng thường được tính là $2 \times S$ (nếu là túi phẳng đơn giản) hoặc tính cả 4 mặt nếu là hộp. Với túi đựng hình chữ nhật thông thường (túi phẳng), diện tích vật liệu là $2 \times (20 \times 30) = 1200 \text{ cm}^2$.
+Tuy nhiên, cần lưu ý ""bề dày một mặt của lớp nylon là $0,02$ cm"".
+Thể tích HDPE của một túi:
+$V_{túi} = \text{Diện tích bề mặt} \times \text{Độ dày}$.
+Nếu tính theo 2 mặt phẳng (túi phẳng): $S_{tổng} = 2 \times 20 \times 30 = 1200 \text{ cm}^2$.
+$V_{túi} = 1200 \text{ cm}^2 \times 0,02 \text{ cm} = 24 \text{ cm}^3$.
+
+Khối lượng HDPE thực tế trong một túi (sau khi sản xuất):
+$m_{HDPE, thực} = V_{túi} \times D_{HDPE} = 24 \text{ cm}^3 \times 0,95 \text{ g/cm}^3 = 22,8 \text{ g}$.
+
+**Bước 2: Tính khối"
+2761,mathematics,mc,parse_failure,"Để giải quyết bài toán này, ta thực hiện các bước sau:
+
+**1. Điều kiện xác định:**
+Phương trình chứa căn thức $\sqrt{x+3}$, nên điều kiện xác định là $x + 3 \ge 0 \Rightarrow x \ge -3$.
+
+**2. Biến đổi phương trình:**
+Phương trình đã cho:
+$$x^2 - 3x + 2(x - 2)\sqrt{x + 3} + m + 3 = 0$$
+
+Ta tách các hạng tử để nhóm lại. Nhận thấy $x^2 - 3x + 2 = (x-1)(x-2)$.
+Viết lại phương trình:
+$$(x-1)(x-2) + 2(x-2)\sqrt{x+3} + m + 3 = 0$$
+$$(x-2)(x - 1 + 2\sqrt{x+3}) + m + 3 = 0$$
+
+Đặt $t = \sqrt{x+3}$. Khi đó $t \ge 0$ và $x = t^2 - 3$.
+Thay $x$ vào biểu thức trong ngoặc:
+$$x - 1 + 2\sqrt{x+3} = (t^2 - 3) - 1 + 2t = t^2 + 2t - 4$$
+Và $x - 2 = t^2 - 3 - 2 = t^2 - 5$.
+
+Phương trình trở thành:
+$$(t^2 - 5)(t^2 + 2t - 4) + m + 3 = 0$$
+$$t^4 + 2t^3 - 4t^2 - 5t^2 - 10t + 20 + m + 3 = 0$$
+$$t^4 + 2t^3 - 9t^2 - 10t + m + 23 = 0$$
+
+Đây là cách tiếp cận phức tạp. Hãy thử một cách đặt ẩn phụ khác hoặc quan sát trực tiếp hơn.
+
+Quay lại phương trình:
+$$x^2 - 3x + 2 + 2(x-2)\sqrt{x+3} + m + 1 = 0$$
+$$(x-1)(x-2) + 2(x-"
+3293,mathematics,mc,parse_failure,"Để giải quyết bài toán này, chúng ta sẽ phân tích từng khẳng định một cách cẩn thận.
+
+**Phân tích phương trình:**
+Phương trình đã cho là:
+$$ \frac{\cos x \cos 2x - m \cos x + \cos 2x - m}{\sin x} = 0 $$
+
+**Điều kiện xác định (ĐKXĐ):**
+Mẫu số khác 0: $\sin x \neq 0 \Rightarrow x \neq k\pi, k \in \mathbb{Z}$.
+
+**Biến đổi tử số:**
+Tử số $T = \cos x \cos 2x - m \cos x + \cos 2x - m$.
+Nhóm các hạng tử:
+$T = \cos x (\cos 2x - m) + 1 (\cos 2x - m)$
+$T = (\cos x + 1)(\cos 2x - m)$
+
+Vậy phương trình tương đương với:
+$$ (\cos x + 1)(\cos 2x - m) = 0 $$
+với điều kiện $x \neq k\pi$.
+
+Phương trình có nghiệm khi và chỉ khi:
+1. $\cos x + 1 = 0 \Rightarrow \cos x = -1 \Rightarrow x = \pi + k2\pi$.
+   Tuy nhiên, theo ĐKXĐ, $x \neq k\pi$. Với $x = \pi + k2\pi$, ta có $\sin x = 0$, nên các nghiệm này **bị loại**.
+   Do đó, nhánh $\cos x = -1$ không cho nghiệm nào thỏa mãn ĐKXĐ.
+
+2. $\cos 2x - m = 0 \Rightarrow \cos 2x = m$.
+   Để phương trình có nghiệm, ta cần $-1 \le m \le 1$.
+   Nghiệm là $2x = \pm \arccos m + k2\pi \Rightarrow x = \pm \frac{1}{2}\arccos m + k\pi$.
+   Ta cần kiểm tra xem các nghiệm này có thỏa mãn $\sin x \neq 0$ không.
+   Nếu $\sin x = 0 \Rightarrow x = k\pi \Rightarrow 2x = 2k\pi \Rightarrow \cos 2x = 1$."
+4161,mathematics,mc,parse_failure,"Để giải quyết bài toán này, chúng ta cần xác định số cách điền số vào lưới $3 \times 9$ thỏa mãn các điều kiện Sudoku (mỗi hàng có 9 số khác nhau, mỗi khối $3 \times 3$ có 9 số khác nhau).
+
+**Bước 1: Phân tích cấu trúc lưới**
+Lưới $3 \times 9$ được chia thành 3 khối $3 \times 3$ nằm ngang. Gọi các khối này là $B_1, B_2, B_3$.
+Mỗi khối $3 \times 3$ chứa các số từ 1 đến 9.
+Số cách điền một khối $3 \times 3$ sao cho mỗi hàng và mỗi cột (trong khối đó) có số khác nhau là số cách điền bảng Latin $3 \times 3$.
+Số bảng Latin $3 \times 3$ là $12$.
+Tuy nhiên, điều kiện đề bài chỉ yêu cầu:
+1. Mỗi hàng của lưới $3 \times 9$ chứa 9 số khác nhau (tức là mỗi hàng là một hoán vị của $\{1, ..., 9\}$).
+2. Mỗi khối $3 \times 3$ chứa 9 số khác nhau (tức là mỗi khối là một hoán vị của $\{1, ..., 9\}$).
+
+Lưu ý: Đề bài **không** yêu cầu mỗi cột của lưới $3 \times 9$ phải chứa các số khác nhau. Đây là điểm khác biệt so với Sudoku chuẩn $9 \times 9$.
+
+**Bước 2: Tính số cách điền**
+Gọi các hàng là $R_1, R_2, R_3$.
+Gọi các khối là $B_1$ (cột 1-3), $B_2$ (cột 4-6), $B_3$ (cột 7-9).
+
+Xét từng khối $3 \times 3$:
+Mỗi khối $B_i$ phải chứa các số $1, \dots, 9$ mỗi số đúng một lần.
+Số cách điền một khối $3 \times 3$ sao cho nó chứa 9 số khác nhau là $9!$ cách? Không, vì các hàng trong khối đó cũng là một phần của hàng tổng thể.
+Thực tế, điều kiện ""mỗi khối chứa 9 số khác nhau"" nghĩa là"
+4223,mathematics,mc,parse_failure,"Để giải quyết bài toán này, chúng ta cần tìm điểm $M$ trên mặt cầu $(S)$ sao cho biểu thức $|\vec{MA} - \vec{MB} - \vec{MC}|$ đạt giá trị lớn nhất.
+
+**Bước 1: Rút gọn biểu thức vectơ**
+
+Gọi $K$ là điểm thỏa mãn $\vec{KA} - \vec{KB} - \vec{KC} = \vec{0}$.
+Ta có:
+$\vec{MA} - \vec{MB} - \vec{MC} = (\vec{KA} - \vec{KM}) - (\vec{KB} - \vec{KM}) - (\vec{KC} - \vec{KM})$
+$= \vec{KA} - \vec{KB} - \vec{KC} + (-\vec{KM} + \vec{KM} + \vec{KM})$
+$= \vec{KA} - \vec{KB} - \vec{KC} + \vec{MK}$
+
+Nếu ta chọn $K$ sao cho $\vec{KA} - \vec{KB} - \vec{KC} = \vec{0}$, thì biểu thức trở thành $\vec{MK}$.
+Tuy nhiên, điều kiện $\vec{KA} - \vec{KB} - \vec{KC} = \vec{0}$ tương đương với $\vec{KA} = \vec{KB} + \vec{KC}$.
+Điều này có nghĩa là $K$ là điểm sao cho $\vec{KA} - \vec{KB} - \vec{KC} = \vec{0}$.
+Ta viết lại:
+$\vec{MA} - \vec{MB} - \vec{MC} = (\vec{OA} - \vec{OM}) - (\vec{OB} - \vec{OM}) - (\vec{OC} - \vec{OM})$
+$= \vec{OA} - \vec{OB} - \vec{OC} + (-\vec{OM} + \vec{OM} + \vec{OM})$
+$= (\vec{OA} - \vec{OB} - \vec{OC}) + \vec{MO}$
+
+Đặt $\vec{V} = \vec{OA} - \vec{OB} - \vec{OC}$.
+Khi đó,"
+6378,chemistry,mc,parse_failure,"Để tính giá trị $t = x + y + z$, ta cần xác định khối lượng ion chloride ($Cl^-$) trong lượng muối ($NaCl$) tương ứng cho từng nhóm tuổi.
+
+**Bước 1: Xác định khối lượng mol**
+*   Khối lượng mol của $NaCl$: $M_{NaCl} = 23 + 35.5 = 58.5$ (g/mol)
+*   Khối lượng mol của ion $Cl^-$: $M_{Cl} = 35.5$ (g/mol)
+*   Tỉ lệ khối lượng của $Cl$ trong $NaCl$ là: $\frac{35.5}{58.5}$
+
+**Bước 2: Tính khối lượng ion $Cl^-$ (đơn vị mg) cho từng nhóm**
+Lưu ý: $1 \text{ g} = 1000 \text{ mg}$.
+
+1.  **Nhóm trẻ sơ sinh ($0.3$ g $NaCl$):**
+    $$x = 0.3 \times 1000 \times \frac{35.5}{58.5} = 300 \times \frac{35.5}{58.5} \approx 182.051 \text{ mg}$$
+
+2.  **Nhóm trẻ dưới 1 tuổi ($1.5$ g $NaCl$):**
+    $$y = 1.5 \times 1000 \times \frac{35.5}{58.5} = 1500 \times \frac{35.5}{58.5} \approx 910.256 \text{ mg}$$
+
+3.  **Nhóm trẻ dưới 2 tuổi ($2.3$ g $NaCl$):**
+    $$z = 2.3 \times 1000 \times \frac{35.5}{58.5} = 2300 \times \frac{35.5}{58.5} \approx 1396.410 \text{ mg}$$
+
+**Bước 3: Tính tổng $t = x + y + z$**
+$$t = 182.051 + 910.256 + 1"
+7255,mathematics,mc,parse_failure,"Để hàm số $y = \left| x^4 - mx^2 - 64x \right|$ có đúng 5 điểm cực trị, ta cần xét hàm số bên trong $f(x) = x^4 - mx^2 - 64x$.
+
+Các điểm cực trị của hàm $y = |f(x)|$ bao gồm:
+1. Các điểm cực trị của $f(x)$ mà tại đó $f(x) \neq 0$.
+2. Các nghiệm đơn của phương trình $f(x) = 0$ (vì tại các nghiệm đơn, đồ thị $y=|f(x)|$ có góc nhọn, tạo thành điểm cực trị).
+
+Hàm $f(x) = x^4 - mx^2 - 64x$ là hàm bậc 4.
+$f'(x) = 4x^3 - 2mx - 64$.
+Phương trình $f'(x) = 0$ luôn có 3 nghiệm thực phân biệt (vì $f'(x)$ là hàm bậc 3 có đạo hàm $f''(x) = 12x^2 - 2m$, nếu $m \ge 0$ thì $f'(x)$ có 2 cực trị trái dấu nên có 3 nghiệm; nếu $m < 0$ thì $f'(x)$ đơn điệu nên có 1 nghiệm... chờ đã, cần phân tích kỹ hơn).
+
+Thực tế, số điểm cực trị của $y=|f(x)|$ phụ thuộc vào số nghiệm của $f(x)=0$ và vị trí của chúng so với các điểm cực trị của $f(x)$.
+Một cách tiếp cận phổ biến cho dạng bài này:
+Hàm $f(x) = x^4 - mx^2 - 64x$ luôn có 3 điểm cực trị (gọi là $x_1, x_2, x_3$) nếu phương trình $f'(x)=0$ có 3 nghiệm phân biệt.
+$f'(x) = 4x^3 - 2mx - 64$.
+Xét $g(x) = 4x^3 - 2mx - 64$.
+$g'(x) = 12x^2 - 2m$.
+- Nếu $m \le 0$, $g'(x) \ge 0$ (hoặc $>0$ với $"
+8055,mathematics,mc,parse_failure,"Để giải quyết bài toán này, ta cần tìm số giá trị nguyên của $m$ sao cho phương trình hoành độ giao điểm của $(C_1)$ và $(C_2)$ có đúng 4 nghiệm phân biệt.
+
+**Bước 1: Lập phương trình hoành độ giao điểm**
+
+Phương trình giao điểm là:
+$$x(x-2)(x-3)(m-|x|) = x^4 - 6x^3 + 5x^2 + 11x - 6$$
+
+Ta nhận thấy vế trái có nhân tử $x(x-2)(x-3)$. Hãy khai triển phần đa thức này:
+$$x(x-2)(x-3) = x(x^2 - 5x + 6) = x^3 - 5x^2 + 6x$$
+
+Phương trình trở thành:
+$$(x^3 - 5x^2 + 6x)(m - |x|) = x^4 - 6x^3 + 5x^2 + 11x - 6$$
+
+Ta xét các trường hợp dựa vào dấu của $x$ để bỏ giá trị tuyệt đối $|x|$.
+
+**Trường hợp 1: $x \ge 0$**
+Khi đó $|x| = x$. Phương trình trở thành:
+$$(x^3 - 5x^2 + 6x)(m - x) = x^4 - 6x^3 + 5x^2 + 11x - 6$$
+Khai triển vế trái:
+$$m(x^3 - 5x^2 + 6x) - x(x^3 - 5x^2 + 6x) = x^4 - 6x^3 + 5x^2 + 11x - 6$$
+$$m(x^3 - 5x^2 + 6x) - (x^4 - 5x^3 + 6x^2) = x^4 - 6x^3 + 5x^2 + 11x - 6$$
+Chuyển các hạng tử không chứa $m$ sang vế phải:
+$$m(x^3 - 5x^2 + 6x) = x^4 - 6x^3 + 5x^2 + 11x -"
+8397,agentic,agentic,truncated_output,"```json
+[
+  {
+    ""verifySocialHousingApplications_a57b4"": {
+      ""applications"": [
+        {
+          ""applicationId"": ""APP-2024-001"",
+          ""citizenId"": ""079200000001"",
+          ""householdIncome"": 24000000,
+          ""householdMembers"": 3,
+          ""residencyDuration"": 60,
+          ""district"": ""Đống Đa"",
+          ""policyStatus"": ""không_áp_dụng"",
+          ""receivedBenefitLast36Months"": false
+        },
+        {
+          ""applicationId"": ""APP-2024-002"",
+          ""citizenId"": ""079200000002"",
+          ""householdIncome"": 30000000,
+          ""householdMembers"": 2,
+          ""residencyDuration"": 72,
+          ""district"": ""Hai Bà Trưng"",
+          ""policyStatus"": ""thương_binh_hạng_nặng"",
+          ""receivedBenefitLast36Months"": true
+        },
+        {
+          ""applicationId"": ""APP-2024-003"",
+          ""citizenId"": ""079200000003"",
+          ""householdIncome"": 15000000,
+          ""householdMembers"": 4,
+          ""residencyDuration"": 48,
+          ""district"": ""Cầu Giấy"",
+          ""policyStatus"": ""không_áp_dụng"",
+          ""receivedBenefitLast36Months"": false
+        },
+        {
+          ""applicationId"": ""APP-2024-004"",
+          ""citizenId"": ""079200000004"",
+          ""householdIncome"": 20000000,
+          ""householdMembers"": 2,
+          ""residencyDuration"": 60,
+          ""district"": ""Hoàn Kiếm"",
+          ""policyStatus"": ""không_áp_dụng"",
+          ""receivedBenefitLast36Months"": true
+        }
+      ],
+      ""verificationRules"":"
+8479,agentic,agentic,truncated_output,"[
+  {
+    ""processInheritanceSimulation_8db7a"": {
+      ""caseMetadata"": {
+        ""deceasedName"": ""Trần Quốc Tuấn"",
+        ""dateOfDeath"": ""2023-08-10"",
+        ""locationOfDeath"": ""Quận Cầu Giấy, Hà Nội"",
+        ""hasWill"": false
+      },
+      ""assetList"": [
+        {
+          ""assetCategory"": ""real_estate"",
+          ""valuation"": 4500000000,
+          ""ownershipMode"": ""separate_property"",
+          ""description"": ""Căn hộ chung cư tại Times City""
+        },
+        {
+          ""assetCategory"": ""real_estate"",
+          ""valuation"": 2000000000,
+          ""ownershipMode"": ""joint_property"",
+          ""description"": ""Mảnh đất thổ cư tại Hưng Yên (tài sản chung vợ chồng)""
+        },
+        {
+          ""assetCategory"": ""financial_asset"",
+          ""valuation"": 1200000000,
+          ""ownershipMode"": ""separate_property"",
+          ""description"": ""Tiền gửi tiết kiệm tại BIDV""
+        },
+        {
+          ""assetCategory"": ""vehicle"",
+          ""valuation"": 1800000000,
+          ""ownershipMode"": ""separate_property"",
+          ""description"": ""Xe Mercedes đời 2021""
+        }
+      ],
+      ""liabilityList"": [
+        {
+          ""amount"": 700000000,
+          ""creditorType"": ""bank""
+        }
+      ],
+      ""heirProfile"": [
+        {
+          ""fullName"": ""Lê Thị Hương"",
+          ""kinship"": ""spouse"",
+          ""legalStatus"": ""fully_documented""
+        },
+        {
+          ""fullName"": ""Trần Đức Thắng"",
+          ""kinship"": ""biological_child"",
+          ""legalStatus"": ""fully_documented""
+        },
+        {
+          ""fullName"": ""Trần Thu Trang"",
+          ""kinship"": ""biological_child"",
+          ""legalStatus"": ""fully_documented""
+        },
+        {
+          ""fullName"": """
+8480,agentic,agentic,truncated_output,"```json
+[
+  {
+    ""simulateQKDNetworkOptimization_66d3d"": {
+      ""simulationType"": ""qkd_optimization"",
+      ""shoppingEvent"": ""11.11"",
+      ""networkLatencyMultiplier"": 4.0,
+      ""relayStations"": [
+        {
+          ""stationId"": ""HN-QKD-001"",
+          ""stationName"": ""Hà Nội"",
+          ""geoCoordinates"": [
+            21.0245,
+            105.8412
+          ],
+          ""priorityLevel"": ""cao"",
+          ""quantumConfig"": {
+            ""decoherenceRate"": 0.05,
+            ""entanglementFidelityThreshold"": 0.95,
+            ""keyGenerationRate"": 1000,
+            ""errorCorrectionThreshold"": 0.1
+          },
+          ""backupRoutes"": [
+            {
+              ""routeId"": ""HN-BG-01"",
+              ""connectedProvince"": ""Bắc Giang"",
+              ""distanceKm"": 80,
+              ""bandwidthMbps"": 1000
+            },
+            {
+              ""routeId"": ""HN-HB-01"",
+              ""connectedProvince"": ""Hòa Bình"",
+              ""distanceKm"": 120,
+              ""bandwidthMbps"": 500
+            }
+          ]
+        },
+        {
+          ""stationId"": ""HCM-QKD-002"",
+          ""stationName"": ""Thành phố Hồ Chí Minh"",
+          ""geoCoordinates"": [
+            10.7626,
+            106.6957
+          ],
+          ""priorityLevel"": ""cao"",
+          ""quantumConfig"": {
+            ""decoherenceRate"": 0.08,
+            ""entanglementFidelityThreshold"": 0.92,
+            ""keyGenerationRate"": 1500,
+            ""errorCorrectionThreshold"": 0.15
+          },
+          ""backupRoutes"": [
+            {
+              ""routeId"": ""HCM-DN-01"",
+              ""connectedProvince"": ""Đồng Nai"",
+              ""distanceKm"": 40,
+              ""bandwidthMbps"": 2"
+8797,agentic,agentic,truncated_output,"{
+  ""configureGameEventSystem_5995f"": {
+    ""regionList"": [
+      ""mienBac"",
+      ""mienTrung"",
+      ""mienNam"",
+      ""tayNguyen"",
+      ""dongBangSongCuuLong""
+    ],
+    ""eventConfig"": [
+      {
+        ""eventId"": ""evt_tet_mienbac_01"",
+        ""eventName"": ""Lễ Hội Tết Nguyên Đán Miền Bắc"",
+        ""culturalTheme"": ""leHoiDanGian"",
+        ""stages"": [
+          {
+            ""stageId"": ""stg_01"",
+            ""stageName"": ""ChuanBi"",
+            ""difficultyLevel"": 3,
+            ""timeLimit"": 30
+          },
+          {
+            ""stageId"": ""stg_02"",
+            ""stageName"": ""ThucHien"",
+            ""difficultyLevel"": 7,
+            ""timeLimit"": 60
+          },
+          {
+            ""stageId"": ""stg_03"",
+            ""stageName"": ""KetThuc"",
+            ""difficultyLevel"": 5,
+            ""timeLimit"": 15
+          }
+        ],
+        ""activationConditions"": {
+          ""weatherType"": ""lanh"",
+          ""localFestival"": ""tetNguyenDan"",
+          ""npcInteractionRequired"": true,
+          ""npcList"": [
+            {
+              ""npcId"": ""npc_bao_01"",
+              ""npcRole"": ""nguCaoNien"",
+              ""dialogueTree"": [
+                ""Chào mừng năm mới"",
+                ""Chúc sức khỏe""
+              ]
+            }
+          ]
+        },
+        ""rewards"": [
+          {
+            ""rewardId"": ""rw_01"",
+            ""rewardName"": ""Áo Dài Truyền Thống"",
+            ""rewardType"": ""trangPhuc"",
+            ""rarityLevel"": ""ratHiem"",
+            ""regionExclusive"": ""mienBac"",
+            ""quantity"": 1
+          },
+          {
+            ""rewardId"": ""rw_02"",
+            ""rewardName"": ""Tiền Te Tết"",
+            ""rewardType"": ""tienTe"",
+            ""rarityLevel"": ""ph"
+8873,agentic,agentic,truncated_output,"{
+  ""createStructuredNutritionJournal_e4fc6"": {
+    ""location"": ""Đà Lạt"",
+    ""holidayPeriod"": ""30/4"",
+    ""meals"": [
+      {
+        ""day"": ""Ngày 1"",
+        ""restaurant"": ""Quán Ánh Sáng"",
+        ""dishName"": ""Lẩu gà lá é"",
+        ""mainIngredients"": [
+          {
+            ""name"": ""Gà ta"",
+            ""weightInGrams"": 300
+          },
+          {
+            ""name"": ""Lá é"",
+            ""weightInGrams"": 50
+          },
+          {
+            ""name"": ""Nấm rơm"",
+            ""weightInGrams"": 100
+          }
+        ],
+        ""calories"": 450,
+        ""allergens"": [
+          ""không có""
+        ],
+        ""isVerified"": true
+      },
+      {
+        ""day"": ""Ngày 1"",
+        ""restaurant"": ""Bếp Đà Lạt"",
+        ""dishName"": ""Bánh căn"",
+        ""mainIngredients"": [
+          {
+            ""name"": ""Bột gạo"",
+            ""weightInGrams"": 150
+          },
+          {
+            ""name"": ""Trứng gà"",
+            ""weightInGrams"": 50
+          },
+          {
+            ""name"": ""Thịt heo"",
+            ""weightInGrams"": 30
+          }
+        ],
+        ""calories"": 320,
+        ""allergens"": [
+          ""trứng""
+        ],
+        ""isVerified"": true
+      },
+      {
+        ""day"": ""Ngày 1"",
+        ""restaurant"": ""Quán Vỉa Hè"",
+        ""dishName"": ""Nem nướng"",
+        ""mainIngredients"": [
+          {
+            ""name"": ""Thịt heo"",
+            ""weightInGrams"": 100
+          },
+          {
+            ""name"": ""Lá lốt"",
+            ""weightInGrams"": 20
+          }
+        ],
+        ""calories"": 280,
+        ""allergens"": [
+          ""không có""
+        ],"
+8919,agentic,agentic,truncated_output,"{
+  ""suggestWinePairing_ccfb1"": {
+    ""eventLocation"": ""Quận 2"",
+    ""eventType"": ""tiệc tất niên"",
+    ""menuCourses"": [
+      {
+        ""courseName"": ""Salad rong biển"",
+        ""courseType"": ""khai vị"",
+        ""cuisineStyle"": ""Á-Âu"",
+        ""allergens"": [
+          ""hải sản""
+        ]
+      },
+      {
+        ""courseName"": ""Súp bí đỏ hạt dẻ"",
+        ""courseType"": ""súp"",
+        ""cuisineStyle"": ""Á-Âu"",
+        ""allergens"": [
+          ""không có""
+        ]
+      },
+      {
+        ""courseName"": ""Cá chẽm sốt tiêu xanh"",
+        ""courseType"": ""món chính"",
+        ""cuisineStyle"": ""Á-Âu"",
+        ""allergens"": [
+          ""cá""
+        ]
+      },
+      {
+        ""courseName"": ""Thịt bò hầm rượu vang"",
+        ""courseType"": ""món chính"",
+        ""cuisineStyle"": ""Á-Âu"",
+        ""allergens"": [
+          ""không có""
+        ]
+      },
+      {
+        ""courseName"": ""Kem sầu riêng"",
+        ""courseType"": ""tráng miệng"",
+        ""cuisineStyle"": ""Á-Âu"",
+        ""allergens"": [
+          ""sữa""
+        ]
+      }
+    ],
+    ""guestGroups"": [
+      {
+        ""groupId"": ""A"",
+        ""guestCount"": 5,
+        ""dietaryRestrictions"": [
+          ""ăn chay trường"",
+          ""không cồn""
+        ],
+        ""winePreference"": {
+          ""wineType"": ""non-alcoholic""
+        }
+      },
+      {
+        ""groupId"": ""B"",
+        ""guestCount"": 10,
+        ""dietaryRestrictions"": [
+          ""không kiêng""
+        ],
+        ""winePreference"": {
+          ""wineType"": ""rượu đỏ"",
+          ""wineRegion"": ""Tân Thế Giới""
+        },
+        ""budgetLimit"": {
+          ""maxBudget"": 8"

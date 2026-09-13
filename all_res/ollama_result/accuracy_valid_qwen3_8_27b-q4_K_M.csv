@@ -1,0 +1,64 @@
+level,name,n,correct,accuracy
+overall,overall,744,582,78.23
+category,STEM,272,224,82.35
+category,Social Science,131,102,77.86
+category,Humanity,229,175,76.42
+category,Other,112,81,72.32
+subject,01 Elementary Mathematics,14,8,57.14
+subject,02 Elementary Science,14,14,100.0
+subject,03 Middle School Biology,13,13,100.0
+subject,04 Middle School Chemistry,14,12,85.71
+subject,05 Middle School Mathematics,8,6,75.0
+subject,06 Middle School Physics,14,13,92.86
+subject,07 High School Biology,14,13,92.86
+subject,08 High School Chemistry,14,14,100.0
+subject,09 High School Mathematics,11,9,81.82
+subject,10 High School Physics,14,14,100.0
+subject,11 Applied Informatics,14,10,71.43
+subject,12 Computer Architecture,14,11,78.57
+subject,13 Computer Network,13,11,84.62
+subject,14 Discrete Mathematics,12,8,66.67
+subject,15 Electrical Engineering,13,13,100.0
+subject,16 Introduction to Chemistry,13,7,53.85
+subject,17 Introduction to Physics,13,9,69.23
+subject,18 Introduction to Programming,13,12,92.31
+subject,19 Metrology Engineer,10,6,60.0
+subject,20 Operating System,14,12,85.71
+subject,21 Statistics and Probability,13,9,69.23
+subject,22 Middle School Civil Education,13,9,69.23
+subject,23 Middle School Geography,11,8,72.73
+subject,24 High School Civil Education,14,13,92.86
+subject,25 High School Geography,12,10,83.33
+subject,26 Business Administration,13,10,76.92
+subject,27 Ho Chi Minh Ideology,13,8,61.54
+subject,28 Macroeconomics,14,10,71.43
+subject,29 Microeconomics,14,10,71.43
+subject,30 Principles of Marxism and Leninism,14,13,92.86
+subject,31 Sociology,13,11,84.62
+subject,32 Elementary History,13,11,84.62
+subject,33 Middle School History,14,12,85.71
+subject,34 Middle School Literature,13,7,53.85
+subject,35 High School History,14,12,85.71
+subject,36 High School Literature,14,11,78.57
+subject,37 Administrative Law,7,4,57.14
+subject,38 Business Law,13,12,92.31
+subject,39 Civil Law,14,6,42.86
+subject,40 Criminal Law,12,11,91.67
+subject,41 Economic Law,12,8,66.67
+subject,42 Education Law,12,8,66.67
+subject,43 History of World Civilization,14,12,85.71
+subject,44 Idealogical and Moral Cultivation,14,14,100.0
+subject,45 Introduction to Laws,9,6,66.67
+subject,46 Introduction to Vietnam Culture,14,11,78.57
+subject,47 Logic,13,10,76.92
+subject,48 Revolutionary Policy of the Vietnamese Commununist Part,14,10,71.43
+subject,49 Vietnamese Language and Literature,13,10,76.92
+subject,50 Accountant,13,7,53.85
+subject,51 Clinical Pharmacology,14,13,92.86
+subject,52 Environmental Engineering,13,9,69.23
+subject,53 Internal Basic Medicine,13,8,61.54
+subject,54 Preschool Pedagogy,7,3,42.86
+subject,55 Tax Accountant,13,10,76.92
+subject,56 Tax Civil Servant,13,6,46.15
+subject,57 Civil Servant,13,12,92.31
+subject,58 Driving License Certificate,13,13,100.0
