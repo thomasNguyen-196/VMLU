@@ -11,6 +11,7 @@ fails fast instead of burning 15 minutes per question on a bad key.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 import time
 
@@ -18,10 +19,10 @@ from openai import OpenAI, AuthenticationError, PermissionDeniedError
 
 
 def build_client(base_url: str, api_key: str) -> OpenAI:
-    return OpenAI(base_url=base_url, api_key=api_key)
+    return OpenAI(base_url=base_url, api_key=api_key, timeout=60.0)
 
 
-def call_model_with_retry(client: OpenAI, model: str, prompt: str, temperature: float, seed: int, max_tokens: int, max_retries: int = 30, sleep_sec: int = 30) -> str:
+def call_model_with_retry(client: OpenAI, model: str, prompt: str, temperature: float, seed: int, max_tokens: int, max_retries: int = 30, sleep_sec: int = 30, extra_body: dict | None = None) -> str:
     messages = [{"role": "user", "content": prompt}]
     for attempt in range(1, max_retries + 1):
         try:
@@ -33,6 +34,10 @@ def call_model_with_retry(client: OpenAI, model: str, prompt: str, temperature: 
             }
             if seed is not None:
                 kwargs["seed"] = seed
+            if extra_body is not None:
+                kwargs["extra_body"] = extra_body
+            elif os.getenv("OPENAI_REASONING_EFFORT"):
+                kwargs["extra_body"] = {"reasoning_effort": os.getenv("OPENAI_REASONING_EFFORT")}
 
             response = client.chat.completions.create(**kwargs)
             content = response.choices[0].message.content
