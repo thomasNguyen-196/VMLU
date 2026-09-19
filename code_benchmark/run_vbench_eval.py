@@ -6,6 +6,16 @@ submission.jsonl uploadable at https://vbench.ai/submission. There are NO
 gold answers — scoring is server-side and returns only an aggregate, so the
 local contract is "parse + validate every row that leaves the checkpoint".
 
+Valid vs correct (gate 1.3) are TWO SEPARATE logs, never one table:
+  local   vbench_valid_summary_<model>.csv — syntactic validity per
+          (track, domain), recomputed from raw_response; carries
+          measurement_card_hash. Written automatically by every run.
+  server  vbench_server_scores_<model>.csv — hand-copied official grades
+          (the ONLY place a `correct` number may appear), recorded via
+          --record-server-scores + --server-source with its own
+          measurement_card_hash. The runner never joins the two; any table
+          showing both cites both files.
+
 Tracks (confirmed against the Submission & Scoring Spec on the site):
   mc      choices[] non-empty  -> answer is a letter A..E, CLAMPED to the
             actual number of choices on the row (frozen build_prompt /
@@ -23,13 +33,19 @@ in all_res/ollama_result/; --resume/--submission-only reuse them.
 Run from repo root:
   .venv/bin/python code_benchmark/run_vbench_eval.py --workers 4 [--resume]
   .venv/bin/python code_benchmark/run_vbench_eval.py --submission-only   # rebuild jsonl from latest checkpoint
+  .venv/bin/python code_benchmark/run_vbench_eval.py --record-server-scores grades.csv \
+      --server-source "vbench.ai grading page v2026.03.28, screenshot 2026-09-04" --model <slug>
 """
+import csv
+import hashlib
+import os
 import re
 import json
 import time
 import argparse
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from threading import Lock
 from pathlib import Path
 
@@ -63,6 +79,101 @@ VB_SCORED_EXPECTED = 5141
 CHECKPOINT_COLS = ["id", "domain", "track", "question", "raw_response", "answer"]
 
 _MC_LETTERS = "ABCDE"
+MEASUREMENT_CARD = Path("measurement_card.md")
+
+# Gate 1.3 column contracts — the two logs share NO data column except the
+# join keys (track, domain) and the provenance hash. A `correct`/`score`
+# column in the valid summary (or a `valid` column in the server snapshot)
+# is a layering bug, asserted by the unit tests.
+VALID_SUMMARY_COLS = ["track", "domain", "n", "valid", "valid_rate", "measurement_card_hash"]
+SERVER_INPUT_COLS = ["domain", "track", "score", "correct", "total"]
+SERVER_SCORES_COLS = ["domain", "track", "score", "correct", "total",
+                      "measurement_card_hash", "server_source", "recorded_at"]
+
+
+def measurement_card_hash(path: Path = MEASUREMENT_CARD) -> str:
+    """sha256 of the condition document (same rule as score_reading_eval:
+    every output carries it; a missing card aborts instead of stamping
+    untraceable numbers)."""
+    if not path.exists():
+        raise SystemExit(f"Error: {path} missing — every scored run must cite a measurement card")
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def build_valid_summary(results: list[dict], card_hash: str) -> list[dict]:
+    """Local syntactic validity per (track, domain): a row counts as valid
+    when its stored `answer` is non-empty (parsed + schema-validated).
+    Pure recompute from results — needs no endpoint, no gold. Carries no
+    `correct`/`score` keys by construction."""
+    stats: dict[tuple[str, str], list[int]] = {}
+    for r in results:
+        key = (str(r.get("track", "")), str(r.get("domain", "")))
+        cell = stats.setdefault(key, [0, 0])
+        cell[0] += 1
+        if str(r.get("answer", "")).strip():
+            cell[1] += 1
+    rows = []
+    for (track, domain) in sorted(stats):
+        n, valid = stats[(track, domain)]
+        rows.append({"track": track, "domain": domain, "n": n, "valid": valid,
+                     "valid_rate": round(100.0 * valid / n, 2) if n else 0.0,
+                     "measurement_card_hash": card_hash})
+    return rows
+
+
+def read_server_scores(path: Path) -> list[dict]:
+    """Fail-fast read of the hand-copied server grade table: exact header
+    domain,track,score,correct,total (per-domain rows — macro/micro averages
+    are reporting recomputes, never stored rows). Each row must satisfy
+    0 <= correct <= total and score == 100*correct/total (±0.05); anything
+    else is a wrong-file pairing, never silently kept."""
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        rdr = csv.DictReader(f)
+        if (rdr.fieldnames or []) != SERVER_INPUT_COLS:
+            raise SystemExit(f"Error: server-scores {path} header mismatch — expected exactly "
+                             f"{SERVER_INPUT_COLS}, got {rdr.fieldnames}")
+        raw = list(rdr)
+    if not raw:
+        raise SystemExit(f"Error: empty server-scores {path}")
+    grades = []
+    seen: set[tuple[str, str]] = set()
+    for lineno, r in enumerate(raw, 2):
+        domain, track = str(r["domain"]).strip(), str(r["track"]).strip()
+        if not domain or not track:
+            raise SystemExit(f"Error: server-scores {path}:{lineno}: domain/track must be non-empty")
+        try:
+            correct = int(str(r["correct"]).strip())
+            total = int(str(r["total"]).strip())
+            score = float(str(r["score"]).strip())
+        except ValueError as e:
+            raise SystemExit(f"Error: server-scores {path}:{lineno}: "
+                             "correct/total must be ints, score a float") from e
+        if total <= 0 or not 0 <= correct <= total:
+            raise SystemExit(f"Error: server-scores {path}:{lineno}: need 0 <= correct <= total, total > 0")
+        if not 0.0 <= score <= 100.0:
+            raise SystemExit(f"Error: server-scores {path}:{lineno}: score must be 0..100")
+        if abs(score - 100.0 * correct / total) > 0.05:
+            raise SystemExit(f"Error: server-scores {path}:{lineno}: score {score} != "
+                             f"100*correct/total ({100.0 * correct / total:.2f}) — wrong table?")
+        if (domain, track) in seen:
+            raise SystemExit(f"Error: server-scores {path}:{lineno}: duplicate row for "
+                             f"domain={domain} track={track}")
+        seen.add((domain, track))
+        grades.append({"domain": domain, "track": track, "score": score,
+                       "correct": correct, "total": total})
+    return grades
+
+
+def write_server_snapshot(path: Path, grades: list[dict], card_hash: str, source: str) -> None:
+    """Stamp validated server grades with provenance. The ONLY writer of a
+    `correct` column in this pipeline; never called during inference."""
+    if not source or not source.strip():
+        raise SystemExit("Error: --server-source must be non-empty provenance "
+                         "(e.g. 'vbench.ai grading page v2026.03.28, screenshot 2026-09-04')")
+    stamped = [dict(g, measurement_card_hash=card_hash, server_source=source.strip(),
+                    recorded_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+               for g in grades]
+    write_csv_atomic(path, stamped, SERVER_SCORES_COLS)
 
 
 # ── Row classification (fail-fast on contract drift) ────────────────────────
@@ -469,6 +580,8 @@ def write_submission_jsonl(path: Path, rows: list[dict]) -> None:
 
 
 def log_track_stats(results: list[dict]) -> None:
+    """Console-only mirror of the durable valid summary (syntax, not score).
+    Correctness never appears here — see vbench_server_scores_*.csv."""
     df = pd.DataFrame(results)
     df["ok"] = df["answer"].astype(str) != ""
     for track, grp in df.groupby("track"):
@@ -502,6 +615,14 @@ def parse_args():
                         help="agentic prompt condition: minimal = question + schema + official "
                              "format line only (default); detailed = full-guidance variant. Use a "
                              "distinct --model slug per condition to keep checkpoints separate")
+    parser.add_argument("--record-server-scores", type=Path, default=None,
+                        help="record a hand-copied server grade table and exit (no inference): CSV "
+                             "with exact header domain,track,score,correct,total (per-domain rows; "
+                             "macro/micro averages are reporting recomputes, never stored). Writes "
+                             "vbench_server_scores_<model>.csv — the ONLY place `correct` may appear.")
+    parser.add_argument("--server-source", type=str, default=None,
+                        help="provenance label for --record-server-scores "
+                             "(e.g. 'vbench.ai grading page v2026.03.28, screenshot 2026-09-04')")
 
     add_endpoint_args(parser,
                       max_tokens_default=512,
@@ -557,12 +678,20 @@ def load_checkpoint(path: Path, by_id: dict[int, dict] | None = None) -> list[di
 
 def write_final_outputs(args, model, results, result_folder, by_id):
     sanitized = sanitize_model(model)
+    card_hash = measurement_card_hash()
     out_path = args.submission_out or Path(f"data/submission_vbench_{sanitized}.jsonl")
     rows = build_submission_rows(results)
     write_submission_jsonl(out_path, rows)
     logging.info(f"Submission written to {out_path} ({len(rows)} rows)")
     pd.DataFrame(results)[CHECKPOINT_COLS].to_csv(
         result_folder / f"vbench_full_evaluation_{sanitized}.csv", index=False)
+    valid_rows = build_valid_summary(results, card_hash)
+    valid_path = result_folder / f"vbench_valid_summary_{sanitized}.csv"
+    write_csv_atomic(valid_path, valid_rows, VALID_SUMMARY_COLS)
+    logging.info(f"Valid summary written to {valid_path} "
+                 f"({sum(r['valid'] for r in valid_rows)}/{sum(r['n'] for r in valid_rows)} locally valid; "
+                 "syntax only — NOT correctness)")
+    logging.info(f"measurement_card_hash={card_hash}")
     log_track_stats(results)
     write_model_errors(result_folder / f"vbench_failures_{sanitized}.csv", results, by_id)
 
@@ -574,6 +703,24 @@ def main():
                          "the unparsed rows of an existing checkpoint); add --resume.")
     result_folder = RESULTS_DIR
     result_folder.mkdir(parents=True, exist_ok=True)
+
+    if args.record_server_scores is not None:
+        if args.submission_only:
+            raise SystemExit("Error: --record-server-scores and --submission-only are separate modes; pick one.")
+        if not args.server_source or not args.server_source.strip():
+            raise SystemExit("Error: --record-server-scores needs --server-source provenance "
+                             "(e.g. 'vbench.ai grading page v2026.03.28, screenshot 2026-09-04').")
+        model = args.model or os.environ.get("OPENAI_MODEL")
+        if not model:
+            raise SystemExit("Error: OPENAI_MODEL is not set. Provide --model so the snapshot stays per-model.")
+        setup_logging(Path("logs") / f"vbench_{sanitize_model(model)}.log")
+        card_hash = measurement_card_hash()
+        grades = read_server_scores(args.record_server_scores)
+        snap_path = result_folder / f"vbench_server_scores_{sanitize_model(model)}.csv"
+        write_server_snapshot(snap_path, grades, card_hash, args.server_source)
+        logging.info(f"Server snapshot recorded to {snap_path} ({len(grades)} domain rows; "
+                     "correctness lives ONLY here, never in the valid summary).")
+        return
 
     base_url, api_key, model = resolve_endpoint(args)
     sanitized_model = sanitize_model(model)

@@ -33,10 +33,15 @@ v_bench/
 /data/sample_submission.jsonl
 /data/submission_vbench_*.jsonl
 
+# SEATauBench vendor (telecom EN+VI + smoke log; re-fetchable from SEACrowd/SEATauBench @ 312f3e6).
+# The pre-register manifest seatau_bench/manifest_*.json stays tracked.
+seatau_bench/telecom/
+seatau_bench/telecom_tasks_*.json
+seatau_bench/smoke_*.json
+seatau_bench/split_tasks.json
 # Independent Vietnamese legal benchmarks (HF downloads; re-fetchable, hashes in its README)
 # VLSP2025-LegalSML/Public-Test + ntphuc149/ViBidLQA_v1
 v_legal_slsp/
-
 
 # Annotation workbooks (local human artifacts; the filled manifest is the committed record)
 annotation_workbooks/

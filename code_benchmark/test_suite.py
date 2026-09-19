@@ -54,6 +54,12 @@ from code_benchmark.run_vbench_eval import (
     guided_call as vb_guided_call,
     load_checkpoint as vb_load_checkpoint,
     CHECKPOINT_COLS as VB_CHECKPOINT_COLS,
+    build_valid_summary as vb_build_valid_summary,
+    read_server_scores as vb_read_server_scores,
+    write_server_snapshot as vb_write_server_snapshot,
+    measurement_card_hash as vb_measurement_card_hash,
+    VALID_SUMMARY_COLS as VB_VALID_SUMMARY_COLS,
+    SERVER_SCORES_COLS as VB_SERVER_SCORES_COLS,
 )
 from code_benchmark.export_annotation_workbooks import (
     merge_answers,
@@ -657,6 +663,64 @@ class TestVbenchRunner(unittest.TestCase):
         self.assertIn("tra_cuu_thoi_tiet", detailed)          # detailed keeps the example
         # default must be the honest condition
         self.assertEqual(vb_build_agentic_prompt(q, fns), minimal)
+
+    def test_valid_summary_never_carries_correctness(self):
+        # gate 1.3: the local log counts syntactic validity only. The report's
+        # minimal run had 4,141 valid MC + 985 valid agentic rows — the shape
+        # below mirrors that split at small scale.
+        results = [
+            {"track": "mc", "domain": "laws", "answer": "C"},
+            {"track": "mc", "domain": "laws", "answer": ""},
+            {"track": "agentic", "domain": "agentic", "answer": '[{"f": {}}]'},
+            {"track": "agentic", "domain": "agentic", "answer": ""},
+        ]
+        rows = vb_build_valid_summary(results, "deadbeef")
+        self.assertEqual([(r["track"], r["domain"], r["n"], r["valid"]) for r in rows],
+                         [("agentic", "agentic", 2, 1), ("mc", "laws", 2, 1)])
+        for r in rows:
+            self.assertEqual(r["valid_rate"], 50.0)
+            self.assertEqual(r["measurement_card_hash"], "deadbeef")
+            self.assertNotIn("correct", r)          # correctness lives server-side only
+            self.assertNotIn("score", r)
+        self.assertNotIn("correct", VB_VALID_SUMMARY_COLS)
+        self.assertNotIn("score", VB_VALID_SUMMARY_COLS)
+        self.assertNotIn("valid", VB_SERVER_SCORES_COLS)
+        self.assertNotIn("valid_rate", VB_SERVER_SCORES_COLS)
+
+    def test_server_scores_roundtrip_and_guards(self):
+        good = ("domain,track,score,correct,total\n"
+                "laws,multiple-choice,60.73,116,191\n"
+                "agentic,function calling,39.10,391,1000\n")
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "grades.csv"
+            src.write_text(good, encoding="utf-8")
+            grades = vb_read_server_scores(src)
+            self.assertEqual([(g["domain"], g["correct"], g["total"]) for g in grades],
+                             [("laws", 116, 191), ("agentic", 391, 1000)])
+            snap = Path(td) / "snap.csv"
+            vb_write_server_snapshot(snap, grades, "deadbeef", "vbench.ai, screenshot 2026-09-04")
+            back = pd.read_csv(snap, dtype=str)
+            self.assertEqual(list(back.columns), VB_SERVER_SCORES_COLS)
+            self.assertTrue((back["measurement_card_hash"] == "deadbeef").all())
+            self.assertTrue((back["server_source"] == "vbench.ai, screenshot 2026-09-04").all())
+            # macro/micro averages are reporting recomputes, never stored rows
+            self.assertEqual(len(back), 2)
+            bad_header = Path(td) / "bad.csv"
+            bad_header.write_text("domain,score\nlaws,60.73\n", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                vb_read_server_scores(bad_header)
+            bad_math = Path(td) / "badmath.csv"
+            bad_math.write_text("domain,track,score,correct,total\nlaws,multiple-choice,99.0,116,191\n",
+                                encoding="utf-8")
+            with self.assertRaises(SystemExit):   # score != 100*correct/total
+                vb_read_server_scores(bad_math)
+            with self.assertRaises(SystemExit):   # provenance is mandatory
+                vb_write_server_snapshot(Path(td) / "x.csv", grades, "deadbeef", "  ")
+
+    def test_measurement_card_hash_aborts_when_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaises(SystemExit):
+                vb_measurement_card_hash(Path(td) / "no-such-card.md")
 
 
 class TestAnnotationWorkbooks(unittest.TestCase):

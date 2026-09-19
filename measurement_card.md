@@ -108,6 +108,25 @@ Kiểm tra ngày 2026-09-12:
 
 ---
 
+## MC-5 — SEATauBench l2_domain telecom VI (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-5` |
+| `ngay_chay` | 2026-09-19 |
+| `benchmark` | SEATauBench `312f3e6` (SEACrowd/SEATauBench), scenario `l2_domain`, domain `telecom`, `lang_id=vi` |
+| `manifest` | `seatau_bench/manifest_l2_domain_vi_telecom_test.json` — n=40 (toàn bộ telecom `test`), seed 42, sha256 `644737e8…c5cee4d627` |
+| `agent_model` | `qwen38-nothink` (FROM `qwen3.8:27b-q4_K_M`, `PARAMETER think false`) qua `https://porridge-livable-umbrella.ngrok-free.dev/v1` |
+| `user_sim` | `Qwen3.5-9B-28K` qua `https://llmapi.iec-uit.com/v1` (paper dùng Qwen3-235B cả 2 vai — khác điều kiện) |
+| `temperature` / `seed` | 0.0 / 42 |
+| `trials` | q=1 trước, q=3 khi cần `ρ³` |
+| `scoring` | `correct` = `reward_info.reward` (telecom `ENV_ASSERTION`, không LLM judge); `valid` ≠ `correct` (gate 1.3, 2 file riêng) |
+| `ket_qua` | chưa chạy |
+| `trang_thai` | pre-registered — commit này sớm hơn infer đầu |
+
+> Cấm so ngang MC-1..MC-3 (model/endpoint khác). Không suy năng lực từ single-run.
+---
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
