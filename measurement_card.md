@@ -160,9 +160,9 @@ Kiểm tra ngày 2026-09-12:
 | `max_tokens` | 4 |
 | `workers` | 4 |
 | `prompt_style` | frozen `build_prompt` — zero-shot, no-CoT, trả lời bằng chữ cái |
-| `scoring` | không chấm local (no gold); output `full_evaluation_Qwen3_5-9B-28K.csv` + submission `data/submission_vmlu_test_Qwen3_5-9B-28K.csv` để upload |
-| `ket_qua` | đang chạy |
-| `trang_thai` | pre-registered — commit này sớm hơn infer đầu |
+| `scoring` | không chấm local (no gold); output `full_evaluation_Qwen3_5-9B-28K.csv` + submission `data/submission_vmlu_test_Qwen3_5-9B-28K.csv` (9.833 dòng, id khớp 1:1, unique) để upload |
+| `ket_qua` | infer xong 2026-09-20 00:06 (+07), 39,4 phút, exit 0; valid (parse được) 9.833/9.833 (0 blank); phân phối đoán A1980/B2192/C2583/D3041/E37 — không collapse; **điểm accuracy chỉ có sau khi `vmlu.ai/submit` chấm** |
+| `trang_thai` | ✅ infer xong — chờ upload web lấy điểm; pre-register commit `363faa6` 23:26 sớm hơn infer đầu |
 
 > Cấm so ngang MC-1 (model khác, tập khác: 1.047 gold vs 9.833 no-gold).
 
@@ -182,8 +182,8 @@ Kiểm tra ngày 2026-09-12:
 | `workers` | 4 |
 | `prompt_style` | **`minimal`** (một điều kiện duy nhất cho slug này — cấm trộn `detailed`) |
 | `scoring` | server-side (vbench.ai); local chỉ `valid` (parser frozen + clamp) → `vbench_valid_summary_*.csv` mang hash; `correct` chỉ qua `--record-server-scores` |
-| `ket_qua` | chưa chạy (chạy sau MC-7, tuần tự để khỏi dồn gateway) |
-| `trang_thai` | pre-registered — commit này sớm hơn infer đầu |
+| `ket_qua` | infer xong 2026-09-20 01:14 (+07), 68,4 phút, exit 0; **valid 5.127/5.141 (99,73%)** — mc 4.141/4.141 (100%), agentic 986/1.000 (98,6%); 14 agentic invalid đã log `vbench_failures_Qwen3_5-9B-28K.csv`; submission 5.127 dòng để upload `vbench.ai/submission` |
+| `trang_thai` | ✅ infer xong — chờ upload web lấy điểm; `correct`/macro chỉ có sau khi server chấm (ghi qua `--record-server-scores`) |
 
 > Cấm so ngang MC-2/MC-2b (model khác). Không gộp `minimal` với điều kiện khác.
 
