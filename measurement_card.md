@@ -121,10 +121,29 @@ Kiểm tra ngày 2026-09-12:
 | `temperature` / `seed` | 0.0 / 42 |
 | `trials` | q=1 trước, q=3 khi cần `ρ³` |
 | `scoring` | `correct` = `reward_info.reward` (telecom `ENV_ASSERTION`, không LLM judge); `valid` ≠ `correct` (gate 1.3, 2 file riêng) |
-| `ket_qua` | chưa chạy |
-| `trang_thai` | pre-registered — commit này sớm hơn infer đầu |
+| `ket_qua` | 2/40 sim xong (reward 1.0, 1.0) rồi kill — **ABORTED**, không phải kết quả |
+| `trang_thai` | ⛔ **ABORTED 2026-09-19**: IEC 502 giữa sim 3 (user-sim Qwen3.5), tau2 retry treo >27 phút; đã kill. 2 sim dở dang không công bố |
 
 > Cấm so ngang MC-1..MC-3 (model/endpoint khác). Không suy năng lực từ single-run.
+---
+
+## MC-6 — VLSP2025-LegalSLM multichoice (pre-register, đang chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-6` |
+| `ngay_chay` | 2026-09-19 |
+| `benchmark` | VLSP2025-LegalSLM public-test, split `multichoice`, n=146 |
+| `manifest` | `data/legal_slm_multichoice_manifest.json` — LG-0001..LG-0146, seed 42 (gold local, closed-book, không RAG) |
+| `model_id` | `qwen38-nothink` (FROM `qwen3.8:27b-q4_K_M`, `PARAMETER think false`) qua `https://porridge-livable-umbrella.ngrok-free.dev/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 512 (budget nhỏ ra rỗng do thinking ẩn — đã đo: 256 rỗng, 512 ra đáp án) |
+| `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
+| `baseline` | majority-class A=91/146 (**62,3%**) — mọi accuracy phải báo kèm baseline này |
+| `ket_qua` | chưa chạy xong |
+| `trang_thai` | pre-registered — commit này sớm hơn infer đầu |
+
+> Cấm so ngang VMLU 73% (suite khác dạng). Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố.
 ---
 
 ## Quy tắc dùng card
