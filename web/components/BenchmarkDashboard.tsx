@@ -64,6 +64,18 @@ interface ReadingSource {
   strata: ReadingStratum[];
 }
 
+interface LegalBlock {
+  benchmark_name: string;
+  date: string;
+  condition: string;
+  measurement_card_hash: string;
+  overall: { n: number; correct: number; accuracy: number; valid: number; blanks: number; wrong_parsed: number };
+  baseline: { majority_letter: string; majority_n: number; majority_accuracy: number; label: string };
+  by_gold: Array<{ gold: string; n: number; correct: number; accuracy: number }>;
+  blank_ids: string[];
+  caveat: string;
+}
+
 interface ReadingBlock {
   benchmark_name: string;
   date: string;
@@ -120,6 +132,7 @@ interface BenchmarkData {
     };
   };
   reading: ReadingBlock;
+  legal: LegalBlock;
 }
 
 export function BenchmarkDashboard({
@@ -129,7 +142,7 @@ export function BenchmarkDashboard({
   data: BenchmarkData;
   questions: VmluQuestion[];
 }) {
-  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "synthesis">("vmlu");
+  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "legal" | "synthesis">("vmlu");
 
   // VMLU filters
   const [vmluCat, setVmluCat] = useState<string>("ALL");
@@ -261,6 +274,21 @@ export function BenchmarkDashboard({
                 EM {data.reading.overall.em}%
               </span>
             </button>
+
+            <button
+              onClick={() => setTab("legal")}
+              className={`px-4 py-2.5 text-sm font-semibold border-b-2 flex items-center gap-2 transition-colors ${
+                tab === "legal"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <span>⚖️ LegalSLM (146 câu)</span>
+              <span className="px-1.5 py-0.5 rounded text-xs bg-sky-50 text-sky-700 font-mono font-bold">
+                {data.legal.overall.accuracy}%
+              </span>
+            </button>
+
 
             <button
               onClick={() => setTab("synthesis")}
@@ -973,6 +1001,98 @@ export function BenchmarkDashboard({
             </div>
           </div>
         )}
+
+        {/* ========================================================== */}
+        {/* TAB: LEGALSLM MULTICHOICE (MC-6) */}
+        {/* ========================================================== */}
+        {tab === "legal" && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-sky-900 via-blue-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
+              <div className="space-y-3 max-w-3xl">
+                <div className="flex items-center gap-2 text-sky-300 text-xs font-semibold uppercase tracking-wider">
+                  <span>Tiền đăng ký · seed 42 · closed-book · card MC-6</span>
+                </div>
+                <h2 className="text-2xl font-bold">Luật trắc nghiệm — {data.legal.overall.n} câu</h2>
+                <p className="text-sm text-sky-100/80 leading-relaxed">
+                  {data.legal.condition}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Accuracy</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal.overall.accuracy}%</div>
+                  <div className="text-[11px] text-sky-200/70 font-mono">
+                    {data.legal.overall.correct}/{data.legal.overall.n}
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Baseline ({data.legal.baseline.label})</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal.baseline.majority_accuracy}%</div>
+                  <div className="text-[11px] text-sky-200/70 font-mono">
+                    {data.legal.baseline.majority_n}/{data.legal.overall.n}
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Hơn baseline</div>
+                  <div className="text-2xl font-black font-mono mt-1 text-emerald-300">
+                    +{(data.legal.overall.accuracy - data.legal.baseline.majority_accuracy).toFixed(2)}
+                  </div>
+                  <div className="text-[11px] text-sky-200/70">điểm phần trăm</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Valid (parse được)</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal.overall.valid}/{data.legal.overall.n}</div>
+                  <div className="text-[11px] text-sky-200/70 font-mono">
+                    sai trong số parse được: {data.legal.overall.wrong_parsed}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-slate-200 bg-slate-50">
+                <h3 className="font-bold text-slate-900 text-sm">
+                  Accuracy theo đáp án đúng
+                </h3>
+              </div>
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-100 text-slate-700 font-semibold">
+                  <tr>
+                    <th className="py-2 px-4">Đáp án đúng</th>
+                    <th className="py-2 px-3 text-right">n</th>
+                    <th className="py-2 px-3 text-right">Đúng</th>
+                    <th className="py-2 px-3 text-right">Accuracy (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {data.legal.by_gold.map((g) => (
+                    <tr key={g.gold}>
+                      <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
+                      <td className="py-2 px-3 text-right font-mono">{g.n}</td>
+                      <td className="py-2 px-3 text-right font-mono">{g.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono font-bold text-sky-700">
+                        {g.accuracy.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+              </div>
+              <p className="text-xs text-amber-900/90 leading-relaxed">{data.legal.caveat}</p>
+              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+                card {data.legal.measurement_card_hash.slice(0, 12)}… · {data.legal.blank_ids.length} câu blank
+              </p>
+            </div>
+          </div>
+        )}
+
 
         {/* ========================================================== */}
         {/* TAB 4: CROSS-BENCHMARK SYNTHESIS */}
