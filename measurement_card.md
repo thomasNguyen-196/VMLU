@@ -140,7 +140,7 @@ Kiểm tra ngày 2026-09-12:
 | `max_tokens` | 512 (budget nhỏ ra rỗng do thinking ẩn — đã đo: 256 rỗng, 512 ra đáp án) |
 | `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
 | `baseline` | majority-class A=91/146 (**62,3%**) — mọi accuracy phải báo kèm baseline này |
-| `ket_qua` | accuracy **82,88%** (121/146); baseline majority-class A 62,33% (91/146) → **+20,5đ** trên baseline; valid (parse được) 125/146 (85,6%), sai trong số parse được chỉ 4; confusion: gold-A 83/91, gold-B 29/39, gold-C 9/16; 21 blank (raw rỗng, tính sai) |
+| `ket_qua` | accuracy **82,88%** (121/146); baseline majority-class A 62,33% (91/146) → **+20,5đ** trên baseline; valid (parse được) 125/146 (85,6%), sai trong số parse được chỉ 4; confusion: gold-A 83/91, gold-B 29/39, gold-C 9/16; 21 blank (raw rỗng, tính sai — reprobe LG-0025: prompt 1019 chars vẫn `length` ở 512, không tương quan độ dài prompt; nguyên nhân chưa rõ, cấm tự ý cộng điểm bù) |
 | `trang_thai` | ✅ xong 2026-09-19 ~18:26 (+07); output `all_res/ollama_result/full_evaluation_qwen38-nothink.csv` + `accuracy_qwen38-nothink.csv` + `/tmp/legal_run/submission.csv`; pre-register commit `027d714` 17:15 sớm hơn infer đầu |
 
 > Cấm so ngang VMLU 73% (suite khác dạng). Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố.
