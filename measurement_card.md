@@ -146,6 +146,49 @@ Kiểm tra ngày 2026-09-12:
 > Cấm so ngang VMLU 73% (suite khác dạng). Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố.
 ---
 
+
+## MC-7 — VMLU-MQA test 9.833 câu (Qwen3.5-9B-28K, pre-register)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-7` |
+| `ngay_chay` | 2026-09-19 |
+| `benchmark` | VMLU-MQA `vmlu_mqa_v1.5/test.jsonl`, n=9.833, **không gold local** (chấm duy nhất qua submit `vmlu.ai/submit`) |
+| `model_id` | `Qwen3.5-9B-28K` (backend `Qwen3.5-9B-Q6_K.gguf` theo MC-4; non-thinking, đã probe `max_tokens=4` → `A`) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 4 |
+| `workers` | 4 |
+| `prompt_style` | frozen `build_prompt` — zero-shot, no-CoT, trả lời bằng chữ cái |
+| `scoring` | không chấm local (no gold); output `full_evaluation_Qwen3_5-9B-28K.csv` + submission `data/submission_vmlu_test_Qwen3_5-9B-28K.csv` để upload |
+| `ket_qua` | đang chạy |
+| `trang_thai` | pre-registered — commit này sớm hơn infer đầu |
+
+> Cấm so ngang MC-1 (model khác, tập khác: 1.047 gold vs 9.833 no-gold).
+
+---
+
+## MC-8 — V-Bench public test (Qwen3.5-9B-28K, pre-register)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-8` |
+| `ngay_chay` | 2026-09-19 |
+| `benchmark` | V-Bench public test `v2026.03.28` (`v_bench/public-test.jsonl`), 5.141 câu chấm được (mc + agentic; safety skip) |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 512 |
+| `workers` | 4 |
+| `prompt_style` | **`minimal`** (một điều kiện duy nhất cho slug này — cấm trộn `detailed`) |
+| `scoring` | server-side (vbench.ai); local chỉ `valid` (parser frozen + clamp) → `vbench_valid_summary_*.csv` mang hash; `correct` chỉ qua `--record-server-scores` |
+| `ket_qua` | chưa chạy (chạy sau MC-7, tuần tự để khỏi dồn gateway) |
+| `trang_thai` | pre-registered — commit này sớm hơn infer đầu |
+
+> Cấm so ngang MC-2/MC-2b (model khác). Không gộp `minimal` với điều kiện khác.
+
+---
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
