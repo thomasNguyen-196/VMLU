@@ -182,8 +182,8 @@ Kiểm tra ngày 2026-09-12:
 | `workers` | 4 |
 | `prompt_style` | **`minimal`** (một điều kiện duy nhất cho slug này — cấm trộn `detailed`) |
 | `scoring` | server-side (vbench.ai); local chỉ `valid` (parser frozen + clamp) → `vbench_valid_summary_*.csv` mang hash; `correct` chỉ qua `--record-server-scores` |
-| `ket_qua` | infer xong 2026-09-20 01:14 (+07), 68,4 phút, exit 0; **valid 5.127/5.141 (99,73%)** — mc 4.141/4.141 (100%), agentic 986/1.000 (98,6%); 14 agentic invalid đã log `vbench_failures_Qwen3_5-9B-28K.csv`; submission 5.127 dòng để upload `vbench.ai/submission` |
-| `trang_thai` | ✅ infer xong — chờ upload web lấy điểm; `correct`/macro chỉ có sau khi server chấm (ghi qua `--record-server-scores`) |
+| `ket_qua` | infer 2026-09-20 01:14 (+07) exit 0: valid 5.127/5.141 — mc 4.141/4.141 (100%), agentic 986/1.000 (98,6%), 14 invalid logged `vbench_failures_*`; `--retry-unparsed` 13:58 (96s, 14 re-asked): vẫn 986/1.000 cùng 14 ids (lỗi model thật, không phải parser drift); `--guided` 14:01 (173s): agentic **1.000/1.000**, failures file đã xóa; submission rebuild **5.141 dòng** (`submission_vbench_Qwen3_5-9B-28K.jsonl`, shape `{"id":int,"answer"}` khớp official sample) |
+| `trang_thai` | ✅ infer + retry xong — chờ upload web lấy điểm; `correct`/macro chỉ có sau khi server chấm (ghi qua `--record-server-scores`); 14 guided rows là condition thứ 3 (transcript `Q[function]` trong raw_response, không gộp silent vào minimal) |
 
 > Cấm so ngang MC-2/MC-2b (model khác). Không gộp `minimal` với điều kiện khác.
 ---
