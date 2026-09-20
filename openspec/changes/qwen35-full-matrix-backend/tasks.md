@@ -16,19 +16,19 @@
 - [x] 2.1 `valid.jsonl` (744, có gold): chạy xong exit 0, 220s → **540/744 = 72.58%** (STEM 78.31 / SocSci 76.34 / Humanity 68.56 / Other 62.50); recompute từ `full_evaluation_*` khớp 0 mismatch
 - [x] 2.2 `dev.jsonl` (303, có gold): chạy xong exit 0, 91s → **229/303 = 75.58%** (STEM 81.08 / SocSci 84.91 / Humanity 67.37 / Other 68.18); recompute khớp. LƯU Ý: runner ghi đè `full_evaluation_*` + `accuracy_*` theo tên model (không theo file input) — file cuối cùng trên đĩa là của all_gold; số valid/dev đã record ở đây
 - [x] 2.3 `all_gold.jsonl` (1047, có gold): chạy xong exit 0, 309s → **768/1047 = 73.35%** (STEM 79.37 / SocSci 78.26 / Humanity 68.52 / Other 62.82); 0 mismatch
-- [ ] 2.4 Rebuild test submission: `--submission-only`-tương đương cho MC (rebuild `submissions/Qwen3_5-9B-28K/submission_vmlu_test_*.csv` từ checkpoint mới nhất, schema `id,answer` chữ hoa) — sẵn sàng upload vmlu.ai
-- [ ] 2.5 Ghi kết quả 3 sets vào dashboard `.vmlu` (mở rộng blob hoặc ghi chú multi-file cho Phase 5 dùng)
+- [x] 2.4 Rebuild test submission: verified `submissions/Qwen3_5-9B-28K/submission_vmlu_test_Qwen3_5-9B-28K.csv` byte-identical với rebuild từ `raw_result_9833_Qwen3_5-9B-28K.csv` (sha256 `1dc68aa3…`, 9.833 rows, 0 empty, header `id,answer`, đáp án A–E hoa) — sẵn sàng upload vmlu.ai
+- [x] 2.5 Ghi kết quả 3 sets vào dashboard `.vmlu` (commit `6006fae`): card MC-9 mới + hash `87f63017…`; `gold_sets={valid 540/744=72.58%, dev 229/303=75.58%, all_gold 768/1047=73.35%}` recompute từ source+checkpoint (0 mismatch); all_gold giữ primary explorer block; blob parse OK (tsc + node), các key khác nguyên vẹn
 
 ## Phase 3 — V-Bench retry 14 rows lỗi (986/1000 agentic)
 
-- [ ] 3.1 Direct retry: `run_vbench_eval.py --resume --retry-unparsed --model Qwen3.5-9B-28K` (chỉ re-call rows unparsed dưới parser hiện tại; đáp án đúng của model không bao giờ bị chạm) → đếm failures còn lại
-- [ ] 3.2 Guided retry cho rows còn lỗi: `--resume --guided` (phỏng vấn đánh số; transcript nằm trong `raw_response`; `load_checkpoint` KHÔNG re-derive guided rows) → target `vbench_failures_*` rỗng/bị xóa
-- [ ] 3.3 Rebuild + verify: `--submission-only` → jsonl mới; `vbench_valid_summary_*` đạt 1000/1000 agentic (hoặc liệt kê rows bất trị + diagnosis); label guided là condition thứ 3 trong mọi báo cáo
+- [x] 3.1 Direct retry: `run_vbench_eval.py --resume --retry-unparsed --model Qwen3.5-9B-28K` (14 re-asked, 5.127 kept verbatim; 96s, exit 0) → vẫn 986/1000 agentic, cùng 14 ids (2 hallucinated_arg + 1 no_call_shape + 5 off_enum + 4 truncated + 2 unknown_fn) — lỗi model thật, không phải parser drift
+- [x] 3.2 Guided retry: `--resume --guided` (phỏng vấn đánh số, 173s, exit 0) → agentic **1000/1000**, `vbench_failures_*` đã xóa (không còn file); 14 guided rows giữ transcript trong `raw_response`, answer JSON hợp lệ, 0 empty
+- [x] 3.3 Rebuild + verify: `vbench_valid_summary_*` đạt **5141/5141** (hash `87f63017…` = MC-9); `submission_vbench_Qwen3_5-9B-28K.jsonl` 5.141 dòng đã rebuild; guided là condition thứ 3 (transcript `Q[function]` trong raw_response)
 - [ ] 3.4 Upload `submissions/Qwen3_5-9B-28K/submission_vbench_*.jsonl` lên vbench.ai, record server scores nếu có (`--record-server-scores`)
 
 ## Phase 4 — LegalSLM matrix trên Qwen3.5
 
-- [ ] 4.1 Format probe: đọc 1 dòng mỗi file `v_legal_slsp/legal_slm/{nli,syllogism}.jsonl` + `v_legal_slsp/bidlqa/ViBidLQA_test.jsonl`, liệt kê keys; quyết định adapter-vs-defer cho từng file (runner MC giữ nguyên, chỉ nhận `{id, question, choices[], answer}`)
+- [x] 4.1 Format probe: multichoice `{question, choices[4, bare không prefix A-D], answer:int, answer_choice_letter}` — sha256 khớp manifest, order 1:1, letter↔index khớp 146/146; nli 150 `{legal_document, specific_question, question≡1 câu duy nhất, choices=[Có,Không], answer:0/1}` — KHÔNG phải MC A–E (binary entailment, cần prompt/scoring riêng); syllogism 144 `{question, answer:free-text 551–1819 chars}` — luận chứng sinh thành, không chấm chữ cái được; ViBidLQA_test 603 `{context, question, answer:free-text ngắn}` + không id — dạng reading, không phải MC. Quyết định: multichoice → MC runner qua adapter input (không sửa runner); 3 file còn lại DEFER (ghi lý do ở 4.3).
 - [ ] 4.2 Multichoice-146: chạy MC runner với manifest `data/legal_slm_multichoice_manifest.json` → cross-check manifest-gold như `build_dashboard_legal.py` (recompute accuracy vs `accuracy_*`, majority baseline recompute không hardcode) → patch `.legal` cho Qwen3.5
 - [ ] 4.3 Các file còn lại theo kết quả probe: viết adapter nhỏ (không sửa runner) hoặc ghi explicit defer + lý do
 - [ ] 4.4 Report: accuracy multichoice + baseline so sánh (MC-6 trước đó trên `qwen38-nothink`: 121/146 = 82.88% vs baseline 62.33%)

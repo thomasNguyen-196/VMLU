@@ -3593,15 +3593,17 @@
   "legal": {
     "benchmark_name": "VLSP2025-LegalSLM public-test — multichoice (luật, trắc nghiệm)",
     "date": "2026-09-19",
-    "condition": "closed-book · zero-shot · no-CoT · 512 token · seed 42 · temperature 0 — card MC-6 · frozen build_prompt/extract_answer",
-    "measurement_card_hash": "c60f53c4f786760ccfab10c4968a84829196215f80080aa6a3f383b82987048a",
+    "condition": "closed-book · zero-shot · no-CoT · 4 token · seed 42 · temperature 0 — card MC-10 · frozen build_prompt/extract_answer",
+    "measurement_card": "MC-10",
+    "measurement_card_hash": "2d18df8603020ad8dca871a2b78e85df4e7b843e720fd757803bb4e2c832e611",
+    "model_id": "Qwen3.5-9B-28K",
     "overall": {
       "n": 146,
-      "correct": 121,
-      "accuracy": 82.88,
-      "valid": 125,
-      "blanks": 21,
-      "wrong_parsed": 4
+      "correct": 128,
+      "accuracy": 87.67,
+      "valid": 146,
+      "blanks": 0,
+      "wrong_parsed": 18
     },
     "baseline": {
       "majority_letter": "A",
@@ -3613,45 +3615,23 @@
       {
         "gold": "A",
         "n": 91,
-        "correct": 83,
-        "accuracy": 91.21
+        "correct": 82,
+        "accuracy": 90.11
       },
       {
         "gold": "B",
         "n": 39,
-        "correct": 29,
-        "accuracy": 74.36
+        "correct": 34,
+        "accuracy": 87.18
       },
       {
         "gold": "C",
         "n": 16,
-        "correct": 9,
-        "accuracy": 56.25
+        "correct": 12,
+        "accuracy": 75.0
       }
     ],
-    "blank_ids": [
-      "LG-0025",
-      "LG-0026",
-      "LG-0027",
-      "LG-0031",
-      "LG-0032",
-      "LG-0034",
-      "LG-0035",
-      "LG-0044",
-      "LG-0060",
-      "LG-0062",
-      "LG-0067",
-      "LG-0069",
-      "LG-0075",
-      "LG-0082",
-      "LG-0089",
-      "LG-0090",
-      "LG-0097",
-      "LG-0098",
-      "LG-0100",
-      "LG-0133",
-      "LG-0136"
-    ],
-    "caveat": "21 câu raw rỗng (finish=length ở 512 token) tính sai; reprobe LG-0025 cho thấy không tương quan độ dài prompt, nguyên nhân chưa rõ. Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố. Cấm so ngang VMLU 73% (suite khác dạng)."
+    "blank_ids": [],
+    "caveat": "Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố. Cấm so ngang VMLU 73% (suite khác dạng)."
   }
 }

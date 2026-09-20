@@ -44,11 +44,17 @@ def pct(numerator: int, denominator: int) -> float:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Add the LegalSLM MC-6 block to the dashboard blob.")
+    ap = argparse.ArgumentParser(description="Add the LegalSLM multichoice block to the dashboard blob.")
     ap.add_argument("--dashboard", type=Path, default=DASHBOARD)
     ap.add_argument("--full", type=Path, default=RESULTS_DIR / "qwen38-nothink" / "full_evaluation_qwen38-nothink.csv",
                     help="full_evaluation_<model>.csv (default: the MC-6 file; pass explicitly for another model)")
     ap.add_argument("--manifest", type=Path, default=MANIFEST)
+    ap.add_argument("--card", type=str, default="MC-6",
+                    help="measurement card id for this run (default: MC-6)")
+    ap.add_argument("--max-tokens", type=int, default=512,
+                    help="generation budget recorded in the condition string (default: 512)")
+    ap.add_argument("--model-id", type=str, default=None,
+                    help="model label recorded in the block (default: derived from --full filename)")
     args = ap.parse_args()
 
     full = args.full
@@ -116,12 +122,20 @@ def main() -> None:
     card_hash = hashlib.sha256(MEASUREMENT_CARD.read_bytes()).hexdigest() if MEASUREMENT_CARD.exists() else ""
 
     blob = json.loads(args.dashboard.read_text(encoding="utf-8"))
+    model_label = args.model_id or slug
+    caveat = (
+        "Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố. "
+        "Cấm so ngang VMLU 73% (suite khác dạng).")
+    if blanks:
+        caveat = (f"{len(blanks)} câu raw rỗng tính sai; nguyên nhân chưa rõ. " + caveat)
     blob["legal"] = {
         "benchmark_name": "VLSP2025-LegalSLM public-test — multichoice (luật, trắc nghiệm)",
         "date": "2026-09-19",
-        "condition": ("closed-book · zero-shot · no-CoT · 512 token · seed 42 · temperature 0 — "
-                      "card MC-6 · frozen build_prompt/extract_answer"),
+        "condition": (f"closed-book · zero-shot · no-CoT · {args.max_tokens} token · seed 42 · temperature 0 — "
+                      f"card {args.card} · frozen build_prompt/extract_answer"),
+        "measurement_card": args.card,
         "measurement_card_hash": card_hash,
+        "model_id": model_label,
         "overall": {
             "n": n,
             "correct": correct,
@@ -141,10 +155,7 @@ def main() -> None:
             for g, c in sorted(by_gold.items())
         ],
         "blank_ids": blanks,
-        "caveat": ("21 câu raw rỗng (finish=length ở 512 token) tính sai; reprobe LG-0025 "
-                   "cho thấy không tương quan độ dài prompt, nguyên nhân chưa rõ. "
-                   "Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố. "
-                   "Cấm so ngang VMLU 73% (suite khác dạng)."),
+        "caveat": caveat,
     }
 
     args.dashboard.write_text(json.dumps(blob, ensure_ascii=False, indent=2) + "\n",

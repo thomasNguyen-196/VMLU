@@ -209,6 +209,29 @@ Kiểm tra ngày 2026-09-12:
 
 ---
 
+## MC-10 — VLSP2025-LegalSLM multichoice (Qwen3.5-9B-28K)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-10` |
+| `ngay_chay` | 2026-09-20 |
+| `benchmark` | VLSP2025-LegalSLM public-test, split `multichoice`, n=146 |
+| `manifest` | `data/legal_slm_multichoice_manifest.json` — LG-0001..LG-0146, seed 42, sha256 `7b7d7f15…` khớp source (gold local, closed-book, không RAG) |
+| `adapter` | `/tmp/legal_q35_input/legal_multichoice_146.jsonl` — LG ids theo thứ tự source + choices prefix `A. ` (khớp shape MC-6) + gold letter; runner **không sửa** |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7; non-thinking, probe `max_tokens=4` → đáp án) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 4 (khác MC-6=512: Qwen3.5 không thinking ẩn, không cần budget phình) |
+| `workers` | 4 |
+| `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
+| `baseline` | majority-class A=91/146 (**62,33%**) — recompute từ manifest, không hardcode |
+| `ket_qua` | accuracy **87,67%** (128/146); baseline 62,33% → **+25,0đ**; valid 146/146 (0 blank); by-gold A 82/91=90,11%, B 34/39=87,18%, C 12/16=75,00%; 18 sai trong số parse được |
+| `trang_thai` | ✅ xong 2026-09-20 ~14:15 (+07), 176s, exit 0; output `full_evaluation_legal_*` + `accuracy_legal_*` + `submission_legal_mc_*` (giữ tên legal- để không đè MC-9 all_gold đã restore từ `raw_result_1047`) |
+
+> Cấm so ngang MC-6 (model + max_tokens khác). Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố.
+
+---
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
