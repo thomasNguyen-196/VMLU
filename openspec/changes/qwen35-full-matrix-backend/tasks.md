@@ -24,7 +24,7 @@
 - [x] 3.1 Direct retry: `run_vbench_eval.py --resume --retry-unparsed --model Qwen3.5-9B-28K` (14 re-asked, 5.127 kept verbatim; 96s, exit 0) → vẫn 986/1000 agentic, cùng 14 ids (2 hallucinated_arg + 1 no_call_shape + 5 off_enum + 4 truncated + 2 unknown_fn) — lỗi model thật, không phải parser drift
 - [x] 3.2 Guided retry: `--resume --guided` (phỏng vấn đánh số, 173s, exit 0) → agentic **1000/1000**, `vbench_failures_*` đã xóa (không còn file); 14 guided rows giữ transcript trong `raw_response`, answer JSON hợp lệ, 0 empty
 - [x] 3.3 Rebuild + verify: `vbench_valid_summary_*` đạt **5141/5141** (hash `87f63017…` = MC-9); `submission_vbench_Qwen3_5-9B-28K.jsonl` 5.141 dòng đã rebuild; guided là condition thứ 3 (transcript `Q[function]` trong raw_response)
-- [ ] 3.4 Upload `submissions/Qwen3_5-9B-28K/submission_vbench_*.jsonl` lên vbench.ai, record server scores nếu có (`--record-server-scores`)
+- [x] 3.4 Upload `submissions/Qwen3_5-9B-28K/submission_vbench_*.jsonl` lên vbench.ai (user 2026-09-20: 5.141/5.141 hợp lệ, 0 bỏ qua, 0 chưa trả lời), record server scores qua `--record-server-scores` → snapshot `vbench_server_scores_Qwen3_5-9B-28K.csv` (13 domain rows, hash `459c76ee…`); **macro 45,22 · micro 45,61% (2.345/5.141)** — mc 47,04%, agentic 39,70%; card MC-8 + `docs/vbench-server-qwen35.md`
 
 ## Phase 4 — LegalSLM matrix trên Qwen3.5
 
@@ -46,5 +46,5 @@
 ## Phase 6 — Submit
 
 - [x] 6.1 Upload `submission_vmlu_test_Qwen3_5-9B-28K.csv` lên vmlu.ai (UTF-8, `id,answer` chữ hoa), record leaderboard score về docs → **total 67,87%** (STEM 65,65 / SocSci 74,97 / Humanity 68,61 / Other 63,67); card MC-7 cập nhật + `docs/vmlu-leaderboard-qwen35.md`
-- [ ] 6.2 Upload `submission_vbench_Qwen3_5-9B-28K.jsonl` lên vbench.ai, record server-side scores (`--record-server-scores`)
+- [x] 6.2 Upload `submission_vbench_Qwen3_5-9B-28K.jsonl` lên vbench.ai, record server-side scores (`--record-server-scores`) → **macro 45,22 · micro 45,61%**; xem 3.4 + card MC-8 + `docs/vbench-server-qwen35.md`
 - [x] 6.3 Reading/Legal gold nội bộ — không submit, chỉ hiển thị dashboard (verified 2026-09-20: reading blob EM 319/400=79.75 khớp recompute từ reading_scores_*; legal blob 128/146=87.67 khớp full_evaluation_legal_*; tsc + node parse OK)
