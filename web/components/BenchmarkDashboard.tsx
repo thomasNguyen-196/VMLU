@@ -216,6 +216,12 @@ export function BenchmarkDashboard({
 
             <div className="flex items-center gap-3">
               <Link
+                href="/results"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors shadow-2xs"
+              >
+                <span>🗄️ Results (DB, đa model)</span>
+              </Link>
+              <Link
                 href="/"
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
               >

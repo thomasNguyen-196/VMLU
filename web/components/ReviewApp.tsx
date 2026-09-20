@@ -207,6 +207,12 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
           >
             <span>📊 Dashboard Benchmark (V-Bench & VMLU)</span>
           </Link>
+          <Link
+            href="/results"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-colors shadow-2xs"
+          >
+            <span>🗄️ Results (DB, đa model)</span>
+          </Link>
           <div className="min-w-2 flex-1" />
           <label className="flex items-center gap-2">
             <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">Model</span>

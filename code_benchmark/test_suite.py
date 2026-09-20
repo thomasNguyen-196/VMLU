@@ -88,6 +88,18 @@ from code_benchmark.build_review_ui import (
     embed_json,
     render_html,
 )
+from code_benchmark.seed_registries import (
+    canonical_model_id,
+    make_run_id,
+    seed,
+)
+from code_benchmark.migrate_results_to_mongo import (
+    migrate,
+    mc_item,
+    vbench_item,
+    reading_item,
+    MIGRATION_PLAN,
+)
 
 class TestVMLUBenchmark(unittest.TestCase):
 
@@ -1283,6 +1295,148 @@ process.stdout.write(buildCsv(blob.items, env.items, env.annotator, env.model, a
         self.assertEqual(ma["annotator"], "lình")              # unicode survives both exporters
         for k in ra:
             self.assertEqual(ra[k], rb[k], msg=f"row {k} differs between Next and static export")
+
+class TestResultsIdentity(unittest.TestCase):
+    """Canonical model_id / dataset_id / run_id rules + migration gates
+    (change results-db-frontend). Offline: fake Mongo adapter, tempdirs."""
+
+    def test_canonical_model_id_pins_spellings(self):
+        self.assertEqual(canonical_model_id("Qwen3.5-9B-28K"), "qwen3-5-9b-28k")
+        self.assertEqual(canonical_model_id("Qwen3_5-9B-28K"), "qwen3-5-9b-28k")
+        self.assertEqual(canonical_model_id("qwen38-nothink"), "qwen38-nothink")
+        self.assertEqual(canonical_model_id("Qwen3_8-27B-Q4_K_M_gguf"),
+                         "qwen3-8-27b-q4-k-m-gguf")
+        self.assertEqual(canonical_model_id("Qwen3.8-27B-Q4_K_M.gguf"),
+                         "qwen3-8-27b-q4-k-m-gguf")
+
+    def test_make_run_id_scheme(self):
+        self.assertEqual(make_run_id("qwen3-5-9b-28k", "bidlqa-val", "MC-12"),
+                         "qwen3-5-9b-28k__bidlqa-val__MC-12")
+        with self.assertRaises(ValueError):
+            make_run_id("", "bidlqa-val", "MC-12")
+        with self.assertRaises(ValueError):
+            make_run_id("a__b", "bidlqa-val", "MC-12")
+
+    def test_plan_dirs_resolve_to_one_id(self):
+        for dir_slug, model_id, _files in MIGRATION_PLAN:
+            self.assertEqual(canonical_model_id(dir_slug), model_id,
+                             msg=f"dir {dir_slug} must resolve to {model_id}")
+
+    def test_seed_is_idempotent(self):
+        from unittest.mock import MagicMock
+        db = MagicMock()
+        seed(db)
+        seed(db)  # second run must not raise
+        self.assertTrue(db.__getitem__.return_value.update_one.called)
+
+    def test_item_builders_stamp_both_ids(self):
+        kw = dict(run_id="m__d__MC-9", model_id="m", dataset_id="d", card_hash="h")
+        mc = mc_item({"id": "28-0007", "answer": "A", "gold_answer": "A", "correct": "1",
+                      "question": "q", "prompt": "p", "raw_response": "A"}, **kw)
+        self.assertEqual((mc["model_id"], mc["dataset_id"]), ("m", "d"))
+        self.assertEqual(mc["_id"], "m__d__MC-9::28-0007")
+        vb = vbench_item({"id": "4", "domain": "literature", "track": "mc",
+                          "question": "q", "raw_response": "D", "answer": "D"}, **kw)
+        self.assertEqual((vb["model_id"], vb["dataset_id"]), ("m", "d"))
+        rd = reading_item({"dataset": "squad", "item_id": "0", "stratum": "s",
+                           "gold_answer": "g", "raw_response": "r",
+                           "prediction": "p", "em": "1", "f1": "1.0"}, **kw)
+        self.assertEqual((rd["model_id"], rd["dataset_id"]), ("m", "d"))
+        self.assertEqual(rd["item_id"], "squad:0")
+        with self.assertRaises(SystemExit):
+            mc_item({"id": "", "answer": "A"}, **kw)
+
+    def test_migrate_happy_path_fake_adapter(self):
+        import csv as _csv
+
+        class FakeColl:
+            def __init__(self):
+                self.docs = {}
+
+            def update_one(self, flt, upd, upsert=False):
+                self.docs[flt["_id"]] = upd["$set"]
+
+            def count_documents(self, flt):
+                if not flt:
+                    return len(self.docs)
+                return sum(1 for d in self.docs.values()
+                           if all(d.get(k) == v for k, v in flt.items()))
+
+            def create_index(self, *a, **k):
+                pass
+
+        class FakeDB(dict):
+            def __getitem__(self, k):
+                if k not in self:
+                    self[k] = FakeColl()
+                return dict.__getitem__(self, k)
+
+        with tempfile.TemporaryDirectory() as td:
+            from code_benchmark import migrate_results_to_mongo as mig
+            old_plan, old_dir, old_cfg = mig.MIGRATION_PLAN, mig.RESULTS_DIR, mig.RUN_CONFIGS
+            model_dir = Path(td) / "M"
+            model_dir.mkdir()
+            with open(model_dir / "f.csv", "w", newline="", encoding="utf-8") as f:
+                w = _csv.DictWriter(f, fieldnames=["id", "answer", "gold_answer", "correct"])
+                w.writeheader()
+                w.writerow({"id": "28-0007", "answer": "A", "gold_answer": "A", "correct": "1"})
+            mig.MIGRATION_PLAN = [("M", "m", [("f.csv", "ds", "MC-9", "mc")])]
+            mig.RESULTS_DIR = Path(td)
+            mig.RUN_CONFIGS = {"MC-9": {"temperature": 0.0, "seed": 42, "max_tokens": 4,
+                                        "workers": 4, "prompt_style": "build_prompt"}}
+            orig_seed = mig.seed
+            mig.seed = lambda db: {"models": 0, "datasets": 0}
+            try:
+                counts = migrate(FakeDB(), card_hash="h")
+                self.assertEqual(counts, {"runs": 1, "items": 1})
+            finally:
+                mig.seed = orig_seed
+                mig.MIGRATION_PLAN = old_plan
+                mig.RESULTS_DIR = old_dir
+                mig.RUN_CONFIGS = old_cfg
+
+    def test_migrate_aborts_on_count_mismatch(self):
+        import csv as _csv
+
+        class LyingColl:
+            def update_one(self, flt, upd, upsert=False):
+                pass
+
+            def count_documents(self, flt):
+                return 0
+
+            def create_index(self, *a, **k):
+                pass
+
+        class LyingDB(dict):
+            def __getitem__(self, k):
+                if k not in self:
+                    self[k] = LyingColl()
+                return dict.__getitem__(self, k)
+
+        with tempfile.TemporaryDirectory() as td:
+            from code_benchmark import migrate_results_to_mongo as mig
+            old_plan, old_dir, old_cfg = mig.MIGRATION_PLAN, mig.RESULTS_DIR, mig.RUN_CONFIGS
+            model_dir = Path(td) / "M"
+            model_dir.mkdir()
+            with open(model_dir / "f.csv", "w", newline="", encoding="utf-8") as f:
+                w = _csv.DictWriter(f, fieldnames=["id", "answer", "gold_answer", "correct"])
+                w.writeheader()
+                w.writerow({"id": "28-0007", "answer": "A", "gold_answer": "A", "correct": "1"})
+            mig.MIGRATION_PLAN = [("M", "m", [("f.csv", "ds", "MC-9", "mc")])]
+            mig.RESULTS_DIR = Path(td)
+            mig.RUN_CONFIGS = {"MC-9": {"temperature": 0.0, "seed": 42, "max_tokens": 4,
+                                        "workers": 4, "prompt_style": "build_prompt"}}
+            orig_seed = mig.seed
+            mig.seed = lambda db: {"models": 0, "datasets": 0}
+            try:
+                with self.assertRaises(SystemExit):
+                    migrate(LyingDB(), card_hash="h")
+            finally:
+                mig.seed = orig_seed
+                mig.MIGRATION_PLAN = old_plan
+                mig.RESULTS_DIR = old_dir
+                mig.RUN_CONFIGS = old_cfg
 
 
 if __name__ == "__main__":
