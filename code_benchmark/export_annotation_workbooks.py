@@ -14,7 +14,8 @@ IDENTICAL, INDEPENDENT workbooks (annotator_A.csv / annotator_B.csv):
 merge: reads the two filled workbooks, classifies each item as agreed /
 disagreement under a conservative normalization (casefold, whitespace,
 trailing punctuation — number formats like "15,00%" vs "15.00%" are NOT
-auto-merged), writes data/gold_agreed.csv + data/adjudication.csv, and with --apply
+auto-merged), writes data/gold/gold_agreed.csv + data/gold/adjudication.csv,
+and with --apply
 fills the agreed values into data/eval_set_manifest.csv's gold_answer column.
 Disagreements stay blank in the manifest until the adjudication pass.
 
@@ -22,7 +23,7 @@ review: merges the two Export-CSV files from review_ui.html (build_review_ui).
 Semantics chosen with the project owner: accept => the MODEL answer becomes
 gold; reject => the reviewer's corrected answer becomes gold. Prints each
 reviewer's acceptance % and raw decision agreement (IAA), writes
-data/review_gold_agreed.csv + data/review_adjudication.csv; --apply fills agreed golds.
+data/gold/review_gold_agreed.csv + data/gold/review_adjudication.csv; --apply fills agreed golds.
   | A      | B      | corrections match? | outcome            | gold            |
   | accept | accept | -                  | agreed             | model answer    |
   | accept | reject | -                  | adjudicate         | blank           |
@@ -46,8 +47,8 @@ pipeline remains available if stricter IAA (kappa) is wanted for the thesis.
 
 Shares its loaders with run_reading_eval.py (so: run with .venv python, from
 the repo root, like the test suite). Local artifacts (annotation_workbooks/,
-data/{gold_agreed,adjudication,review_gold_agreed,review_adjudication}.csv, state_*.json) are gitignored;
-the FILLED manifest is the committed record.
+data/gold/{gold_agreed,adjudication,review_gold_agreed,review_adjudication}.csv,
+state_*.json) are gitignored; the FILLED manifest is the committed record.
 """
 from __future__ import annotations
 
@@ -61,12 +62,16 @@ from pathlib import Path
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
     from code_benchmark.common import (item_key, split_item_key, write_csv_atomic,
                                        MANIFEST_COLS, MANIFEST_DEFAULT, SQUAD_DEFAULT,
-                                       DROP_DEFAULT, ANNOTATOR_A_DEFAULT)
+                                       DROP_DEFAULT, ANNOTATOR_A_DEFAULT,
+                                       GOLD_REVIEW_DEFAULT, GOLD_REVIEW_ADJUD_DEFAULT,
+                                       GOLD_BLIND_DEFAULT, GOLD_BLIND_ADJUD_DEFAULT)
     from code_benchmark.run_reading_eval import index_sources, join_manifest, load_manifest
 except ImportError:
     from common import (item_key, split_item_key, write_csv_atomic,
                         MANIFEST_COLS, MANIFEST_DEFAULT, SQUAD_DEFAULT,
-                        DROP_DEFAULT, ANNOTATOR_A_DEFAULT)
+                        DROP_DEFAULT, ANNOTATOR_A_DEFAULT,
+                        GOLD_REVIEW_DEFAULT, GOLD_REVIEW_ADJUD_DEFAULT,
+                        GOLD_BLIND_DEFAULT, GOLD_BLIND_ADJUD_DEFAULT)
     from run_reading_eval import index_sources, join_manifest, load_manifest
 
 WORKBOOK_COLS = ["passage_key", "dataset", "item_id", "stratum", "question",
@@ -320,6 +325,10 @@ def _write_gold_and_adjudication(out_gold: Path, out_adjud: Path,
     """Write the agreed-golds + adjudication sheets (shared by `review` and
     `merge-split`: same 3-col/8-col headers, same key split, same workbook
     re-join for question/context). stratum_of(key) -> str fills the stratum."""
+    out_gold = Path(out_gold)
+    out_adjud = Path(out_adjud)
+    out_gold.parent.mkdir(parents=True, exist_ok=True)
+
     with open(out_gold, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(GOLD_COLS)
@@ -484,8 +493,8 @@ def main():
     mp.add_argument("--a", type=Path, default=ANNOTATOR_A_DEFAULT)
     mp.add_argument("--b", type=Path, default=Path("annotation_workbooks/annotator_B.csv"))
     mp.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
-    mp.add_argument("--out-agreed", type=Path, default=Path("data/gold_agreed.csv"))
-    mp.add_argument("--out-adjud", type=Path, default=Path("data/adjudication.csv"))
+    mp.add_argument("--out-agreed", type=Path, default=GOLD_BLIND_DEFAULT)
+    mp.add_argument("--out-adjud", type=Path, default=GOLD_BLIND_ADJUD_DEFAULT)
     mp.add_argument("--apply", action="store_true",
                     help="write agreed golds into the manifest (irreversible-ish: git diff shows it)")
     mp.set_defaults(func=cmd_merge)
@@ -495,10 +504,10 @@ def main():
     rp.add_argument("--a", type=Path, required=True)
     rp.add_argument("--b", type=Path, required=True)
     rp.add_argument("--workbook", type=Path, default=ANNOTATOR_A_DEFAULT,
-                    help="enriches data/review_adjudication.csv rows with question + context")
+                    help="enriches data/gold/review_adjudication.csv rows with question + context")
     rp.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
-    rp.add_argument("--out-gold", type=Path, default=Path("data/review_gold_agreed.csv"))
-    rp.add_argument("--out-adjud", type=Path, default=Path("data/review_adjudication.csv"))
+    rp.add_argument("--out-gold", type=Path, default=GOLD_REVIEW_DEFAULT)
+    rp.add_argument("--out-adjud", type=Path, default=GOLD_REVIEW_ADJUD_DEFAULT)
     rp.add_argument("--apply", action="store_true",
                     help="write review-agreed golds into the manifest")
     rp.set_defaults(func=cmd_review)
@@ -510,8 +519,8 @@ def main():
     sp.add_argument("--workbook", type=Path, default=ANNOTATOR_A_DEFAULT,
                     help="enriches adjudication rows with question + context")
     sp.add_argument("--manifest", type=Path, default=MANIFEST_DEFAULT)
-    sp.add_argument("--out-gold", type=Path, default=Path("data/review_gold_agreed.csv"))
-    sp.add_argument("--out-adjud", type=Path, default=Path("data/review_adjudication.csv"))
+    sp.add_argument("--out-gold", type=Path, default=GOLD_REVIEW_DEFAULT)
+    sp.add_argument("--out-adjud", type=Path, default=GOLD_REVIEW_ADJUD_DEFAULT)
     sp.add_argument("--apply", action="store_true",
                     help="write union golds into the manifest")
     sp.set_defaults(func=cmd_merge_split)

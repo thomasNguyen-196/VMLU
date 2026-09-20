@@ -47,7 +47,7 @@ Vì vậy đây là ước lượng **cận trên, thiên lệch thuận** (opti
 điểm năng lực. Nhưng khác với "accept-rate" ở chỗ: đây là **EM/char-F1 đo trên một tập tham chiếu
 đã cố định**, nên **so sánh được giữa các lần chạy** — miễn là giữ nguyên tập gold này.
 
-**Điều kiện để con số này có nghĩa:** gold phải đứng yên. Từ nay `data/review_gold_agreed.csv`
+**Điều kiện để con số này có nghĩa:** gold phải đứng yên. Từ nay `data/gold/review_gold_agreed.csv`
 là tập tham chiếu đóng băng. Chạy lại model khác thì chấm trên **đúng file này**.
 
 ---
@@ -125,11 +125,11 @@ không phải vì hai phép đo giống nhau, mà vì gold được sinh ra **t�
 ## Nguồn số liệu
 
 ```
-all_res/ollama_result/reading_answers_Qwen3_8-27B-Q4_K_M_gguf.csv   # câu trả lời thô
-all_res/ollama_result/reading_scores_Qwen3_8-27B-Q4_K_M_gguf.csv    # điểm từng câu (script sinh)
-all_res/ollama_result/reading_summary_Qwen3_8-27B-Q4_K_M_gguf.csv   # bảng tổng hợp
+all_res/ollama_result/Qwen3_8-27B-Q4_K_M_gguf/reading_answers_Qwen3_8-27B-Q4_K_M_gguf.csv   # câu trả lời thô
+all_res/ollama_result/Qwen3_8-27B-Q4_K_M_gguf/reading_scores_Qwen3_8-27B-Q4_K_M_gguf.csv    # điểm từng câu (script sinh)
+all_res/ollama_result/Qwen3_8-27B-Q4_K_M_gguf/reading_summary_Qwen3_8-27B-Q4_K_M_gguf.csv   # bảng tổng hợp
 review_records/review_nttung245_qwen3_8_27b_q4_k_m_gguf.csv         # quyết định duyệt
-data/review_gold_agreed.csv                                         # gold đóng băng (400 câu)
+data/gold/review_gold_agreed.csv                                    # gold đóng băng (400 câu)
 ```
 
 Sinh lại bằng:

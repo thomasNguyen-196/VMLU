@@ -28,7 +28,7 @@ Tracks (confirmed against the Submission & Scoring Spec on the site):
             them; skipped at load.
 
 Checkpoints follow the per-model convention (vbench_result_<count>_<slug>.csv)
-in all_res/ollama_result/; --resume/--submission-only reuse them.
+in all_res/ollama_result/<model>/; --resume/--submission-only reuse them.
 
 Run from repo root:
   .venv/bin/python code_benchmark/run_vbench_eval.py --workers 4 [--resume]
@@ -56,14 +56,15 @@ from dotenv import load_dotenv
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
     from code_benchmark.common import (resolve_endpoint, add_endpoint_args,
                                        parse_endpoint_args, setup_logging,
-                                       RESULTS_DIR, sanitize_model, write_csv_atomic)
+                                       model_dirs, sanitize_model,
+                                       write_csv_atomic)
     from code_benchmark.llm import build_client, verify_credentials, call_model_with_retry
     from code_benchmark.checkpoint import find_latest_checkpoint, checkpoint_name, VBENCH_PREFIX
     from code_benchmark.run_mc_eval import build_prompt, extract_answer
 except ImportError:
     from common import (resolve_endpoint, add_endpoint_args,
                         parse_endpoint_args, setup_logging,
-                        RESULTS_DIR, sanitize_model, write_csv_atomic)
+                        model_dirs, sanitize_model, write_csv_atomic)
     from llm import build_client, verify_credentials, call_model_with_retry
     from checkpoint import find_latest_checkpoint, checkpoint_name, VBENCH_PREFIX
     from run_mc_eval import build_prompt, extract_answer
@@ -600,7 +601,7 @@ def parse_args():
     parser.add_argument("--track", choices=["all", "mc", "agentic"], default="all",
                         help="subset of scorable tracks to run (default: all)")
     parser.add_argument("--submission-out", type=Path, default=None,
-                        help="submission jsonl path (default: data/submission_vbench_<model>.jsonl)")
+                        help="submission jsonl path (default: submissions/<model>/submission_vbench_<model>.jsonl)")
     parser.add_argument("--submission-only", action="store_true",
                         help="skip inference; rebuild submission + stats from the latest checkpoint")
     parser.add_argument("--retry-unparsed", action="store_true",
@@ -676,13 +677,13 @@ def load_checkpoint(path: Path, by_id: dict[int, dict] | None = None) -> list[di
     return rows
 
 
-def write_final_outputs(args, model, results, result_folder, by_id):
+def write_final_outputs(args, model, results, result_folder, subs_folder, by_id):
     sanitized = sanitize_model(model)
     card_hash = measurement_card_hash()
-    out_path = args.submission_out or Path(f"data/submission_vbench_{sanitized}.jsonl")
+    out_path = args.submission_out or subs_folder / f"submission_vbench_{sanitized}.jsonl"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     rows = build_submission_rows(results)
     write_submission_jsonl(out_path, rows)
-    logging.info(f"Submission written to {out_path} ({len(rows)} rows)")
     pd.DataFrame(results)[CHECKPOINT_COLS].to_csv(
         result_folder / f"vbench_full_evaluation_{sanitized}.csv", index=False)
     valid_rows = build_valid_summary(results, card_hash)
@@ -701,8 +702,7 @@ def main():
     if (args.retry_unparsed or args.guided) and not args.resume:
         raise SystemExit("Error: --retry-unparsed/--guided are --resume modifiers (they re-call "
                          "the unparsed rows of an existing checkpoint); add --resume.")
-    result_folder = RESULTS_DIR
-    result_folder.mkdir(parents=True, exist_ok=True)
+    result_folder = None  # resolved per-model below via model_dirs()
 
     if args.record_server_scores is not None:
         if args.submission_only:
@@ -713,7 +713,8 @@ def main():
         model = args.model or os.environ.get("OPENAI_MODEL")
         if not model:
             raise SystemExit("Error: OPENAI_MODEL is not set. Provide --model so the snapshot stays per-model.")
-        setup_logging(Path("logs") / f"vbench_{sanitize_model(model)}.log")
+        result_folder, _, logs_folder = model_dirs(model)
+        setup_logging(logs_folder / f"vbench_{sanitize_model(model)}.log")
         card_hash = measurement_card_hash()
         grades = read_server_scores(args.record_server_scores)
         snap_path = result_folder / f"vbench_server_scores_{sanitize_model(model)}.csv"
@@ -724,7 +725,8 @@ def main():
 
     base_url, api_key, model = resolve_endpoint(args)
     sanitized_model = sanitize_model(model)
-    setup_logging(Path("logs") / f"vbench_{sanitized_model}.log")
+    result_folder, subs_folder, logs_folder = model_dirs(model)
+    setup_logging(logs_folder / f"vbench_{sanitized_model}.log")
     logging.info(f"Model: {model} | Base URL: {base_url} | workers: {args.workers} "
                  f"| agentic prompt-style: {args.prompt_style}")
 
@@ -742,7 +744,7 @@ def main():
             raise SystemExit("Error: --submission-only needs a vbench_result_* "
                              f"checkpoint for model '{model}' in {result_folder}")
         logging.info(f"Rebuilding submission from checkpoint: {latest}")
-        write_final_outputs(args, model, load_checkpoint(latest, by_id), result_folder, by_id)
+        write_final_outputs(args, model, load_checkpoint(latest, by_id), result_folder, subs_folder, by_id)
         return
 
     for item in data:
@@ -825,7 +827,7 @@ def main():
 
     duration = time.time() - start_time
     logging.info(f"Inference time: {duration:.2f}s ({duration/60:.2f} mins)")
-    write_final_outputs(args, model, [r for r in results if r is not None], result_folder, by_id)
+    write_final_outputs(args, model, [r for r in results if r is not None], result_folder, subs_folder, by_id)
     logging.info("Upload the submission at https://vbench.ai/submission")
 
 

@@ -4,7 +4,7 @@ Consumes `data/eval_set_manifest.csv` (from make_eval_sample.py) plus the two
 question_only source JSONs, calls the model on each {context, question} pair,
 and writes per-item free-text answers:
 
-  all_res/ollama_result/reading_answers_<model>.csv
+  all_res/ollama_result/<model>/reading_answers_<model>.csv   (log: logs/<model>/)
 
 This is deliberately SEPARATE from run_mc_eval.py: that harness is the frozen
 multiple-choice pipeline (A-E contract, 4-token budget); reading comprehension
@@ -13,7 +13,6 @@ gold_answer is empty until the 2-annotator pass (EM + char-F1 script comes
 after that).
 
 Run from repo root:
-  .venv/bin/python code_benchmark/run_reading_eval.py --workers 4 --resume
 """
 from __future__ import annotations
 
@@ -29,7 +28,7 @@ from threading import Lock
 from dotenv import load_dotenv
 
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
-    from code_benchmark.common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+    from code_benchmark.common import (sanitize_model, resolve_endpoint, model_dirs,
                                        MANIFEST_DEFAULT, SQUAD_DEFAULT, DROP_DEFAULT,
                                        read_csv_checked, add_endpoint_args,
                                        parse_endpoint_args, setup_logging)
@@ -38,7 +37,7 @@ try:  # package run (repo root) or direct run (cwd == code_benchmark)
     from code_benchmark.llm import build_client, verify_credentials, call_model_with_retry
     from code_benchmark.common import item_key
 except ImportError:
-    from common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+    from common import (sanitize_model, resolve_endpoint, model_dirs,
                         MANIFEST_DEFAULT, SQUAD_DEFAULT, DROP_DEFAULT,
                         read_csv_checked, add_endpoint_args,
                         parse_endpoint_args, setup_logging)
@@ -123,11 +122,10 @@ def main():
     args = parse_args()
     base_url, api_key, model = resolve_endpoint(args)
 
-    result_folder = RESULTS_DIR
-    result_folder.mkdir(parents=True, exist_ok=True)
     sanitized_model = sanitize_model(model)
+    result_folder, _, logs_folder = model_dirs(model)
 
-    setup_logging(f"logs/reading_{sanitized_model}.log")
+    setup_logging(logs_folder / f"reading_{sanitized_model}.log")
 
     logging.info(f"Model: {model} @ {base_url} | workers={args.workers} "
                  f"temp={args.temperature} seed={args.seed} max_tokens={args.max_tokens}")

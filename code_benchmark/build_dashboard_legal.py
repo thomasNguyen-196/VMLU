@@ -4,7 +4,7 @@ Reads the frozen MC runner's own outputs and writes a `legal` key, leaving
 every other key in the dashboard blob untouched (the file also carries
 VMLU/V-Bench/reading sections that this script must not rebuild).
 
-  in : all_res/ollama_result/full_evaluation_<model>.csv   (id,answer,gold_answer,correct)
+  in : all_res/ollama_result/<model>/full_evaluation_<model>.csv   (id,answer,gold_answer,correct)
        data/legal_slm_multichoice_manifest.json            (LG-0001..LG-0146 + gold)
        measurement_card.md                                 (hash provenance)
   out: web/public/benchmark-data.json  ->  .legal
@@ -46,7 +46,7 @@ def pct(numerator: int, denominator: int) -> float:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Add the LegalSLM MC-6 block to the dashboard blob.")
     ap.add_argument("--dashboard", type=Path, default=DASHBOARD)
-    ap.add_argument("--full", type=Path, default=RESULTS_DIR / "full_evaluation_qwen38-nothink.csv",
+    ap.add_argument("--full", type=Path, default=RESULTS_DIR / "qwen38-nothink" / "full_evaluation_qwen38-nothink.csv",
                     help="full_evaluation_<model>.csv (default: the MC-6 file; pass explicitly for another model)")
     ap.add_argument("--manifest", type=Path, default=MANIFEST)
     args = ap.parse_args()
@@ -81,7 +81,7 @@ def main() -> None:
     # Recompute from per-row correct; cross-check the accuracy file the
     # runner wrote (same rule as the reading builder: dashboard shows only
     # numbers reproducible from the CSVs).
-    acc_path = RESULTS_DIR / f"accuracy_{slug}.csv"
+    acc_path = full.parent / f"accuracy_{slug}.csv"
     if not acc_path.exists():
         raise SystemExit(f"Error: missing runner accuracy file {acc_path}")
     acc_rows = read_csv_checked(acc_path, required=ACC_COLS, label="accuracy")
@@ -97,7 +97,6 @@ def main() -> None:
             f"Error: {acc_path} overall disagrees with {full}: "
             f"accuracy n={overall['n']} correct={overall['correct']} acc={overall['accuracy']}, "
             f"recomputed n={n} correct={correct} acc={accuracy}")
-
     valid = sum(1 for r in rows if str(r.get("answer", "")).strip())
     blanks = [str(r["id"]) for r in rows if not str(r.get("answer", "")).strip()]
     wrong_parsed = sum(1 for r in rows if str(r.get("answer", "")).strip() and not int(r["correct"]))

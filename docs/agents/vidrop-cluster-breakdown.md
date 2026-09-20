@@ -1,7 +1,7 @@
 # Vi-DROP — phân rã 79 câu bị bác
 
 > Nguồn: `review_records/review_nttung245_qwen3_8_27b_q4_k_m_gguf.csv` (400 dòng, 1 người duyệt)
-> và `all_res/ollama_result/reading_scores_Qwen3_8-27B-Q4_K_M_gguf.csv` (vừa chấm EM/F1).
+> và `all_res/ollama_result/Qwen3_8-27B-Q4_K_M_gguf/reading_scores_Qwen3_8-27B-Q4_K_M_gguf.csv` (vừa chấm EM/F1).
 > Bộc lộ: **79 câu bị bác trong tổng 400**, riêng Vi-DROP chiếm **74**.
 
 Yêu cầu của thầy: bẻ 74 câu Vi-DROP bị bác thành **đúng 3 cụm**, không gộp chung là "reasoning".

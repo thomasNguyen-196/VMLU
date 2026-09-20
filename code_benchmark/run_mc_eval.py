@@ -4,11 +4,13 @@ Formerly test_ollama.py — renamed because it is a runner, not a test file
 (the test_ prefix is a pytest landmine; it pairs with run_reading_eval.py).
 
 Consumes vmlu_mqa_v1.5-style JSONL ({id, question, choices[], answer?}) via
-any OpenAI-compatible endpoint; writes checkpoints + finals under
-all_res/ollama_result/ and submission.csv at the repo root. build_prompt /
-extract_answer below are BYTE-FROZEN contracts shared with the legacy scripts
-and the standalone parity reference (test_parsing.py) — never "deduplicate"
-them against each other.
+any OpenAI-compatible endpoint; writes per-model outputs under
+all_res/ollama_result/<model>/ (checkpoints + finals), the id,answer
+submission CSV under submissions/<model>/ (default
+submissions/<model>/submission.csv, redirect with --submission-out), and the
+log under logs/<model>/. build_prompt / extract_answer below are BYTE-FROZEN
+contracts shared with the legacy scripts and the standalone parity reference
+(test_parsing.py) — never "deduplicate" them against each other.
 
 Run from repo root:
   .venv/bin/python code_benchmark/run_mc_eval.py --folder ./vmlu_mqa_v1.5 --workers 4
@@ -27,12 +29,12 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
-    from code_benchmark.common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+    from code_benchmark.common import (sanitize_model, resolve_endpoint, model_dirs,
                                        add_endpoint_args, parse_endpoint_args, setup_logging)
     from code_benchmark.checkpoint import checkpoint_name, find_latest_checkpoint
     from code_benchmark.llm import build_client, verify_credentials, call_model_with_retry
 except ImportError:
-    from common import (sanitize_model, resolve_endpoint, RESULTS_DIR,
+    from common import (sanitize_model, resolve_endpoint, model_dirs,
                         add_endpoint_args, parse_endpoint_args, setup_logging)
     from checkpoint import checkpoint_name, find_latest_checkpoint
     from llm import build_client, verify_credentials, call_model_with_retry
@@ -148,9 +150,9 @@ def parse_args():
     parser.add_argument("--file", type=str, default="test.jsonl", help="JSONL filename (default: test.jsonl)")
     add_endpoint_args(parser, max_tokens_default=4,
                       max_tokens_help="Max new tokens to generate (default: 4)",
-                      resume_help="Resume from the newest raw_result_<count>_<model>.csv checkpoint for THIS model in all_res/ollama_result/")
-    parser.add_argument("--submission-out", type=str, default="data/submission.csv",
-                        help="Path of the final id,answer submission CSV (default: ./data/submission.csv)")
+                      resume_help="Resume from the newest raw_result_<count>_<model>.csv checkpoint in all_res/ollama_result/<model>/")
+    parser.add_argument("--submission-out", type=str, default=None,
+                        help="Path of the final id,answer submission CSV (default: submissions/<model>/submission.csv)")
     return parse_endpoint_args(parser)
 
 def build_prompt(question: str, choices: list) -> str:
@@ -197,11 +199,9 @@ def main():
 
     base_url, api_key, model = resolve_endpoint(args)
 
-    result_folder = RESULTS_DIR
-    result_folder.mkdir(parents=True, exist_ok=True)
-
     sanitized_model = sanitize_model(model)
-    setup_logging(Path("logs") / f"{sanitized_model}.log")
+    result_folder, subs_folder, logs_folder = model_dirs(model)
+    setup_logging(logs_folder / f"{sanitized_model}.log")
 
     logging.info(f"Model: {model}")
     logging.info(f"Base URL: {base_url}")
@@ -355,7 +355,8 @@ def main():
     df_all.to_csv(result_folder / f"full_evaluation_{sanitized_model}.csv", index=False)
 
     submission_df = df_all[["id", "answer"]]
-    submission_path = args.submission_out
+    submission_path = Path(args.submission_out) if args.submission_out else subs_folder / "submission.csv"
+    submission_path.parent.mkdir(parents=True, exist_ok=True)
     submission_df.to_csv(submission_path, index=False)
     logging.info(f"Submission saved to {submission_path}")
 
