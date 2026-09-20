@@ -161,8 +161,8 @@ Kiểm tra ngày 2026-09-12:
 | `workers` | 4 |
 | `prompt_style` | frozen `build_prompt` — zero-shot, no-CoT, trả lời bằng chữ cái |
 | `scoring` | không chấm local (no gold); output `full_evaluation_Qwen3_5-9B-28K.csv` + submission `data/submission_vmlu_test_Qwen3_5-9B-28K.csv` (9.833 dòng, id khớp 1:1, unique) để upload |
-| `ket_qua` | infer xong 2026-09-20 00:06 (+07), 39,4 phút, exit 0; valid (parse được) 9.833/9.833 (0 blank); phân phối đoán A1980/B2192/C2583/D3041/E37 — không collapse; **điểm accuracy chỉ có sau khi `vmlu.ai/submit` chấm** |
-| `trang_thai` | ✅ infer xong — chờ upload web lấy điểm; pre-register commit `363faa6` 23:26 sớm hơn infer đầu |
+| `ket_qua` | infer xong 2026-09-20 00:06 (+07), 39,4 phút, exit 0; valid (parse được) 9.833/9.833 (0 blank); phân phối đoán A1980/B2192/C2583/D3041/E37 — không collapse; leaderboard **vmlu.ai 2026-09-20: total 67,87%** (STEM 65,65 / SocSci 74,97 / Humanity 68,61 / Other 63,67) |
+| `trang_thai` | ✅ xong — đã có điểm leaderboard (xem `docs/vmlu-leaderboard-qwen35.md`); pre-register commit `363faa6` 23:26 sớm hơn infer đầu |
 
 > Cấm so ngang MC-1 (model khác, tập khác: 1.047 gold vs 9.833 no-gold).
 
