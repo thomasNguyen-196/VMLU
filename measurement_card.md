@@ -272,7 +272,27 @@ Kiểm tra ngày 2026-09-12:
 | `trang_thai` | ✅ xong 2026-09-20 ~17:40 (+07), 1098s, exit 0; output `reading_answers_bidlqa_val_*` + `reading_scores_bidlqa_val_*` + `reading_summary_bidlqa_val_*` (infix `bidlqa_val` — file MC-3 400 câu nguyên vẹn) |
 
 > Gold file-native (không review) — báo là file-gold EM như MC-10 manifest gold, không phải reviewed-gold. Cấm so ngang model khác.
+---
 
+## MC-11 — ViBidLQA test 603 (Qwen3.5-9B-28K, MC-3 condition)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-11` |
+| `ngay_chay` | 2026-09-20 |
+| `benchmark` | ViBidLQA test (`v_legal_slsp/bidlqa/ViBidLQA_test.jsonl`), n=603 |
+| `manifest` | `data/bidlqa_test_manifest.json` — BIDLQA-T-0001..BIDLQA-T-0603, source order, sha256 `b99b9484…` khớp source (gold file-native trong cột `gold_answer`, không review) |
+| `runner` | `code_benchmark/run_bidlqa_eval.py --split test` — frozen `build_reading_prompt` import từ `run_reading_eval` (không copy); `run_reading_eval.py` byte-frozen |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 48 (như MC-3) |
+| `workers` | 4 |
+| `prompt` / `scoring` | open-book (`build_reading_prompt`), no-CoT; EM + char-F1 trên file gold (`score_reading_eval.py --gold manifest`, scoring math không chạm) |
+| `ket_qua` | EM **33,17%** (200/603) · char-F1 **73,21%** (recompute từ per-item scores khớp summary, 0 mismatch; key-set 2 chiều khớp manifest); 0 empty raw |
+| `trang_thai` | ✅ xong 2026-09-20 ~18:04 (+07), 1359s, exit 0; output `reading_answers_bidlqa_test_*` + `reading_scores_bidlqa_test_*` + `reading_summary_bidlqa_test_*` (infix `bidlqa_test` — file MC-3/val nguyên vẹn) |
+
+> Gold file-native (không review) — báo là file-gold EM như MC-10 manifest gold, không phải reviewed-gold. Cấm so ngang model khác. Val (MC-12) EM 32,78 / test (MC-11) EM 33,17 — cùng điều kiện, chênh 0,4đ.
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
