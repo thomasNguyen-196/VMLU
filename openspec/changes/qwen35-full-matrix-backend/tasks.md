@@ -47,4 +47,4 @@
 
 - [x] 6.1 Upload `submission_vmlu_test_Qwen3_5-9B-28K.csv` lên vmlu.ai (UTF-8, `id,answer` chữ hoa), record leaderboard score về docs → **total 67,87%** (STEM 65,65 / SocSci 74,97 / Humanity 68,61 / Other 63,67); card MC-7 cập nhật + `docs/vmlu-leaderboard-qwen35.md`
 - [ ] 6.2 Upload `submission_vbench_Qwen3_5-9B-28K.jsonl` lên vbench.ai, record server-side scores (`--record-server-scores`)
-- [ ] 6.3 Reading/Legal gold nội bộ — không submit, chỉ hiển thị dashboard; đóng change (archive openspec)
+- [x] 6.3 Reading/Legal gold nội bộ — không submit, chỉ hiển thị dashboard (verified 2026-09-20: reading blob EM 319/400=79.75 khớp recompute từ reading_scores_*; legal blob 128/146=87.67 khớp full_evaluation_legal_*; tsc + node parse OK)
