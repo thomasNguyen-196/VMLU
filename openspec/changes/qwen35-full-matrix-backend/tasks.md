@@ -29,11 +29,13 @@
 ## Phase 4 — LegalSLM matrix trên Qwen3.5
 
 - [x] 4.1 Format probe: multichoice `{question, choices[4, bare không prefix A-D], answer:int, answer_choice_letter}` — sha256 khớp manifest, order 1:1, letter↔index khớp 146/146; nli 150 `{legal_document, specific_question, question≡1 câu duy nhất, choices=[Có,Không], answer:0/1}` — KHÔNG phải MC A–E (binary entailment, cần prompt/scoring riêng); syllogism 144 `{question, answer:free-text 551–1819 chars}` — luận chứng sinh thành, không chấm chữ cái được; ViBidLQA_test 603 `{context, question, answer:free-text ngắn}` + không id — dạng reading, không phải MC. Quyết định: multichoice → MC runner qua adapter input (không sửa runner); 3 file còn lại DEFER (ghi lý do ở 4.3).
-- [ ] 4.2 Multichoice-146: chạy MC runner với manifest `data/legal_slm_multichoice_manifest.json` → cross-check manifest-gold như `build_dashboard_legal.py` (recompute accuracy vs `accuracy_*`, majority baseline recompute không hardcode) → patch `.legal` cho Qwen3.5
-- [ ] 4.3 Các file còn lại theo kết quả probe: viết adapter nhỏ (không sửa runner) hoặc ghi explicit defer + lý do
-- [ ] 4.4 Report: accuracy multichoice + baseline so sánh (MC-6 trước đó trên `qwen38-nothink`: 121/146 = 82.88% vs baseline 62.33%)
+- [x] 4.2 Multichoice-146: adapter `/tmp/legal_q35_input/legal_multichoice_146.jsonl` (LG ids + choices prefix `A. ` + gold letter, sha source khớp manifest) → MC runner frozen (`--max-tokens 4`, Qwen3.5 non-thinking) 176s exit 0 → cross-check manifest-gold 146/146 + recompute khớp `accuracy_legal_*` → patch `.legal` = Qwen3.5/MC-10 (commit `21f869a`); outputs giữ tên `*_legal_*` để không đè MC-9 (all_gold restore từ `raw_result_1047`, 768/1047 nguyên vẹn)
+- [x] 4.3 Các file còn lại: **DEFER cả ba, không adapter** — nli là binary entailment Có/Không (cần prompt/scoring riêng, ép vào runner A–E là sai phép đo); syllogism là luận chứng sinh thành 551–1819 chars (không chấm chữ cái được); ViBidLQA_test là reading có context + không id (thuộc pipeline `run_reading_eval`, không phải MC). Code fix: `build_dashboard_legal.py` thêm `--card/--max-tokens/--model-id` + caveat blank-aware (không còn hardcode MC-6/512/21-blank)
+- [x] 4.4 Report: Qwen3.5 multichoice **128/146 = 87,67%** vs baseline luôn-A 91/146 = 62,33% (**+25,0đ**); valid 146/146 (0 blank — khác MC-6 21 blank do max_tokens 4 đủ cho non-thinking); by-gold A 82/91=90,11%, B 34/39=87,18%, C 12/16=75,00%. Cấm so ngang MC-6 (model + max_tokens khác).
 
-## Phase 5 — Backend MongoDB + multi-model dashboard
+## Phase 5 — Backend MongoDB + multi-model dashboard — ⏸️ DEFERRED (user 2026-09-20)
+
+> Lý do: không có MongoDB server local (chỉ docker images mongo:7/8 chưa chạy), uploads Phase 6 cần user thao tác web thủ công — ưu tiên đóng submits trước, backend thành follow-up change riêng. Spec `results-backend/spec.md` giữ nguyên cho change sau.
 
 - [ ] 5.1 Schema: collections `runs` (model, dataset, condition, config, measurement_card_hash, n, created_at) / `mc_items` / `reading_items` / `vbench_items` (run_id, item_id, answer, gold, correct/score, raw_response; index `(run_id, item_id)`) / `summaries` (số tính sẵn cho frontend) / `models` (params, quantization, endpoint) — xem design D6
 - [ ] 5.2 Migration script: import toàn bộ CSV hiện có (`all_res/**/`, `data/gold/`) + verify row-counts khớp nguồn; summaries mang `measurement_card_hash`
