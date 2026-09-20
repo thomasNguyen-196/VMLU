@@ -3354,20 +3354,20 @@
     "benchmark_name": "Reading comprehension — 400 câu tiền đăng ký (Vi-SQuAD + Vi-DROP)",
     "date": "2026-09-12",
     "condition": "open-book · zero-shot · no-CoT · 48 token · seed 42 · temperature 0 — card MC-3",
-    "measurement_card_hash": "56743eb19d1764d07832af7cb250a1601fe7f74b83937e678a3fe06e63cf633e",
+    "measurement_card_hash": "de01b9265d6090df4ce55212eb9ab5ac8c1182c4064c27d8df5f81999426eba4",
     "overall": {
       "n": 400,
-      "em_count": 321,
-      "em": 80.25,
-      "char_f1": 86.55,
+      "em_count": 319,
+      "em": 79.75,
+      "char_f1": 86.49,
       "label": "Tổng"
     },
     "sources": [
       {
         "n": 200,
-        "em_count": 195,
-        "em": 97.5,
-        "char_f1": 98.61,
+        "em_count": 193,
+        "em": 96.5,
+        "char_f1": 98.63,
         "label": "Vi-SQuAD",
         "reject_count": 5,
         "strata": [
@@ -3375,15 +3375,15 @@
             "n": 92,
             "em_count": 88,
             "em": 95.65,
-            "char_f1": 97.24,
+            "char_f1": 97.55,
             "stratum": "short-direct",
             "label": "Ngắn — trả lời trực tiếp"
           },
           {
             "n": 47,
-            "em_count": 47,
-            "em": 100.0,
-            "char_f1": 100.0,
+            "em_count": 46,
+            "em": 97.87,
+            "char_f1": 99.64,
             "stratum": "mid-direct",
             "label": "Trung bình — trả lời trực tiếp"
           },
@@ -3405,9 +3405,9 @@
           },
           {
             "n": 5,
-            "em_count": 5,
-            "em": 100.0,
-            "char_f1": 100.0,
+            "em_count": 4,
+            "em": 80.0,
+            "char_f1": 98.39,
             "stratum": "mid-infer",
             "label": "Trung bình — phải suy luận"
           },
@@ -3425,7 +3425,7 @@
         "n": 200,
         "em_count": 126,
         "em": 63.0,
-        "char_f1": 74.49,
+        "char_f1": 74.35,
         "label": "Vi-DROP",
         "reject_count": 74,
         "strata": [
@@ -3433,7 +3433,7 @@
             "n": 40,
             "em_count": 19,
             "em": 47.5,
-            "char_f1": 56.28,
+            "char_f1": 55.97,
             "stratum": "count",
             "label": "Đếm"
           },
@@ -3449,7 +3449,7 @@
             "n": 57,
             "em_count": 35,
             "em": 61.4,
-            "char_f1": 72.02,
+            "char_f1": 73.06,
             "stratum": "comparison",
             "label": "So sánh"
           },
@@ -3457,7 +3457,7 @@
             "n": 55,
             "em_count": 32,
             "em": 58.18,
-            "char_f1": 77.28,
+            "char_f1": 75.9,
             "stratum": "add_sub",
             "label": "Cộng / trừ hai thành phần"
           },
