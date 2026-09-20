@@ -2402,7 +2402,122 @@
         "correct": false
       }
     ],
-    "total_questions_count": 1047
+    "total_questions_count": 1047,
+    "measurement_card": "MC-9",
+    "measurement_card_hash": "87f63017637f48b736da8b648333a523d7f6d89e0b55244253a1a4814e2de811",
+    "model_id": "Qwen3.5-9B-28K",
+    "gold_sets": {
+      "valid": {
+        "file": "vmlu_mqa_v1.5/valid.jsonl",
+        "n": 744,
+        "overall": {
+          "n": 744,
+          "correct": 540,
+          "accuracy": 72.58
+        },
+        "categories": [
+          {
+            "name": "STEM",
+            "n": 272,
+            "correct": 213,
+            "accuracy": 78.31
+          },
+          {
+            "name": "Social Science",
+            "n": 131,
+            "correct": 100,
+            "accuracy": 76.34
+          },
+          {
+            "name": "Humanity",
+            "n": 229,
+            "correct": 157,
+            "accuracy": 68.56
+          },
+          {
+            "name": "Other",
+            "n": 112,
+            "correct": 70,
+            "accuracy": 62.5
+          }
+        ],
+        "card": "MC-9"
+      },
+      "dev": {
+        "file": "vmlu_mqa_v1.5/dev.jsonl",
+        "n": 303,
+        "overall": {
+          "n": 303,
+          "correct": 229,
+          "accuracy": 75.58
+        },
+        "categories": [
+          {
+            "name": "STEM",
+            "n": 111,
+            "correct": 90,
+            "accuracy": 81.08
+          },
+          {
+            "name": "Social Science",
+            "n": 53,
+            "correct": 45,
+            "accuracy": 84.91
+          },
+          {
+            "name": "Humanity",
+            "n": 95,
+            "correct": 64,
+            "accuracy": 67.37
+          },
+          {
+            "name": "Other",
+            "n": 44,
+            "correct": 30,
+            "accuracy": 68.18
+          }
+        ],
+        "card": "MC-9"
+      },
+      "all_gold": {
+        "file": "vmlu_mqa_v1.5/all_gold.jsonl",
+        "n": 1047,
+        "overall": {
+          "n": 1047,
+          "correct": 768,
+          "accuracy": 73.35
+        },
+        "categories": [
+          {
+            "name": "STEM",
+            "n": 383,
+            "correct": 304,
+            "accuracy": 79.37
+          },
+          {
+            "name": "Social Science",
+            "n": 184,
+            "correct": 144,
+            "accuracy": 78.26
+          },
+          {
+            "name": "Humanity",
+            "n": 324,
+            "correct": 222,
+            "accuracy": 68.52
+          },
+          {
+            "name": "Other",
+            "n": 156,
+            "correct": 98,
+            "accuracy": 62.82
+          }
+        ],
+        "card": "MC-9",
+        "primary": true
+      }
+    },
+    "note": "Local gold probe (MC-9): valid 540/744=72.58%, dev 229/303=75.58%, all_gold 768/1047=73.35% — NOT the leaderboard score (test gold withheld, server-side only)."
   },
   "vbench": {
     "benchmark_name": "V-Bench Public Test (v2026.03.28)",

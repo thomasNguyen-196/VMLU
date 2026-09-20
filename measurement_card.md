@@ -186,6 +186,26 @@ Kiểm tra ngày 2026-09-12:
 | `trang_thai` | ✅ infer xong — chờ upload web lấy điểm; `correct`/macro chỉ có sau khi server chấm (ghi qua `--record-server-scores`) |
 
 > Cấm so ngang MC-2/MC-2b (model khác). Không gộp `minimal` với điều kiện khác.
+---
+
+## MC-9 — VMLU-MQA gold local (Qwen3.5-9B-28K, 3 sets)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-9` |
+| `ngay_chay` | 2026-09-20 |
+| `benchmark` | VMLU-MQA `vmlu_mqa_v1.5/{valid,dev,all_gold}.jsonl` (744 / 303 / 1.047, có gold local) |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 4 |
+| `workers` | 4 |
+| `prompt_style` | frozen `build_prompt` — zero-shot, no-CoT, trả lời bằng chữ cái |
+| `scoring` | `extract_answer` (contract đóng băng), chữ cái case-insensitive; unparseable = sai nhưng giữ mẫu số |
+| `ket_qua` | valid **540/744 = 72,58%**; dev **229/303 = 75,58%**; all_gold **768/1.047 = 73,35%** (recompute từ checkpoint khớp 0 mismatch) |
+| `trang_thai` | ✅ xong — local probe, KHÔNG phải điểm leaderboard (gold test withheld, chỉ có sau `vmlu.ai/submit`) |
+
+> Cấm so ngang MC-1 (model khác). Local gold accuracy ≠ leaderboard.
 
 ---
 
