@@ -1,0 +1,611 @@
+{
+  "benchmark": "VLSP2025-LegalSLM public-test",
+  "split": "nli",
+  "n": 150,
+  "seed": 42,
+  "source_file": "v_legal_slsp/legal_slm/nli.jsonl",
+  "source_sha256": "43ffd83787ce5524628529c73fc82d6f1ec2ed75bf9a86c1bf94d452310d1291",
+  "adapter": "question = legal_document.strip() + \"\\n\\n\" + specific_question.strip() + \"\\n\" + question.strip(); choices = [\"A. Có\", \"B. Không\"]; gold answer 0 -> A (Có), 1 -> B (Không); ids LG-NLI-0001..0150 in source order; runner untouched",
+  "items": [
+    {
+      "id": "LG-NLI-0001",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0002",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0003",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0004",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0005",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0006",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0007",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0008",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0009",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0010",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0011",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0012",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0013",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0014",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0015",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0016",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0017",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0018",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0019",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0020",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0021",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0022",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0023",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0024",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0025",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0026",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0027",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0028",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0029",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0030",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0031",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0032",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0033",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0034",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0035",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0036",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0037",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0038",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0039",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0040",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0041",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0042",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0043",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0044",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0045",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0046",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0047",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0048",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0049",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0050",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0051",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0052",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0053",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0054",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0055",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0056",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0057",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0058",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0059",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0060",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0061",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0062",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0063",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0064",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0065",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0066",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0067",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0068",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0069",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0070",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0071",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0072",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0073",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0074",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0075",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0076",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0077",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0078",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0079",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0080",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0081",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0082",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0083",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0084",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0085",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0086",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0087",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0088",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0089",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0090",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0091",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0092",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0093",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0094",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0095",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0096",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0097",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0098",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0099",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0100",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0101",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0102",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0103",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0104",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0105",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0106",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0107",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0108",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0109",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0110",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0111",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0112",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0113",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0114",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0115",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0116",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0117",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0118",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0119",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0120",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0121",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0122",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0123",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0124",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0125",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0126",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0127",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0128",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0129",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0130",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0131",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0132",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0133",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0134",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0135",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0136",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0137",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0138",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0139",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0140",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0141",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0142",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0143",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0144",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0145",
+      "gold": "A"
+    },
+    {
+      "id": "LG-NLI-0146",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0147",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0148",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0149",
+      "gold": "B"
+    },
+    {
+      "id": "LG-NLI-0150",
+      "gold": "B"
+    }
+  ]
+}

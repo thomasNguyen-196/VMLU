@@ -229,7 +229,28 @@ Kiểm tra ngày 2026-09-12:
 | `trang_thai` | ✅ xong 2026-09-20 ~14:15 (+07), 176s, exit 0; output `full_evaluation_legal_*` + `accuracy_legal_*` + `submission_legal_mc_*` (giữ tên legal- để không đè MC-9 all_gold đã restore từ `raw_result_1047`) |
 
 > Cấm so ngang MC-6 (model + max_tokens khác). Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố.
+---
 
+## MC-13 — VLSP2025-LegalSLM NLI-150 (Qwen3.5-9B-28K, binary qua MC runner)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-13` |
+| `ngay_chay` | 2026-09-20 |
+| `benchmark` | VLSP2025-LegalSLM public-test, split `nli`, n=150 |
+| `manifest` | `data/legal_nli_manifest.json` — LG-NLI-0001..LG-NLI-0150, seed 42, sha256 `43ffd837…` khớp source (gold local: answer 0→A/Có, 1→B/Không; balanced 75/75) |
+| `adapter` | `/tmp/legal_nli_input/legal_nli_150.jsonl` — verbatim string: `question = legal_document.strip() + "\n\n" + specific_question.strip() + "\n" + question.strip()`; choices `["A. Có","B. Không"]`; gold Có→A / Không→B; ids theo thứ tự source; runner **không sửa** |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7; non-thinking, probe `max_tokens=4` → đáp án) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 4 (như MC-10: Qwen3.5 không thinking ẩn) |
+| `workers` | 4 |
+| `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
+| `baseline` | majority-class A=75/150 (**50,00%**) — recompute từ manifest, không hardcode |
+| `ket_qua` | accuracy **90,00%** (135/150); baseline 50,00% → **+40,0đ**; valid 150/150 (0 blank, 0 raw rỗng); by-gold A 60/75=80,00%, B 75/75=100,00% (model thiên B: đoán B 90/A 60; 15 sai toàn là gold-A đoán B) |
+| `trang_thai` | ✅ xong 2026-09-20 ~17:08 (+07), 145s, exit 0; output `full_evaluation_nli_*` + `accuracy_nli_*` + `submission_nli_*` (giữ tên nli- để không đè MC-9/MC-10; finals MC-9 `full_evaluation_*`/`accuracy_*` đã restore từ backup `/tmp/*mc9*`, 768/1047 nguyên vẹn) |
+
+> Cấm so ngang MC-6 (suite + model khác). Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố.
 ---
 
 ## Quy tắc dùng card
