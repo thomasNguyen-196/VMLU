@@ -4,6 +4,7 @@ import json
 import random
 import shutil
 import subprocess  # nosec B404 — test harness shells out to local CLI/node only
+import hashlib
 import sys
 import tempfile
 import unittest
@@ -41,6 +42,12 @@ from code_benchmark.run_reading_eval import (
     index_sources,
     resume_key,
     find_latest_reading_checkpoint,
+)
+from code_benchmark.run_bidlqa_eval import (
+    split_config,
+    load_source,
+    build_manifest_rows,
+    verify_join,
 )
 from code_benchmark.run_vbench_eval import (
     classify_track as vb_classify_track,
@@ -491,6 +498,145 @@ class TestReadingRunner(unittest.TestCase):
             assert latest is not None
             self.assertEqual(latest.name, "reading_result_400_Qwen.csv")  # still ignores MC
             self.assertIsNone(find_latest_reading_checkpoint(tmp, "TESTMODELSMOKE"))  # legacy ignored
+class TestBidlqaRunner(unittest.TestCase):
+    def _source(self, tmp: Path, n: int = 3):
+        p = tmp / "bidlqa.jsonl"
+        with open(p, "w", encoding="utf-8") as f:
+            for i in range(1, n + 1):
+                f.write(json.dumps({"context": f"ctx {i}", "question": f"Q{i}?",
+                                    "answer": f"A{i}"}, ensure_ascii=False) + "\n")
+        digest = hashlib.sha256(p.read_bytes()).hexdigest()
+        return p, digest
+
+    def test_split_config_pins_known_splits(self):
+        val = split_config("val")
+        test = split_config("test")
+        self.assertEqual((val["n"], val["id_prefix"]), (482, "BIDLQA-V"))
+        self.assertEqual((test["n"], test["id_prefix"]), (603, "BIDLQA-T"))
+        self.assertNotEqual(val["sha"], test["sha"])
+        self.assertNotEqual(val["ckpt_prefix"], test["ckpt_prefix"])
+        with self.assertRaises(SystemExit):
+            split_config("train")
+
+    def test_load_source_rejects_drift_and_empty(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            p, digest = self._source(tmp)
+            self.assertEqual(len(load_source(p, digest)), 3)
+            with self.assertRaises(SystemExit):  # sha drift
+                load_source(p, "0" * 64)
+            p.write_text(json.dumps({"context": "c", "question": "q?",
+                                     "answer": ""}) + "\n", encoding="utf-8")
+            with self.assertRaises(SystemExit):  # empty gold
+                load_source(p, hashlib.sha256(p.read_bytes()).hexdigest())
+
+    def test_manifest_ids_stable_and_join_is_1to1(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            p, digest = self._source(tmp)
+            src = load_source(p, digest)
+            for prefix in ("BIDLQA-V", "BIDLQA-T"):
+                rows = build_manifest_rows(src, prefix)
+                self.assertEqual([r["item_id"] for r in rows],
+                                 [f"{prefix}-{i:04d}" for i in (1, 2, 3)])
+                verify_join(rows, src, prefix)  # exact image passes
+                bad = [dict(rows[0], question="tampered?"), *rows[1:]]
+                with self.assertRaises(SystemExit):
+                    verify_join(bad, src, prefix)
+
+
+class TestBidlqaDashboard(unittest.TestCase):
+    def _split_outputs(self, td: Path, split: str, n: int = 4):
+        slug = f"bidlqa_{split}_M"
+        answers = td / f"reading_answers_{slug}.csv"
+        with open(answers, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["dataset", "item_id", "stratum", "question",
+                                   "context_words", "raw_response"])
+            w.writeheader()
+            for i in range(n):
+                w.writerow({"dataset": "bidlqa", "item_id": f"BIDLQA-{i:04d}",
+                            "stratum": "auction", "question": f"q{i}",
+                            "context_words": 9, "raw_response": f"a{i}"})
+        scores = td / f"reading_scores_{slug}.csv"
+        with open(scores, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["dataset", "item_id", "stratum", "gold_answer",
+                                   "raw_response", "prediction", "em", "f1", "exact_raw"])
+            w.writeheader()
+            for i in range(n):
+                w.writerow({"dataset": "bidlqa", "item_id": f"BIDLQA-{i:04d}",
+                            "stratum": "auction", "gold_answer": f"a{i}",
+                            "raw_response": f"a{i}", "prediction": f"a{i}",
+                            "em": 1 if i % 2 == 0 else 0,
+                            "f1": "1.000000" if i % 2 == 0 else "0.500000",
+                            "exact_raw": 1 if i % 2 == 0 else 0})
+        summary = td / f"reading_summary_{slug}.csv"
+        with open(summary, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["dataset", "n", "em_count", "em", "char_f1",
+                                   "exact_raw_count", "measurement_card_hash"])
+            w.writeheader()
+            w.writerow({"dataset": "ALL", "n": n, "em_count": n // 2, "em": "50.00",
+                        "char_f1": "75.00", "exact_raw_count": n // 2, "measurement_card_hash": "h"})
+        manifest = td / "manifest.csv"
+        with open(manifest, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["dataset", "item_id", "stratum", "passage_id",
+                                   "question", "gold_answer"])
+            w.writeheader()
+            for i in range(n):
+                w.writerow({"dataset": "bidlqa", "item_id": f"BIDLQA-{i:04d}",
+                            "stratum": "auction", "passage_id": str(i),
+                            "question": f"q{i}", "gold_answer": f"a{i}"})
+        blob = td / "blob.json"
+        blob.write_text(json.dumps({"vmlu": {"a": 1}, "legal": {"b": 2}}), encoding="utf-8")
+        return answers, manifest, blob
+
+    def _cli(self, *argv: str):
+        from code_benchmark.build_dashboard_bidlqa import main as bidlqa_main
+        import sys as _sys
+        old = _sys.argv
+        _sys.argv = ["build_dashboard_bidlqa.py", *argv]
+        try:
+            bidlqa_main()
+            return 0
+        finally:
+            _sys.argv = old
+
+    def test_patches_only_bidlqa_key(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            answers, manifest, blob = self._split_outputs(tmp, "val")
+            self._cli("--dashboard", str(blob), "--split", "val",
+                      "--answers", str(answers), "--manifest", str(manifest),
+                      "--card", "MC-12", "--model-id", "M")
+            out = json.loads(blob.read_text(encoding="utf-8"))
+            self.assertEqual(out["vmlu"], {"a": 1})    # untouched
+            self.assertEqual(out["legal"], {"b": 2})   # untouched
+            self.assertEqual(out["bidlqa"]["val"]["overall"]["n"], 4)
+            self.assertEqual(out["bidlqa"]["val"]["overall"]["em"], 50.0)
+            self.assertEqual(out["bidlqa"]["val"]["measurement_card"], "MC-12")
+
+    def test_summary_mismatch_and_id_drift_refuse(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            answers, manifest, blob = self._split_outputs(tmp, "val")
+            with open(tmp / "reading_summary_bidlqa_val_M.csv", "w", newline="",
+                       encoding="utf-8") as f:
+                w = csv.DictWriter(f, ["dataset", "n", "em_count", "em", "char_f1",
+                                       "exact_raw_count", "measurement_card_hash"])
+                w.writeheader()
+                w.writerow({"dataset": "ALL", "n": 4, "em_count": 4, "em": "100.00",
+                            "char_f1": "100.00", "exact_raw_count": 4,
+                            "measurement_card_hash": "h"})
+            with self.assertRaises(SystemExit):
+                self._cli("--dashboard", str(blob), "--split", "val",
+                          "--answers", str(answers), "--manifest", str(manifest),
+                          "--card", "MC-12")
+            self.assertNotIn("bidlqa", json.loads(blob.read_text(encoding="utf-8")))
+            with open(manifest, "a", encoding="utf-8") as f:  # extra gold row
+                f.write("bidlqa,BIDLQA-9999,auction,99,qx,ax\n")
+            with self.assertRaises(SystemExit):
+                self._cli("--dashboard", str(blob), "--split", "val",
+                          "--answers", str(answers), "--manifest", str(manifest),
+                          "--card", "MC-12")
 
 
 class TestVbenchRunner(unittest.TestCase):

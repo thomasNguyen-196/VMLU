@@ -253,6 +253,26 @@ Kiểm tra ngày 2026-09-12:
 > Cấm so ngang MC-6 (suite + model khác). Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố.
 ---
 
+## MC-12 — ViBidLQA val 482 (Qwen3.5-9B-28K, MC-3 condition)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-12` |
+| `ngay_chay` | 2026-09-20 |
+| `benchmark` | ViBidLQA val (`v_legal_slsp/bidlqa/ViBidLQA_val.jsonl`), n=482 |
+| `manifest` | `data/bidlqa_val_manifest.json` — BIDLQA-V-0001..BIDLQA-V-0482, source order, sha256 `4cafca9d…` khớp source (gold file-native trong cột `gold_answer`, không review) |
+| `runner` | `code_benchmark/run_bidlqa_eval.py --split val` — frozen `build_reading_prompt` import từ `run_reading_eval` (không copy); `run_reading_eval.py` byte-frozen |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 48 (như MC-3) |
+| `workers` | 4 |
+| `prompt` / `scoring` | open-book (`build_reading_prompt`), no-CoT; EM + char-F1 trên file gold (`score_reading_eval.py --gold manifest`, scoring math không chạm) |
+| `ket_qua` | EM **32,78%** (158/482) · char-F1 **74,16%** (recompute từ per-item scores khớp summary, 0 mismatch; key-set 2 chiều khớp manifest); 0 empty raw |
+| `trang_thai` | ✅ xong 2026-09-20 ~17:40 (+07), 1098s, exit 0; output `reading_answers_bidlqa_val_*` + `reading_scores_bidlqa_val_*` + `reading_summary_bidlqa_val_*` (infix `bidlqa_val` — file MC-3 400 câu nguyên vẹn) |
+
+> Gold file-native (không review) — báo là file-gold EM như MC-10 manifest gold, không phải reviewed-gold. Cấm so ngang model khác.
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

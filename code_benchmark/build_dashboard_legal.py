@@ -55,8 +55,9 @@ def main() -> None:
                     help="generation budget recorded in the condition string (default: 512)")
     ap.add_argument("--model-id", type=str, default=None,
                     help="model label recorded in the block (default: derived from --full filename)")
+    ap.add_argument("--block", type=str, default="legal",
+                    help="dashboard key to patch (default: legal; use legal_nli for the NLI run)")
     args = ap.parse_args()
-
     full = args.full
     slug = full.stem.removeprefix("full_evaluation_")
 
@@ -122,14 +123,18 @@ def main() -> None:
     card_hash = hashlib.sha256(MEASUREMENT_CARD.read_bytes()).hexdigest() if MEASUREMENT_CARD.exists() else ""
 
     blob = json.loads(args.dashboard.read_text(encoding="utf-8"))
+    before = {k: v for k, v in blob.items() if k != args.block}
     model_label = args.model_id or slug
+    benchmark_name = ("VLSP2025-LegalSLM public-test — nli (suy luận entailment, nhị phân Có/Không qua MC runner)"
+                      if args.block == "legal_nli" else
+                      "VLSP2025-LegalSLM public-test — multichoice (luật, trắc nghiệm)")
     caveat = (
         "Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố. "
         "Cấm so ngang VMLU 73% (suite khác dạng).")
     if blanks:
         caveat = (f"{len(blanks)} câu raw rỗng tính sai; nguyên nhân chưa rõ. " + caveat)
-    blob["legal"] = {
-        "benchmark_name": "VLSP2025-LegalSLM public-test — multichoice (luật, trắc nghiệm)",
+    blob[args.block] = {
+        "benchmark_name": benchmark_name,
         "date": "2026-09-19",
         "condition": (f"closed-book · zero-shot · no-CoT · {args.max_tokens} token · seed 42 · temperature 0 — "
                       f"card {args.card} · frozen build_prompt/extract_answer"),
@@ -160,7 +165,11 @@ def main() -> None:
 
     args.dashboard.write_text(json.dumps(blob, ensure_ascii=False, indent=2) + "\n",
                               encoding="utf-8")
-    print(f"patched {args.dashboard} from {slug}")
+    after = {k: v for k, v in json.loads(args.dashboard.read_text(encoding="utf-8")).items()
+             if k != args.block}
+    if after != before:
+        raise SystemExit(f"Error: patch touched keys outside {args.block!r} — refusing to leave a dirty blob")
+    print(f"patched {args.dashboard} [.{args.block}] from {slug}")
     print(f"  overall n={n} correct={correct} acc={accuracy} valid={valid} blanks={len(blanks)}")
     print(f"  baseline {majority_letter}={majority_n}/{len(gold_by_id)} ({majority_baseline}%)")
 
