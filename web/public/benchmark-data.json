@@ -3633,5 +3633,81 @@
     ],
     "blank_ids": [],
     "caveat": "Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố. Cấm so ngang VMLU 73% (suite khác dạng)."
+  },
+  "legal_nli": {
+    "benchmark_name": "VLSP2025-LegalSLM public-test — nli (suy luận entailment, nhị phân Có/Không qua MC runner)",
+    "date": "2026-09-19",
+    "condition": "closed-book · zero-shot · no-CoT · 4 token · seed 42 · temperature 0 — card MC-13 · frozen build_prompt/extract_answer",
+    "measurement_card": "MC-13",
+    "measurement_card_hash": "0f89936ba2a4c4e3939e8448d013495e01a3c7babf93069d771b5c11c1140b63",
+    "model_id": "Qwen3.5-9B-28K",
+    "overall": {
+      "n": 150,
+      "correct": 135,
+      "accuracy": 90.0,
+      "valid": 150,
+      "blanks": 0,
+      "wrong_parsed": 15
+    },
+    "baseline": {
+      "majority_letter": "A",
+      "majority_n": 75,
+      "majority_accuracy": 50.0,
+      "label": "Luôn đáp A"
+    },
+    "by_gold": [
+      {
+        "gold": "A",
+        "n": 75,
+        "correct": 60,
+        "accuracy": 80.0
+      },
+      {
+        "gold": "B",
+        "n": 75,
+        "correct": 75,
+        "accuracy": 100.0
+      }
+    ],
+    "blank_ids": [],
+    "caveat": "Model >4B trong khi suite giới hạn ≤4B — ghi rõ khi công bố. Cấm so ngang VMLU 73% (suite khác dạng)."
+  },
+  "bidlqa": {
+    "val": {
+      "benchmark_name": "ViBidLQA — đấu thầu (đọc hiểu, open-book)",
+      "date": "2026-09-20",
+      "condition": "open-book · zero-shot · no-CoT · 48 token · seed 42 · temperature 0 — card MC-12 · frozen build_reading_prompt",
+      "measurement_card": "MC-12",
+      "measurement_card_hash": "0f89936ba2a4c4e3939e8448d013495e01a3c7babf93069d771b5c11c1140b63",
+      "model_id": "Qwen3.5-9B-28K",
+      "source_sha256": "4cafca9de80ebdcd20d0267245a0fcd86245ff4c5985669cb3ef7cc9c433e800",
+      "overall": {
+        "n": 482,
+        "em_count": 158,
+        "em": 32.78,
+        "char_f1": 74.16,
+        "empty": 0
+      },
+      "caveat": "Gold lấy nguyên văn trong file (file-gold, không qua review 2 người). EM/char-F1 chấm bằng code_benchmark/score_reading_eval.py --gold manifest.",
+      "scorer": "code_benchmark/score_reading_eval.py"
+    },
+    "test": {
+      "benchmark_name": "ViBidLQA — đấu thầu (đọc hiểu, open-book)",
+      "date": "2026-09-20",
+      "condition": "open-book · zero-shot · no-CoT · 48 token · seed 42 · temperature 0 — card MC-11 · frozen build_reading_prompt",
+      "measurement_card": "MC-11",
+      "measurement_card_hash": "0f89936ba2a4c4e3939e8448d013495e01a3c7babf93069d771b5c11c1140b63",
+      "model_id": "Qwen3.5-9B-28K",
+      "source_sha256": "b99b94842a32ed6f9151c804adc202c8a54f3362ab30be9c4dfe06b02eb6358d",
+      "overall": {
+        "n": 603,
+        "em_count": 200,
+        "em": 33.17,
+        "char_f1": 73.21,
+        "empty": 0
+      },
+      "caveat": "Gold lấy nguyên văn trong file (file-gold, không qua review 2 người). EM/char-F1 chấm bằng code_benchmark/score_reading_eval.py --gold manifest.",
+      "scorer": "code_benchmark/score_reading_eval.py"
+    }
   }
 }
