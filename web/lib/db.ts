@@ -1,9 +1,10 @@
-/** DB-backed results reader (change results-db-frontend) — one deep module.
+/** DB-backed results reader (changes results-db-frontend + results-into-benchmark).
  *
  * Interface: getModels(), getDatasets(), getRuns(model?, dataset?),
- * getSummary(run_id), getItem(run_id, item_id). Read-only: never aggregates
- * at read time (dashboard numbers come from precomputed `summaries`).
- * One shared client behind the seam; route handlers stay thin pass-throughs.
+ * getSummary(run_id), getItem(run_id, item_id), getItemsPage(run_id, opts).
+ * Read-only: never aggregates at read time (dashboard numbers come from
+ * precomputed `summaries`). One shared client behind the seam; route
+ * handlers stay thin pass-throughs.
  */
 import { MongoClient, type Db } from "mongodb";
 
@@ -88,6 +89,28 @@ export async function getSummary(run: string): Promise<Record<string, unknown> |
 
 const ITEM_COLLS = ["mc_items", "reading_items", "vbench_items"] as const;
 
+export async function getItemsPage(
+  run: string,
+  opts: { collection?: string; correct?: 0 | 1; skip?: number; limit?: number } = {},
+): Promise<{ collection: string; total: number; docs: Array<Record<string, unknown>> }> {
+  const d = await getDb();
+  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+  const skip = Math.max(opts.skip ?? 0, 0);
+  const colls = opts.collection ? [opts.collection] : [...ITEM_COLLS];
+  for (const coll of colls) {
+    if (!ITEM_COLLS.includes(coll as (typeof ITEM_COLLS)[number])) continue;
+    const q: Record<string, unknown> = { run_id: run };
+    if (opts.correct !== undefined) q.correct = opts.correct;
+    const cursor = d.collection(coll).find(q).sort({ item_id: 1 }).skip(skip).limit(limit);
+    const docs = (await cursor.toArray()) as Array<Record<string, unknown>>;
+    if (docs.length > 0 || (await d.collection(coll).countDocuments({ run_id: run })) > 0) {
+      const total = await d.collection(coll).countDocuments(q);
+      return { collection: coll, total, docs };
+    }
+  }
+  return { collection: colls[0] ?? ITEM_COLLS[0], total: 0, docs: [] };
+}
+
 export async function getItem(
   run: string,
   item: string,
@@ -99,3 +122,4 @@ export async function getItem(
   }
   return null;
 }
+

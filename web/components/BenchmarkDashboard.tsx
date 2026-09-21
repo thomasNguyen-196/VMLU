@@ -2,39 +2,25 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { InsightPanel } from "@/components/InsightPanel.tsx";
+import { summaryFromBlob } from "@/lib/insights.ts";
+import type {
+  BenchmarkView,
+  LegalBlock as DbLegal,
+  ReadingBlock as DbReading,
+  ReadingSourceVM,
+  ReadingStratumVM,
+  VbenchDomainVM,
+  VmluQuestionVM,
+  VmluSubjectVM,
+} from "@/lib/benchmark-view.ts";
+export type { BenchmarkView };
 
-interface VmluSubject {
-  code: string;
-  name: string;
-  full_name: string;
-  category: string;
-  n: number;
-  correct: number;
-  accuracy: number;
-}
-
-interface VmluQuestion {
-  id: string;
-  subject_code: string;
-  category: string;
-  question: string;
-  prompt: string;
-  raw_response: string;
-  answer: string;
-  gold_answer: string;
-  correct: boolean;
-}
-
-interface VbenchDomain {
-  domain: string;
-  name: string;
-  track: string;
-  score: number;
-  correct: number;
-  total: number;
-  category: string;
-  icon?: string;
-}
+type VmluSubject = VmluSubjectVM;
+type VmluQuestion = VmluQuestionVM;
+type VbenchDomain = VbenchDomainVM;
+type ReadingStratum = ReadingStratumVM;
+type ReadingSource = ReadingSourceVM;
 
 interface VbenchFailure {
   id: number;
@@ -45,47 +31,23 @@ interface VbenchFailure {
   raw_response: string;
 }
 
-interface ReadingStratum {
-  stratum: string;
-  label: string;
-  n: number;
-  em_count: number;
-  em: number;
-  char_f1: number;
-}
-
-interface ReadingSource {
-  label: string;
-  n: number;
-  em_count: number;
-  em: number;
-  char_f1: number;
-  reject_count: number;
-  strata: ReadingStratum[];
-}
-
-interface LegalBlock {
+type LegalBlock = DbLegal & {
   benchmark_name: string;
   date: string;
   condition: string;
   measurement_card_hash: string;
-  overall: { n: number; correct: number; accuracy: number; valid: number; blanks: number; wrong_parsed: number };
-  baseline: { majority_letter: string; majority_n: number; majority_accuracy: number; label: string };
-  by_gold: Array<{ gold: string; n: number; correct: number; accuracy: number }>;
   blank_ids: string[];
   caveat: string;
-}
+};
 
-interface ReadingBlock {
+type ReadingBlock = DbReading & {
   benchmark_name: string;
   date: string;
   condition: string;
   measurement_card_hash: string;
-  overall: { n: number; em_count: number; em: number; char_f1: number; label: string };
-  sources: ReadingSource[];
   caveat: string;
   scorer: string;
-}
+};
 
 interface BenchmarkData {
   model_info: {
@@ -96,6 +58,7 @@ interface BenchmarkData {
     hardware: string;
     inference_settings: string;
   };
+  datasetMeta: Record<string, { about: string; shape: string; metric: string; metricNote: string }>;
   vmlu: {
     benchmark_name: string;
     date: string;
@@ -133,30 +96,383 @@ interface BenchmarkData {
   };
   reading: ReadingBlock;
   legal: LegalBlock;
+  legal_nli: LegalBlock | null;
+  bidlqa_val: ReadingBlock | null;
+  bidlqa_test: ReadingBlock | null;
 }
+
+/** Live view (DB) → dashboard props. Missing blocks render their tab as
+ *  "model chưa chạy dataset" instead of crashing on undefined. */
+export function viewToDashboardData(view: BenchmarkView): { data: BenchmarkData; questions: VmluQuestion[] } {
+  const modelName = view.activeModel.display_name;
+  const model_info = {
+    model_name: modelName,
+    framework: "Mongo-backed results store (db vmlu)",
+    parameters: view.activeModel.params ?? "—",
+    quantization: view.activeModel.quantization ?? "—",
+    hardware: view.activeModel.endpoint ?? "—",
+    inference_settings: "Số live từ Mongo — hero/cards/bảng từ summaries đã commit",
+  };
+  const emptyLegal = (benchmark_name: string): LegalBlock => ({
+    benchmark_name,
+    date: "",
+    condition: "",
+    measurement_card_hash: "",
+    overall: { n: 0, correct: 0, accuracy: 0, valid: 0, blanks: 0, wrong_parsed: 0 },
+    baseline: { majority_letter: "—", majority_n: 0, majority_accuracy: 0, label: "—" },
+    by_gold: [],
+    blank_ids: [],
+    caveat: "",
+  });
+  const emptyReading = (benchmark_name: string): ReadingBlock => ({
+    benchmark_name,
+    date: "",
+    condition: "",
+    measurement_card_hash: "",
+    overall: { n: 0, em_count: 0, em: 0, char_f1: 0, label: "Tổng" },
+    sources: [],
+    caveat: "",
+    scorer: "",
+  });
+  const withLegalMeta = (
+    block: DbLegal | null,
+    benchmark_name: string,
+    datasetId: "legal-mc-146" | "legal-nli-150",
+  ): LegalBlock => ({
+    ...(block ?? emptyLegal(benchmark_name)),
+    benchmark_name,
+    date: "",
+    condition: view.runMeta[datasetId]?.condition ?? "",
+    measurement_card_hash: view.runMeta[datasetId]?.measurement_card_hash ?? "",
+    blank_ids: [],
+    caveat:
+      datasetId === "legal-mc-146"
+        ? "Baseline + by-gold đếm trực tiếp từ mc_items (majority là dữ liệu, không hardcode)."
+        : "NLI nhị phân Có→A / Không→B qua MC runner frozen; baseline 75/75 ≈ 50%.",
+  });
+  const withReadingMeta = (
+    block: DbReading | null,
+    benchmark_name: string,
+    datasetId: string,
+    caveat: string,
+    scorer: string,
+  ): ReadingBlock => ({
+    ...(block ?? emptyReading(benchmark_name)),
+    benchmark_name,
+    date: "",
+    condition: view.runMeta[datasetId]?.condition ?? "",
+    measurement_card_hash: view.runMeta[datasetId]?.measurement_card_hash ?? "",
+    caveat,
+    scorer,
+  });
+  const vmluBlock = view.vmlu;
+  const vbenchBlock = view.vbench;
+  const data: BenchmarkData = {
+    model_info,
+    datasetMeta: view.datasetMeta,
+    vmlu: {
+      benchmark_name: "VMLU (Vietnamese Multitask Language Understanding)",
+      date: "",
+      condition: view.runMeta["vmlu-mqa-all-gold"]?.condition ?? "",
+      overall: vmluBlock?.overall ?? { n: 0, correct: 0, accuracy: 0 },
+      categories: vmluBlock?.categories ?? [],
+      subjects: vmluBlock?.subjects ?? [],
+      weakest_subjects: vmluBlock?.weakest_subjects ?? [],
+      strongest_subjects: vmluBlock?.strongest_subjects ?? [],
+      questions_sample: vmluBlock?.questions_sample ?? [],
+      total_questions_count: vmluBlock?.overall.n ?? 0,
+    },
+    vbench: {
+      benchmark_name: "V-Bench Public Test (v2026.03.28)",
+      date: "",
+      condition: view.runMeta["vbench-public-test"]?.condition ?? "",
+      macro_score: vbenchBlock?.macro_score ?? 0,
+      micro_accuracy: vbenchBlock?.micro_accuracy ?? 0,
+      total_items: vbenchBlock?.total_items ?? 0,
+      total_correct: vbenchBlock?.total_correct ?? 0,
+      tracks: vbenchBlock?.tracks ?? {
+        multiple_choice: { total: 0, correct: 0, accuracy: 0 },
+        agentic: { total: 0, correct: 0, accuracy: 0 },
+      },
+      domains: vbenchBlock?.domains ?? [],
+      failure_summary: [],
+      rejected_items: [],
+      ablation_finding: {
+        comparison: "",
+        answers_changed_pct: 0,
+        answers_changed_count: "",
+        function_changed_count: 0,
+        insight: "",
+      },
+    },
+    reading: withReadingMeta(
+      view.reading,
+      "Reading comprehension — 400 câu tiền đăng ký (Vi-SQuAD + Vi-DROP)",
+      "reading-400",
+      "EM/F1 live từ Mongo. Strata EM đếm từ items (summaries hiện không lưu stratum).",
+      "summaries.reading_rows + items",
+    ),
+    legal: withLegalMeta(view.legal, "VLSP2025-LegalSLM public-test — multichoice (luật, trắc nghiệm)", "legal-mc-146"),
+    legal_nli: view.legal_nli
+      ? withLegalMeta(view.legal_nli, "VLSP2025-LegalSLM public-test — nli (entailment nhị phân)", "legal-nli-150")
+      : null,
+    bidlqa_val: view.bidlqa_val
+      ? withReadingMeta(view.bidlqa_val, "ViBidLQA — đấu thầu (đọc hiểu, open-book)", "bidlqa-val", "Gold lấy nguyên văn trong file (file-gold).", "summaries.reading_rows + items")
+      : null,
+    bidlqa_test: view.bidlqa_test
+      ? withReadingMeta(view.bidlqa_test, "ViBidLQA — đấu thầu (đọc hiểu, open-book)", "bidlqa-test", "Gold lấy nguyên văn trong file (file-gold).", "summaries.reading_rows + items")
+      : null,
+  };
+  return { data, questions: vmluBlock?.questions_sample ?? [] };
+}
+
+/** One shared "what is this dataset + how is it scored" strip. Rendered
+ *  under every hero from DATASET_META so all tabs share one vocabulary:
+ *  about (dataset là gì) · shape (dạng câu) · metric (thang điểm) ·
+ *  metricNote (không được hiểu nhầm thành gì). */
+function DatasetStrip({
+  meta,
+  headline,
+}: {
+  meta: { about: string; shape: string; metric: string; metricNote: string } | undefined;
+  headline: string;
+}) {
+  if (!meta) return null;
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-1.5">
+      <p className="text-xs text-slate-700 leading-relaxed">
+        <span className="font-bold text-slate-900">Dataset: </span>
+        {meta.about}
+      </p>
+      <p className="text-xs text-slate-600 leading-relaxed">
+        <span className="font-semibold text-slate-800">Dạng câu: </span>
+        {meta.shape}
+      </p>
+      <p className="text-xs text-slate-600 leading-relaxed">
+        <span className="font-semibold text-slate-800">Thang điểm hero: </span>
+        <span className="font-mono font-bold text-indigo-700">{headline}</span>
+        <span className="text-slate-500"> — {meta.metric}</span>
+      </p>
+      <p className="text-[11px] text-amber-800 leading-relaxed bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+        ⚠️ {meta.metricNote}
+      </p>
+    </div>
+  );
+}
+
+/** Insight khối DB-view cho một tab: model = `activeModelId` (view đã canonical),
+ *  bằng chứng số dùng chung với /results qua `summaryFromBlob`. */
+function TabInsight({
+  datasetId,
+  modelId,
+  block,
+}: {
+  datasetId: string;
+  modelId: string;
+  block: unknown;
+}) {
+  const summary = summaryFromBlob(datasetId, block);
+  if (!summary) return null;
+  return <InsightPanel modelId={modelId} datasetId={datasetId} summary={summary} />;
+}
+
+/** EM/F1 reading layout shared by reading-400 + bidlqa val/test (single source). */
+function ReadingTabView({
+  block,
+  title,
+  eyebrow,
+  meta,
+  datasetId,
+  modelId,
+}: {
+  block: ReadingBlock;
+  title: string;
+  eyebrow: string;
+  meta: { about: string; shape: string; metric: string; metricNote: string } | undefined;
+  datasetId: string;
+  modelId: string;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
+        <div className="space-y-3 max-w-3xl">
+          <div className="flex items-center gap-2 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
+            <span>{eyebrow}</span>
+          </div>
+          <h2 className="text-2xl font-bold">{title}</h2>
+          <p className="text-sm text-emerald-100/80 leading-relaxed">
+            {block.condition}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+            <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Số câu (n)</div>
+            <div className="text-2xl font-black font-mono mt-1">{block.overall.n}</div>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+            <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">EM</div>
+            <div className="text-2xl font-black font-mono mt-1">{block.overall.em.toFixed(2)}%</div>
+            <div className="text-[11px] text-emerald-200/70 font-mono">
+              {block.overall.em_count}/{block.overall.n}
+            </div>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+            <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">char-F1</div>
+            <div className="text-2xl font-black font-mono mt-1">{block.overall.char_f1.toFixed(2)}%</div>
+          </div>
+          <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+            <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Chênh EM→F1</div>
+            <div className="text-2xl font-black font-mono mt-1 text-amber-300">
+              {(block.overall.char_f1 - block.overall.em).toFixed(2)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <DatasetStrip meta={meta} headline={`EM ${block.overall.em.toFixed(2)}% · F1 ${block.overall.char_f1.toFixed(2)}% (n=${block.overall.n})`} />
+      <TabInsight datasetId={datasetId} modelId={modelId} block={block} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {block.sources.map((src) => (
+          <div key={src.label} className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900">{src.label}</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  n = {src.n} · {src.em_count} câu exact
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-black font-mono text-emerald-600">{src.em.toFixed(2)}%</div>
+                <div className="text-[11px] text-slate-500 font-mono">EM · F1 {src.char_f1.toFixed(2)}%</div>
+              </div>
+            </div>
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-slate-100 text-slate-700 font-semibold">
+                <tr>
+                  <th className="py-2 px-4">Dạng câu hỏi</th>
+                  <th className="py-2 px-3 text-right">n</th>
+                  <th className="py-2 px-3 text-right">EM (%)</th>
+                  <th className="py-2 px-3 text-right">char-F1 (%)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {[...src.strata]
+                  .sort((a, b) => a.em - b.em)
+                  .map((st) => (
+                    <tr key={st.stratum}>
+                      <td className="py-2 px-4">{st.label}</td>
+                      <td className="py-2 px-3 text-right font-mono">{st.n}</td>
+                      <td
+                        className={`py-2 px-3 text-right font-mono font-bold ${
+                          st.em < 60 ? "text-rose-600" : st.em < 80 ? "text-amber-600" : "text-emerald-600"
+                        }`}
+                      >
+                        {st.em.toFixed(2)}
+                      </td>
+                      <td className="py-2 px-3 text-right font-mono text-slate-600">
+                        {st.char_f1.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⚠️</span>
+          <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+        </div>
+        <p className="text-xs text-amber-900/90 leading-relaxed">{block.caveat}</p>
+        <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+          scorer: {block.scorer} · card {block.measurement_card_hash.slice(0, 12)}…
+        </p>
+      </div>
+    </div>
+  );
+}
+
 
 export function BenchmarkDashboard({
   data,
   questions,
+  models,
+  activeModelId,
+  onModelChange,
 }: {
   data: BenchmarkData;
   questions: VmluQuestion[];
+  models: Array<{ id: string; display_name: string }>;
+  activeModelId: string;
+  onModelChange: (id: string) => void;
 }) {
-  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "legal" | "synthesis">("vmlu");
+  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test">(
+    data.vmlu.overall.n > 0 ? "vmlu" : "legal",
+  );
 
-  // VMLU filters
+  // Tabs render only when the model ran that dataset (DB has the block).
+  // Badges are live numbers from Mongo, not frozen blob constants.
+  const tabs = [
+    data.vmlu.overall.n > 0 && {
+      id: "vmlu" as const,
+      label: "🇻🇳 VMLU Benchmark",
+      badge: `${data.vmlu.overall.accuracy.toFixed(2)}%`,
+      badgeClass: "bg-indigo-50 text-indigo-700",
+    },
+    data.vbench.total_items > 0 && {
+      id: "vbench" as const,
+      label: "🚀 V-Bench",
+      badge: `${data.vbench.macro_score.toFixed(2)}`,
+      badgeClass: "bg-slate-100 text-slate-700",
+    },
+    data.reading.overall.n > 0 && {
+      id: "reading" as const,
+      label: "📖 Đọc hiểu (400 câu)",
+      badge: `EM ${data.reading.overall.em.toFixed(2)}%`,
+      badgeClass: "bg-emerald-50 text-emerald-700",
+    },
+    data.legal.overall.n > 0 && {
+      id: "legal" as const,
+      label: "⚖️ LegalSLM (146 câu)",
+      badge: `${data.legal.overall.accuracy.toFixed(2)}%`,
+      badgeClass: "bg-sky-50 text-sky-700",
+    },
+    data.legal_nli && data.legal_nli.overall.n > 0 && {
+      id: "nli" as const,
+      label: "🔀 Legal NLI (150 câu)",
+      badge: `${data.legal_nli.overall.accuracy.toFixed(2)}%`,
+      badgeClass: "bg-violet-50 text-violet-700",
+    },
+    data.bidlqa_val && data.bidlqa_val.overall.n > 0 && {
+      id: "bidlqa-val" as const,
+      label: `📑 BidLQA val (${data.bidlqa_val.overall.n})`,
+      badge: `EM ${data.bidlqa_val.overall.em.toFixed(2)}%`,
+      badgeClass: "bg-teal-50 text-teal-700",
+    },
+    data.bidlqa_test && data.bidlqa_test.overall.n > 0 && {
+      id: "bidlqa-test" as const,
+      label: `📑 BidLQA test (${data.bidlqa_test.overall.n})`,
+      badge: `EM ${data.bidlqa_test.overall.em.toFixed(2)}%`,
+      badgeClass: "bg-teal-50 text-teal-700",
+    },
+  ].filter((t): t is { id: "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test"; label: string; badge: string; badgeClass: string } => Boolean(t));
+
+  // VMLU subject table filters
   const [vmluCat, setVmluCat] = useState<string>("ALL");
   const [vmluSearch, setVmluSearch] = useState<string>("");
   const [vmluSortAsc, setVmluSortAsc] = useState<boolean>(false);
 
-  // Question Explorer filters
-  const [qStatus, setQStatus] = useState<"ALL" | "CORRECT" | "INCORRECT">("ALL");
+  // Wrong-answer explorer: local filter over the 50 wrong items + paging
+  // through the full wrong set via /api/results/items-page.
   const [qCat, setQCat] = useState<string>("ALL");
   const [qSearch, setQSearch] = useState<string>("");
 
   // Modal
   const [selectedQuestion, setSelectedQuestion] = useState<VmluQuestion | null>(null);
-  const [selectedFailure, setSelectedFailure] = useState<VbenchFailure | null>(null);
 
   // Filtered VMLU subjects
   const filteredSubjects = useMemo(() => {
@@ -172,11 +488,9 @@ export function BenchmarkDashboard({
     );
   }, [data.vmlu.subjects, vmluCat, vmluSearch, vmluSortAsc]);
 
-  // Filtered Questions
+  // Filtered wrong-answer items (client-side slice of the loaded page)
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
-      if (qStatus === "CORRECT" && !q.correct) return false;
-      if (qStatus === "INCORRECT" && q.correct) return false;
       if (qCat !== "ALL" && q.category !== qCat) return false;
       if (
         qSearch &&
@@ -187,11 +501,11 @@ export function BenchmarkDashboard({
       }
       return true;
     });
-  }, [questions, qStatus, qCat, qSearch]);
+  }, [questions, qCat, qSearch]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* TOP HEADER */}
+      {/* TOP HEADER — brand + review link left, model switch lives in sidebar */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -205,116 +519,30 @@ export function BenchmarkDashboard({
                     Benchmark Research Hub
                   </h1>
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    v2026.09
+                    live · Mongo
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Đối chiếu thực nghiệm đa chiều VMLU (58 Môn) & V-Bench Public Test
+                  Số live từ Mongo — hero/cards/bảng từ summaries đã commit
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <Link
-                href="/results"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors shadow-2xs"
-              >
-                <span>🗄️ Results (DB, đa model)</span>
-              </Link>
-              <Link
                 href="/"
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
               >
                 <span>📝 Trình Review 400 câu</span>
               </Link>
-              <div className="hidden md:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-slate-500">Model:</span>
-                <span className="font-semibold text-slate-800 font-mono">
-                  {data.model_info.model_name}
-                </span>
-              </div>
             </div>
-          </div>
-
-          {/* TAB BUTTONS */}
-          <div className="flex border-t border-slate-100 space-x-2 sm:space-x-4 pt-1">
-            <button
-              onClick={() => setTab("vmlu")}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 flex items-center gap-2 transition-colors ${
-                tab === "vmlu"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <span>🇻🇳 VMLU Benchmark</span>
-              <span className="px-1.5 py-0.5 rounded text-xs bg-indigo-50 text-indigo-700 font-mono font-bold">
-                73.35%
-              </span>
-            </button>
-
-            <button
-              onClick={() => setTab("vbench")}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 flex items-center gap-2 transition-colors ${
-                tab === "vbench"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <span>🚀 V-Bench (13 Domains)</span>
-              <span className="px-1.5 py-0.5 rounded text-xs bg-slate-100 text-slate-700 font-mono font-bold">
-                44.97
-              </span>
-            </button>
-
-            <button
-              onClick={() => setTab("reading")}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 flex items-center gap-2 transition-colors ${
-                tab === "reading"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <span>📖 Đọc hiểu (400 câu)</span>
-              <span className="px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700 font-mono font-bold">
-                EM {data.reading.overall.em}%
-              </span>
-            </button>
-
-            <button
-              onClick={() => setTab("legal")}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 flex items-center gap-2 transition-colors ${
-                tab === "legal"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <span>⚖️ LegalSLM (146 câu)</span>
-              <span className="px-1.5 py-0.5 rounded text-xs bg-sky-50 text-sky-700 font-mono font-bold">
-                {data.legal.overall.accuracy}%
-              </span>
-            </button>
-
-
-            <button
-              onClick={() => setTab("synthesis")}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 flex items-center gap-2 transition-colors ${
-                tab === "synthesis"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <span>⚖️ Đối sánh & Định hướng AER-Legal</span>
-              <span className="px-1.5 py-0.5 rounded text-xs bg-amber-100 text-amber-800 font-semibold">
-                Pareto Insights
-              </span>
-            </button>
           </div>
         </div>
       </header>
 
-      {/* BODY CONTENT */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* BODY: content + sticky dataset rail */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 items-start">
+      <main className="min-w-0 flex-1 space-y-6">
         {/* ========================================================== */}
         {/* TAB 1: VMLU */}
         {/* ========================================================== */}
@@ -377,6 +605,9 @@ export function BenchmarkDashboard({
                 ))}
               </div>
             </div>
+
+            <DatasetStrip meta={data.datasetMeta["vmlu-mqa-all-gold"]} headline={`Accuracy ${data.vmlu.overall.accuracy.toFixed(2)}% (${data.vmlu.overall.correct}/${data.vmlu.overall.n}) · 4 categories + 58 subjects`} />
+            <TabInsight datasetId="vmlu-mqa-all-gold" modelId={activeModelId} block={data.vmlu} />
 
             {/* Highlighting Weakest vs Strongest */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -542,35 +773,22 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            {/* QUESTION EXPLORER */}
+            {/* WRONG-ANSWER EXPLORER (DB: first 50 correct=0 of this run) */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                 <div>
                   <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <span>🔍 Trình Duyệt Câu Hỏi VMLU (Question Explorer)</span>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-indigo-100 text-indigo-800">
+                    <span>🔍 Câu trả lời sai (Wrong-answer explorer)</span>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-rose-100 text-rose-800">
                       {filteredQuestions.length} câu
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Tra cứu đề bài, đáp án mô hình chọn so với đáp án chuẩn và kiểm tra raw response
+                    50 câu sai đầu tiên của run này (sort theo item_id) — bấm để soi prompt, raw response, gold
                   </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    value={qStatus}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "ALL" || v === "CORRECT" || v === "INCORRECT") setQStatus(v);
-                    }}
-                    className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 font-medium"
-                  >
-                    <option value="ALL">Tất cả kết quả</option>
-                    <option value="CORRECT">✅ Chỉ xem câu Đúng (768)</option>
-                    <option value="INCORRECT">❌ Chỉ xem câu Sai (279)</option>
-                  </select>
-
                   <select
                     value={qCat}
                     onChange={(e) => setQCat(e.target.value)}
@@ -598,35 +816,19 @@ export function BenchmarkDashboard({
                   <div
                     key={q.id}
                     onClick={() => setSelectedQuestion(q)}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                      q.correct
-                        ? "border-slate-200 bg-white hover:border-emerald-300"
-                        : "border-rose-200 bg-rose-50/20 hover:border-rose-400"
-                    }`}
+                    className="p-4 rounded-xl border transition-all cursor-pointer border-rose-200 bg-rose-50/20 hover:border-rose-400"
                   >
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <div className="flex items-center gap-2">
-                        <span
-                          className={`font-mono font-bold ${
-                            q.correct ? "text-slate-600" : "text-rose-700"
-                          }`}
-                        >
+                        <span className="font-mono font-bold text-rose-700">
                           {q.id}
                         </span>
                         <span className="px-2 py-0.5 rounded text-[10.5px] bg-slate-100 text-slate-600">
                           {q.category}
                         </span>
                       </div>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                          q.correct
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-rose-100 text-rose-800"
-                        }`}
-                      >
-                        {q.correct
-                          ? `✅ Đúng (${q.answer})`
-                          : `❌ Sai (Chọn ${q.answer} / Đúng: ${q.gold_answer})`}
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">
+                        {`❌ Sai (Chọn ${q.answer} / Đúng: ${q.gold_answer})`}
                       </span>
                     </div>
                     <div className="text-xs text-slate-900 font-medium line-clamp-2">
@@ -722,6 +924,9 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
+            <DatasetStrip meta={data.datasetMeta["vbench-public-test"]} headline={`Micro ${data.vbench.micro_accuracy.toFixed(2)}% (${data.vbench.total_correct}/${data.vbench.total_items}) · Macro ${data.vbench.macro_score.toFixed(2)} (13 miền)`} />
+            <TabInsight datasetId="vbench-public-test" modelId={activeModelId} block={data.vbench} />
+
             {/* 13 Domains Leaderboard */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
               <div className="p-5 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
@@ -800,214 +1005,20 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            {/* Agentic Breakdown & Failure Ledger */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Failure summary */}
-              <div className="lg:col-span-1 bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
-                <div className="border-b border-slate-100 pb-3">
-                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-                    Phân Loại 15 Câu Agentic Bị Từ Chối
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Chỉ có 15 / 1.000 câu không qua được cú pháp nghiêm ngặt
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {data.vbench.failure_summary.map((f) => (
-                    <div key={f.class} className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-900 text-xs">{f.class}</span>
-                        <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-mono font-bold text-xs">
-                          {f.count} câu
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 mt-1">{f.desc}</p>
-                      <div className="text-[10.5px] font-mono text-slate-400 mt-1">
-                        Câu: {f.examples}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-3 bg-purple-50 rounded-lg border border-purple-100 text-xs text-purple-900 leading-relaxed">
-                  <strong>💡 Phát hiện khoa học:</strong> 98.5% câu Agentic đáp ứng cấu trúc gọi hàm
-                  hoàn hảo, nhưng chỉ 39.1% đúng ngữ nghĩa. Điểm nghẽn là nhận diện công cụ chứ không
-                  phải format JSON.
-                </div>
-              </div>
-
-              {/* Rejected items */}
-              <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
-                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm">
-                      Sổ Ghi Nhận Thất Bại (Failure Ledger — 15 Items)
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Bấm vào từng câu để kiểm tra chi tiết phản hồi nguyên bản của mô hình
-                    </p>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded border border-rose-200">
-                    15 Rejected Rows
-                  </span>
-                </div>
-                <div className="space-y-2.5 max-h-[440px] overflow-y-auto pr-1">
-                  {data.vbench.rejected_items.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => setSelectedFailure(item)}
-                      className="p-3 rounded-lg border border-slate-200 hover:border-purple-300 hover:bg-purple-50/30 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                            ID #{item.id}
-                          </span>
-                          <span className="font-semibold text-slate-800">
-                            {item.failure_class}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-mono text-rose-600">{item.reason}</span>
-                      </div>
-                      <div className="mt-2 text-[11px] text-slate-600 font-mono bg-slate-50 p-2 rounded truncate border border-slate-100">
-                        {item.raw_response}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Prompt ablation */}
-            <div className="bg-amber-50 rounded-xl p-5 border border-amber-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="text-xs font-bold uppercase tracking-wider text-amber-800">
-                  🔬 Kết quả Nghiên cứu Ablation (Prompt Variance)
-                </div>
-                <h4 className="font-bold text-slate-900 text-base">
-                  Tác động của Prompt Engineering lên Năng Lực Agentic
-                </h4>
-                <p className="text-xs text-slate-700 max-w-3xl leading-relaxed">
-                  So sánh cùng model Qwen3.8-27B giữa Minimal Prompt vs Detailed Prompt: có tới{" "}
-                  <strong>42.2% câu trả lời bị xáo trộn</strong> (415/983), trong đó{" "}
-                  <strong>213 câu thay đổi hẳn hàm được chọn</strong>. Đo lường tách bạch là điều kiện
-                  tiên quyết để đo đúng thực chất năng lực.
-                </p>
-              </div>
-              <div className="text-right shrink-0 bg-white px-4 py-3 rounded-lg border border-amber-300 shadow-2xs">
-                <div className="text-2xl font-black font-mono text-amber-700">42.2%</div>
-                <div className="text-[11px] text-slate-500">Tỷ lệ đổi đáp án</div>
-              </div>
-            </div>
           </div>
         )}
 
-        {/* ========================================================== */}
-        {/* TAB 3: READING COMPREHENSION (400 pre-registered) */}
-        {/* ========================================================== */}
+        {/* TAB 3: READING COMPREHENSION */}
         {tab === "reading" && (
-          <div className="space-y-6">
-            <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
-              <div className="space-y-3 max-w-3xl">
-                <div className="flex items-center gap-2 text-emerald-300 text-xs font-semibold uppercase tracking-wider">
-                  <span>Tiền đăng ký · seed 42 · 200 Vi-SQuAD + 200 Vi-DROP</span>
-                </div>
-                <h2 className="text-2xl font-bold">Bài kiểm tra Đọc hiểu — {data.reading.overall.n} câu</h2>
-                <p className="text-sm text-emerald-100/80 leading-relaxed">
-                  {data.reading.condition}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Số câu (n)</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.reading.overall.n}</div>
-                </div>
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">EM</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.reading.overall.em}%</div>
-                  <div className="text-[11px] text-emerald-200/70 font-mono">
-                    {data.reading.overall.em_count}/{data.reading.overall.n}
-                  </div>
-                </div>
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">char-F1</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.reading.overall.char_f1}%</div>
-                </div>
-                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Chênh EM→F1</div>
-                  <div className="text-2xl font-black font-mono mt-1 text-amber-300">
-                    {(data.reading.overall.char_f1 - data.reading.overall.em).toFixed(2)}
-                  </div>
-                  <div className="text-[11px] text-emerald-200/70">điểm</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Per-source cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {data.reading.sources.map((src) => (
-                <div key={src.label} className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-                  <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-slate-900">{src.label}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        n = {src.n} · {src.reject_count} câu bị người duyệt bác
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xl font-black font-mono text-emerald-600">{src.em}%</div>
-                      <div className="text-[11px] text-slate-500 font-mono">EM · F1 {src.char_f1}%</div>
-                    </div>
-                  </div>
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead className="bg-slate-100 text-slate-700 font-semibold">
-                      <tr>
-                        <th className="py-2 px-4">Dạng câu hỏi</th>
-                        <th className="py-2 px-3 text-right">n</th>
-                        <th className="py-2 px-3 text-right">EM (%)</th>
-                        <th className="py-2 px-3 text-right">char-F1 (%)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {[...src.strata]
-                        .sort((a, b) => a.em - b.em)
-                        .map((st) => (
-                          <tr key={st.stratum}>
-                            <td className="py-2 px-4">{st.label}</td>
-                            <td className="py-2 px-3 text-right font-mono">{st.n}</td>
-                            <td
-                              className={`py-2 px-3 text-right font-mono font-bold ${
-                                st.em < 60 ? "text-rose-600" : st.em < 80 ? "text-amber-600" : "text-emerald-600"
-                              }`}
-                            >
-                              {st.em.toFixed(2)}
-                            </td>
-                            <td className="py-2 px-3 text-right font-mono text-slate-600">
-                              {st.char_f1.toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-            </div>
-
-            {/* Caveat box — the honest reading of these numbers */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">⚠️</span>
-                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
-              </div>
-              <p className="text-xs text-amber-900/90 leading-relaxed">{data.reading.caveat}</p>
-              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
-                scorer: {data.reading.scorer} · card {data.reading.measurement_card_hash.slice(0, 12)}…
-              </p>
-            </div>
-          </div>
+          <ReadingTabView
+            block={data.reading}
+            title={`Bài kiểm tra Đọc hiểu — ${data.reading.overall.n} câu`}
+            eyebrow="Tiền đăng ký · seed 42 · 200 Vi-SQuAD + 200 Vi-DROP"
+            meta={data.datasetMeta["reading-400"]}
+            datasetId="reading-400"
+            modelId={activeModelId}
+          />
         )}
-
         {/* ========================================================== */}
         {/* TAB: LEGALSLM MULTICHOICE (MC-6) */}
         {/* ========================================================== */}
@@ -1027,14 +1038,14 @@ export function BenchmarkDashboard({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Accuracy</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal.overall.accuracy}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal.overall.accuracy.toFixed(2)}%</div>
                   <div className="text-[11px] text-sky-200/70 font-mono">
                     {data.legal.overall.correct}/{data.legal.overall.n}
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Baseline ({data.legal.baseline.label})</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal.baseline.majority_accuracy}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal.baseline.majority_accuracy.toFixed(2)}%</div>
                   <div className="text-[11px] text-sky-200/70 font-mono">
                     {data.legal.baseline.majority_n}/{data.legal.overall.n}
                   </div>
@@ -1055,6 +1066,9 @@ export function BenchmarkDashboard({
                 </div>
               </div>
             </div>
+
+            <DatasetStrip meta={data.datasetMeta["legal-mc-146"]} headline={`Accuracy ${data.legal.overall.accuracy.toFixed(2)}% (${data.legal.overall.correct}/${data.legal.overall.n}) · baseline ${data.legal.baseline.majority_accuracy.toFixed(2)}%`} />
+            <TabInsight datasetId="legal-mc-146" modelId={activeModelId} block={data.legal} />
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
               <div className="p-5 border-b border-slate-200 bg-slate-50">
@@ -1099,190 +1113,111 @@ export function BenchmarkDashboard({
           </div>
         )}
 
-
-        {/* ========================================================== */}
-        {/* TAB 4: CROSS-BENCHMARK SYNTHESIS */}
-        {/* ========================================================== */}
-        {tab === "synthesis" && (
+        {/* NLI tab reuses the legal layout (binary A/B through the frozen MC runner) */}
+        {tab === "nli" && data.legal_nli && (
           <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-4">
-              <div className="max-w-3xl">
-                <span className="px-2.5 py-1 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  Luận Điểm Khoa Học Khóa Luận
-                </span>
-                <h2 className="text-2xl font-bold text-slate-900 mt-2">
-                  Đối sánh Hai Bộ Chuẩn & Cơ Sở Kiến Trúc AER-Legal
-                </h2>
-                <p className="text-sm text-slate-600 mt-1 leading-relaxed">
-                  Phân tích đối chứng giữa <strong>VMLU (1,047 câu)</strong> và{" "}
-                  <strong>V-Bench (5,141 câu)</strong> bộc lộ quy luật cốt lõi giải thích vì sao mô
-                  hình reasoning cần cơ chế định tuyến tri thức (Epistemic Routing) thay vì ReAct phổ
-                  quát.
+            <div className="bg-gradient-to-r from-violet-900 via-purple-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
+              <div className="space-y-3 max-w-3xl">
+                <div className="flex items-center gap-2 text-violet-300 text-xs font-semibold uppercase tracking-wider">
+                  <span>Nhị phân Có→A / Không→B · seed 42 · MC runner frozen</span>
+                </div>
+                <h2 className="text-2xl font-bold">Suy luận entailment — {data.legal_nli.overall.n} câu</h2>
+                <p className="text-sm text-violet-100/80 leading-relaxed">
+                  {data.legal_nli.condition}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
-                    1
-                  </div>
-                  <h4 className="font-bold text-slate-900 text-sm">Vùng Tri Thức Tham Số Vững</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    STEM và CS đều đạt đỉnh ở cả hai benchmark (VMLU STEM đạt 79.4%, V-Bench CS đạt
-                    70.2%). Mô hình ghi nhớ kiến thức tự nhiên rất tốt.
-                  </p>
-                  <div className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
-                    👉 Fast Path: Zero-shot, tắt CoT để tiết kiệm token
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Accuracy</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal_nli.overall.accuracy.toFixed(2)}%</div>
+                  <div className="text-[11px] text-violet-200/70 font-mono">
+                    {data.legal_nli.overall.correct}/{data.legal_nli.overall.n}
                   </div>
                 </div>
-
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-sm">
-                    2
-                  </div>
-                  <h4 className="font-bold text-slate-900 text-sm">Vùng Trũng Tri Thức Quy Chuẩn</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    Các môn Pháp luật, Thuế, và Nghiệp vụ công chức rớt xuống 30–47% trên VMLU. Đây là
-                    tri thức quy định không thể suy luận logic tự thân.
-                  </p>
-                  <div className="text-xs font-semibold text-rose-700 bg-rose-50 px-2 py-1 rounded border border-rose-200">
-                    👉 Evidence Path: Bắt buộc RAG với VBPL Corpus
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Baseline ({data.legal_nli.baseline.label})</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal_nli.baseline.majority_accuracy.toFixed(2)}%</div>
+                  <div className="text-[11px] text-violet-200/70 font-mono">
+                    {data.legal_nli.baseline.majority_n}/{data.legal_nli.overall.n}
                   </div>
                 </div>
-
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
-                    3
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Hơn baseline</div>
+                  <div className="text-2xl font-black font-mono mt-1 text-emerald-300">
+                    +{(data.legal_nli.overall.accuracy - data.legal_nli.baseline.majority_accuracy).toFixed(2)}
                   </div>
-                  <h4 className="font-bold text-slate-900 text-sm">Điểm Nghẽn Tính Toán & Logic</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    V-Bench Toán (19.2%) và Logic (24.0%) thấp hơn cả xác suất đoán ngẫu nhiên. VMLU
-                    Toán tiểu học cũng chỉ đạt 40%. Không có CoT/Calculator, model đoán mò.
-                  </p>
-                  <div className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200">
-                    👉 Deep Path: Bật Thinking mode / Python Evaluator
+                  <div className="text-[11px] text-violet-200/70">điểm phần trăm</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Valid (parse được)</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.legal_nli.overall.valid}/{data.legal_nli.overall.n}</div>
+                  <div className="text-[11px] text-violet-200/70 font-mono">
+                    sai trong số parse được: {data.legal_nli.overall.wrong_parsed}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Cross table */}
+            <DatasetStrip meta={data.datasetMeta["legal-nli-150"]} headline={`Accuracy ${data.legal_nli.overall.accuracy.toFixed(2)}% (${data.legal_nli.overall.correct}/${data.legal_nli.overall.n}) · baseline ${data.legal_nli.baseline.majority_accuracy.toFixed(2)}%`} />
+            <TabInsight datasetId="legal-nli-150" modelId={activeModelId} block={data.legal_nli} />
+
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
               <div className="p-5 border-b border-slate-200 bg-slate-50">
                 <h3 className="font-bold text-slate-900 text-sm">
-                  Bảng So Sánh Đối Đầu Theo Lĩnh Vực Tương Đồng
+                  Accuracy theo đáp án đúng (Có=A / Không=B)
                 </h3>
               </div>
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-slate-100 text-slate-700 font-semibold">
                   <tr>
-                    <th className="py-3 px-4">Lĩnh vực kiến thức</th>
-                    <th className="py-3 px-4">Độ chính xác trên VMLU</th>
-                    <th className="py-3 px-4">Độ chính xác trên V-Bench</th>
-                    <th className="py-3 px-4">Nhận định & Chiến lược định tuyến</th>
+                    <th className="py-2 px-4">Đáp án đúng</th>
+                    <th className="py-2 px-3 text-right">n</th>
+                    <th className="py-2 px-3 text-right">Đúng</th>
+                    <th className="py-2 px-3 text-right">Accuracy (%)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  <tr>
-                    <td className="py-3 px-4 font-semibold">Công nghệ thông tin / CS</td>
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">
-                      77.5% (Kiến trúc MT, Mạng, Lập trình)
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">
-                      70.21% (Computer Science)
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                        Thế mạnh
-                      </span>{" "}
-                      — Không cần can thiệp tool.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-semibold">Triết học & Tư tưởng</td>
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">
-                      74.3% (Mác-Lênin, Tư tưởng HCM)
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">
-                      64.64% (Philosophy)
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                        Tương đồng
-                      </span>{" "}
-                      — Ghi nhớ tốt các học thuyết lớn.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-semibold">Văn học & Ngôn ngữ</td>
-                    <td className="py-3 px-4 font-mono font-bold text-amber-600">
-                      45.0% (Văn THCS, Văn THPT)
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-amber-600">
-                      40.77% (Literature)
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800">
-                        Yếu vừa
-                      </span>{" "}
-                      — Dễ nhầm tác giả, trích đoạn thơ.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-semibold">Pháp luật chuyên ngành</td>
-                    <td className="py-3 px-4 font-mono font-bold text-rose-600">
-                      30.0% – 47.1% (Hành chính, Kinh tế)
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-blue-600">
-                      60.73% (Laws - lý thuyết đại cương)
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800">
-                        Đột phá
-                      </span>{" "}
-                      — Bắt buộc phải có Grounded Retrieval VBPL.
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 font-semibold">Toán học & Suy luận rời rạc</td>
-                    <td className="py-3 px-4 font-mono font-bold text-rose-600">
-                      40.0% (Toán tiểu học)
-                    </td>
-                    <td className="py-3 px-4 font-mono font-bold text-rose-600">
-                      19.20% (Toán) / 24.0% (Logic)
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800">
-                        Điểm chết
-                      </span>{" "}
-                      — Không có CoT/Calculator sẽ đoán mò.
-                    </td>
-                  </tr>
+                  {data.legal_nli.by_gold.map((g) => (
+                    <tr key={g.gold}>
+                      <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
+                      <td className="py-2 px-3 text-right font-mono">{g.n}</td>
+                      <td className="py-2 px-3 text-right font-mono">{g.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono font-bold text-violet-700">
+                        {g.accuracy.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Pareto formula box */}
-            <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-xl p-6 space-y-4">
-              <h3 className="font-bold text-lg text-emerald-400">
-                Chỉ Số Tối Ưu Hóa Cân Bằng Đa Mục Tiêu (Pareto Frontier)
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Trong đề tài khóa luận <strong>AER-Legal</strong>, mục tiêu là tối ưu hóa chỉ số hiệu quả
-                chi phí $E_{"{pareto}"}$ bằng cách hạn chế tối đa việc sinh token suy luận thừa ở các câu hỏi
-                dễ:
-              </p>
-              <div className="bg-black/30 p-4 rounded-lg font-mono text-sm text-center border border-white/10">
-                E_pareto = Accuracy(%) / log10(T_avg)
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
               </div>
-              <p className="text-xs text-slate-400 text-center">
-                Trong đó $T_{"{avg}"}$ là số lượng output tokens trung bình cho mỗi câu trả lời. AER-Legal
-                dự kiến đạt ngang ngửa điểm số của chế độ luôn bật Thinking nhưng tiết kiệm{" "}
-                <strong>40%–60% lượng token</strong>.
+              <p className="text-xs text-amber-900/90 leading-relaxed">{data.legal_nli.caveat}</p>
+              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+                card {data.legal_nli.measurement_card_hash.slice(0, 12)}… · {data.legal_nli.blank_ids.length} câu blank
               </p>
             </div>
           </div>
         )}
+
+        {/* BidLQA tabs reuse the reading layout (single-source EM/F1, file gold) */}
+        {(tab === "bidlqa-val" || tab === "bidlqa-test") &&
+          (tab === "bidlqa-val" ? data.bidlqa_val : data.bidlqa_test) && (
+            <ReadingTabView
+              block={(tab === "bidlqa-val" ? data.bidlqa_val : data.bidlqa_test)!}
+              title={tab === "bidlqa-val" ? "ViBidLQA val — 482 câu" : "ViBidLQA test — 603 câu"}
+              eyebrow="File-gold · open-book · seed 42"
+              meta={data.datasetMeta[tab]}
+              datasetId={tab === "bidlqa-val" ? "bidlqa-val" : "bidlqa-test"}
+              modelId={activeModelId}
+            />
+          )}
+
       </main>
 
       {/* MODAL INSPECTOR */}
@@ -1370,58 +1305,93 @@ export function BenchmarkDashboard({
         </div>
       )}
 
-      {/* MODAL FAILURE INSPECTOR */}
-      {selectedFailure && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold px-2 py-0.5 bg-purple-100 text-purple-800 rounded">
-                  V-Bench #{selectedFailure.id}
-                </span>
-                <span className="text-xs font-semibold text-slate-600">
-                  {selectedFailure.domain} ({selectedFailure.track})
-                </span>
-              </div>
-              <button
-                onClick={() => setSelectedFailure(null)}
-                className="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
-              >
-                &times;
-              </button>
+      {/* RIGHT RAIL — sticky model + dataset switcher */}
+
+      <aside className="hidden lg:block w-72 shrink-0 sticky top-24 space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Model</p>
+            <div className="mt-1.5 space-y-1.5" role="radiogroup" aria-label="Chọn model">
+              {models.map((m) => {
+                const active = m.id === activeModelId;
+                return (
+                  <button
+                    key={m.id}
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => {
+                      if (!active) onModelChange(m.id);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-xl border text-xs transition-colors ${
+                      active
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-900 font-bold"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${active ? "bg-indigo-600" : "bg-slate-300"}`}
+                      ></span>
+                      <span className="font-mono truncate">{m.display_name}</span>
+                    </span>
+                    <span className="block font-mono text-[10.5px] text-slate-400 truncate mt-0.5 ml-4">
+                      {m.id}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div className="p-6 overflow-y-auto space-y-4 text-xs">
-              <div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Nhóm lỗi & Lý do từ chối:
-                </div>
-                <div className="text-sm font-semibold text-rose-700 bg-rose-50 p-3 rounded-lg border border-rose-200">
-                  {selectedFailure.failure_class} ({selectedFailure.reason})
-                </div>
-              </div>
-
-              <div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Phản hồi nguyên bản của mô hình:
-                </div>
-                <pre className="bg-slate-900 text-slate-100 p-3.5 rounded-lg font-mono text-[11.5px] overflow-x-auto whitespace-pre-wrap max-h-64 border border-slate-800">
-                  {selectedFailure.raw_response}
-                </pre>
-              </div>
-            </div>
-
-            <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-end">
-              <button
-                onClick={() => setSelectedFailure(null)}
-                className="px-4 py-1.5 text-xs font-semibold bg-slate-800 text-white rounded-lg hover:bg-slate-700"
-              >
-                Đóng
-              </button>
+          <div className="border-t border-slate-100 pt-3">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Dataset</p>
+            <div className="mt-1.5 space-y-1.5">
+              {tabs.map((t) => {
+                const active = tab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-xs transition-colors ${
+                      active
+                        ? "border-indigo-600 bg-indigo-600 text-white font-bold shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50"
+                    }`}
+                  >
+                    <span className="truncate">{t.label}</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded text-[10.5px] font-mono font-bold shrink-0 ${active ? "bg-white/20 text-white" : t.badgeClass}`}
+                    >
+                      {t.badge}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
-      )}
+      </aside>
+      </div>
+
+      {/* MOBILE dataset switcher (rail is lg+) */}
+      <div className="lg:hidden max-w-7xl mx-auto px-4 sm:px-6 pb-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs flex gap-2 overflow-x-auto">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-3 py-2 text-xs font-semibold rounded-xl border whitespace-nowrap transition-colors ${
+                tab === t.id
+                  ? "border-indigo-600 bg-indigo-600 text-white"
+                  : "border-slate-200 bg-white text-slate-600"
+              }`}
+            >
+              {t.label} · {t.badge}
+            </button>
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }
