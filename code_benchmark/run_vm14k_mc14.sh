@@ -13,7 +13,8 @@
 #   3. parks the new VM14K checkpoints in vm14k_checkpoints/.
 #
 # Usage:
-#   ./run_mc14.sh              # full 12,488 (~50 min, 4 workers)
+#   ./run_mc14.sh              # full 12,488 (workers default 4; use WORKERS=8 for MC-14b)
+#   WORKERS=8 ./run_mc14.sh    # MC-14b condition (8 concurrent)
 #   LIMIT=20 ./run_mc14.sh     # smoke test (same protection)
 #   RESUME=1 ./run_mc14.sh     # ONLY after an interruption past ~9,833 questions
 #                              # (below that, find_latest_checkpoint picks MC-7's
@@ -43,7 +44,7 @@ restore_mc9() {
 }
 trap restore_mc9 EXIT
 
-args=(--folder v_med_vm14k --file vm14k_input.jsonl --workers 4
+args=(--folder v_med_vm14k --file vm14k_input.jsonl --workers "${WORKERS:-4}"
       --model "$MODEL"
       --submission-out "v_med_vm14k/submission_vm14k_$SLUG.csv")
 if [ -n "${LIMIT:-}" ]; then args+=(--limit "$LIMIT"); fi

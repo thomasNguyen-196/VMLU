@@ -312,14 +312,38 @@ Kiểm tra ngày 2026-09-12:
 | `workers` | 4 |
 | `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
 | `baseline` | majority-class A = 3915/12488 (**31,35%**) — recompute từ manifest, không hardcode |
-| `ket_qua` | ⏳ chưa chạy |
-| `trang_thai` | 🕓 **pre-register 2026-09-21** — chờ commit `data/vm14k_manifest.json` TRƯỚC khi infer; output dự kiến `full_evaluation_vm14k_*` + `accuracy_vm14k_*` + `submission_vm14k_*`; checkpoint VM14K tách vào `all_res/ollama_result/Qwen3_5-9B-28K/vm14k_checkpoints/` để không nhiễm `find_latest_checkpoint` (max cũ của model này là 9833 từ MC-7) |
+| `ket_qua` | ⛔ **ABORTED — không có kết quả** (dừng ở 568/12.488 sau 12,5 phút vì đổi điều kiện concurrency; theo lệ MC-5, không công bố) |
+| `trang_thai` | ⛔ **ABORTED 2026-09-21** trước khi hoàn thành → chuyển sang **MC-14b** (workers 8). Manifest/điều kiện đo không đổi; không có kết quả nào bị trộn điều kiện |
 
 > **Caveat bắt buộc khi công bố:** (1) bản phát hành HF lệch paper (12.488 vs "4k sample + 10k full + 2k private") và dataset card **không có license**;
 > (2) 1.377/12.488 dòng không phải 4 lựa chọn (2→1.240 · 3→101 · 1→15 · 5→2 · 7→19); 34 dòng có option placeholder `optionE/F/G`; 2 dòng question rỗng;
 > (3) ~6% nội dung trùng lặp (716 nhóm / 785 dòng thừa) — giữ nguyên theo quyết định "raw", không dedupe;
 > (4) suite công bố giới hạn ≤4B trong khi model 9B vượt — ghi rõ;
 > (5) chỉ được đối chiếu V-Bench medicine 38,78% theo hướng "cùng/khác", **không trừ hai phần trăm cho nhau**.
+
+---
+
+## MC-14b — VM14K public release 12.488 câu (Qwen3.5-9B-28K, workers 8, pre-register, đang chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-14b` |
+| `ngay_chay` | 2026-09-21 |
+| `benchmark` | VM14K public release — `v_med_vm14k/data-processed-shuffled0.jsonl` (HF `venera-ai/VietnameseMedBench`), n=12.488 |
+| `manifest` | `data/vm14k_manifest.json` — sha256 `68821834…1e05aef4` khớp source, seed 42 (commit `97982e3`) |
+| `adapter` | `code_benchmark/make_vm14k_input.py` → `v_med_vm14k/vm14k_input.jsonl`; `run_mc_eval.py` **byte-frozen** |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7; non-thinking) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 4 |
+| `workers` | **8** — đo tải 2026-09-21 (probe cùng lúc với run cũ): 1 request 0,26 req/s · 4 song song 0,72 req/s · 8 song song **1,55 req/s**; các điều kiện khác giữ nguyên MC-14 |
+| `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
+| `baseline` | majority-class A = 3915/12488 (**31,35%**) — recompute từ manifest, không hardcode |
+| `ket_qua` | ⏳ đang chạy (bắt đầu 2026-09-21 ~23:0x) |
+| `trang_thai` | 🕓 thay thế MC-14 (aborted trước khi có kết quả); output `full_evaluation_vm14k_*` + `accuracy_vm14k_*` + `submission_vm14k_*`; checkpoint VM14K park riêng; wrapper `code_benchmark/run_vm14k_mc14.sh` (MC-9 finals backup + restore, commit `a172027`) |
+
+> Cùng **caveat bắt buộc** như MC-14: (1) bản phát hành lệch paper + không license; (2) 1.377/12.488 dòng ≠ 4 lựa chọn, 34 dòng option placeholder, 2 dòng question rỗng; (3) ~6% trùng lặp (giữ nguyên, không dedupe); (4) suite ≤4B vs model 9B; (5) chỉ so hướng với V-Bench medicine 38,78%.
+> **Lưu ý kỹ thuật:** `workers` là tham số hạ tầng — `temperature 0` + `seed 42` + prompt/parser không đổi; MC-14 chưa từng cho ra kết quả nên hai điều kiện không bị trộn.
 
 ## Quy tắc dùng card
 
