@@ -86,6 +86,29 @@ Một con số không có measurement card đi kèm thì không được đem so
 
 ---
 
+## MC-3b — Reading eval 400 câu (Qwen3.5-9B-28K, cùng điều kiện MC-3, ghi nhận bổ sung)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-3b` |
+| `ngay_chay` | 2026-09-20 (12:54–12:58 +07; khối ghi nhận bổ sung 2026-09-22) |
+| `benchmark` | `eval_set_manifest.csv` — 400 câu pre-registered (200 Vi-SQuAD + 200 Vi-DROP, seed 42) |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7; non-thinking) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 48 (như MC-3) |
+| `workers` | 4 |
+| `prompt_style` | **open-book** (`build_reading_prompt`) — context đưa sẵn trong prompt |
+| `cot` | không |
+| `scoring` | EM + char-F1 trên gold đã hiệu đính (`code_benchmark/score_reading_eval.py`) |
+| `ket_qua` | ALL EM **79,75%** (319/400) · char-F1 **86,49**; Vi-SQuAD EM **96,50%** (193/200) · F1 **98,63**; Vi-DROP EM **63,00%** (126/200) · F1 **74,35**; 0 empty raw |
+| `trang_thai` | ✅ xong; output `reading_answers_Qwen3_5-9B-28K.csv` + `reading_scores_Qwen3_5-9B-28K.csv` + `reading_summary_Qwen3_5-9B-28K.csv`; card hash ghi trong summary lúc chạy: `de01b926…` (bản card trước khi thêm khối này) |
+
+> **Ghi nhận bổ sung (2026-09-22):** run đã chạy và được DB `/results` phục vụ từ trước nhưng chưa có khối riêng trong card — thêm theo lệ "mỗi lần chạy một khối"; hash trong output thuộc bản card lúc chạy, không phải bản hiện tại.
+> Cấm so ngang MC-1/MC-2/MC-2b (model khác). So với MC-3 (Qwen3.8-27B): EM 79,75 vs 80,25 · DROP EM **y hệt 63,00** — xem `docs/model-insights.md` §1.1.
+
+---
+
 ## MC-4 — trạng thái endpoint hiện tại (2026-09-12)
 
 ⚠️ **Endpoint đã thay model. Đây là sự kiện, không phải lỗi cấu hình.**

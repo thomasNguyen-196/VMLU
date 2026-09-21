@@ -146,7 +146,7 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
         "Vi-DROP là điểm nghẽn chung của cả hai model → ưu tiên can thiệp suy luận số học (ngân sách/CoT có kiểm soát) thay vì tăng tham số.",
         "Giữ cặp model làm đối chứng kích thước: cải tiến giúp cả hai = tín hiệu phương pháp; chỉ giúp model lớn = tín hiệu capacity.",
       ],
-      caveat: "Chưa có khối measurement card riêng cho run Qwen3.5 reading (chạy 20/09 cùng card hash MC-3) — cần bổ sung; single-rater, chưa IAA.",
+      caveat: "Run ghi nhận bổ sung tại MC-3b (chạy 20/09, cùng card hash MC-3); single-rater, chưa IAA.",
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
