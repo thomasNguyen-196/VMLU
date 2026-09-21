@@ -71,7 +71,7 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
-        "Cùng 768/1.047 = 73,35% với Qwen3.5-9B — gấp ~3 lần tham số không tạo khác biệt; profile môn gần như trùng (cùng trũng Luật hành chính 30%, Thuế 33%). Bằng chứng “capacity không phải nút thắt” trên bộ này.",
+        "Cùng 768/1.047 = 73,35% với Qwen3.5-9B — gấp ~3 lần tham số không tạo khác biệt: 54/58 môn trùng khớp tuyệt đối, chỉ 4 môn lệch (Toán THCS 55 vs 45, Kế toán 50 vs 44, Đo lường 57 vs 64, Luật giáo dục 71 vs 76). Bằng chứng “capacity không phải nút thắt”.",
       causes: ["normative", "parametric"],
       actions: [
         "Dùng làm lập luận chuyển ngân sách từ tăng tham số sang grounding/định tuyến trong giai đoạn C.",
@@ -128,7 +128,7 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
-        "Macro 44,97 · micro 45,46% — thấp hơn nhẹ Qwen3.5-9B (45,22/45,61) dù lớn gấp 3 lần; đổi prompt minimal→detailed làm 42,2% câu agentic đổi đáp án.",
+        "Macro 44,97 · micro 45,46% — thấp hơn nhẹ Qwen3.5-9B (45,22/45,61) dù lớn gấp 3 lần; từng miền lệch ≤2,1 điểm. Đổi prompt minimal→detailed làm 42,2% câu agentic đổi đáp án.",
       causes: ["robustness", "reasoning"],
       actions: [
         "Đọc như bằng chứng “prompt nhạy”: mọi so sánh phải khoá một điều kiện hỏi duy nhất.",
@@ -197,10 +197,10 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
   "bidlqa-val": {
     "qwen3-5-9b-28k": {
       verdict:
-        "EM 32,78% · char-F1 74,16% — khoảng cách EM–F1 ~41 điểm chỉ ra vấn đề định dạng/độ dài câu trả lời nhiều hơn là không tìm được thông tin.",
+        "EM 32,78% · char-F1 74,16% — 105/482 câu (21,8%) có F1≥0,8 nhưng EM=0, chỉ 2 câu F1=0. Lỗi chủ yếu là định dạng/độ dài câu trả lời, không phải không tìm được thông tin.",
       causes: ["format", "reasoning"],
       actions: [
-        "Thử ràng buộc trích span ngắn/nguyên văn (hoặc hạ token budget) để thu hẹp gap EM–F1.",
+        "Thử ràng buộc trích span ngắn/nguyên văn (hoặc hạ token budget) — mục tiêu kéo 21,8% near-miss về EM.",
         "Báo EM là cận dưới (file-gold chưa review 2 người); dùng F1 cho so sánh.",
         "Đây là open-book: chạy thêm điều kiện closed-book nếu muốn tách “không biết” khỏi “không tìm thấy”.",
       ],
@@ -210,7 +210,7 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
   "bidlqa-test": {
     "qwen3-5-9b-28k": {
       verdict:
-        "EM 33,17% · char-F1 73,21% — lệch val chỉ 0,4 điểm EM → ổn định qua split unseen; cùng dạng lỗi định dạng như val.",
+        "EM 33,17% · char-F1 73,21% — lệch val chỉ 0,4 điểm EM → ổn định qua split unseen; 120/603 câu (19,9%) F1≥0,8 nhưng EM=0, cùng dạng lỗi định dạng như val.",
       causes: ["format", "reasoning"],
       actions: [
         "Dùng cặp val/test làm kiểm tra độ ổn định của mọi cải tiến định dạng (một split để chọn, một để xác nhận).",
