@@ -293,6 +293,34 @@ Kiểm tra ngày 2026-09-12:
 | `trang_thai` | ✅ xong 2026-09-20 ~18:04 (+07), 1359s, exit 0; output `reading_answers_bidlqa_test_*` + `reading_scores_bidlqa_test_*` + `reading_summary_bidlqa_test_*` (infix `bidlqa_test` — file MC-3/val nguyên vẹn) |
 
 > Gold file-native (không review) — báo là file-gold EM như MC-10 manifest gold, không phải reviewed-gold. Cấm so ngang model khác. Val (MC-12) EM 32,78 / test (MC-11) EM 33,17 — cùng điều kiện, chênh 0,4đ.
+
+---
+
+## MC-14 — VM14K public release 12.488 câu (Qwen3.5-9B-28K, pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-14` |
+| `ngay_chay` | 2026-09-21 (pre-register; infer chưa chạy) |
+| `benchmark` | VM14K public release — `v_med_vm14k/data-processed-shuffled0.jsonl` (HF `venera-ai/VietnameseMedBench`, tải 2026-09-21), n=12.488 |
+| `manifest` | `data/vm14k_manifest.json` — sha256 `68821834…1e05aef4` khớp source, seed 42; items = id gốc (hex) + gold + n_choices + difficulty_level |
+| `adapter` | `code_benchmark/make_vm14k_input.py` → `v_med_vm14k/vm14k_input.jsonl` (choices prefix `A. `, gold letter); `run_mc_eval.py` **byte-frozen**, không sửa |
+| `model_id` | `Qwen3.5-9B-28K` (như MC-7; non-thinking, probe `max_tokens=4`) |
+| `endpoint` | `https://llmapi.iec-uit.com/v1` |
+| `temperature` / `seed` | 0.0 / 42 |
+| `max_tokens` | 4 (như MC-10/MC-13: Qwen3.5 không thinking ẩn) |
+| `workers` | 4 |
+| `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
+| `baseline` | majority-class A = 3915/12488 (**31,35%**) — recompute từ manifest, không hardcode |
+| `ket_qua` | ⏳ chưa chạy |
+| `trang_thai` | 🕓 **pre-register 2026-09-21** — chờ commit `data/vm14k_manifest.json` TRƯỚC khi infer; output dự kiến `full_evaluation_vm14k_*` + `accuracy_vm14k_*` + `submission_vm14k_*`; checkpoint VM14K tách vào `all_res/ollama_result/Qwen3_5-9B-28K/vm14k_checkpoints/` để không nhiễm `find_latest_checkpoint` (max cũ của model này là 9833 từ MC-7) |
+
+> **Caveat bắt buộc khi công bố:** (1) bản phát hành HF lệch paper (12.488 vs "4k sample + 10k full + 2k private") và dataset card **không có license**;
+> (2) 1.377/12.488 dòng không phải 4 lựa chọn (2→1.240 · 3→101 · 1→15 · 5→2 · 7→19); 34 dòng có option placeholder `optionE/F/G`; 2 dòng question rỗng;
+> (3) ~6% nội dung trùng lặp (716 nhóm / 785 dòng thừa) — giữ nguyên theo quyết định "raw", không dedupe;
+> (4) suite công bố giới hạn ≤4B trong khi model 9B vượt — ghi rõ;
+> (5) chỉ được đối chiếu V-Bench medicine 38,78% theo hướng "cùng/khác", **không trừ hai phần trăm cho nhau**.
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
