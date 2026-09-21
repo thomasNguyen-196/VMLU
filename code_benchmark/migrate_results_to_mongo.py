@@ -23,6 +23,7 @@ file that happened to hold it):
   full_evaluation_nli_Qwen3_5-9B-28K.csv    -> legal-nli-150      / MC-13
   reading_scores_bidlqa_val_Qwen3_5-9B-28K  -> bidlqa-val         / MC-12
   reading_scores_bidlqa_test_Qwen3_5-9B-28K -> bidlqa-test        / MC-11
+  full_evaluation_vm14k_Qwen3_5-9B-28K.csv  -> vm14k-public-12488 / MC-14b
   (same shapes for the gguf dir; qwen38-nothink carries legal-mc-146 / MC-6)
 
 The Mongo client is accepted as a dependency (design D5) so unit tests run
@@ -65,6 +66,7 @@ MIGRATION_PLAN = [
         ("full_evaluation_nli_Qwen3_5-9B-28K.csv", "legal-nli-150", "MC-13", "mc"),
         ("reading_scores_bidlqa_val_Qwen3_5-9B-28K.csv", "bidlqa-val", "MC-12", "reading"),
         ("reading_scores_bidlqa_test_Qwen3_5-9B-28K.csv", "bidlqa-test", "MC-11", "reading"),
+        ("full_evaluation_vm14k_Qwen3_5-9B-28K.csv", "vm14k-public-12488", "MC-14b", "mc"),
     ]),
     ("Qwen3_8-27B-Q4_K_M_gguf", "qwen3-8-27b-q4-k-m-gguf", [
         ("full_evaluation_Qwen3_8-27B-Q4_K_M_gguf.csv", "vmlu-mqa-all-gold", "MC-1", "mc"),
@@ -91,6 +93,7 @@ RUN_CONFIGS = {
     "MC-11": {"temperature": 0.0, "seed": 42, "max_tokens": 48, "workers": 4, "prompt_style": "build_reading_prompt"},
     "MC-12": {"temperature": 0.0, "seed": 42, "max_tokens": 48, "workers": 4, "prompt_style": "build_reading_prompt"},
     "MC-13": {"temperature": 0.0, "seed": 42, "max_tokens": 4, "workers": 4, "prompt_style": "build_prompt"},
+    "MC-14b": {"temperature": 0.0, "seed": 42, "max_tokens": 4, "workers": 8, "prompt_style": "build_prompt"},
 }
 
 
@@ -163,7 +166,8 @@ BUILDERS = {"mc": mc_item, "vbench": vbench_item, "reading": reading_item}
 def accuracy_summary_rows(model_dir: Path, dir_slug: str) -> dict[str, list[dict]]:
     """accuracy_<infix>_<slug>.csv rows keyed by dataset: the committed aggregates."""
     out: dict[str, list[dict]] = {}
-    for infix, dataset_id in (("", "vmlu-mqa-all-gold"), ("_legal", "legal-mc-146"), ("_nli", "legal-nli-150")):
+    for infix, dataset_id in (("", "vmlu-mqa-all-gold"), ("_legal", "legal-mc-146"), ("_nli", "legal-nli-150"),
+                              ("_vm14k", "vm14k-public-12488")):
         for cand in (f"accuracy{infix}_{dir_slug}.csv", f"accuracy_{dir_slug}.csv"):
             path = model_dir / cand
             if path.exists():

@@ -11,6 +11,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { InsightPanel } from "@/components/InsightPanel.tsx";
+
 interface ModelOpt {
   _id: string;
   display_name: string;
@@ -188,7 +190,10 @@ function RunPanel({
         {summaryError ? (
           <p className="text-sm text-red-600">summary: {summaryError}</p>
         ) : summary ? (
-          <OverallLine summary={summary} />
+          <>
+            <OverallLine summary={summary} />
+            <InsightPanel modelId={run.model_id} datasetId={run.dataset_id} summary={summary} />
+          </>
         ) : (
           <p className="text-sm text-slate-500">Đang tải summary…</p>
         )}

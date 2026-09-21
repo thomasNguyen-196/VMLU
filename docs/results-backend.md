@@ -64,6 +64,13 @@ mang đủ cả hai (denormalize trên item để query không cần join).
   counterpart song song — cả hai 200, không đường đọc chung, không regression tab cũ.
   Header hai chiều: review `/` ↔ `/benchmark` ↔ `/results` (ghi chú cutover in ngay
   dưới header `/results`).
+- Insight layer (mỗi model × dataset): `web/lib/insights.ts` (thuần hàm) +
+  `web/components/InsightPanel.tsx` — chẩn đoán + nguyên nhân khả nghi (taxonomy đề cương:
+  tham số/quy chuẩn/suy luận/định dạng/thiên lệch/nhạy cách hỏi) + hành động đề xuất
+  (grounding, ngân sách, định tuyến, chuẩn hoá — không fine-tune), kèm "bằng chứng số"
+  rút tự động từ `summaries` lúc render (số neo trong verdict chỉ là anchor).
+  Seed theo `dataset_id` → `model_id` → `"*"`; thiếu seed thì chỉ hiện bằng chứng tự động.
+  Test offline: `cd web && bun test lib/insights.test.ts`.
 
 ## Cutover evidence (verify 2026-09-20)
 
