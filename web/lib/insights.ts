@@ -71,7 +71,7 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
-        "Cùng 768/1.047 = 73,35% với Qwen3.5-9B — gấp ~3 lần tham số không tạo khác biệt: 54/58 môn trùng khớp tuyệt đối, chỉ 4 môn lệch (Toán THCS 55 vs 45, Kế toán 50 vs 44, Đo lường 57 vs 64, Luật giáo dục 71 vs 76). Bằng chứng “capacity không phải nút thắt”.",
+        "73,35% (768/1.047) — cùng profile trũng như mọi model: Luật hành chính 30%, Sư phạm mầm non 30%, Thuế 33%, Văn THPT 40%. So với Qwen3.5-9B: 54/58 môn trùng khớp tuyệt đối (gấp ~3 tham số không tạo khác biệt) — bằng chứng “capacity không phải nút thắt”.",
       causes: ["normative", "parametric"],
       actions: [
         "Dùng làm lập luận chuyển ngân sách từ tăng tham số sang grounding/định tuyến trong giai đoạn C.",
@@ -128,7 +128,7 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
-        "Macro 44,97 · micro 45,46% — thấp hơn nhẹ Qwen3.5-9B (45,22/45,61) dù lớn gấp 3 lần; từng miền lệch ≤2,1 điểm. Đổi prompt minimal→detailed làm 42,2% câu agentic đổi đáp án.",
+        "Macro 44,97 · micro 45,46% — cùng cấu trúc lỗi như Qwen3.5-9B: toán 19,2 · logic 24,0 · lý 29,9; MC 47,0% vs agentic 39,1%. Từng miền lệch ≤2,1 điểm so với 9B dù lớn gấp 3 lần; đổi prompt minimal→detailed làm 42,2% câu agentic đổi đáp án.",
       causes: ["robustness", "reasoning"],
       actions: [
         "Đọc như bằng chứng “prompt nhạy”: mọi so sánh phải khoá một điều kiện hỏi duy nhất.",
@@ -140,7 +140,7 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
   "reading-400": {
     "qwen3-5-9b-28k": {
       verdict:
-        "EM 79,75% · char-F1 86,49% — gần bằng Qwen3.8-27B (80,25/86,55) dù nhỏ hơn ~3 lần; cùng profile: Vi-SQuAD gần trần (EM 96,5%) vs Vi-DROP 63,0%.",
+        "EM 79,75% · char-F1 86,49% — Vi-SQuAD gần trần (EM 96,5%) nhưng Vi-DROP chỉ 63,0%; khoảng trống nằm ở suy luận số. Gần bằng Qwen3.8-27B (80,25/86,55) dù nhỏ hơn ~3 lần.",
       causes: ["reasoning"],
       actions: [
         "Vi-DROP là điểm nghẽn chung của cả hai model → ưu tiên can thiệp suy luận số học (ngân sách/CoT có kiểm soát) thay vì tăng tham số.",
@@ -216,6 +216,19 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
         "Dùng cặp val/test làm kiểm tra độ ổn định của mọi cải tiến định dạng (một split để chọn, một để xác nhận).",
       ],
       caveat: "Gold file-native; không so ngang model khác.",
+    },
+  },
+  "vm14k-public-12488": {
+    "qwen3-5-9b-28k": {
+      verdict:
+        "64,79% (8.091/12.488), parse 100%, 0 blank; vượt baseline A (31,35%) +33,4 điểm. Giảm đơn điệu theo độ khó: Easy 67,19 → Medium 64,01 → Challenging 61,78 → Hard 56,67; câu 4 lựa chọn 64,16% (câu Đúng/Sai 69,84% kéo điểm lên).",
+      causes: ["parametric", "reasoning"],
+      actions: [
+        "Đối chiếu với V-Bench medicine của CÙNG model (38,57%, 189/490) chỉ theo “cùng/khác hướng”: VM14K 64,79 vs 38,57 là khác hướng mạnh — nghi do dạng câu/độ khó khác (nhiều câu Đúng/Sai, có câu 1 lựa chọn), KHÔNG được trừ hai phần trăm cho nhau.",
+        "Báo cáo bẻ theo difficulty (đã có trong manifest) để tách “khó” khỏi “không biết”; giữ 4-lựa-chọn làm số chính, nêu riêng Đúng/Sai.",
+        "Bản phát hành có caveat dữ liệu (1.377 dòng ≠ 4 lựa chọn, 34 dòng placeholder, ~6% trùng lặp) — muốn số sạch hơn thì pre-register bản lọc riêng (card mới), không tự ý sửa bộ raw.",
+      ],
+      caveat: "HF release lệch paper (12.488 vs 4k+10k+2k), không license; suite giới hạn ≤4B mà model 9B; đối chiếu V-Bench chỉ “cùng/khác hướng”.",
     },
   },
 };
@@ -337,4 +350,73 @@ export function buildInsight(
     caveat: seed?.caveat,
     curated: Boolean(seed),
   };
+}
+
+/** Canonical model id — mirror of seed_registries.canonical_model_id (Python):
+ *  sanitize_model → NFD-strip → lower → [^a-z0-9]+ → '-' → trim '-'. */
+export function canonicalModelId(model: string): string {
+  let t = model.replace(/[^a-zA-Z0-9_-]/g, "_");
+  t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  t = t.toLowerCase();
+  return t.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+/** Adapt một khối blob `/benchmark` (shape riêng của dashboard) sang shape
+ *  `summaries` mà `deriveEvidence` đọc được — để panel insight dùng chung một
+ *  nguồn bằng chứng ở cả `/benchmark` (blob) lẫn `/results` (DB). */
+export function summaryFromBlob(datasetId: string, block: unknown): Record<string, unknown> | null {
+  if (!block || typeof block !== "object") return null;
+  const b = block as Row;
+
+  if (datasetId === "vmlu-mqa-all-gold") {
+    const rows: Row[] = [];
+    if (b.overall && typeof b.overall === "object") {
+      rows.push({ level: "overall", name: "overall", ...(b.overall as Row) });
+    }
+    for (const c of asRows(b.categories)) rows.push({ level: "category", ...c });
+    for (const s of asRows(b.subjects)) {
+      rows.push({ level: "subject", ...s, name: s.full_name ?? s.name });
+    }
+    return { n: (b.overall as Row | undefined)?.n, accuracy_rows: rows };
+  }
+
+  if (datasetId === "vbench-public-test") {
+    return {
+      n: b.total_items,
+      server_rows: asRows(b.domains).map((d) => ({
+        domain: d.domain,
+        track: d.track,
+        score: d.score,
+        correct: d.correct,
+        total: d.total,
+      })),
+    };
+  }
+
+  if (datasetId === "reading-400") {
+    const rows: Row[] = asRows(b.sources).map((s) => ({
+      dataset: s.label,
+      n: s.n,
+      em_count: s.em_count,
+      em: s.em,
+      char_f1: s.char_f1,
+    }));
+    const overall = b.overall as Row | undefined;
+    if (overall) rows.push({ dataset: "ALL", ...overall });
+    return { n: overall?.n, reading_rows: rows };
+  }
+
+  if (datasetId === "legal-mc-146" || datasetId === "legal-nli-150") {
+    const overall = b.overall as Row | undefined;
+    return overall
+      ? { n: overall.n, accuracy_rows: [{ level: "overall", name: "overall", ...overall }] }
+      : null;
+  }
+
+  if (datasetId === "bidlqa-val" || datasetId === "bidlqa-test") {
+    const overall = b.overall as Row | undefined;
+    return overall ? { n: overall.n, reading_rows: [{ dataset: "ALL", ...overall }] } : null;
+  }
+
+  return null;
 }

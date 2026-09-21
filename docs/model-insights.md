@@ -22,6 +22,7 @@
 | Legal NLI-150 | **90,00%** (baseline 50) | — | — |
 | BidLQA val-482 | EM **32,78** · F1 **74,16** | — | — |
 | BidLQA test-603 | EM **33,17** · F1 **73,21** | — | — |
+| VM14K public-12.488 | **64,79%** (8.091; baseline A 31,35) | — | — |
 
 ---
 
@@ -51,6 +52,8 @@ Hệ quả cho đề cương: giai đoạn C nên dồn ngân sách vào groundi
 | Y | Nội cơ sở 78% (n=18) | medicine **38,57%** (n=490) | ~39 điểm |
 
 → "STEM mạnh 79%" trên VMLU **không** có nghĩa model làm được bài toán/lý/hóa ứng dụng. VMLU đo kiến thức phổ thông dạng nhớ; V-Bench đo vận dụng. **Không được gộp hai loại số này thành một "năng lực STEM".**
+
+Bổ sung **VM14K (Y, 12.488 câu, MC-14b)**: 64,79% — cao hơn hẳn V-Bench medicine 38,57% của *cùng model* (MC-8). Hai bộ đo hai thứ khác nhau (VM14K có 1.240 câu Đúng/Sai + 15 câu 1 lựa chọn; độ khó tự khai báo), nên chỉ được nói **"khác hướng"**, **không trừ hai phần trăm cho nhau** (đúng luật mục 3.2 của roadmap).
 
 ### 1.3. "Valid ≠ correct" và lỗi gần đúng (near-miss) chiếm phần lớn
 
@@ -118,6 +121,13 @@ Hệ quả cho đề cương: giai đoạn C nên dồn ngân sách vào groundi
 - EM ~33% nhưng F1 ~73–74% và near-miss ~20% → mô hình **tìm đúng vùng thông tin**, thua ở định dạng/độ dài.
 - Val/test lệch 0,4 điểm EM → ổn định; lỗi có hệ thống, không phải nhiễu.
 
+### 3.6. VM14K (Y, 12.488 câu — MC-14b)
+- **64,79%** (8.091/12.488), parse **100%**, 0 blank; baseline majority A 31,35% → **+33,4 điểm**.
+- Giảm đơn điệu theo độ khó tự khai báo: Easy **67,19%** → Medium **64,01%** → Challenging **61,78%** → Hard **56,67%** (thang độ khó của bộ có tín hiệu).
+- Theo số lựa chọn: 4 → **64,16%** (7.129/11.111) · 2 (Đúng/Sai) → **69,84%** (866/1.240) · 3 → 67,33% · 7 → 57,89% (11/19). Câu Đúng/Sai kéo điểm tổng lên; nên báo 4-lựa-chọn làm số chính.
+- Đối chiếu V-Bench medicine **38,57%** (cùng model, MC-8) → **khác hướng mạnh**; ghi rõ khác dạng câu, không trừ hai phần trăm.
+- Caveat dữ liệu (đã ghi ở MC-14b): 1.377/12.488 dòng ≠ 4 lựa chọn · 34 dòng placeholder `optionE/F/G` · ~6% trùng lặp · HF release lệch paper + không license.
+
 ---
 
 ## 4. Xếp hạng điểm nghẽn + hướng can thiệp (giai đoạn C của đề cương)
@@ -158,4 +168,5 @@ Hệ quả cho đề cương: giai đoạn C nên dồn ngân sách vào groundi
 5. **Reading-400 single-rater, chưa IAA**; EM/F1 trên gold hiệu đính 1 người.
 6. **VMLU theo môn chỉ 10–20 câu/môn** — không lấy làm đại diện cả mảng; đặc biệt "Luật hành chính 30%" (n=10) chưa đủ để kết luận mảng luật (xem §3.4).
 7. **V-Bench chấm server-side** (vbench.ai), không recompute local; `valid ≠ correct`.
-8. **Số neo trong tài liệu này** lấy tại 2026-09-21/22; khi finals đổi (VM14K sắp xong) phải cập nhật — bảng trong `/results` là nguồn live.
+8. **Số neo trong tài liệu này** lấy tại 2026-09-21/22; khi finals đổi phải cập nhật — bảng trong `/results` là nguồn live.
+9. **VM14K:** bản phát hành lệch paper (12.488 vs 4k+10k+2k) và không license; điểm 64,79% **không so ngang** V-Bench medicine (khác dạng câu) — chỉ nói "khác hướng".

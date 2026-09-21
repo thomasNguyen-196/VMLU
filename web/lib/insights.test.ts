@@ -5,7 +5,7 @@
  * Run: `cd web && bun test lib/insights.test.ts`
  */
 import { describe, expect, test } from "bun:test";
-import { buildInsight, deriveEvidence } from "./insights.ts";
+import { buildInsight, canonicalModelId, deriveEvidence, summaryFromBlob } from "./insights.ts";
 
 const mcSummary = {
   n: 40,
@@ -93,5 +93,59 @@ describe("buildInsight", () => {
     expect(ins.evidence.length).toBeGreaterThan(0);
     expect(ins.causes).toEqual([]);
     expect(ins.actions).toEqual([]);
+  });
+});
+
+describe("canonicalModelId", () => {
+  test("khớp rule seed_registries (Python)", () => {
+    expect(canonicalModelId("Qwen3.5-9B-28K")).toBe("qwen3-5-9b-28k");
+    expect(canonicalModelId("Qwen3.8-27B-Q4_K_M (GGUF)")).toBe("qwen3-8-27b-q4-k-m-gguf");
+    expect(canonicalModelId("qwen38-nothink")).toBe("qwen38-nothink");
+  });
+});
+
+describe("summaryFromBlob", () => {
+  test("vmlu: overall + categories + subjects → accuracy_rows", () => {
+    const s = summaryFromBlob("vmlu-mqa-all-gold", {
+      overall: { n: 3, correct: 2, accuracy: 66.67 },
+      categories: [{ name: "STEM", n: 2, correct: 2, accuracy: 100 }],
+      subjects: [
+        { name: "Administrative Law", full_name: "37 Luật hành chính", n: 10, correct: 3, accuracy: 30 },
+        { name: "Elementary Science", full_name: "02 Khoa học tiểu học", n: 10, correct: 10, accuracy: 100 },
+      ],
+    });
+    const ev = deriveEvidence(s);
+    expect(ev.join("\n")).toContain("Overall: 2/3 = 66.67%");
+    expect(ev.join("\n")).toContain("37 Luật hành chính 30%");
+  });
+
+  test("reading: sources + ALL → reading_rows", () => {
+    const s = summaryFromBlob("reading-400", {
+      overall: { n: 400, em_count: 319, em: 79.75, char_f1: 86.49 },
+      sources: [{ label: "Vi-SQuAD", n: 200, em_count: 193, em: 96.5, char_f1: 98.63 }],
+    });
+    const ev = deriveEvidence(s);
+    expect(ev.join("\n")).toContain("Vi-SQuAD: EM 96.5% · F1 98.63 (n=200)");
+    expect(ev.join("\n")).toContain("Tổng: EM 79.75% · char-F1 86.49 (319/400 exact)");
+  });
+
+  test("vbench: domains → server_rows (micro tính lại)", () => {
+    const s = summaryFromBlob("vbench-public-test", {
+      total_items: 1313,
+      domains: [
+        { domain: "mathematics", track: "multiple-choice", score: 20, correct: 25, total: 125 },
+        { domain: "agentic", track: "function-calling", score: 39.1, correct: 391, total: 1000 },
+      ],
+    });
+    expect(deriveEvidence(s).join("\n")).toContain("Micro (server rows): 416/1125 = 36.98%");
+  });
+
+  test("legal + bidlqa + block lạ", () => {
+    const legal = summaryFromBlob("legal-mc-146", { overall: { n: 146, correct: 128, accuracy: 87.67 } });
+    expect(deriveEvidence(legal).join("\n")).toContain("Overall: 128/146 = 87.67%");
+    const bid = summaryFromBlob("bidlqa-val", { overall: { n: 482, em_count: 158, em: 32.78, char_f1: 74.16 } });
+    expect(deriveEvidence(bid).join("\n")).toContain("Gap EM→F1: 41.38 điểm");
+    expect(summaryFromBlob("unknown-dataset", { overall: { n: 1 } })).toBeNull();
+    expect(summaryFromBlob("vmlu-mqa-all-gold", null)).toBeNull();
   });
 });

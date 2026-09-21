@@ -362,8 +362,8 @@ Kiểm tra ngày 2026-09-12:
 | `workers` | **8** — đo tải 2026-09-21 (probe cùng lúc với run cũ): 1 request 0,26 req/s · 4 song song 0,72 req/s · 8 song song **1,55 req/s**; các điều kiện khác giữ nguyên MC-14 |
 | `prompt` / `scoring` | frozen `build_prompt` / `extract_answer` (byte-frozen, không sửa); chấm accuracy chữ cái |
 | `baseline` | majority-class A = 3915/12488 (**31,35%**) — recompute từ manifest, không hardcode |
-| `ket_qua` | ⏳ đang chạy (bắt đầu 2026-09-21 ~23:0x) |
-| `trang_thai` | 🕓 thay thế MC-14 (aborted trước khi có kết quả); output `full_evaluation_vm14k_*` + `accuracy_vm14k_*` + `submission_vm14k_*`; checkpoint VM14K park riêng; wrapper `code_benchmark/run_vm14k_mc14.sh` (MC-9 finals backup + restore, commit `a172027`) |
+| `ket_qua` | accuracy **64,79%** (8.091/12.488); parse **12.488/12.488 (100%, 0 blank)**; baseline majority A 31,35% → **+33,4đ**; theo difficulty: Easy **67,19%** (2.763/4.112) · Medium **64,01%** (4.540/7.093) · Challenging **61,78%** (737/1.193) · Hard **56,67%** (51/90); theo số lựa chọn: 4→64,16% (7.129/11.111) · 2→69,84% (866/1.240) · 3→67,33% (68/101) · 7→57,89% (11/19) |
+| `trang_thai` | ✅ xong 2026-09-22 ~00:38 (+07), exit 0; output `full_evaluation_vm14k_*` + `accuracy_vm14k_*` + `submission_vm14k_*` (12.488 dòng); MC-9 finals restore nguyên vẹn (sha khớp); checkpoint VM14K park riêng `vm14k_checkpoints/` (**125 file**, park theo nội dung — tránh nhiễm `find_latest_checkpoint`); DB: run `qwen3-5-9b-28k__vm14k-public-12488__MC-14b` |
 
 > Cùng **caveat bắt buộc** như MC-14: (1) bản phát hành lệch paper + không license; (2) 1.377/12.488 dòng ≠ 4 lựa chọn, 34 dòng option placeholder, 2 dòng question rỗng; (3) ~6% trùng lặp (giữ nguyên, không dedupe); (4) suite ≤4B vs model 9B; (5) chỉ so hướng với V-Bench medicine 38,78%.
 > **Lưu ý kỹ thuật:** `workers` là tham số hạ tầng — `temperature 0` + `seed 42` + prompt/parser không đổi; MC-14 chưa từng cho ra kết quả nên hai điều kiện không bị trộn.

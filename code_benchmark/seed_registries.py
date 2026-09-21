@@ -108,6 +108,8 @@ def dataset_docs() -> list[dict]:
          "data/bidlqa_val_manifest.csv"),
         ("bidlqa-test", "ViBidLQA", "test", 603, "v_legal_slsp/bidlqa/ViBidLQA_test.jsonl", "file",
          "data/bidlqa_test_manifest.csv"),
+        ("vm14k-public-12488", "VM14K", "public-shuffled0", 12488,
+         "v_med_vm14k/data-processed-shuffled0.jsonl", "file", "data/vm14k_manifest.json"),
     ]
     docs = []
     for dataset_id, benchmark, split, n, source_file, gold_kind, manifest_path in specs:
