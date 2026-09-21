@@ -1323,10 +1323,16 @@ class TestResultsIdentity(unittest.TestCase):
                              msg=f"dir {dir_slug} must resolve to {model_id}")
 
     def test_seed_is_idempotent(self):
-        from unittest.mock import MagicMock
+        from unittest.mock import MagicMock, patch
+        import code_benchmark.seed_registries as sr
+
         db = MagicMock()
-        seed(db)
-        seed(db)  # second run must not raise
+        # dataset_docs() reads the gitignored dataset files (absent on a clean
+        # CI checkout). The idempotency contract under test is the upsert loop,
+        # so inject fake docs instead of requiring real dataset sources.
+        with patch.object(sr, "dataset_docs", return_value=[{"_id": "ds1"}]):
+            seed(db)
+            seed(db)  # second run must not raise
         self.assertTrue(db.__getitem__.return_value.update_one.called)
 
     def test_item_builders_stamp_both_ids(self):
