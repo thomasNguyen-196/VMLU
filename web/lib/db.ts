@@ -123,3 +123,66 @@ export async function getItem(
   return null;
 }
 
+// ── Model notes (nhận xét thủ công giữa các model) ────────────────────────
+// Nhiều note cho mỗi cặp (model_id, dataset_id, compare_model_id); mỗi lần
+// lưu là một doc mới (không ghi đè). dataset_id BẮT BUỘC non-empty: note chỉ
+// hiện ở đúng dataset của nó, không có phạm vi "chung mọi dataset".
+
+export interface ModelNoteDoc {
+  _id: string;
+  model_id: string;
+  /** Dataset phạm vi; luôn non-empty — note chỉ hiện ở dataset này. */
+  dataset_id: string;
+  /** Model được so sánh; "" = nhận xét chỉ dành riêng cho model_id. */
+  compare_model_id: string;
+  body: string;
+  author: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Id duy nhất cho mỗi lần lưu — ép "thêm mới", không upsert. */
+export function modelNoteId(modelId: string, compareModelId: string, datasetId: string): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const rand = Math.random().toString(36).slice(2, 8);
+  return `${modelId}__${datasetId}__${compareModelId || "solo"}__${stamp}__${rand}`;
+}
+
+/** Mọi note của model trong ĐÚNG dataset yêu cầu (mới nhất trước). */
+export async function listModelNotes(modelId: string, datasetId = ""): Promise<ModelNoteDoc[]> {
+  const d = await getDb();
+  if (!datasetId) return [];
+  return d
+    .collection<ModelNoteDoc>("model_notes")
+    .find({ model_id: modelId, dataset_id: datasetId })
+    .sort({ created_at: -1 })
+    .toArray();
+}
+
+export async function saveModelNote(
+  modelId: string,
+  compareModelId: string,
+  datasetId: string,
+  body: string,
+  author: string,
+): Promise<ModelNoteDoc> {
+  if (!datasetId) throw new Error("saveModelNote cần dataset non-empty (không còn note chung)");
+  const now = new Date().toISOString();
+  const d = await getDb();
+  const coll = d.collection<ModelNoteDoc>("model_notes");
+  const _id = modelNoteId(modelId, compareModelId, datasetId);
+  const doc: ModelNoteDoc = {
+    _id, model_id: modelId, dataset_id: datasetId, compare_model_id: compareModelId,
+    body, author, created_at: now, updated_at: now,
+  };
+  await coll.insertOne(doc);
+  return doc;
+}
+
+/** Xóa một note theo _id (chỉ khi đúng model chủ). Trả về số doc đã xóa. */
+export async function deleteModelNote(modelId: string, noteId: string): Promise<number> {
+  const d = await getDb();
+  const r = await d.collection<ModelNoteDoc>("model_notes").deleteOne({ _id: noteId, model_id: modelId });
+  return r.deletedCount;
+}
+

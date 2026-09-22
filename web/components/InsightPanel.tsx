@@ -1,6 +1,7 @@
 "use client";
 
 import { buildInsight } from "@/lib/insights.ts";
+import { ModelNotePanel } from "@/components/ModelNotePanel.tsx";
 
 /** Khối "Insight & định hướng" cho một run (model × dataset).
  *  Nhận định thủ công + bằng chứng số rút từ summary; thuần trình bày,
@@ -48,18 +49,28 @@ export function InsightPanel({
       )}
 
       {insight.causes.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             Nguyên nhân khả nghi
           </span>
-          {insight.causes.map((c) => (
-            <span
-              key={c.tag}
-              className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
-            >
-              {c.label}
-            </span>
-          ))}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {insight.causes.map((c) => (
+              <span
+                key={c.tag}
+                title={c.desc}
+                className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800"
+              >
+                {c.label}
+              </span>
+            ))}
+          </div>
+          <ul className="space-y-0.5 text-[11px] leading-relaxed text-slate-600">
+            {insight.causes.map((c) => (
+              <li key={c.tag}>
+                <span className="font-semibold text-amber-800">{c.label}:</span> {c.desc}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -81,6 +92,8 @@ export function InsightPanel({
           ⚠️ Không được suy diễn: {insight.caveat}
         </p>
       )}
+
+      <ModelNotePanel modelId={modelId} datasetId={datasetId} />
     </div>
   );
 }
