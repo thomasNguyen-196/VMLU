@@ -28,6 +28,11 @@ from pathlib import Path
 SEED = 42
 LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+try:
+    from code_benchmark.vm14k_taxonomy import category_of, primary_topic
+except ImportError:
+    from vm14k_taxonomy import category_of, primary_topic
+
 # Pinned by v_med_vm14k/README.md (downloaded 2026-09-21). Drift = wrong file.
 SHA256 = {
     "data-processed-shuffled0.jsonl": "688218341055536f032806beb7f3b6d552d5429eebe4620a581e9c861e05aef4",
@@ -108,11 +113,14 @@ def build(rows: list[dict]) -> tuple[list[dict], list[dict]]:
 
         choices = [f"{LETTERS[j]}. {str(o).strip()}" for j, o in enumerate(options)]
         input_rows.append({"id": rid, "question": question, "choices": choices, "answer": answer})
+        topics = r.get("medical_topic")
         items.append({
             "id": rid,
             "gold": answer,
             "n_choices": n,
             "difficulty_level": r.get("difficulty_level", ""),
+            "primary_topic": primary_topic(topics),
+            "category": category_of(topics),
         })
 
     if empty_question or placeholder_rows:

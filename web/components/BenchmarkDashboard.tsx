@@ -11,6 +11,7 @@ import type {
   ReadingSourceVM,
   ReadingStratumVM,
   VbenchDomainVM,
+  Vm14kBlock as DbVm14k,
   VmluQuestionVM,
   VmluSubjectVM,
 } from "@/lib/benchmark-view.ts";
@@ -47,6 +48,15 @@ type ReadingBlock = DbReading & {
   measurement_card_hash: string;
   caveat: string;
   scorer: string;
+};
+
+type Vm14kBlock = DbVm14k & {
+  benchmark_name: string;
+  date: string;
+  condition: string;
+  measurement_card_hash: string;
+  blank_ids: string[];
+  caveat: string;
 };
 
 interface BenchmarkData {
@@ -99,6 +109,7 @@ interface BenchmarkData {
   legal_nli: LegalBlock | null;
   bidlqa_val: ReadingBlock | null;
   bidlqa_test: ReadingBlock | null;
+  vm14k: Vm14kBlock | null;
 }
 
 /** Live view (DB) → dashboard props. Missing blocks render their tab as
@@ -149,6 +160,25 @@ export function viewToDashboardData(view: BenchmarkView): { data: BenchmarkData;
       datasetId === "legal-mc-146"
         ? "Baseline + by-gold đếm trực tiếp từ mc_items (majority là dữ liệu, không hardcode)."
         : "NLI nhị phân Có→A / Không→B qua MC runner frozen; baseline 75/75 ≈ 50%.",
+  });
+  const withVm14kMeta = (block: DbVm14k | null): Vm14kBlock => ({
+    ...(block ?? {
+      overall: { n: 0, correct: 0, accuracy: 0, valid: 0, blanks: 0, wrong_parsed: 0 },
+      baseline: { majority_letter: "—", majority_n: 0, majority_accuracy: 0, label: "—" },
+      by_gold: [],
+      by_difficulty: [],
+      by_n_choices: [],
+      by_category: [],
+    }),
+    benchmark_name: "VM14K public release — trắc nghiệm Y khoa (12.488 câu)",
+    date: "",
+    condition: view.runMeta["vm14k-public-12488"]?.condition ?? "",
+    measurement_card_hash: view.runMeta["vm14k-public-12488"]?.measurement_card_hash ?? "",
+    blank_ids: [],
+    caveat:
+      "Baseline + by-gold live từ mc_items; breakdown độ khó/số lựa chọn join manifest tiền đăng ký " +
+      "(data/vm14k_manifest.json). Public release lệch paper + không license; ~6% trùng lặp giữ nguyên; " +
+      "chỉ đối chiếu hướng với V-Bench medicine.",
   });
   const withReadingMeta = (
     block: DbReading | null,
@@ -222,6 +252,7 @@ export function viewToDashboardData(view: BenchmarkView): { data: BenchmarkData;
     bidlqa_test: view.bidlqa_test
       ? withReadingMeta(view.bidlqa_test, "ViBidLQA — đấu thầu (đọc hiểu, open-book)", "bidlqa-test", "Gold lấy nguyên văn trong file (file-gold).", "summaries.reading_rows + items")
       : null,
+    vm14k: view.vm14k ? withVm14kMeta(view.vm14k) : null,
   };
   return { data, questions: vmluBlock?.questions_sample ?? [] };
 }
@@ -410,7 +441,7 @@ export function BenchmarkDashboard({
   activeModelId: string;
   onModelChange: (id: string) => void;
 }) {
-  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test">(
+  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k">(
     data.vmlu.overall.n > 0 ? "vmlu" : "legal",
   );
 
@@ -459,7 +490,13 @@ export function BenchmarkDashboard({
       badge: `EM ${data.bidlqa_test.overall.em.toFixed(2)}%`,
       badgeClass: "bg-teal-50 text-teal-700",
     },
-  ].filter((t): t is { id: "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test"; label: string; badge: string; badgeClass: string } => Boolean(t));
+    data.vm14k && data.vm14k.overall.n > 0 && {
+      id: "vm14k" as const,
+      label: `🩺 VM14K (${data.vm14k.overall.n})`,
+      badge: `${data.vm14k.overall.accuracy.toFixed(2)}%`,
+      badgeClass: "bg-cyan-50 text-cyan-700",
+    },
+  ].filter((t): t is { id: "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k"; label: string; badge: string; badgeClass: string } => Boolean(t));
 
   // VMLU subject table filters
   const [vmluCat, setVmluCat] = useState<string>("ALL");
@@ -1217,6 +1254,199 @@ export function BenchmarkDashboard({
               modelId={activeModelId}
             />
           )}
+
+        {/* VM14K tab: legal-style MC hero + manifest breakdowns (difficulty / n_choices) */}
+        {tab === "vm14k" && data.vm14k && (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-teal-900 via-cyan-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
+              <div className="space-y-3 max-w-3xl">
+                <div className="flex items-center gap-2 text-teal-300 text-xs font-semibold uppercase tracking-wider">
+                  <span>Public release · shuffled0 · closed-book · seed 42 · card MC-14b</span>
+                </div>
+                <h2 className="text-2xl font-bold">Trắc nghiệm Y khoa — {data.vm14k.overall.n} câu</h2>
+                <p className="text-sm text-teal-100/80 leading-relaxed">
+                  {data.vm14k.condition}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Accuracy</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.vm14k.overall.accuracy.toFixed(2)}%</div>
+                  <div className="text-[11px] text-teal-200/70 font-mono">
+                    {data.vm14k.overall.correct}/{data.vm14k.overall.n}
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Baseline ({data.vm14k.baseline.label})</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.vm14k.baseline.majority_accuracy.toFixed(2)}%</div>
+                  <div className="text-[11px] text-teal-200/70 font-mono">
+                    {data.vm14k.baseline.majority_n}/{data.vm14k.overall.n}
+                  </div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Hơn baseline</div>
+                  <div className="text-2xl font-black font-mono mt-1 text-emerald-300">
+                    +{(data.vm14k.overall.accuracy - data.vm14k.baseline.majority_accuracy).toFixed(2)}
+                  </div>
+                  <div className="text-[11px] text-teal-200/70">điểm phần trăm</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
+                  <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Valid (parse được)</div>
+                  <div className="text-2xl font-black font-mono mt-1">{data.vm14k.overall.valid}/{data.vm14k.overall.n}</div>
+                  <div className="text-[11px] text-teal-200/70 font-mono">
+                    sai trong số parse được: {data.vm14k.overall.wrong_parsed}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DatasetStrip meta={data.datasetMeta["vm14k-public-12488"]} headline={`Accuracy ${data.vm14k.overall.accuracy.toFixed(2)}% (${data.vm14k.overall.correct}/${data.vm14k.overall.n}) · baseline ${data.vm14k.baseline.majority_accuracy.toFixed(2)}%`} />
+            <TabInsight datasetId="vm14k-public-12488" modelId={activeModelId} block={data.vm14k} />
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-slate-200 bg-slate-50">
+                <h3 className="font-bold text-slate-900 text-sm">
+                  Accuracy theo nhóm chuyên khoa (9 nhóm + unknown)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Nhóm = tag đầu tiên của medical_topic (taxonomy tiền đăng ký); Nội khoa chiếm một nửa bộ
+                </p>
+              </div>
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-100 text-slate-700 font-semibold">
+                  <tr>
+                    <th className="py-2 px-4">Nhóm chuyên khoa</th>
+                    <th className="py-2 px-3 text-right">n</th>
+                    <th className="py-2 px-3 text-right">Đúng</th>
+                    <th className="py-2 px-3 text-right">Accuracy (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {data.vm14k.by_category.map((d) => (
+                    <tr key={d.category}>
+                      <td className="py-2 px-4 font-semibold">{d.category}</td>
+                      <td className="py-2 px-3 text-right font-mono">{d.n}</td>
+                      <td className="py-2 px-3 text-right font-mono">{d.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
+                        {d.accuracy.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="p-5 border-b border-slate-200 bg-slate-50">
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    Accuracy theo độ khó tự khai báo
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Thang độ khó của bộ có tín hiệu (giảm đơn điệu)
+                  </p>
+                </div>
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-100 text-slate-700 font-semibold">
+                    <tr>
+                      <th className="py-2 px-4">Độ khó</th>
+                      <th className="py-2 px-3 text-right">n</th>
+                      <th className="py-2 px-3 text-right">Đúng</th>
+                      <th className="py-2 px-3 text-right">Accuracy (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {data.vm14k.by_difficulty.map((d) => (
+                      <tr key={d.difficulty}>
+                        <td className="py-2 px-4 font-semibold">{d.difficulty}</td>
+                        <td className="py-2 px-3 text-right font-mono">{d.n}</td>
+                        <td className="py-2 px-3 text-right font-mono">{d.correct}</td>
+                        <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
+                          {d.accuracy.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="p-5 border-b border-slate-200 bg-slate-50">
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    Accuracy theo số lựa chọn
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Câu Đúng/Sai (2 lựa chọn) kéo điểm tổng lên — báo 4-lựa-chọn làm số chính
+                  </p>
+                </div>
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-100 text-slate-700 font-semibold">
+                    <tr>
+                      <th className="py-2 px-4">Số lựa chọn</th>
+                      <th className="py-2 px-3 text-right">n</th>
+                      <th className="py-2 px-3 text-right">Đúng</th>
+                      <th className="py-2 px-3 text-right">Accuracy (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {data.vm14k.by_n_choices.map((d) => (
+                      <tr key={d.n_choices}>
+                        <td className="py-2 px-4 font-mono font-bold">{d.n_choices}</td>
+                        <td className="py-2 px-3 text-right font-mono">{d.n}</td>
+                        <td className="py-2 px-3 text-right font-mono">{d.correct}</td>
+                        <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
+                          {d.accuracy.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-slate-200 bg-slate-50">
+                <h3 className="font-bold text-slate-900 text-sm">
+                  Accuracy theo đáp án đúng
+                </h3>
+              </div>
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-100 text-slate-700 font-semibold">
+                  <tr>
+                    <th className="py-2 px-4">Đáp án đúng</th>
+                    <th className="py-2 px-3 text-right">n</th>
+                    <th className="py-2 px-3 text-right">Đúng</th>
+                    <th className="py-2 px-3 text-right">Accuracy (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {data.vm14k.by_gold.map((g) => (
+                    <tr key={g.gold}>
+                      <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
+                      <td className="py-2 px-3 text-right font-mono">{g.n}</td>
+                      <td className="py-2 px-3 text-right font-mono">{g.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
+                        {g.accuracy.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+              </div>
+              <p className="text-xs text-amber-900/90 leading-relaxed">{data.vm14k.caveat}</p>
+              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+                card {data.vm14k.measurement_card_hash.slice(0, 12)}… · {data.vm14k.blank_ids.length} câu blank
+              </p>
+            </div>
+          </div>
+        )}
 
       </main>
 

@@ -140,11 +140,13 @@ describe("summaryFromBlob", () => {
     expect(deriveEvidence(s).join("\n")).toContain("Micro (server rows): 416/1125 = 36.98%");
   });
 
-  test("legal + bidlqa + block lạ", () => {
+  test("legal + bidlqa + vm14k + block lạ", () => {
     const legal = summaryFromBlob("legal-mc-146", { overall: { n: 146, correct: 128, accuracy: 87.67 } });
     expect(deriveEvidence(legal).join("\n")).toContain("Overall: 128/146 = 87.67%");
     const bid = summaryFromBlob("bidlqa-val", { overall: { n: 482, em_count: 158, em: 32.78, char_f1: 74.16 } });
     expect(deriveEvidence(bid).join("\n")).toContain("Gap EM→F1: 41.38 điểm");
+    const vm14k = summaryFromBlob("vm14k-public-12488", { overall: { n: 12488, correct: 8091, accuracy: 64.79 } });
+    expect(deriveEvidence(vm14k).join("\n")).toContain("Overall: 8091/12488 = 64.79%");
     expect(summaryFromBlob("unknown-dataset", { overall: { n: 1 } })).toBeNull();
     expect(summaryFromBlob("vmlu-mqa-all-gold", null)).toBeNull();
   });

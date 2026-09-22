@@ -30,6 +30,16 @@ export const CAUSE_LABEL: Record<InsightCause, string> = {
   robustness: "Nhạy với cách hỏi / phân bố",
 };
 
+/** Mô tả 1 dòng cho mỗi nhóm nguyên nhân — hiển thị trong UI để dễ hiểu. */
+export const CAUSE_DESC: Record<InsightCause, string> = {
+  parametric: "Model chưa từng thấy mảng kiến thức này khi pretrain — hỏi lại theo cách khác vẫn sai.",
+  normative: "Thiếu tri thức quy chuẩn/bản địa VN (luật, thuế, nghiệp vụ) — cần grounding/RAG văn bản quy phạm.",
+  reasoning: "Đọc đúng thông tin nhưng sai ở bước suy luận (số học, so sánh, đếm, logic) — cần ngân sách suy luận/CoT có kiểm soát.",
+  format: "Tìm đúng thông tin nhưng trả lời sai định dạng, hoặc thinking ẩn ăn hết token budget gây blank — lỗi đo lường, sửa được bằng chuẩn hoá/ràng buộc span.",
+  calibration: "Thiên lệch đáp án có hệ thống (thiên về một nhãn) — cần hiệu chỉnh trước khi dùng cho routing/kiểm chứng.",
+  robustness: "Đáp án đổi khi đổi cách hỏi hoặc phân bố — mọi so sánh phải khóa một điều kiện hỏi.",
+};
+
 export interface InsightSeed {
   /** Chẩn đoán 1–2 câu, có số neo. */
   verdict: string;
@@ -44,7 +54,7 @@ export interface InsightSeed {
 export interface Insight {
   verdict: string;
   evidence: string[];
-  causes: Array<{ tag: InsightCause; label: string }>;
+  causes: Array<{ tag: InsightCause; label: string; desc: string }>;
   actions: string[];
   caveat?: string;
   /** true = có nhận định thủ công; false = chỉ có bằng chứng tự động. */
@@ -345,7 +355,7 @@ export function buildInsight(
   return {
     verdict: seed?.verdict ?? FALLBACK_VERDICT,
     evidence: deriveEvidence(summary),
-    causes: (seed?.causes ?? []).map((tag) => ({ tag, label: CAUSE_LABEL[tag] })),
+    causes: (seed?.causes ?? []).map((tag) => ({ tag, label: CAUSE_LABEL[tag], desc: CAUSE_DESC[tag] })),
     actions: seed?.actions ?? [],
     caveat: seed?.caveat,
     curated: Boolean(seed),
@@ -406,7 +416,7 @@ export function summaryFromBlob(datasetId: string, block: unknown): Record<strin
     return { n: overall?.n, reading_rows: rows };
   }
 
-  if (datasetId === "legal-mc-146" || datasetId === "legal-nli-150") {
+  if (datasetId === "legal-mc-146" || datasetId === "legal-nli-150" || datasetId === "vm14k-public-12488") {
     const overall = b.overall as Row | undefined;
     return overall
       ? { n: overall.n, accuracy_rows: [{ level: "overall", name: "overall", ...overall }] }

@@ -172,6 +172,12 @@ export const DATASET_META: Record<string, DatasetMeta> = {
     metric: "EM + char-F1 trên file-gold",
     metricNote: "Đọc cùng val để thấy độ ổn định qua 2 split.",
   },
+  "vm14k-public-12488": {
+    about: "Trắc nghiệm Y khoa tiếng Việt 12.488 câu (VM14K public release, shuffled0) — đo mảng Y đã lộ yếu trên V-Bench medicine.",
+    shape: "Trắc nghiệm A–E qua MC runner frozen (4 token, closed-book); lẫn 1.240 câu Đúng/Sai + câu 1 lựa chọn",
+    metric: "Accuracy + baseline majority + bẻ theo độ khó / số lựa chọn",
+    metricNote: "Chỉ đối chiếu hướng với V-Bench medicine (khác dạng câu); báo 4-lựa-chọn làm số chính.",
+  },
 };
 
 /* ------------------------------ view types ------------------------------ */
@@ -259,6 +265,15 @@ export interface LegalBlock {
   by_gold: Array<{ gold: string; n: number; correct: number; accuracy: number }>;
 }
 
+/** VM14K = LegalBlock + breakdowns joined from the pre-registered manifest
+ *  (difficulty_level, n_choices). Correctness stays live from mc_items;
+ *  labels come from data/vm14k_manifest.json (tracked, byte-frozen). */
+export interface Vm14kBlock extends LegalBlock {
+  by_difficulty: Array<{ difficulty: string; n: number; correct: number; accuracy: number }>;
+  by_n_choices: Array<{ n_choices: number; n: number; correct: number; accuracy: number }>;
+  by_category: Array<{ category: string; n: number; correct: number; accuracy: number }>;
+}
+
 export interface BenchmarkView {
   models: Array<{ id: string; display_name: string; params?: string; quantization?: string; endpoint?: string }>;
   activeModel: { id: string; display_name: string; params?: string; quantization?: string; endpoint?: string };
@@ -272,6 +287,7 @@ export interface BenchmarkView {
   legal_nli: LegalBlock | null;
   bidlqa_val: ReadingBlock | null;
   bidlqa_test: ReadingBlock | null;
+  vm14k: Vm14kBlock | null;
 }
 
 /* ------------------------------ small helpers ------------------------------ */
@@ -525,6 +541,148 @@ async function buildLegal(run: RunDoc): Promise<LegalBlock> {
   };
 }
 
+/** Pre-registered VM14K manifest labels (id → category / difficulty / n_choices).
+ *  Server-only: benchmark-view.ts never ships to the browser (client modules
+ *  import it with `import type` only). Cached per server process; degrades to
+ *  an empty map when the file is absent so the tab still shows live overall. */
+let vm14kManifestCache: Record<string, { difficulty: string; n_choices: number; category: string }> | null = null;
+
+async function vm14kManifestLabels(): Promise<Record<string, { difficulty: string; n_choices: number; category: string }>> {
+  if (vm14kManifestCache) return vm14kManifestCache;
+  try {
+    const { readFile } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    for (const p of [join(process.cwd(), "data/vm14k_manifest.json"), join(process.cwd(), "../data/vm14k_manifest.json")]) {
+      try {
+        const raw = await readFile(p, "utf-8");
+        const man = JSON.parse(raw) as { items?: Array<{ id?: unknown; difficulty_level?: unknown; n_choices?: unknown; category?: unknown }> };
+        const map: Record<string, { difficulty: string; n_choices: number; category: string }> = {};
+        for (const it of man.items ?? []) {
+          if (typeof it.id !== "string" || !it.id) continue;
+          map[it.id] = {
+            difficulty: typeof it.difficulty_level === "string" && it.difficulty_level ? it.difficulty_level : "unknown",
+            n_choices: typeof it.n_choices === "number" ? it.n_choices : 0,
+            category: typeof it.category === "string" && it.category ? it.category : "unknown",
+          };
+        }
+        vm14kManifestCache = map;
+        return map;
+      } catch {
+        // try the next candidate path
+      }
+    }
+  } catch {
+    // fs unavailable — degrade to overall-only below
+  }
+  vm14kManifestCache = {};
+  return vm14kManifestCache;
+}
+
+const VM14K_DIFFICULTY_ORDER = ["Easy", "Medium", "Challenging", "Hard"];
+
+/** Category display order — mirror of CATEGORY_ORDER in code_benchmark/vm14k_taxonomy.py. */
+const VM14K_CATEGORY_ORDER = [
+  "Nội khoa",
+  "Sản – Nhi",
+  "Ngoại – Gây mê – Hồi sức – Cấp cứu",
+  "Dược – Độc – Điều trị",
+  "Chuyên khoa khác",
+  "Cận lâm sàng & Chẩn đoán",
+  "Khoa học cơ sở",
+  "Ung bướu & Chăm sóc giảm nhẹ",
+  "Y tế công cộng & Dự phòng",
+  "unknown",
+];
+
+async function buildVm14k(run: RunDoc): Promise<Vm14kBlock> {
+  // Same paging loop as buildLegal (baseline + by-gold live from items),
+  // plus a correct-by-id map for the manifest join. One scan, no re-reads.
+  const counts: Record<string, { n: number; correct: number }> = {};
+  const correctById: Record<string, number> = {};
+  let blanks = 0;
+  let skip = 0;
+  for (;;) {
+    const page = await getItemsPage(run._id, { collection: "mc_items", skip, limit: 200 });
+    if (page.docs.length === 0) break;
+    for (const d of page.docs) {
+      const gold = String(d.gold ?? "");
+      const slot = counts[gold] ?? { n: 0, correct: 0 };
+      slot.n += 1;
+      const ok = Number(d.correct) === 1 ? 1 : 0;
+      if (ok === 1) slot.correct += 1;
+      counts[gold] = slot;
+      correctById[String(d.item_id ?? "")] = ok;
+      if (!d.raw_response || !d.answer) blanks += 1;
+    }
+    skip += page.docs.length;
+    if (skip >= page.total) break;
+  }
+  const entries = Object.entries(counts).filter(([g]) => g !== "").sort((a, b) => b[1].n - a[1].n);
+  const n = entries.reduce((s, [, v]) => s + v.n, 0);
+  const correct = entries.reduce((s, [, v]) => s + v.correct, 0);
+  const [majLetter, maj] = entries[0] ?? ["—", { n: 0, correct: 0 }];
+  const round2 = (x: number) => Math.round(x * 100) / 100;
+
+  const labels = await vm14kManifestLabels();
+  const byDiff: Record<string, { n: number; correct: number }> = {};
+  const byNc: Record<number, { n: number; correct: number }> = {};
+  const byCat: Record<string, { n: number; correct: number }> = {};
+  for (const [id, lab] of Object.entries(labels)) {
+    const ok = correctById[id];
+    if (ok === undefined) continue; // manifest id with no run item — skip, never guess
+    const ds = byDiff[lab.difficulty] ?? { n: 0, correct: 0 };
+    ds.n += 1;
+    ds.correct += ok;
+    byDiff[lab.difficulty] = ds;
+    const ns = byNc[lab.n_choices] ?? { n: 0, correct: 0 };
+    ns.n += 1;
+    ns.correct += ok;
+    byNc[lab.n_choices] = ns;
+    const cs = byCat[lab.category] ?? { n: 0, correct: 0 };
+    cs.n += 1;
+    cs.correct += ok;
+    byCat[lab.category] = cs;
+  }
+  const diffRows = [
+    ...VM14K_DIFFICULTY_ORDER.filter((d) => byDiff[d]).map((d) => ({ difficulty: d, ...byDiff[d] })),
+    ...Object.keys(byDiff).filter((d) => !VM14K_DIFFICULTY_ORDER.includes(d)).sort().map((d) => ({ difficulty: d, ...byDiff[d] })),
+  ].map((r) => ({ ...r, accuracy: r.n > 0 ? round2((r.correct / r.n) * 100) : 0 }));
+  const ncRows = Object.entries(byNc)
+    .map(([nc, v]) => ({ n_choices: Number(nc), ...v }))
+    .sort((a, b) => a.n_choices - b.n_choices)
+    .map((r) => ({ ...r, accuracy: r.n > 0 ? round2((r.correct / r.n) * 100) : 0 }));
+  const catRows = [
+    ...VM14K_CATEGORY_ORDER.filter((c) => byCat[c]).map((c) => ({ category: c, ...byCat[c] })),
+    ...Object.keys(byCat).filter((c) => !VM14K_CATEGORY_ORDER.includes(c)).sort().map((c) => ({ category: c, ...byCat[c] })),
+  ].map((r) => ({ ...r, accuracy: r.n > 0 ? round2((r.correct / r.n) * 100) : 0 }));
+
+  return {
+    overall: {
+      n,
+      correct,
+      accuracy: n > 0 ? round2((correct / n) * 100) : 0,
+      valid: n - blanks,
+      blanks,
+      wrong_parsed: n - correct - blanks,
+    },
+    baseline: {
+      majority_letter: majLetter,
+      majority_n: maj.n,
+      majority_accuracy: n > 0 ? round2((maj.n / n) * 100) : 0,
+      label: `Luôn đáp ${majLetter}`,
+    },
+    by_gold: entries.map(([gold, v]) => ({
+      gold,
+      n: v.n,
+      correct: v.correct,
+      accuracy: v.n > 0 ? round2((v.correct / v.n) * 100) : 0,
+    })),
+    by_difficulty: diffRows,
+    by_n_choices: ncRows,
+    by_category: catRows,
+  };
+}
+
 export async function getBenchmarkView(modelId?: string): Promise<BenchmarkView> {
   const [models, datasets, runs] = await Promise.all([getModels(), getDatasets(), getRuns()]);
   if (models.length === 0) throw new Error("no models in registry — run seed_registries first");
@@ -564,8 +722,9 @@ export async function getBenchmarkView(modelId?: string): Promise<BenchmarkView>
   const nliRun = get("legal-nli-150");
   const bidValRun = get("bidlqa-val");
   const bidTestRun = get("bidlqa-test");
+  const vm14kRun = get("vm14k-public-12488");
 
-  const [vmlu, reading, legal, legal_nli, bidlqa_val, bidlqa_test] = await Promise.all([
+  const [vmlu, reading, legal, legal_nli, bidlqa_val, bidlqa_test, vm14k] = await Promise.all([
     vmluRun ? buildVmlu(vmluRun, sum("vmlu-mqa-all-gold")) : Promise.resolve(null),
     readingRun
       ? buildReading(
@@ -604,6 +763,7 @@ export async function getBenchmarkView(modelId?: string): Promise<BenchmarkView>
           return pages;
         }, { bidlqa: "ViBidLQA-test" })
       : Promise.resolve(null),
+    vm14kRun ? buildVm14k(vm14kRun) : Promise.resolve(null),
   ]);
   return {
     models: models.map((m) => ({
@@ -634,6 +794,7 @@ export async function getBenchmarkView(modelId?: string): Promise<BenchmarkView>
     legal_nli,
     bidlqa_val,
     bidlqa_test,
+    vm14k,
   };
 }
 

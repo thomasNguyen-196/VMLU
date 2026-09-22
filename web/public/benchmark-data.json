@@ -3709,5 +3709,188 @@
       "caveat": "Gold lấy nguyên văn trong file (file-gold, không qua review 2 người). EM/char-F1 chấm bằng code_benchmark/score_reading_eval.py --gold manifest.",
       "scorer": "code_benchmark/score_reading_eval.py"
     }
+  },
+  "vm14k": {
+    "benchmark_name": "VM14K public release — trắc nghiệm Y khoa tiếng Việt (12.488 câu, shuffled0)",
+    "date": "2026-09-22",
+    "condition": "closed-book · zero-shot · no-CoT · 4 token · seed 42 · temperature 0 · workers 8 — card MC-14b · frozen build_prompt/extract_answer",
+    "measurement_card": "MC-14b",
+    "measurement_card_hash": "bc4d7c28587ee6db92bcccd2a4940025a50902431800b254cf3eeb74e4f7bf04",
+    "model_id": "Qwen3_5-9B-28K",
+    "source_sha256": "688218341055536f032806beb7f3b6d552d5429eebe4620a581e9c861e05aef4",
+    "overall": {
+      "n": 12488,
+      "correct": 8091,
+      "accuracy": 64.79,
+      "valid": 12488,
+      "blanks": 0,
+      "wrong_parsed": 4397
+    },
+    "baseline": {
+      "majority_letter": "A",
+      "majority_n": 3915,
+      "majority_accuracy": 31.35,
+      "label": "Luôn đáp A"
+    },
+    "by_gold": [
+      {
+        "gold": "A",
+        "n": 3915,
+        "correct": 2458,
+        "accuracy": 62.78
+      },
+      {
+        "gold": "B",
+        "n": 3282,
+        "correct": 1924,
+        "accuracy": 58.62
+      },
+      {
+        "gold": "C",
+        "n": 2535,
+        "correct": 1640,
+        "accuracy": 64.69
+      },
+      {
+        "gold": "D",
+        "n": 2755,
+        "correct": 2068,
+        "accuracy": 75.06
+      },
+      {
+        "gold": "E",
+        "n": 1,
+        "correct": 1,
+        "accuracy": 100.0
+      }
+    ],
+    "by_category": [
+      {
+        "category": "Nội khoa",
+        "n": 6299,
+        "correct": 4150,
+        "accuracy": 65.88
+      },
+      {
+        "category": "Sản – Nhi",
+        "n": 2589,
+        "correct": 1627,
+        "accuracy": 62.84
+      },
+      {
+        "category": "Ngoại – Gây mê – Hồi sức – Cấp cứu",
+        "n": 1236,
+        "correct": 760,
+        "accuracy": 61.49
+      },
+      {
+        "category": "Dược – Độc – Điều trị",
+        "n": 567,
+        "correct": 367,
+        "accuracy": 64.73
+      },
+      {
+        "category": "Chuyên khoa khác",
+        "n": 493,
+        "correct": 316,
+        "accuracy": 64.1
+      },
+      {
+        "category": "Cận lâm sàng & Chẩn đoán",
+        "n": 408,
+        "correct": 251,
+        "accuracy": 61.52
+      },
+      {
+        "category": "Khoa học cơ sở",
+        "n": 381,
+        "correct": 256,
+        "accuracy": 67.19
+      },
+      {
+        "category": "Ung bướu & Chăm sóc giảm nhẹ",
+        "n": 280,
+        "correct": 200,
+        "accuracy": 71.43
+      },
+      {
+        "category": "Y tế công cộng & Dự phòng",
+        "n": 228,
+        "correct": 161,
+        "accuracy": 70.61
+      },
+      {
+        "category": "unknown",
+        "n": 7,
+        "correct": 3,
+        "accuracy": 42.86
+      }
+    ],
+    "by_difficulty": [
+      {
+        "difficulty": "Easy",
+        "n": 4112,
+        "correct": 2763,
+        "accuracy": 67.19
+      },
+      {
+        "difficulty": "Medium",
+        "n": 7093,
+        "correct": 4540,
+        "accuracy": 64.01
+      },
+      {
+        "difficulty": "Challenging",
+        "n": 1193,
+        "correct": 737,
+        "accuracy": 61.78
+      },
+      {
+        "difficulty": "Hard",
+        "n": 90,
+        "correct": 51,
+        "accuracy": 56.67
+      }
+    ],
+    "by_n_choices": [
+      {
+        "n_choices": 1,
+        "n": 15,
+        "correct": 15,
+        "accuracy": 100.0
+      },
+      {
+        "n_choices": 2,
+        "n": 1240,
+        "correct": 866,
+        "accuracy": 69.84
+      },
+      {
+        "n_choices": 3,
+        "n": 101,
+        "correct": 68,
+        "accuracy": 67.33
+      },
+      {
+        "n_choices": 4,
+        "n": 11111,
+        "correct": 7129,
+        "accuracy": 64.16
+      },
+      {
+        "n_choices": 5,
+        "n": 2,
+        "correct": 2,
+        "accuracy": 100.0
+      },
+      {
+        "n_choices": 7,
+        "n": 19,
+        "correct": 11,
+        "accuracy": 57.89
+      }
+    ],
+    "blank_ids": [],
+    "caveat": "Public release lệch paper (12.488 dòng/file, không rõ partition; private 2k không có) + không license (research-use, trích dẫn paper + HF). 1.377/12.488 dòng ≠ 4 lựa chọn (1.240 Đúng/Sai, 15 câu 1 lựa chọn, 34 dòng placeholder optionE/F/G); ~6% trùng lặp giữ nguyên (không dedupe). Model 9B vượt giới hạn ≤4B của suite — ghi rõ khi công bố. Chỉ đối chiếu hướng với V-Bench medicine, không trừ phần trăm (khác dạng câu)."
   }
 }

@@ -1,7 +1,7 @@
 /** Dataset descriptions + shared metric vocabulary (change dataset-meta).
  *
  * One deep module: every benchmark tab renders its "what / how-scored"
- * strip from DATASET_META, so all seven tabs share one vocabulary and no
+ * strip from DATASET_META, so all eight tabs share one vocabulary and no
  * hero hardcodes its own prose. Page/route stays a thin pass-through.
  */
 
@@ -58,5 +58,11 @@ export const DATASET_META: Record<string, DatasetMeta> = {
     shape: "Trả lời tự do từ ngữ cảnh văn bản đấu thầu (open-book, 48 token)",
     metric: "EM + char-F1 trên file-gold",
     metricNote: "Đọc cùng val để thấy độ ổn định qua 2 split.",
+  },
+  vm14k: {
+    about: "Trắc nghiệm Y khoa tiếng Việt 12.488 câu (VM14K public release, shuffled0) — đo mảng Y đã lộ yếu trên V-Bench medicine.",
+    shape: "Trắc nghiệm A–E qua MC runner frozen (4 token, closed-book); lẫn 1.240 câu Đúng/Sai + câu 1 lựa chọn",
+    metric: "Accuracy + baseline majority + bẻ theo độ khó / số lựa chọn",
+    metricNote: "Chỉ đối chiếu hướng với V-Bench medicine (khác dạng câu); báo 4-lựa-chọn làm số chính.",
   },
 };

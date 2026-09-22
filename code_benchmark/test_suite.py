@@ -651,6 +651,147 @@ class TestBidlqaDashboard(unittest.TestCase):
                           "--card", "MC-12")
 
 
+class TestVm14kDashboard(unittest.TestCase):
+    def _vm14k_outputs(self, td: Path):
+        full = td / "full_evaluation_vm14k_M.csv"
+        with open(full, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["id", "question", "prompt", "raw_response",
+                                   "answer", "gold_answer", "correct"])
+            w.writeheader()
+            rows = [
+                ("id1", "A", "A", 1, "Easy", 4),
+                ("id2", "B", "A", 0, "Easy", 4),
+                ("id3", "B", "B", 1, "Medium", 2),
+                ("id4", "A", "B", 0, "Medium", 2),
+            ]
+            for rid, ans, gold, corr, _diff, _nc in rows:
+                w.writerow({"id": rid, "question": f"q-{rid}", "prompt": "p",
+                            "raw_response": ans, "answer": ans,
+                            "gold_answer": gold, "correct": corr})
+        acc = td / "accuracy_vm14k_M.csv"
+        with open(acc, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, ["level", "name", "n", "correct", "accuracy"])
+            w.writeheader()
+            w.writerow({"level": "overall", "name": "overall", "n": 4,
+                        "correct": 2, "accuracy": "50.0"})
+            w.writerow({"level": "category", "name": "unknown", "n": 4,
+                        "correct": 2, "accuracy": "50.0"})
+        manifest = td / "vm14k_manifest.json"
+        manifest.write_text(json.dumps({
+            "benchmark": "VM14K-test", "n": 4, "source_sha256": "s",
+            "items": [
+                {"id": "id1", "gold": "A", "n_choices": 4, "difficulty_level": "Easy",
+                 "primary_topic": "Cardiology", "category": "Nội khoa"},
+                {"id": "id2", "gold": "A", "n_choices": 4, "difficulty_level": "Easy",
+                 "primary_topic": "Cardiology", "category": "Nội khoa"},
+                {"id": "id3", "gold": "B", "n_choices": 2, "difficulty_level": "Medium",
+                 "primary_topic": "Pediatrics", "category": "Sản – Nhi"},
+                {"id": "id4", "gold": "B", "n_choices": 2, "difficulty_level": "Medium",
+                 "primary_topic": "Pediatrics", "category": "Sản – Nhi"},
+            ],
+        }), encoding="utf-8")
+        blob = td / "blob.json"
+        blob.write_text(json.dumps({"vmlu": {"a": 1}, "legal": {"b": 2}}), encoding="utf-8")
+        return full, manifest, blob
+
+    def _cli(self, *argv: str):
+        from code_benchmark.build_dashboard_vm14k import main as vm14k_main
+        import sys as _sys
+        old = _sys.argv
+        _sys.argv = ["build_dashboard_vm14k.py", *argv]
+        try:
+            vm14k_main()
+            return 0
+        finally:
+            _sys.argv = old
+
+    def test_patches_only_vm14k_key(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            full, manifest, blob = self._vm14k_outputs(tmp)
+            self._cli("--dashboard", str(blob), "--full", str(full),
+                      "--manifest", str(manifest), "--card", "MC-14b",
+                      "--model-id", "M")
+            out = json.loads(blob.read_text(encoding="utf-8"))
+            self.assertEqual(out["vmlu"], {"a": 1})    # untouched
+            self.assertEqual(out["legal"], {"b": 2})   # untouched
+            vm = out["vm14k"]
+            self.assertEqual(vm["overall"], {"n": 4, "correct": 2, "accuracy": 50.0,
+                                             "valid": 4, "blanks": 0, "wrong_parsed": 2})
+            self.assertEqual(vm["baseline"]["majority_accuracy"], 50.0)
+            self.assertEqual(vm["measurement_card"], "MC-14b")
+            self.assertEqual(
+                [(d["difficulty"], d["n"], d["correct"]) for d in vm["by_difficulty"]],
+                [("Easy", 2, 1), ("Medium", 2, 1)])
+            self.assertEqual(
+                [(d["category"], d["n"], d["correct"]) for d in vm["by_category"]],
+                [("Nội khoa", 2, 1), ("Sản – Nhi", 2, 1)])
+            self.assertEqual(
+                [(d["n_choices"], d["n"], d["correct"]) for d in vm["by_n_choices"]],
+                [(2, 2, 1), (4, 2, 1)])
+
+    def test_summary_mismatch_and_gold_drift_refuse(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            full, manifest, blob = self._vm14k_outputs(tmp)
+            with open(tmp / "accuracy_vm14k_M.csv", "w", newline="",
+                       encoding="utf-8") as f:
+                w = csv.DictWriter(f, ["level", "name", "n", "correct", "accuracy"])
+                w.writeheader()
+                w.writerow({"level": "overall", "name": "overall", "n": 4,
+                            "correct": 4, "accuracy": "100.0"})
+            with self.assertRaises(SystemExit):
+                self._cli("--dashboard", str(blob), "--full", str(full),
+                          "--manifest", str(manifest), "--card", "MC-14b")
+            self.assertNotIn("vm14k", json.loads(blob.read_text(encoding="utf-8")))
+            man = json.loads(manifest.read_text(encoding="utf-8"))
+            man["items"][0]["gold"] = "B"  # drift vs full gold_answer A
+            manifest.write_text(json.dumps(man), encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                self._cli("--dashboard", str(blob), "--full", str(full),
+                          "--manifest", str(manifest), "--card", "MC-14b")
+
+
+class TestVm14kTaxonomy(unittest.TestCase):
+    def test_every_category_value_is_ordered(self):
+        from code_benchmark.vm14k_taxonomy import CATEGORY_ORDER, TAG_TO_CATEGORY, UNKNOWN
+        self.assertIn(UNKNOWN, CATEGORY_ORDER)
+        for tag, cat in TAG_TO_CATEGORY.items():
+            self.assertIn(cat, CATEGORY_ORDER, msg=f"tag {tag!r} -> unordered {cat!r}")
+
+    def test_category_of_primary_tag_and_junk(self):
+        from code_benchmark.vm14k_taxonomy import category_of, UNKNOWN
+        self.assertEqual(category_of(["Cardiology", "Radiology"]), "Nội khoa")
+        self.assertEqual(category_of(["Pediatrics"]), "Sản – Nhi")
+        self.assertEqual(category_of([]), UNKNOWN)
+        self.assertEqual(category_of(None), UNKNOWN)
+        self.assertEqual(category_of(["optionD"]), UNKNOWN)
+        self.assertEqual(category_of([""]), UNKNOWN)
+
+    def test_source_primary_tags_all_mapped_or_explicit_junk(self):
+        import json as _json
+        from code_benchmark.vm14k_taxonomy import TAG_TO_CATEGORY, UNKNOWN, category_of
+        from pathlib import Path as _Path
+        src = _Path(__file__).resolve().parent.parent / "v_med_vm14k" / "data-processed-shuffled0.jsonl"
+        if not src.exists():
+            self.skipTest("gitignored VM14K source absent")
+        junk = {"", "optionD", "Classification", "Other(No Category)",
+                '"Endocrinology', 'Internal Medicine"',
+                "10. Tích oxalat. Các hội chứng bất thường liên quan đến gen lặn là gì? (Dịch: Các hội chứng bất thường liên quan đến gen lặn là gì?)",
+                "lí giải minh bạch"}
+        seen: set[str] = set()
+        with open(src, encoding="utf-8") as f:
+            for line in f:
+                topics = _json.loads(line).get("medical_topic") or []
+                if topics:
+                    seen.add(topics[0])
+        unmapped = {t for t in seen if t not in TAG_TO_CATEGORY}
+        self.assertEqual(unmapped - junk, set(),
+                         msg=f"new primary tags without a category: {sorted(unmapped - junk)}")
+        for t in unmapped:
+            self.assertEqual(category_of([t]), UNKNOWN)
+
+
 class TestVbenchRunner(unittest.TestCase):
     FN = {
         "name": "tra_cuu_giao_dich",
