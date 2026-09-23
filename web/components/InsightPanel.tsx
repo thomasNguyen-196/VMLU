@@ -3,8 +3,8 @@
 import { buildInsight } from "@/lib/insights.ts";
 import { ModelNotePanel } from "@/components/ModelNotePanel.tsx";
 
-/** Khối "Insight & định hướng" cho một run (model × dataset).
- *  Nhận định thủ công + bằng chứng số rút từ summary; thuần trình bày,
+/** Khối "Nhận xét & hướng kiểm chứng" cho một lần chạy (mô hình × bộ dữ liệu).
+ *  Diễn giải chuyên biệt + bằng chứng số rút từ summary; thuần trình bày,
  *  không fetch thêm (summary đã có sẵn ở panel cha). */
 export function InsightPanel({
   modelId,
@@ -20,7 +20,7 @@ export function InsightPanel({
   return (
     <div className="mt-4 space-y-2.5 rounded-xl border border-indigo-100 bg-indigo-50/40 p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold text-indigo-900">💡 Insight &amp; định hướng</span>
+        <span className="text-sm font-semibold text-indigo-900">💡 Nhận xét &amp; hướng kiểm chứng</span>
         <span
           className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
             insight.curated
@@ -28,7 +28,7 @@ export function InsightPanel({
               : "border-slate-200 bg-white text-slate-500"
           }`}
         >
-          {insight.curated ? "nhận định thủ công" : "chỉ bằng chứng tự động"}
+          {insight.curated ? "AI soạn · chưa có người đánh giá xác nhận" : "bằng chứng tự động"}
         </span>
         <span className="font-mono text-[10px] text-slate-400">
           {modelId} × {datasetId}
@@ -51,7 +51,7 @@ export function InsightPanel({
       {insight.causes.length > 0 && (
         <div className="space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Nguyên nhân khả nghi
+            Giả thuyết cần kiểm chứng
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
             {insight.causes.map((c) => (
@@ -77,7 +77,7 @@ export function InsightPanel({
       {insight.actions.length > 0 && (
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Hành động đề xuất
+            Phép kiểm chứng đề xuất
           </p>
           <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-xs leading-relaxed text-slate-700">
             {insight.actions.map((a, i) => (
@@ -89,7 +89,7 @@ export function InsightPanel({
 
       {insight.caveat && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] leading-relaxed text-amber-800">
-          ⚠️ Không được suy diễn: {insight.caveat}
+          ⚠️ Giới hạn diễn giải: {insight.caveat}
         </p>
       )}
 

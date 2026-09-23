@@ -27,7 +27,7 @@ function NoteCard({
       <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-700">{note.body}</p>
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <p className="font-mono text-[10px] text-slate-400">
-          {note.author} · sửa {note.updated_at}
+          Tác giả: {note.author} · cập nhật {note.updated_at}
         </p>
         <button
           onClick={() => void onDelete()}
@@ -41,8 +41,8 @@ function NoteCard({
   );
 }
 
-/** Nhận xét thủ công trong phạm vi dataset hiện tại (nhiều note/dataset).
- *  Note chỉ hiện ở đúng dataset của nó — không có phạm vi chung. */
+/** Ghi chú đã lưu trong phạm vi bộ dữ liệu hiện tại (nhiều ghi chú/bộ dữ liệu).
+ *  Mỗi ghi chú chỉ hiện ở đúng bộ dữ liệu của nó — không có phạm vi chung. */
 export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datasetId: string }) {
   const [models, setModels] = useState<string[]>([]);
   const [compare, setCompare] = useState("");
@@ -130,15 +130,15 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
     <div className="mt-2.5 space-y-2.5 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-semibold text-emerald-900">
-          📝 Nhận xét model · dataset này ({scoped.length})
+          📝 Nhận xét về mô hình · bộ dữ liệu này ({scoped.length})
         </span>
         <select
           value={compare}
           onChange={(e) => setCompare(e.target.value)}
           className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono text-[11px]"
-          title="Rỗng = nhận xét riêng của model; chọn model khác = nhận xét so sánh"
+          title="Rỗng = nhận xét riêng của mô hình; chọn mô hình khác = nhận xét so sánh"
         >
-          <option value="">riêng {modelId}</option>
+          <option value="">riêng mô hình {modelId}</option>
           {models.map((m) => (
             <option key={m} value={m}>
               vs {m}
@@ -155,10 +155,15 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
         )}
       </div>
 
+      <p className="text-[10px] leading-relaxed text-emerald-800/75">
+        Tác giả được hiển thị ở từng ghi chú. Hệ thống chưa lưu trạng thái riêng như “đã được
+        người đánh giá kiểm tra”, nên không tự suy ra nội dung đã được xác nhận.
+      </p>
+
       {loading ? (
         <p className="text-xs text-slate-500">Đang tải nhận xét…</p>
       ) : error ? (
-        <p className="text-xs text-red-600">nhận xét: {error}</p>
+        <p className="text-xs text-red-600">Không tải được nhận xét: {error}</p>
       ) : (
         <div className="space-y-2">
           {adding && (
@@ -174,7 +179,7 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
                 <input
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
-                  placeholder="Tên reviewer (bắt buộc)"
+                  placeholder="Tên người ghi (bắt buộc)"
                   className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                 />
                 <button
@@ -197,7 +202,7 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
             </div>
           )}
           {scoped.length === 0 && !adding ? (
-            <p className="text-xs text-slate-500">Chưa có nhận xét cho dataset này.</p>
+            <p className="text-xs text-slate-500">Chưa có nhận xét cho bộ dữ liệu này.</p>
           ) : (
             scoped.map((n) => (
               <NoteCard key={n._id} note={n} onDelete={() => remove(n._id)} deleting={deletingId === n._id} />
