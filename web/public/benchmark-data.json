@@ -3901,7 +3901,7 @@
     "harness": "omp (Oh My Pi) v18.2.7",
     "condition": "prompt byte-identical với arm A, temperature 0, seed 42, scorer đóng băng; khác duy nhất là đường elicitation",
     "measurement_card": "MC-15…MC-27",
-    "measurement_card_hash": "075e8d0116151565f1d82b16b2d9d382584516a296c8894ceef48651fe6907f4",
+    "measurement_card_hash": "a33e30d4bbf594464e2ceb19f4fefdbe0c6e0a9a041a598806b6c6aadcd5be9e",
     "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
     "ladder": [
       {
@@ -4415,7 +4415,7 @@
     ],
     "repeatability": [
       {
-        "cell": "ompH1_Qwen3_5-9B-28K",
+        "cell": "ompH1",
         "repeat": 1,
         "arm": "H1",
         "label": "omp: không tool + system prompt của omp (có rò style)",
@@ -4431,7 +4431,7 @@
         "mcnemar_p": "5.948e-05"
       },
       {
-        "cell": "ompH2_Qwen3_5-9B-28K",
+        "cell": "ompH2",
         "repeat": 1,
         "arm": "H2",
         "label": "omp: tool đầy đủ + system prompt của omp (có rò style)",
@@ -4447,7 +4447,7 @@
         "mcnemar_p": "4.87e-13"
       },
       {
-        "cell": "ompH2_Qwen3_5-9B-28K",
+        "cell": "ompH2",
         "repeat": 1,
         "arm": "H2",
         "label": "omp: tool đầy đủ + system prompt của omp (có rò style)",
@@ -4463,7 +4463,7 @@
         "mcnemar_p": "1.336e-12"
       },
       {
-        "cell": "ompH2_Qwen3_5-9B-28K",
+        "cell": "ompH2",
         "repeat": 1,
         "arm": "H2",
         "label": "omp: tool đầy đủ + system prompt của omp (có rò style)",
@@ -4479,7 +4479,7 @@
         "mcnemar_p": "1.617e-59"
       },
       {
-        "cell": "ompH2_Qwen3_5-9B-28K",
+        "cell": "ompH2",
         "repeat": 1,
         "arm": "H2",
         "label": "omp: tool đầy đủ + system prompt của omp (có rò style)",
@@ -4495,7 +4495,7 @@
         "mcnemar_p": "7.352e-33"
       },
       {
-        "cell": "ompH3_Qwen3_5-9B-28K",
+        "cell": "ompH3",
         "repeat": 1,
         "arm": "H3",
         "label": "omp: tool đầy đủ + system prompt trung tính (có rò style)",
@@ -4511,7 +4511,7 @@
         "mcnemar_p": "5.722e-06"
       },
       {
-        "cell": "ompH4_Qwen3_5-9B-28K",
+        "cell": "ompH4",
         "repeat": 1,
         "arm": "H4",
         "label": "omp: không tool + system prompt trung tính (có rò style)",
