@@ -120,6 +120,13 @@ const block = (ladder: unknown[] = [row(), row({ role: "baseline", arm: "A", del
   cost: [],
   speed: speedPair(),
   secondary_metrics: [secondary()],
+  insight: {
+    verdict: "V1",
+    claims: [
+      { id: "penalty", title: "T1", body: "B1", evidence: [{ label: "L", value: "V" }] },
+      { id: "vbench", title: "T2", body: "B2", evidence: [{ label: "L", value: "V" }] },
+    ],
+  },
   repeatability: [
     repeat({ repeat: 1, cell_n: 3, arm_b: 69.18, delta: -18.49, ci95_low: -26.33, ci95_high: -10.65, cell_min: 69.18, cell_max: 72.6 }),
     repeat(),
@@ -167,6 +174,41 @@ describe("parseHarnessBlock", () => {
 
   test("requires the speed table (the cost probe the block promises)", () => {
     expect(() => parseHarnessBlock({ ...block(), speed: [] })).toThrow(/thiếu .speed/);
+  });
+});
+
+describe("insight (phần nhận xét)", () => {
+  test("accepts claims that each carry evidence", () => {
+    expect(parseHarnessBlock(block()).insight.claims).toHaveLength(2);
+  });
+
+  test("rejects a block with no insight at all (the page's actual answer)", () => {
+    const b = { ...block() } as Record<string, unknown>;
+    delete b.insight;
+    expect(() => parseHarnessBlock(b)).toThrow(/thiếu .insight.claims/);
+  });
+
+  test("rejects an empty verdict or an empty claim list", () => {
+    expect(() => parseHarnessBlock({ ...block(), insight: { verdict: "", claims: block().insight.claims } })).toThrow(
+      /verdict rỗng/,
+    );
+    expect(() => parseHarnessBlock({ ...block(), insight: { verdict: "V", claims: [] } })).toThrow(
+      /thiếu .insight.claims/,
+    );
+  });
+
+  test("rejects a claim with no evidence — a claim without a number is just an opinion", () => {
+    const bad = { ...block(), insight: { verdict: "V", claims: [{ id: "x", title: "T", body: "B", evidence: [] }] } };
+    expect(() => parseHarnessBlock(bad)).toThrow(/không có evidence/);
+  });
+
+  test("rejects duplicate claim ids and claims missing title/body", () => {
+    const dup = { ...block(), insight: { verdict: "V", claims: [block().insight.claims[0], block().insight.claims[0]] } };
+    expect(() => parseHarnessBlock(dup)).toThrow(/claim id trùng/);
+    const bare = { ...block(), insight: { verdict: "V", claims: [{ id: "x", title: "", body: "B", evidence: [{ label: "L", value: "V" }] }] } };
+    expect(() => parseHarnessBlock(bare)).toThrow(/thiếu id\/title\/body/);
+    const ev = { ...block(), insight: { verdict: "V", claims: [{ id: "x", title: "T", body: "B", evidence: [{ label: "", value: "V" }] }] } };
+    expect(() => parseHarnessBlock(ev)).toThrow(/evidence thiếu label\/value/);
   });
 });
 

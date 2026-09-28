@@ -4828,6 +4828,98 @@
         "mcnemar_p": "2.98e-08"
       }
     ],
+    "insight": {
+      "verdict": "Cùng model, cùng prompt, cùng scorer: đi qua tiến trình agent làm giảm điểm ở mọi tập đã đo, và không gene nào của scaffold chịu trách nhiệm. Phần lớn thiệt hại ban đầu hoá ra là **cấu hình trả lời cá nhân của máy rò vào scaffold**, không phải bản thân `omp` — và ở task duy nhất scaffold được lợi thế (function-calling) thì nó vẫn chỉ thua, thua nhiều hơn bản thống kê cục bộ gợi ý.",
+      "claims": [
+        {
+          "id": "penalty",
+          "title": "Đi qua tiến trình agent thì mất điểm — ở mọi tập đã đo",
+          "body": "Với cùng model, cùng prompt byte-identical, cùng scorer đóng băng, chỉ khác đường elicitation: các arm scaffold sạch thua arm A -22.25…-5.60 điểm trên 4 tập (ViBidLQA val (EM), legal-MC (accuracy), legal-NLI (accuracy), reading-400 (EM)). Khoản phạt KHÔNG phụ thuộc cấu hình: cùng một dấu hiệu, kể cả khi bật cả tool menu lẫn system prompt của omp.",
+          "evidence": [
+            {
+              "label": "Δ nhỏ nhất",
+              "value": "-22.25"
+            },
+            {
+              "label": "Δ lớn nhất",
+              "value": "-5.60"
+            },
+            {
+              "label": "số dòng bằng chứng",
+              "value": "7"
+            }
+          ]
+        },
+        {
+          "id": "vbench",
+          "title": "Chỗ duy nhất scaffold *có thể* thắng — nó vẫn thua, và tệ hơn bản thống kê cục bộ",
+          "body": "Trên 1000 câu function-calling: schema validity 100.00% → 97.40% (-2.60đ), nhưng điểm server thật là 39.70% → 30.80% (-8.90đ) — lớn hơn 3.4 lần. Nghĩa là phần lớn lỗi KHÔNG phải “sinh JSON sai” mà là **gọi đúng hàm sai tham số**: validator schema không thấy loại lỗi đó.",
+          "evidence": [
+            {
+              "label": "validity Δ",
+              "value": "-2.60"
+            },
+            {
+              "label": "accuracy Δ (server)",
+              "value": "-8.90"
+            },
+            {
+              "label": "chênh lệch",
+              "value": "3.4×"
+            }
+          ]
+        },
+        {
+          "id": "noise",
+          "title": "Có phạt thật; nhưng tương tác persona × tool thì không tách được",
+          "body": "Trên legal-MC — cùng tập đã lặp — chính một ô biến thiên 0.68…5.48 điểm ở `temperature 0`. Khoản phạt của scaffold ở đây là 11.00…18.49đ, tức 2.0–3.4 lần mức nhiễu ⇒ **vững**. Nhưng hiệu ứng persona × tool chỉ +3.53đ, **nhỏ hơn cả nhiễu của chính một ô** ⇒ không kết luận được, và không phải vì thiếu mẫu.",
+          "evidence": [
+            {
+              "label": "nhiễu trong ô (legal-MC)",
+              "value": "0.68…5.48"
+            },
+            {
+              "label": "contrast H8−H5",
+              "value": "+3.53"
+            },
+            {
+              "label": "Δ scaffold ở legal-MC",
+              "value": "11.00…18.49đ"
+            }
+          ]
+        },
+        {
+          "id": "wrapper",
+          "title": "Phần lớn “harness tax” ban đầu là cấu hình của máy rò vào, không phải bản thân omp",
+          "body": "Chấm lại **cùng** câu trả lời sau khi bỏ vỏ markdown (ViBidLQA val (EM), n=482): arm bị rò lên +16.18đ, còn arm sạch +0.00đ — tức vỏ là của **cấu hình**, và câu trả lời arm sạch vốn đã trần. Nguyên nhân: `PI_CODING_AGENT_DIR` không cô lập được scaffold, omp vẫn đọc `~/.omp/agent/APPEND_SYSTEM.md` từ agent dir mặc định.",
+          "evidence": [
+            {
+              "label": "arm rò (ViBidLQA val (EM))",
+              "value": "+16.18"
+            },
+            {
+              "label": "arm sạch (ViBidLQA val (EM))",
+              "value": "+0.00"
+            }
+          ]
+        },
+        {
+          "id": "cost",
+          "title": "Hai cơ chế chi phí là hai thứ tiền khác nhau — đừng gộp",
+          "body": "Rò cấu hình: +140 prompt token nhưng **+4.00s/item** và completion token ×118 (2→235). Tool menu: **+4737 prompt token** mà gần như -0.05s, và không cộng điểm. ⇒ muốn giảm độ trễ thì cắt văn bản ép dài, **đừng cắt tool**.",
+          "evidence": [
+            {
+              "label": "rò: token / giây",
+              "value": "+140 / +4.00s"
+            },
+            {
+              "label": "tool: token / giây",
+              "value": "+4737 / -0.05s"
+            }
+          ]
+        }
+      ]
+    },
     "cost": [
       {
         "arm": "H2",
