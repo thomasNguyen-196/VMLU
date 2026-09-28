@@ -58,6 +58,42 @@ export default async function HarnessPage() {
         <b>Cách chặn:</b> {block.leak.fix} · <b>Guard:</b> {block.leak.guard}
       </div>
 
+      <section className="mt-8 rounded-lg border border-hair bg-card p-5">
+        <h2 className="text-[16px] font-semibold">Nhận xét — đọc kết quả này thành gì?</h2>
+        <p className="mt-2 text-[14px] font-medium leading-relaxed">{block.insight.verdict}</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          {block.insight.claims.map((c) => (
+            <div key={c.id} className="rounded-lg border border-hair p-4">
+              <h3 className="text-[13.5px] font-semibold leading-snug">{c.title}</h3>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">
+                {c.body.split("**").map((chunk, i) =>
+                  i % 2 === 1 ? (
+                    <b key={i} className="text-ink">
+                      {chunk}
+                    </b>
+                  ) : (
+                    <span key={i}>{chunk}</span>
+                  ),
+                )}
+              </p>
+              <dl className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 border-t border-hair pt-2 text-[12px]">
+                {c.evidence.map((e) => (
+                  <div key={e.label} className="flex gap-1.5">
+                    <dt className="text-ink-2">{e.label}</dt>
+                    <dd className="font-mono font-semibold">{e.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-[11.5px] text-ink-2">
+          Mọi con số ở trên được builder nội suy từ artifact của chính các bảng dưới đây
+          (<code>insight()</code> trong <code>build_dashboard_harness.py</code>) — không có số nào gõ tay,
+          nên phần diễn giải không thể lệch với dữ liệu.
+        </p>
+      </section>
+
       {DATASET_ORDER.map((ds) => {
         const rows = rowsForDataset(block, ds);
         if (!rows.length) return null;

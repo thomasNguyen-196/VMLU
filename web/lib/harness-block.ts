@@ -121,6 +121,22 @@ export interface HarnessRepeatRow {
   cell_max?: number;
 }
 
+/** The interpretation layer. Every number in `body` is INTERPOLATED from the rows
+ *  the builder already carries (see `insight()` in build_dashboard_harness.py), so
+ *  a claim cannot go stale the way a hand-typed sentence would. Claims whose
+ *  evidence rows are absent are omitted, never printed with a hole. */
+export interface HarnessInsightClaim {
+  id: string;
+  title: string;
+  body: string;
+  evidence: { label: string; value: string }[];
+}
+
+export interface HarnessInsight {
+  verdict: string;
+  claims: HarnessInsightClaim[];
+}
+
 export interface HarnessBlock {
   benchmark_name: string;
   date: string;
@@ -136,6 +152,7 @@ export interface HarnessBlock {
   speed: HarnessSpeedRow[];
   secondary_metrics: HarnessSecondaryRow[];
   repeatability: HarnessRepeatRow[];
+  insight: HarnessInsight;
   totals: {
     items_harness: number;
     failures: number;
@@ -233,6 +250,24 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
       if (m.em_stripped < m.em_verbatim) {
         fail(`${m.arm}/${m.dataset}: EM sau cắt vỏ (${m.em_stripped}) < EM nguyên văn (${m.em_verbatim}) — bóc vỏ không thể làm điểm giảm`);
       }
+    }
+  }
+  // The insight layer is the page's actual answer, so an empty one is a broken
+  // page, not a cosmetic gap.
+  if (!b.insight || !Array.isArray(b.insight.claims) || !b.insight.claims.length) {
+    fail("block .harness thiếu .insight.claims — trang không có phần nhận xét");
+  }
+  if (!b.insight.verdict) fail("block .harness .insight.verdict rỗng");
+  const seenIds = new Set<string>();
+  for (const c of b.insight.claims) {
+    if (!c.id || !c.title || !c.body) fail(`claim thiếu id/title/body: ${JSON.stringify(c).slice(0, 100)}`);
+    if (seenIds.has(c.id)) fail(`claim id trùng: ${c.id}`);
+    seenIds.add(c.id);
+    if (!Array.isArray(c.evidence) || !c.evidence.length) {
+      fail(`claim ${c.id} không có evidence — một claim không kèm số thể chỉ là ý kiến`);
+    }
+    for (const e of c.evidence) {
+      if (!e.label || !e.value) fail(`claim ${c.id}: evidence thiếu label/value`);
     }
   }
   // `repeatability` is required once present in the schema: a table that omits

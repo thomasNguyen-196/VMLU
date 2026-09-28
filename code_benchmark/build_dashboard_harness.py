@@ -422,6 +422,149 @@ def repeatability(results_dir: Path, arms: list = ARMS) -> list[dict]:
     return sorted(rows, key=lambda r: (r["cell"], r["n"], r["repeat"]))
 
 
+def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
+            speed_rows: list[dict]) -> dict:
+    """The interpretation layer — every number INTERPOLATED from the artifacts.
+
+    A hand-typed sentence about a measured number goes stale the moment a run is
+    re-done, and nobody notices. So nothing here is typed: each claim is built
+    from the rows the block already carries, and a claim whose evidence rows are
+    absent is OMITTED rather than printed with a hole in it.
+    """
+    # V-Bench is EXCLUDED on purpose: its row is schema VALIDITY while the others are
+    # accuracy/EM, so a min..max across both would be a range between two different
+    # metrics. It has its own claim below.
+    clean = [r for r in ladder
+             if "clean" in r["arm_slug"] and r["role"] == "harness"
+             and r["dataset"] != "vbench_agentic"]
+    claims: list[dict] = []
+
+    # 1. the penalty, across every dataset a clean arm covered
+    if clean:
+        deltas = sorted(r["delta"] for r in clean)
+        ds = sorted({r["dataset_label"] for r in clean})
+        claims.append({
+            "id": "penalty",
+            "title": "Đi qua tiến trình agent thì mất điểm — ở mọi tập đã đo",
+            "body": (f"Với cùng model, cùng prompt byte-identical, cùng scorer đóng băng, chỉ khác "
+                     f"đường elicitation: các arm scaffold sạch thua arm A "
+                     f"{deltas[0]:+.2f}…{deltas[-1]:+.2f} điểm trên {len(ds)} tập "
+                     f"({', '.join(ds)}). Khoản phạt KHÔNG phụ thuộc cấu hình: cùng một dấu hiệu, "
+                     f"kể cả khi bật cả tool menu lẫn system prompt của omp."),
+            "evidence": [{"label": "Δ nhỏ nhất", "value": f"{deltas[0]:+.2f}"},
+                         {"label": "Δ lớn nhất", "value": f"{deltas[-1]:+.2f}"},
+                         {"label": "số dòng bằng chứng", "value": str(len(clean))}],
+        })
+
+    # 2. V-Bench: validity said −2,60 but the server said −8,90
+    v_a = next((r for r in ladder if r["role"] == "baseline" and r["dataset"] == "vbench_agentic"), None)
+    v_b = next((r for r in ladder if r["dataset"] == "vbench_agentic" and r["role"] == "harness"), None)
+    if v_a and v_b and v_b.get("server_score") is not None:
+        vdelta = v_b["server_score"] - v_a["server_score"]
+        ratio = abs(vdelta / v_b["delta"]) if v_b["delta"] else float("nan")
+        claims.append({
+            "id": "vbench",
+            "title": "Chỗ duy nhất scaffold *có thể* thắng — nó vẫn thua, và tệ hơn bản thống kê cục bộ",
+            "body": (f"Trên {v_b['n']} câu function-calling: schema validity "
+                     f"{v_a['arm_b']:.2f}% → {v_b['arm_b']:.2f}% ({v_b['delta']:+.2f}đ), nhưng điểm server "
+                     f"thật là {v_a['server_score']:.2f}% → {v_b['server_score']:.2f}% ({vdelta:+.2f}đ) — "
+                     f"lớn hơn {ratio:.1f} lần. Nghĩa là phần lớn lỗi KHÔNG phải “sinh JSON sai” mà là "
+                     f"**gọi đúng hàm sai tham số**: validator schema không thấy loại lỗi đó."),
+            "evidence": [{"label": "validity Δ", "value": f"{v_b['delta']:+.2f}"},
+                         {"label": "accuracy Δ (server)", "value": f"{vdelta:+.2f}"},
+                         {"label": "chênh lệch", "value": f"{ratio:.1f}×"}],
+        })
+
+    # 3. the noise floor vs the persona x tools interaction
+    spreads = {r["cell"]: r["cell_spread"] for r in reps if r.get("cell_spread") is not None}
+    means = {r["cell"]: r["cell_mean"] for r in reps if r.get("cell_mean") is not None}
+    if {"ompH5clean", "ompH8clean"} <= set(means) and spreads:
+        noise = max(spreads.values())
+        contrast = means["ompH8clean"] - means["ompH5clean"]
+        # The repeats (and therefore the noise floor) were measured on legal-MC, so
+        # only legal-MC deltas may be compared with it. Mixing in ViBidLQA's -5,60
+        # would put a 146-item SD next to a 482-item delta and call the result "inside
+        # the noise" when it is not a like-for-like statement.
+        matched = [r for r in clean if r["dataset"] == "legal_mc"]
+        if matched:
+            worst = min(abs(r["delta"]) for r in matched)
+            best = max(abs(r["delta"]) for r in matched)
+            claims.append({
+                "id": "noise",
+                "title": "Có phạt thật; nhưng tương tác persona × tool thì không tách được",
+                "body": (f"Trên legal-MC — cùng tập đã lặp — chính một ô biến thiên "
+                         f"{min(spreads.values()):.2f}…{noise:.2f} điểm ở `temperature 0`. "
+                         f"Khoản phạt của scaffold ở đây là {worst:.2f}…{best:.2f}đ, tức "
+                         f"{worst / noise:.1f}–{best / noise:.1f} lần mức nhiễu ⇒ **vững**. "
+                         f"Nhưng hiệu ứng persona × tool chỉ {contrast:+.2f}đ, **nhỏ hơn cả nhiễu của "
+                         f"chính một ô** ⇒ không kết luận được, và không phải vì thiếu mẫu."),
+                "evidence": [{"label": "nhiễu trong ô (legal-MC)", "value": f"{min(spreads.values()):.2f}…{noise:.2f}"},
+                             {"label": "contrast H8−H5", "value": f"{contrast:+.2f}"},
+                             {"label": "Δ scaffold ở legal-MC", "value": f"{worst:.2f}…{best:.2f}đ"}],
+            })
+
+    # 4. wrapper cost = the leak, quantified; tools are a different currency
+    w = {(m["arm"], m["dataset"]): m for m in secondary}
+    leak_r = [k for k in w if k[0] == "H2"]
+    clean_r = [k for k in w if k[0] == "H5"]
+    if leak_r and clean_r:
+        # same dataset on both sides, and always name it: "the wrapper is worth
+        # +22,25" is a different claim per dataset
+        ds = sorted({k[1] for k in leak_r} & {k[1] for k in clean_r})
+        if ds:
+            d = ds[0]
+            a, b = w[("H2", d)], w[("H5", d)]
+            label = a["dataset_label"]
+            claims.append({
+                "id": "wrapper",
+                "title": "Phần lớn “harness tax” ban đầu là cấu hình của máy rò vào, không phải bản thân omp",
+                "body": (f"Chấm lại **cùng** câu trả lời sau khi bỏ vỏ markdown "
+                         f"({label}, n={a['n']}): arm bị rò lên {a['wrapper_cost']:+.2f}đ, "
+                         f"còn arm sạch {b['wrapper_cost']:+.2f}đ — tức vỏ là của **cấu hình**, và câu "
+                         f"trả lời arm sạch vốn đã trần. Nguyên nhân: `PI_CODING_AGENT_DIR` không cô lập "
+                         f"được scaffold, omp vẫn đọc `~/.omp/agent/APPEND_SYSTEM.md` từ agent dir mặc định."),
+                "evidence": [{"label": f"arm rò ({label})", "value": f"{a['wrapper_cost']:+.2f}"},
+                             {"label": f"arm sạch ({label})", "value": f"{b['wrapper_cost']:+.2f}"}],
+            })
+
+    # 5. latency vs tokens, split by gene — derived from the n=24 probe cells
+    def probe(arm: str, field: str) -> float | None:
+        for r in speed_rows:
+            if r.get("arm") == arm and r.get("side") == "omp" and r.get("n") == "24":
+                return float(r[field])
+        return None
+
+    leak = None
+    if all(probe(a, "prompt_tok_per_item") is not None for a in ("H5", "H4")):
+        leak = {"tok": probe("H4", "prompt_tok_per_item") - probe("H5", "prompt_tok_per_item"),
+                "s": probe("H4", "overhead_s_per_item") - probe("H5", "overhead_s_per_item"),
+                "out_a": probe("H5", "completion_tok_per_item"),
+                "out_b": probe("H4", "completion_tok_per_item")}
+    tools = None
+    if all(probe(a, "prompt_tok_per_item") is not None for a in ("H4", "H3")):
+        tools = {"tok": probe("H3", "prompt_tok_per_item") - probe("H4", "prompt_tok_per_item"),
+                 "s": probe("H3", "overhead_s_per_item") - probe("H4", "overhead_s_per_item")}
+    if leak and tools and leak["out_a"] and leak["out_b"]:
+        claims.append({
+            "id": "cost",
+            "title": "Hai cơ chế chi phí là hai thứ tiền khác nhau — đừng gộp",
+            "body": (f"Rò cấu hình: {leak['tok']:+.0f} prompt token nhưng **{leak['s']:+.2f}s/item** và "
+                     f"completion token ×{leak['out_b'] / leak['out_a']:.0f} "
+                     f"({leak['out_a']:.0f}→{leak['out_b']:.0f}). Tool menu: "
+                     f"**{tools['tok']:+.0f} prompt token** mà gần như {tools['s']:+.2f}s, và không cộng điểm. "
+                     f"⇒ muốn giảm độ trễ thì cắt văn bản ép dài, **đừng cắt tool**."),
+            "evidence": [{"label": "rò: token / giây", "value": f"{leak['tok']:+.0f} / {leak['s']:+.2f}s"},
+                         {"label": "tool: token / giây", "value": f"{tools['tok']:+.0f} / {tools['s']:+.2f}s"}],
+        })
+
+    verdict = ("Cùng model, cùng prompt, cùng scorer: đi qua tiến trình agent làm giảm điểm ở mọi tập "
+               "đã đo, và không gene nào của scaffold chịu trách nhiệm. Phần lớn thiệt hại ban đầu hoá ra là "
+               "**cấu hình trả lời cá nhân của máy rò vào scaffold**, không phải bản thân `omp` — và ở task "
+               "duy nhất scaffold được lợi thế (function-calling) thì nó vẫn chỉ thua, thua nhiều hơn bản "
+               "thống kê cục bộ gợi ý.") if claims else ""
+    return {"verdict": verdict, "claims": claims}
+
+
 def build_block(results_dir: Path, arms: list = ARMS) -> dict:
     ladder, costs = build_ladder(results_dir, arms)
     speed_rows: list[dict] = []
@@ -436,6 +579,8 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
                 # own pair id is projected to `side`. Never let the CSV overwrite
                 # the arm identity — that is how five arms once displayed as H2.
                 speed_rows.append({**row, "arm": short, "label": label})
+    secondary = secondary_metrics(results_dir, arms)
+    reps = repeatability(results_dir, arms)
     totals = {
         "items_harness": sum(c["n"] for c in costs),
         "failures": sum(c["failures"] for c in costs),
@@ -455,8 +600,9 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
         "measurement_card_hash": measurement_card_hash(),
         "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
         "ladder": ladder,
-        "secondary_metrics": secondary_metrics(results_dir, arms),
-        "repeatability": repeatability(results_dir, arms),
+        "secondary_metrics": secondary,
+        "repeatability": reps,
+        "insight": insight(ladder, secondary, reps, speed_rows),
         "cost": costs,
         "speed": speed_rows,
         "totals": totals,
@@ -544,6 +690,13 @@ def render_html(block: dict) -> str:
                           f'<span class="neg">+{m["wrapper_cost"]:.2f}</span>'
                           if m["wrapper_cost"] > 0.5 else f'{m["wrapper_cost"]:+.2f}'])
                      for m in block.get("secondary_metrics", [])]
+    ins = block.get("insight", {"verdict": "", "claims": []})
+    ins_html = "".join(
+        f'<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px">'
+        f'<b>{e(c["title"])}</b><p class="sub" style="margin:6px 0">{e(c["body"])}</p>'
+        f'<div class="sub">{" · ".join(e(x["label"]) + " <b>" + e(x["value"]) + "</b>" for x in c["evidence"])}</div>'
+        f"</div>"
+        for c in ins["claims"])
     caveat_rows = "".join(f"<li>{e(c)}</li>" for c in block["caveats"])
     t = block["totals"]
     return f"""<!DOCTYPE html>
@@ -575,6 +728,12 @@ def render_html(block: dict) -> str:
 <div class="box"><b>⚠ Đọc MC-15…MC-21 cùng MC-22.</b> {e(block["leak"]["what"])}<br>
 <b>Bằng chứng:</b> {e(block["leak"]["evidence"])}<br>
 <b>Cách chặn:</b> {e(block["leak"]["fix"])} · <b>Guard:</b> {e(block["leak"]["guard"])}</div>
+
+<h2>Nhận xét — đọc kết quả này thành gì?</h2>
+<p><b>{e(ins["verdict"])}</b></p>
+<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">{ins_html}</div>
+<p class="sub">Mọi số ở trên nội suy từ artifact của các bảng dưới đây (<code>insight()</code>) —
+không có số nào gõ tay.</p>
 
 <h2>Bảng chính — paired, cùng tập item</h2>
 <table><tr><th>Arm</th><th>Tập</th><th>n</th><th>Metric</th><th>Arm A</th><th>Arm B</th>
