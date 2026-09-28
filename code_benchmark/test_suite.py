@@ -2140,6 +2140,28 @@ class TestHarnessDashboard(unittest.TestCase):
         self.assertIn("did not answer a 1-token call", msg)
         self.assertIn("--resume", msg)          # tells the operator nothing is lost
 
+    def test_preflight_names_an_http_error_as_an_upstream_outage(self):
+        # observed 2026-09-28: /v1/models answered but the inference backend was
+        # down — a clean 502, which looks nothing like the earlier silence and
+        # must not be reported as "the endpoint did not answer".
+        import io
+        import urllib.error
+
+        def boom(*a, **kw):
+            raise urllib.error.HTTPError("https://x/v1/chat/completions", 502, "Bad Gateway",
+                                         {}, io.BytesIO(b'{"detail":"Error connecting to '
+                                                              b'backend LLM server: "}'))
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=False):
+            with unittest.mock.patch("urllib.request.urlopen", boom):
+                with self.assertRaises(SystemExit) as ctx:
+                    harness.preflight_endpoint(timeout=0.01)
+        msg = str(ctx.exception)
+        self.assertIn("HTTP 502 Bad Gateway", msg)
+        self.assertIn("IS answering", msg)
+        self.assertIn("upstream outage", msg)
+        self.assertIn("Error connecting to backend LLM server", msg)   # the body is quoted
+        self.assertNotIn("did not answer a 1-token call", msg)         # the other branch
+
     def test_preflight_passes_through_when_the_endpoint_answers(self):
         class FakeResp:
             def read(self):

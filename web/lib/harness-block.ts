@@ -19,7 +19,9 @@ export interface HarnessRow {
   card: string | null;
   dataset: string;
   dataset_label: string;
-  metric: "accuracy" | "EM";
+  /** `agreement_with_arm_A` = no local gold (V-Bench MC), so the pairable
+   *  number is "did the agent change the answer?", never accuracy. */
+  metric: "accuracy" | "EM" | "valid_rate" | "agreement_with_arm_A";
   n: number;
   arm_a: number;
   arm_b: number;

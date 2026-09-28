@@ -59,6 +59,7 @@ import shutil
 import subprocess  # nosec B404 — the harness IS a subprocess; argv is built, never a shell string
 import tempfile
 import time
+import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -79,7 +80,7 @@ try:  # package run (repo root) or direct run (cwd == code_benchmark)
     from code_benchmark.run_mc_eval import build_prompt, extract_answer
     from code_benchmark.llm import build_client, verify_credentials
     from code_benchmark.run_vbench_eval import (build_agentic_prompt, extract_function_call,
-                                                load_vbench)
+                                                extract_mc_answer, load_vbench)
     from code_benchmark.score_reading_eval import measurement_card_hash, score_pair
 except ImportError:
     from common import (MANIFEST_DEFAULT, SQUAD_DEFAULT, DROP_DEFAULT,
@@ -94,7 +95,8 @@ except ImportError:
                                  verify_join as verify_bidlqa_join)
     from run_mc_eval import build_prompt, extract_answer
     from llm import build_client, verify_credentials
-    from run_vbench_eval import build_agentic_prompt, extract_function_call, load_vbench
+    from run_vbench_eval import (build_agentic_prompt, extract_function_call,
+                                  extract_mc_answer, load_vbench)
     from score_reading_eval import measurement_card_hash, score_pair
 
 RESULTS_DIR = Path("all_res/ollama_result")
@@ -145,6 +147,17 @@ ARM_A = {
         "kind": "vbench", "n": 1000,
         "eval": None,
         "scores": "vbench_valid_summary_{a}.csv",
+    },
+    # V-Bench MC (4.141, 12 domains). Also NO local gold, so accuracy is again
+    # server-side; the only locally computable number is AGREEMENT WITH ARM A per
+    # item (did routing the same prompt through the agent change the answer?) —
+    # plus the blank rate. `compare` therefore reports agreement, never accuracy,
+    # and never runs McNemar (arm A trivially "agrees" with itself, which would
+    # make the test meaningless).
+    "vbench_mc": {
+        "kind": "vbench_mc", "n": 4141,
+        "eval": None,
+        "scores": None,
     },
 }
 VBENCH_SOURCE = Path("v_bench/public-test.jsonl")
@@ -353,10 +366,34 @@ def load_vbench_agentic() -> list[dict]:
     return out
 
 
+def load_vbench_mc() -> list[dict]:
+    """V-Bench MC rows (4.141) with the FROZEN MC prompt and no gold.
+
+    Same prompt bytes as arm A used: `build_prompt(question, choices)`, the
+    function the MC pipeline and every direct arm share. Parsing goes through
+    `extract_mc_answer`, which is `extract_answer` plus the per-row letter clamp
+    (a "E" on a 4-choice row is not a valid submission value).
+    """
+    rows = [r for r in load_vbench(VBENCH_SOURCE) if r["track"] == "mc"]
+    if len(rows) != ARM_A["vbench_mc"]["n"]:
+        logging.warning("vbench MC rows = %d, card says %d — check the release "
+                        "(expected 4.141 for v2026.03.28)", len(rows),
+                        ARM_A["vbench_mc"]["n"])
+    out = []
+    for r in rows:
+        prompt = build_prompt(r["question"], r["choices"])
+        out.append({"dataset": "vbench_mc", "item_id": str(r["id"]),
+                    "stratum": r["domain"], "kind": "vbench_mc", "question": r["question"],
+                    "prompt": prompt, "prompt_sha256": _sha256_text(prompt), "gold": "",
+                    "choices": r["choices"], "domain": r["domain"]})
+    return out
+
+
 def load_items(dataset: str, arm_a_slug: str) -> list[dict]:
     loaders = {"reading400": lambda: load_reading400(),
                "bidlqa_val": lambda: load_bidlqa_val(),
                "vbench_agentic": lambda: load_vbench_agentic(),
+               "vbench_mc": lambda: load_vbench_mc(),
                "legal_mc": lambda: load_legal_mc(arm_a_slug),
                "legal_nli": lambda: load_legal_nli(arm_a_slug)}
     if dataset not in loaders:
@@ -583,6 +620,12 @@ def run_item(item: dict, *, omp_bin: str, model: str, tools: str, max_time: int,
         answer = extract_answer(text)
         row["answer"] = answer
         row["correct"] = int(bool(answer) and answer == item["gold"])
+    elif item["kind"] == "vbench_mc":
+        # Frozen MC parser + the row's own choice clamp. No gold locally, so there
+        # is no `correct` — only the shipped letter and whether one was produced.
+        answer = extract_mc_answer(text, item["choices"])
+        row["answer"] = answer
+        row["valid"] = int(bool(answer))
     elif item["kind"] == "vbench":
         # Frozen V-Bench parser: '' means NO candidate validated against the row's
         # own schema — that emptiness IS the locally computable metric (validity),
@@ -641,6 +684,25 @@ def diagnose(row: dict, stderr: str) -> str:
 def write_projection(rows: list[dict], dataset: str, kind: str, slug: str,
                      folder: Path, items_by_id: dict[str, dict]) -> Path:
     """Project the ledger onto the file shape the FROZEN scorers already read."""
+    if kind == "vbench_mc":
+        # Server-side scoring, same as agentic: ship the letters, keep a local
+        # answers file. The submission holds ONLY this arm's MC rows — never mixed
+        # with arm A's, or the two arms' numbers would be indistinguishable.
+        path = folder / f"vbench_mc_answers_{slug}.csv"
+        write_csv_atomic(path, [{"id": r["item_id"], "domain": r["stratum"],
+                                 "question": r["question"],
+                                 "raw_response": r["raw_response"],
+                                 "answer": r["answer"],
+                                 "valid": int(bool(r["answer"]))} for r in rows],
+                        ["id", "domain", "question", "raw_response", "answer", "valid"])
+        sub_dir = Path("submissions") / slug
+        sub_dir.mkdir(parents=True, exist_ok=True)
+        with open(sub_dir / f"submission_vbench_mc_{slug}.jsonl", "w", encoding="utf-8") as f:
+            for r in sorted(rows, key=lambda x: int(x["item_id"])):
+                # compact separators: byte style of the official sample submission
+                f.write(json.dumps({"id": int(r["item_id"]), "answer": r["answer"]},
+                                   ensure_ascii=False, separators=(",", ":")) + "\n")
+        return path
     if kind == "vbench":
         # No local gold: the arm-A-shaped artifact here is the VALIDITY summary
         # (same shape run_vbench_eval writes) plus the uploadable submission.
@@ -717,6 +779,20 @@ def preflight_endpoint(timeout: float = 45.0) -> None:
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310
             resp.read()
+    except urllib.error.HTTPError as exc:
+        # The gateway is up and ANSWERING — just failing (502 from a dead upstream is
+        # the common case, and it looks nothing like a timeout). Say which, because
+        # "the endpoint is down" sends you down the wrong path.
+        body = (exc.read() or b"")[:200].decode("utf-8", "replace").strip()
+        raise SystemExit(
+            f"Error: endpoint preflight returned HTTP {exc.code} {exc.reason} after "
+            f"{time.time() - started:.0f}s.\n"
+            f"  {url} IS answering, but the inference backend is failing — this is an "
+            f"upstream outage, not a network problem.\n"
+            f"  Body: {body or '(empty)'}\n"
+            f"  Refusing to start: every item would be recorded as a model failure. "
+            f"Re-run when the backend recovers (nothing is lost: --resume picks up "
+            f"from the newest checkpoint).") from exc
     except Exception as exc:
         raise SystemExit(
             f"Error: endpoint preflight failed after {time.time() - started:.0f}s "
@@ -1134,6 +1210,12 @@ def _arm_a_correct_rows(dataset: str, arm_a: str) -> list[tuple[str, int]]:
     """
     spec = ARM_A[dataset]
     folder = RESULTS_DIR / arm_a
+    if spec["kind"] == "vbench_mc":
+        letters = _vbench_mc_letters(folder, arm_a, harness_arm=False)
+        if letters is None:
+            raise SystemExit(f"Error: arm A has no vbench_result_*_{arm_a}.csv — its MC "
+                             f"answers are the only local reference for agreement")
+        return list(letters.items())
     if spec["kind"] == "vbench":
         per_item = _vbench_validity(folder, arm_a, dataset, harness_arm=False)
         if per_item is not None:
@@ -1155,9 +1237,36 @@ def _arm_a_correct_rows(dataset: str, arm_a: str) -> list[tuple[str, int]]:
     return [(item_key(r), int(r["em"])) for r in rows]
 
 
+def _vbench_mc_letters(folder: Path, slug: str, *, harness_arm: bool) -> dict | None:
+    """Per-item shipped LETTER for a V-Bench MC arm: {id: "A".."E" or ""}.
+
+    No gold exists locally, so the pairable bit is agreement with arm A, not
+    correctness. The direct arm's letters come from its own checkpoint (the same
+    `answer` column its submission shipped); a harness arm's from the ledger.
+    """
+    if harness_arm:
+        path = folder / f"harness_ledger_vbench_mc_{slug}.csv"
+        if not path.exists():
+            return None
+        rows = read_csv_checked(path, required={"item_id", "answer"}, label="harness ledger")
+        return {str(r["item_id"]): str(r["answer"] or "") for r in rows}
+    checkpoints = [p for p in folder.glob(f"vbench_result_*_{slug}.csv")
+                   if re.search(r"vbench_result_(\d+)_", p.name)]
+    if not checkpoints:
+        return None
+    latest = max(checkpoints, key=lambda p: int(re.search(r"vbench_result_(\d+)_", p.name).group(1)))
+    with open(latest, encoding="utf-8", newline="") as f:
+        return {str(r["id"]): str(r.get("answer") or "") for r in csv.DictReader(f)}
+
+
 def _arm_b_correct_rows(dataset: str, slug: str) -> list[tuple[str, int]]:
     spec = ARM_A[dataset]
     folder = RESULTS_DIR / slug
+    if spec["kind"] == "vbench_mc":
+        letters = _vbench_mc_letters(folder, slug, harness_arm=True)
+        if letters is None:
+            raise SystemExit(f"Error: no harness ledger for {dataset} under {folder}")
+        return list(letters.items())
     if spec["kind"] == "vbench":
         per_item = _vbench_validity(folder, slug, dataset, harness_arm=True)
         if per_item is None:
@@ -1209,6 +1318,37 @@ def cmd_compare(args) -> None:
               f"{rate_b:.2f}%   delta {rate_b - rate_a:+.2f}")
         print("  NOTE: no paired test — upload arm B's submission to vbench.ai for the "
               "server-side score.\n  -> " + str(path) + "\n")
+        return
+
+    if ARM_A[args.dataset]["kind"] == "vbench_mc":
+        shared = [k for k in a_rows if k in b_rows]
+        if not shared:
+            raise SystemExit(f"Error: no shared items between {args.dataset} arms")
+        n = len(shared)
+        same = sum(1 for k in shared if a_rows[k] and a_rows[k] == b_rows[k])
+        blanks_b = sum(1 for k in shared if not b_rows[k])
+        blanks_a = sum(1 for k in shared if not a_rows[k])
+        rate = 100.0 * same / n
+        lo, hi = _paired_bootstrap([int(a_rows[k] == b_rows[k]) for k in shared])
+        tag = f"_{args.tag}" if args.tag else ""
+        out = [{"metric": "agreement_with_arm_A", "group": "ALL", "n": n,
+                "arm_a": "100.00", "arm_b": f"{rate:.2f}",
+                "delta": f"{rate - 100.0:+.2f}", "ci95_low": f"{lo * 100 - 100.0:.2f}",
+                "ci95_high": f"{hi * 100 - 100.0:.2f}",
+                # arm A trivially agrees with itself: McNemar here would test
+                # "is the disagreement rate 50%?", which is not a question worth
+                # asking. Left empty on purpose.
+                "mcnemar_p": "", "a_only": "", "b_only": "",
+                "both": same, "neither": n - same,
+                "arm_b_failures": blanks_b, "measurement_card_hash": card_hash}]
+        path = RESULTS_DIR / slug / f"harness_compare_{args.dataset}{tag}_{slug}.csv"
+        write_csv_atomic(path, out, COMPARE_COLS)
+        print(f"\n{args.dataset} (AGREEMENT with arm A — no local gold, so this is NOT "
+              f"accuracy)\n  n={n} | trùng khớp {same} = {rate:.2f}% "
+              f"(CI {lo * 100 - 100.0:+.2f}..{hi * 100 - 100.0:+.2f}) | khác {n - same}"
+              f"\n  answer rỗng: arm A {blanks_a} · arm B {blanks_b}")
+        print("  Accuracy chỉ có ở server: nộp file trong submissions/<slug>/ để lấy điểm."
+              "\n  -> " + str(path) + "\n")
         return
 
     shared = [k for k in a_rows if k in b_rows]
