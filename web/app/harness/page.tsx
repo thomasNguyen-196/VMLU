@@ -11,7 +11,7 @@ import { HARNESS_BLOB_HINT, readHarnessBlock, rowsForDataset, type HarnessBlock 
 
 export const dynamic = "force-dynamic";
 
-const DATASET_ORDER = ["reading400", "legal_mc", "legal_nli", "bidlqa_val"];
+const DATASET_ORDER = ["reading400", "legal_mc", "legal_nli", "bidlqa_val", "vbench_agentic"];
 
 async function load(): Promise<HarnessBlock> {
   const file = path.join(process.cwd(), "public", "benchmark-data.json");

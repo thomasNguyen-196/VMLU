@@ -377,7 +377,9 @@ def repeatability(results_dir: Path, arms: list = ARMS) -> list[dict]:
         folder = results_dir / slug
         if not folder.exists():
             continue
-        match = re.match(r"(ompH\d+clean?)(?:_r(\d+))?_Qwen", slug)
+        # `clean?` would REQUIRE the literal "clea" (the ? binds to n only), so
+        # ompH1…ompH4 silently fell back to the full slug as the cell name.
+        match = re.match(r"(ompH\d+(?:clean)?)(?:_r(\d+))?_Qwen", slug)
         cell = match.group(1) if match else slug
         repeat = int(match.group(2)) if (match and match.group(2)) else 1
         if slug in by_slug:

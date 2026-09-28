@@ -2,6 +2,7 @@ import argparse
 import csv
 import json
 import random
+import re
 import shutil
 import subprocess  # nosec B404 — test harness shells out to local CLI/node only
 import hashlib
@@ -2099,6 +2100,27 @@ class TestHarnessDashboard(unittest.TestCase):
             finally:
                 sub.unlink()
                 sub.parent.rmdir()
+
+    def test_repeatability_groups_a_cell_by_slug_without_the_model_suffix(self):
+        # Regression: `(ompH\d+clean?)` REQUIRES the literal "clea" (the ? binds to
+        # the n only), so ompH1…ompH4 never matched and every one of them fell back
+        # to the full slug as its "cell" — which is what the display showed.
+        cells = {}
+        for slug in ("ompH1_Qwen3_5-9B-28K", "ompH2_Qwen3_5-9B-28K", "ompH3_Qwen3_5-9B-28K",
+                     "ompH4_Qwen3_5-9B-28K", "ompH5clean_Qwen3_5-9B-28K",
+                     "ompH5clean_r2_Qwen3_5-9B-28K", "ompH8clean_r3_Qwen3_5-9B-28K"):
+            m = re.match(r"(ompH\d+(?:clean)?)(?:_r(\d+))?_Qwen", slug)
+            self.assertIsNotNone(m, f"{slug} phải match được")
+            cells[slug] = (m.group(1), int(m.group(2)) if m.group(2) else 1)
+        self.assertEqual(cells["ompH1_Qwen3_5-9B-28K"][0], "ompH1")
+        self.assertEqual(cells["ompH2_Qwen3_5-9B-28K"][0], "ompH2")
+        self.assertEqual(cells["ompH5clean_Qwen3_5-9B-28K"], ("ompH5clean", 1))
+        self.assertEqual(cells["ompH5clean_r2_Qwen3_5-9B-28K"], ("ompH5clean", 2))
+        self.assertEqual(cells["ompH8clean_r3_Qwen3_5-9B-28K"], ("ompH8clean", 3))
+        # a repeat must land in the SAME cell as its first run, or the spread is
+        # computed across two "different" cells and the noise floor is fiction
+        self.assertEqual(cells["ompH5clean_Qwen3_5-9B-28K"][0],
+                         cells["ompH5clean_r2_Qwen3_5-9B-28K"][0])
 
     def test_speed_budget_table_has_a_vbench_entry(self):
         self.assertEqual(harness.ARM_A_MAX_TOKENS["vbench"], 512)
