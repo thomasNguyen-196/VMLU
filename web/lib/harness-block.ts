@@ -132,9 +132,24 @@ export interface HarnessInsightClaim {
   evidence: { label: string; value: string }[];
 }
 
+/** One row of the direct comparison the study exists for: the same model and the
+ *  same prompt with and without the agent in the path. `no_harness` is the direct
+ *  API call; `with_harness` is the clean scaffold (H5). Sorted by delta so the
+ *  worst case is the first thing read. */
+export interface HarnessComparisonRow {
+  dataset: string;
+  dataset_label: string;
+  metric: string;
+  n: number;
+  no_harness: number;
+  with_harness: number;
+  delta: number;
+}
+
 export interface HarnessInsight {
   verdict: string;
   claims: HarnessInsightClaim[];
+  comparison: HarnessComparisonRow[];
 }
 
 export interface HarnessBlock {
@@ -268,6 +283,20 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
     }
     for (const e of c.evidence) {
       if (!e.label || !e.value) fail(`claim ${c.id}: evidence thiếu label/value`);
+    }
+  }
+  // The with/without-harness table is the study's reason for existing.
+  if (!Array.isArray(b.insight.comparison) || !b.insight.comparison.length) {
+    fail("block .harness .insight.comparison rỗng — đây chính là phép so sánh cốt lõi");
+  }
+  for (const c of b.insight.comparison) {
+    if (!c.dataset || !c.dataset_label || !c.metric) fail(`dòng .comparison thiếu nhãn: ${JSON.stringify(c).slice(0, 100)}`);
+    if (!Number.isInteger(c.n) || c.n <= 0) fail(`${c.dataset}: n phải là số nguyên dương (${c.n})`);
+    for (const k of ["no_harness", "with_harness"] as const) {
+      if (c[k] < 0 || c[k] > 100) fail(`${c.dataset}: ${k} = ${c[k]} ngoài [0,100]`);
+    }
+    if (Math.abs(c.delta - (c.with_harness - c.no_harness)) > 0.02) {
+      fail(`${c.dataset}: delta (${c.delta}) ≠ with_harness − no_harness`);
     }
   }
   // `repeatability` is required once present in the schema: a table that omits
