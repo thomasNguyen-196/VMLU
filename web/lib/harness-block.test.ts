@@ -122,6 +122,12 @@ const block = (ladder: unknown[] = [row(), row({ role: "baseline", arm: "A", del
   secondary_metrics: [secondary()],
   insight: {
     verdict: "V1",
+    comparison: [
+      { dataset: "reading400", dataset_label: "reading-400 (EM)", metric: "EM", n: 400,
+        no_harness: 79.75, with_harness: 57.5, delta: -22.25 },
+      { dataset: "legal_mc", dataset_label: "legal-MC (accuracy)", metric: "accuracy", n: 146,
+        no_harness: 87.67, with_harness: 69.18, delta: -18.49 },
+    ],
     claims: [
       { id: "penalty", title: "T1", body: "B1", evidence: [{ label: "L", value: "V" }] },
       { id: "vbench", title: "T2", body: "B2", evidence: [{ label: "L", value: "V" }] },
@@ -209,6 +215,38 @@ describe("insight (phần nhận xét)", () => {
     expect(() => parseHarnessBlock(bare)).toThrow(/thiếu id\/title\/body/);
     const ev = { ...block(), insight: { verdict: "V", claims: [{ id: "x", title: "T", body: "B", evidence: [{ label: "", value: "V" }] }] } };
     expect(() => parseHarnessBlock(ev)).toThrow(/evidence thiếu label\/value/);
+  });
+});
+
+describe("insight.comparison (không harness vs có harness)", () => {
+  test("accepts the direct comparison rows", () => {
+    expect(parseHarnessBlock(block()).insight.comparison).toHaveLength(2);
+  });
+
+  test("rejects an EMPTY comparison — this is the study's reason for existing", () => {
+    expect(() => parseHarnessBlock({ ...block(), insight: { ...block().insight, comparison: [] } })).toThrow(
+      /comparison rỗng/,
+    );
+  });
+
+  test("rejects a delta that is not with_harness − no_harness", () => {
+    const bad = { ...block(), insight: { ...block().insight,
+      comparison: [{ ...block().insight.comparison[0], delta: -5 }] } };
+    expect(() => parseHarnessBlock(bad)).toThrow(/≠ with_harness − no_harness/);
+  });
+
+  test("rejects scores outside [0,100] and a non-positive n", () => {
+    for (const over of [{ no_harness: 140 }, { with_harness: -1 }, { n: 0 }]) {
+      const bad = { ...block(), insight: { ...block().insight,
+        comparison: [{ ...block().insight.comparison[0], ...over }] } };
+      expect(() => parseHarnessBlock(bad)).toThrow();
+    }
+  });
+
+  test("rejects a row with no label", () => {
+    const bad = { ...block(), insight: { ...block().insight,
+      comparison: [{ ...block().insight.comparison[0], dataset_label: "" }] } };
+    expect(() => parseHarnessBlock(bad)).toThrow(/thiếu nhãn/);
   });
 });
 

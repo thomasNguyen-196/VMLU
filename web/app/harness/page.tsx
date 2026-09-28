@@ -8,8 +8,71 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { HARNESS_BLOB_HINT, readHarnessBlock, rowsForDataset, type HarnessBlock } from "@/lib/harness-block.ts";
+import ThemeToggle from "@/components/ThemeToggle.tsx";
 
 export const dynamic = "force-dynamic";
+
+
+/** Thuật ngữ chuyên ngành giữ nguyên tiếng Anh trong phần diễn giải, vì dịch
+ *  sang tiếng Việt sẽ mất nghĩa kỹ thuật hoặc tạo một thuật ngữ không có nguồn.
+ *  Ở đây mỗi thuật ngữ được định nghĩa đúng một lần. */
+const GLOSSARY: { term: string; vi: string; def: string }[] = [
+  {
+    term: "harness / agent scaffold",
+    vi: "khung chạy agent",
+    def: "Toàn bộ những thứ được chèn vào giữa lời gọi HTTP thuần và câu trả lời của model: system prompt, định nghĩa công cụ, vòng lặp suy luận, quy ước định dạng đầu ra. Nghiên cứu này so sánh `omp` (một coding agent) với đường gọi trực tiếp, giữ nguyên model và prompt.",
+  },
+  {
+    term: "elicitation path",
+    vi: "đường truy xuất câu trả lời",
+    def: "Cách duy nhất mà câu trả lời được lấy ra model. Ở đây chỉ có hai đường: gọi HTTP trực tiếp, hoặc gọi trong tiến trình agent. Mọi khác biệt quan sát được đều quy về biến này.",
+  },
+  {
+    term: "scaffold leak",
+    vi: "rò cấu hình",
+    def: "Khi cấu hình cá nhân của máy đang chạy lọt vào điều kiện thí nghiệm. Ở đây `PI_CODING_AGENT_DIR` không chặn được `~/.omp/agent/APPEND_SYSTEM.md` của agent dir mặc định, nên mọi arm đều thừa hưởng quy tắc trả lời của máy.",
+  },
+  {
+    term: "paired bootstrap / McNemar",
+    vi: "khoảng tin cậy bootstrap ghép cặp / kiểm định McNemar",
+    def: "Hai phép kiểm định dùng chung một câu hỏi: với mỗi câu hỏi, arm A và arm B có cho ra kết quả khác nhau không. Bootstrap ghép cặp cho khoảng tin cậy của mức chênh lệch; McNemar kiểm tra tính có hệ thống của sự khác biệt đó.",
+  },
+  {
+    term: "noise floor",
+    vi: "ngưỡng nhiễu",
+    def: "Mức dao động của chính một điều kiện khi chạy lại nhiều lần với cùng tham số. Hiệu ứng nhỏ hơn ngưỡng này thì không phải là kết quả, dù trung bình có thể khác 0.",
+  },
+  {
+    term: "schema validity",
+    vi: "tính hợp lệ về cấu trúc",
+    def: "Với bài function-calling: lời gọi hàm có khớp với định nghĩa hàm của chính câu hỏi đó hay không (đủ tham số bắt buộc, đúng giá trị trong `enum`, không có tham số bịa). Nói rõ khác với accuracy: hợp lệ về cấu trúc không bảo đảm gọi đúng hàm.",
+  },
+  {
+    term: "temperature = 0",
+    vi: "nhiệt độ lấy mẫu bằng 0",
+    def: "Tham số lấy mẫu đầu ra ở chế độ tất định. Ngay cả vậy, kết quả vẫn dao động giữa các lần chạy — vì thứ tự thực thi, việc chọn công cụ và cách lập luận của agent đều có tính ngẫu nhiên riêng.",
+  },
+  {
+    term: "prompt token / completion token",
+    vi: "token đầu vào / token đầu ra",
+    def: "Đơn vị đo độ dài theo tokenizer của model. `prompt token` tính cả những gì agent tự chèn vào (system prompt, định nghĩa công cụ); `completion token` là phần model sinh ra.",
+  },
+  {
+    term: "overhead",
+    vi: "chi phí phát sinh thêm",
+    def: "Chênh lệch thời gian xử lý giữa hai đường trên cùng một câu hỏi và cùng `workers`. Nó gồm thời gian khởi tạo tiến trình, thời gian chờ công cụ, và mọi bước trung gian của agent.",
+  },
+  {
+    term: "persona",
+    vi: "vai trò / lề (persona)",
+    def: "Lớp hướng dẫn phong cách trả lời mà agent nhận thêm, độc lập với nhiệm vụ. Trong nghiên cứu này có hai mức: system prompt trung tính và system prompt sẵn có của omp.",
+  },
+  {
+    term: "guard",
+    vi: "chốt chặn",
+    def: "Kiểm tra bắt buộc chạy trước khi tốn tài nguyên, dừng ngay với thông báo nêu rõ nguyên nhân thay vì để lỗi lan xuống dữ liệu. Ví dụ: kiểm tra 1-token trước mỗi lần chạy để không ghi nhầm sự cố hạ tầng thành kết quả của model.",
+  },
+];
 
 const DATASET_ORDER = ["reading400", "legal_mc", "legal_nli", "bidlqa_val", "vbench_agentic", "vbench_mc"];
 
@@ -43,7 +106,10 @@ export default async function HarnessPage() {
   const t = block.totals;
   return (
     <main className="mx-auto max-w-[1100px] px-6 py-12">
-      <h1 className="text-[24px] font-semibold">{block.benchmark_name}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="text-[24px] font-semibold">{block.benchmark_name}</h1>
+        <ThemeToggle />
+      </div>
       <p className="mt-2 text-[13px] text-ink-2">
         model <b>{block.model_id}</b> @ {block.endpoint} · harness <b>{block.harness}</b> · {block.condition} ·
         card {block.measurement_card} · hash{" "}
@@ -58,7 +124,50 @@ export default async function HarnessPage() {
         <b>Cách chặn:</b> {block.leak.fix} · <b>Guard:</b> {block.leak.guard}
       </div>
 
-      <section className="mt-8 rounded-lg border border-hair bg-card p-5">
+      <section className="mt-6 rounded-lg border border-hair bg-card p-5">
+        <h2 className="text-[16px] font-semibold">So sánh trực tiếp: không dùng harness ⟷ dùng harness</h2>
+        <p className="mt-1 text-[12.5px] text-ink-2">
+          Cùng một model và cùng một prompt; chỉ khác ở chỗ có đưa câu hỏi qua tiến trình agent của{" "}
+          <code className="font-mono">{block.harness}</code> hay không. Cột bên phải là cấu hình scaffold
+          sạch (trung tính × không công cụ), theo thứ tự từ nặng đến nhẹ.
+        </p>
+        <table className="mt-2.5 w-full border-collapse text-[13px]">
+          <thead>
+            <tr className="border-b border-hair text-left text-ink-2">
+              <th className="py-1.5 pr-2 font-medium">Tập dữ liệu</th>
+              <th className="py-1.5 pr-2 font-medium">Tiêu chí</th>
+              <th className="py-1.5 pr-2 font-medium">n</th>
+              <th className="py-1.5 pr-2 font-medium">Không dùng harness</th>
+              <th className="py-1.5 pr-2 font-medium">Dùng harness</th>
+              <th className="py-1.5 font-medium">Chênh lệch</th>
+            </tr>
+          </thead>
+          <tbody>
+            {block.insight.comparison.map((c) => (
+              <tr key={c.dataset} className="border-b border-hair/60">
+                <td className="py-1.5 pr-2">{c.dataset_label}</td>
+                <td className="py-1.5 pr-2 font-mono text-ink-2">{c.metric}</td>
+                <td className="py-1.5 pr-2 font-mono">{c.n}</td>
+                <td className="py-1.5 pr-2 font-mono">{c.no_harness.toFixed(2)}%</td>
+                <td className="py-1.5 pr-2 font-mono font-semibold">{c.with_harness.toFixed(2)}%</td>
+                <td className="py-1.5 font-mono">
+                  <span className={c.delta < 0 ? "text-flag" : "text-ok"}>
+                    {c.delta >= 0 ? "+" : ""}
+                    {c.delta.toFixed(2)}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-2 text-[12.5px] text-ink-2">
+          Ở mọi tập đã đo, đưa câu hỏi qua agent đều làm giảm điểm. Mức giảm nhỏ nhất (
+          {block.insight.comparison[block.insight.comparison.length - 1]?.delta.toFixed(2)}) nằm trên
+          tập lớn nhất, nên nó đáng tin hơn các con số trên tập nhỏ.
+        </p>
+      </section>
+
+      <section className="mt-6 rounded-lg border border-hair bg-card p-5">
         <h2 className="text-[16px] font-semibold">Nhận xét — đọc kết quả này thành gì?</h2>
         <p className="mt-2 text-[14px] font-medium leading-relaxed">{block.insight.verdict}</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -398,6 +507,26 @@ export default async function HarnessPage() {
           </table>
         </section>
       ) : null}
+
+      <section className="mt-10">
+        <h2 className="text-[16px] font-semibold">Thuật ngữ</h2>
+        <p className="mt-1 text-[12.5px] text-ink-2">
+          Các thuật ngữ chuyên ngành được giữ nguyên tiếng Anh trong phần nhận xét và trong bảng biểu,
+          vì cách dịch sang tiếng Việt sẽ hoặc mất nghĩa kỹ thuật, hoặc tạo ra một thuật ngữ không có
+          nguồn. Mỗi thuật ngữ được định nghĩa đúng một lần tại đây.
+        </p>
+        <dl className="mt-3 space-y-3">
+          {GLOSSARY.map((g) => (
+            <div key={g.term} className="border-b border-hair/60 pb-2.5 last:border-b-0">
+              <dt className="text-[13px]">
+                <code className="font-mono font-semibold">{g.term}</code>
+                <span className="ml-2 text-[12px] text-ink-2">— {g.vi}</span>
+              </dt>
+              <dd className="mt-0.5 text-[12.5px] leading-relaxed text-ink-2">{g.def}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       <section className="mt-10">
         <h2 className="text-[16px] font-semibold">Giới hạn phải nói khi trích</h2>

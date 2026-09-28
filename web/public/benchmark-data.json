@@ -4829,12 +4829,12 @@
       }
     ],
     "insight": {
-      "verdict": "Cùng model, cùng prompt, cùng scorer: đi qua tiến trình agent làm giảm điểm ở mọi tập đã đo, và không gene nào của scaffold chịu trách nhiệm. Phần lớn thiệt hại ban đầu hoá ra là **cấu hình trả lời cá nhân của máy rò vào scaffold**, không phải bản thân `omp` — và ở task duy nhất scaffold được lợi thế (function-calling) thì nó vẫn chỉ thua, thua nhiều hơn bản thống kê cục bộ gợi ý.",
+      "verdict": "Với model, prompt và bộ chấm đều giữ nguyên, việc trả lời qua một tiến trình agent làm giảm điểm ở mọi tập đã đo, và không tầng cấu hình nào của scaffold chịu trách nhiệm cho phần này. Điều đáng chú ý nhất là phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold chứ không phải từ bản thân omp; còn trên bài function-calling — nơi scaffold được lợi thế rõ nhất — scaffold vẫn chỉ thua, và mức thua thật lớn hơn nhiều so với mức mà phép kiểm tra tại chỗ gợi ý. Vì vậy, khi lập luận về chi phí của agent, điều cần tách trước là chi phí của văn bản ép dài và chi phí của vòng lặp agent — chúng không cùng bản chất và cũng không cùng loại tiền.",
       "claims": [
         {
           "id": "penalty",
-          "title": "Đi qua tiến trình agent thì mất điểm — ở mọi tập đã đo",
-          "body": "Với cùng model, cùng prompt byte-identical, cùng scorer đóng băng, chỉ khác đường elicitation: các arm scaffold sạch thua arm A -22.25…-5.60 điểm trên 4 tập (ViBidLQA val (EM), legal-MC (accuracy), legal-NLI (accuracy), reading-400 (EM)). Khoản phạt KHÔNG phụ thuộc cấu hình: cùng một dấu hiệu, kể cả khi bật cả tool menu lẫn system prompt của omp.",
+          "title": "Chi phí chung của việc đưa một prompt qua tiến trình agent",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua đường gọi trực tiếp -22.25…-5.60 điểm trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong 7 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0.",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
@@ -4845,78 +4845,137 @@
               "value": "-5.60"
             },
             {
-              "label": "số dòng bằng chứng",
-              "value": "7"
+              "label": "CI 95% loại trừ 0",
+              "value": "7/7"
+            },
+            {
+              "label": "tập nhỏ nhất",
+              "value": "n=100"
             }
           ]
         },
         {
           "id": "vbench",
-          "title": "Chỗ duy nhất scaffold *có thể* thắng — nó vẫn thua, và tệ hơn bản thống kê cục bộ",
-          "body": "Trên 1000 câu function-calling: schema validity 100.00% → 97.40% (-2.60đ), nhưng điểm server thật là 39.70% → 30.80% (-8.90đ) — lớn hơn 3.4 lần. Nghĩa là phần lớn lỗi KHÔNG phải “sinh JSON sai” mà là **gọi đúng hàm sai tham số**: validator schema không thấy loại lỗi đó.",
+          "title": "Trên bài function-calling — nơi scaffold duy nhất được lợi thế — vẫn chỉ thua, và thua nhiều hơn thống kê cục bộ gợi ý",
+          "body": "Trên 1000 câu lệnh gọi hàm: tính schema validity tại chỗ cho 100.00% → 97.40% (-2.60 điểm), nhưng điểm chấm thật từ máy chủ là 39.70% → 30.80% (-8.90 điểm) — lớn hơn 3.4 lần. Phần lớn lỗi vì vậy không phải do phát sinh JSON sai cấu trúc, mà do chọn đúng hàm nhưng điền sai tham số: một lỗi mà bộ kiểm tra schema về cấu trúc không thể phát hiện.",
           "evidence": [
             {
-              "label": "validity Δ",
-              "value": "-2.60"
+              "label": "Δ schema validity",
+              "value": "-2.60đ"
             },
             {
-              "label": "accuracy Δ (server)",
-              "value": "-8.90"
+              "label": "Δ điểm máy chủ",
+              "value": "-8.90đ"
             },
             {
-              "label": "chênh lệch",
+              "label": "hệ số chênh lệch",
               "value": "3.4×"
+            },
+            {
+              "label": "cỡ mẫu",
+              "value": "1000"
             }
           ]
         },
         {
           "id": "noise",
-          "title": "Có phạt thật; nhưng tương tác persona × tool thì không tách được",
-          "body": "Trên legal-MC — cùng tập đã lặp — chính một ô biến thiên 0.68…5.48 điểm ở `temperature 0`. Khoản phạt của scaffold ở đây là 11.00…18.49đ, tức 2.0–3.4 lần mức nhiễu ⇒ **vững**. Nhưng hiệu ứng persona × tool chỉ +3.53đ, **nhỏ hơn cả nhiễu của chính một ô** ⇒ không kết luận được, và không phải vì thiếu mẫu.",
+          "title": "Khoản phạt là thật; còn tương tác giữa persona và menu công cụ thì không tách được khỏi nhiễu",
+          "body": "Lặp lại cùng một điều kiện từ hai đến ba lần trên legal-MC: ngay trong một ô, điểm dao động 0.68…5.48 điểm ngay cả khi `temperature` bằng 0. Khoản phạt của scaffold trên chính tập đó là 11.00…18.49 điểm, tức gấp 2.0–3.4 lần mức dao động này, nên kết luận là vững. Trái lại, hiệu ứng của việc đổi persona và bật menu công cụ chỉ +3.53 điểm, nhỏ hơn cả dao động nội tại của một ô — nên không kết luận được, và nguyên nhân không phải là thiếu mẫu.",
           "evidence": [
             {
-              "label": "nhiễu trong ô (legal-MC)",
+              "label": "dao động trong một ô",
               "value": "0.68…5.48"
             },
             {
-              "label": "contrast H8−H5",
-              "value": "+3.53"
+              "label": "hiệu ứng persona × tool",
+              "value": "+3.53đ"
             },
             {
-              "label": "Δ scaffold ở legal-MC",
+              "label": "Δ scaffold trên legal-MC",
               "value": "11.00…18.49đ"
             }
           ]
         },
         {
           "id": "wrapper",
-          "title": "Phần lớn “harness tax” ban đầu là cấu hình của máy rò vào, không phải bản thân omp",
-          "body": "Chấm lại **cùng** câu trả lời sau khi bỏ vỏ markdown (ViBidLQA val (EM), n=482): arm bị rò lên +16.18đ, còn arm sạch +0.00đ — tức vỏ là của **cấu hình**, và câu trả lời arm sạch vốn đã trần. Nguyên nhân: `PI_CODING_AGENT_DIR` không cô lập được scaffold, omp vẫn đọc `~/.omp/agent/APPEND_SYSTEM.md` từ agent dir mặc định.",
+          "title": "Phần lớn “harness tax” ở các lần đo ban đầu đến từ cấu hình trả lời của máy bị lọt vào, không phải từ bản thân omp",
+          "body": "Chấm lại chính các câu trả lời đó sau khi bỏ lớp vỏ markdown (ViBidLQA val (EM), n=482 câu): điểm của cấu hình bị lọt tăng thêm +16.18 điểm, còn của cấu hình sạch là +0.00 điểm. Nghĩa là lớp vỏ là hệ quả của cấu hình, trong khi câu trả lời của cấu hình sạch vốn đã trần. Nguyên nhân đã được xác định: `PI_CODING_AGENT_DIR` không cô lập được scaffold, vì omp vẫn đọc `~/.omp/agent/APPEND_SYSTEM.md` từ agent dir mặc định.",
           "evidence": [
             {
-              "label": "arm rò (ViBidLQA val (EM))",
-              "value": "+16.18"
+              "label": "bị lọt (ViBidLQA val (EM))",
+              "value": "+16.18đ"
             },
             {
-              "label": "arm sạch (ViBidLQA val (EM))",
-              "value": "+0.00"
+              "label": "sạch (ViBidLQA val (EM))",
+              "value": "+0.00đ"
             }
           ]
         },
         {
           "id": "cost",
-          "title": "Hai cơ chế chi phí là hai thứ tiền khác nhau — đừng gộp",
-          "body": "Rò cấu hình: +140 prompt token nhưng **+4.00s/item** và completion token ×118 (2→235). Tool menu: **+4737 prompt token** mà gần như -0.05s, và không cộng điểm. ⇒ muốn giảm độ trễ thì cắt văn bản ép dài, **đừng cắt tool**.",
+          "title": "Hai cơ chế phát sinh chi phí là hai loại tiền khác nhau — không nên gộp chung",
+          "body": "Cấu hình bị lọt: +140 prompt token, gần như không tốn token đầu vào, nhưng cộng thêm +4.00 giây mỗi câu và làm số completion token tăng 118 lần (2 → 235). Menu công cụ: ngược lại, +4737 prompt token (chủ yếu là phần định nghĩa công cụ) mà gần như không cộng thời gian (-0.05 giây) và không cộng thêm điểm. Hàm quyết định thiết kế: muốn giảm độ trễ thì cắt văn bản ép câu trả lời dài, đừng cắt bộ công cụ.",
           "evidence": [
             {
-              "label": "rò: token / giây",
+              "label": "rò cấu hình: token / giây",
               "value": "+140 / +4.00s"
             },
             {
-              "label": "tool: token / giây",
+              "label": "menu công cụ: token / giây",
               "value": "+4737 / -0.05s"
+            },
+            {
+              "label": "completion token",
+              "value": "×118"
             }
           ]
+        }
+      ],
+      "comparison": [
+        {
+          "dataset": "reading400",
+          "dataset_label": "reading-400 (EM)",
+          "metric": "EM",
+          "n": 400,
+          "no_harness": 79.75,
+          "with_harness": 57.5,
+          "delta": -22.25
+        },
+        {
+          "dataset": "legal_mc",
+          "dataset_label": "legal-MC (accuracy)",
+          "metric": "accuracy",
+          "n": 146,
+          "no_harness": 87.67,
+          "with_harness": 69.18,
+          "delta": -18.49
+        },
+        {
+          "dataset": "legal_nli",
+          "dataset_label": "legal-NLI (accuracy)",
+          "metric": "accuracy",
+          "n": 150,
+          "no_harness": 90.0,
+          "with_harness": 78.67,
+          "delta": -11.33
+        },
+        {
+          "dataset": "vbench_agentic",
+          "dataset_label": "V-Bench function-calling (điểm máy chủ)",
+          "metric": "accuracy",
+          "n": 1000,
+          "no_harness": 39.7,
+          "with_harness": 30.8,
+          "delta": -8.9
+        },
+        {
+          "dataset": "bidlqa_val",
+          "dataset_label": "ViBidLQA val (EM)",
+          "metric": "EM",
+          "n": 482,
+          "no_harness": 32.78,
+          "with_harness": 27.18,
+          "delta": -5.6
         }
       ]
     },
