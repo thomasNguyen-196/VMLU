@@ -1,0 +1,306 @@
+/** The harness block of `web/public/benchmark-data.json` (change harness-block).
+ *
+ * The harness study is a *frozen* artifact set — 9 arms of the same model
+ * measured on the same items — with no per-item DB counterpart, so unlike
+ * /benchmark it cannot be assembled from Mongo. It is read from the static blob
+ * that `code_benchmark/build_dashboard_harness.py` patches, and validated here
+ * so a stale or half-written block fails loudly instead of rendering zeros.
+ *
+ * Contract: the Python builder is the single source of truth (labels, card ids
+ * and the leak/caveat prose live there). Nothing is recomputed in TS.
+ */
+
+export interface HarnessRow {
+  /** "baseline" = the direct-prompt arm A (no paired stats), "harness" = an arm. */
+  role: "baseline" | "harness";
+  arm: string;
+  arm_slug: string;
+  label: string;
+  card: string | null;
+  dataset: string;
+  dataset_label: string;
+  metric: "accuracy" | "EM";
+  n: number;
+  arm_a: number;
+  arm_b: number;
+  delta: number;
+  ci95_low: number;
+  ci95_high: number;
+  mcnemar_p: string;
+  both: number | string;
+  a_only: number | string;
+  b_only: number | string;
+  neither: number | string;
+  char_f1: number | null;
+  /** Server-side score, when a `vbench_server_scores_*.csv` snapshot exists. It is
+   *  a DIFFERENT measurement from `arm_b` (accuracy vs schema validity) and is
+   *  never merged into it — the two differed by 3.4x on V-Bench (MC-28). */
+  server_score?: number;
+  server_correct?: number;
+  server_total?: number;
+  blanks: number;
+}
+
+export interface HarnessCostRow {
+  arm: string;
+  arm_slug: string;
+  label: string;
+  n: number;
+  datasets: number;
+  wall_s_per_item: number;
+  turns_per_item: number;
+  failures: number;
+  tool_use_items: number;
+  net_attempt_items: number;
+  path_escape_items: number;
+  reported_input_tokens: number;
+  reported_cache_read: number;
+  completion_tokens: number;
+}
+
+/** One row of the cost probe. `side` is which end of the pair the row measures
+ *  ("direct" = arm A's own HTTP call, "omp" = the same item inside the agent);
+ *  `arm` is the REAL arm identity from the builder's registry. Every number is
+ *  a string because it is read verbatim from `speed_summary_*.csv` — mirroring
+ *  the file is the point (see `overhead_s_per_item`, which is a signed delta). */
+export interface HarnessSpeedRow {
+  arm: string;
+  label: string;
+  side: "direct" | "omp";
+  dataset: string;
+  n: string;
+  workers: string;
+  wall_p50_s: string;
+  wall_mean_s: string;
+  items_per_min: string;
+  prompt_tok_per_item: string;
+  completion_tok_per_item: string;
+  total_tok_per_item: string;
+  overhead_s_per_item: string;
+  note: string;
+}
+
+/** SECONDARY attribution metric: EM on the verbatim reply vs EM on the same
+ *  reply with the harness's wrapper peeled off. Never replaces the headline EM. */
+export interface HarnessSecondaryRow {
+  arm: string;
+  label: string;
+  dataset: string;
+  dataset_label: string;
+  n: number;
+  em_verbatim: number;
+  em_stripped: number;
+  wrapper_cost: number;
+}
+
+/** One measurement of one cell. Repeats of the same cell at the same n appear as
+ *  several rows sharing `cell` — that repetition IS the noise floor, and the
+ *  `cell_*` fields are attached identically to each of them. Never pool across
+ *  `n`: a 100-item run and a 146-item run are different experiments. */
+export interface HarnessRepeatRow {
+  cell: string;
+  repeat: number;
+  arm: string;
+  label: string;
+  card: string | null;
+  dataset: string;
+  dataset_label: string;
+  n: number;
+  arm_a: number;
+  arm_b: number;
+  delta: number;
+  ci95_low: number;
+  ci95_high: number;
+  mcnemar_p: string;
+  cell_n?: number;
+  cell_mean?: number;
+  cell_spread?: number;
+  cell_min?: number;
+  cell_max?: number;
+}
+
+export interface HarnessBlock {
+  benchmark_name: string;
+  date: string;
+  model_id: string;
+  endpoint: string;
+  harness: string;
+  condition: string;
+  measurement_card: string;
+  measurement_card_hash: string;
+  scorer: string;
+  ladder: HarnessRow[];
+  cost: HarnessCostRow[];
+  speed: HarnessSpeedRow[];
+  secondary_metrics: HarnessSecondaryRow[];
+  repeatability: HarnessRepeatRow[];
+  totals: {
+    items_harness: number;
+    failures: number;
+    tool_use_items: number;
+    net_attempt_items: number;
+    path_escape_items: number;
+  };
+  leak: { what: string; evidence: string; fix: string; guard: string };
+  caveats: string[];
+  sources: Record<string, string>;
+}
+
+export const HARNESS_BLOB_HINT =
+  "chạy: .venv/bin/python code_benchmark/build_dashboard_harness.py (từ thư mục gốc repo)";
+
+function fail(message: string): never {
+  throw new Error(`${message} — ${HARNESS_BLOB_HINT}`);
+}
+
+/** Validate the block the builder wrote. Fails loud on a stale/partial file. */
+export function parseHarnessBlock(raw: unknown): HarnessBlock {
+  if (typeof raw !== "object" || raw === null) fail("benchmark-data.json không phải object");
+  const b = raw as Partial<HarnessBlock>;
+  if (!Array.isArray(b.ladder) || !b.ladder.length) fail("block .harness thiếu .ladder");
+  if (!Array.isArray(b.caveats) || !b.caveats.length) fail("block .harness thiếu .caveats");
+  if (!b.totals) fail("block .harness thiếu .totals");
+  for (const row of b.ladder) {
+    if (!row.arm || !row.dataset || typeof row.n !== "number" || row.n <= 0) {
+      fail(`dòng .ladder không hợp lệ: ${JSON.stringify(row).slice(0, 120)}`);
+    }
+    if (row.role === "harness" && row.ci95_low > row.ci95_high) {
+      fail(`${row.arm}/${row.dataset}: CI đảo ngược (${row.ci95_low} > ${row.ci95_high})`);
+    }
+    // `!= null` (not `!== undefined`): a hand-edited blob may carry an explicit
+    // null, which must read as ABSENT, not as a score of 0.
+    const trio = [row.server_score, row.server_correct, row.server_total];
+    if (trio.some((v) => v != null)) {
+      if (trio.some((v) => v == null)) {
+        fail(`${row.arm}/${row.dataset}: server_score/correct/total phải có đủ cả ba`);
+      }
+      if (row.server_total! <= 0) fail(`${row.arm}/${row.dataset}: server_total phải > 0`);
+      if (row.server_correct! > row.server_total!) {
+        fail(`${row.arm}/${row.dataset}: server_correct (${row.server_correct}) > server_total (${row.server_total})`);
+      }
+      if (row.server_score! < 0 || row.server_score! > 100) {
+        fail(`${row.arm}/${row.dataset}: server_score ${row.server_score} ngoài [0,100]`);
+      }
+      if (Math.abs(row.server_score! - (100 * row.server_correct!) / row.server_total!) > 0.02) {
+        fail(`${row.arm}/${row.dataset}: server_score ${row.server_score} ≠ 100·correct/total`);
+      }
+    }
+  }
+  if (!b.ladder.some((r) => r.role === "baseline")) {
+    fail("block .harness không có dòng baseline (arm A) — không so sánh được");
+  }
+  if (!Array.isArray(b.speed) || !b.speed.length) fail("block .harness thiếu .speed");
+  for (const r of b.speed) {
+    // `side` is load-bearing: the probe's own column used to be the pair id
+    // (`A_direct`/`B_omp_h2`), so every arm rendered as H2 until the builder
+    // projected it. A row without an explicit side is that bug again.
+    if (r.side !== "direct" && r.side !== "omp") {
+      fail(`dòng .speed thiếu side hợp lệ (direct|omp): ${JSON.stringify(r).slice(0, 120)}`);
+    }
+    if (!r.arm || !r.dataset || !r.note) {
+      fail(`dòng .speed không hợp lệ: ${JSON.stringify(r).slice(0, 120)}`);
+    }
+    if (!/^\d+$/.test(r.n) || Number(r.n) <= 0) fail(`${r.arm}/${r.dataset}: n không phải số nguyên dương (${r.n})`);
+    if (!/^\d+$/.test(r.workers) || Number(r.workers) <= 0) {
+      fail(`${r.arm}/${r.dataset}: workers không phải số nguyên dương (${r.workers})`);
+    }
+    if (r.side === "direct" && Number(r.overhead_s_per_item) !== 0) {
+      fail(`${r.arm}/${r.dataset}: overhead của arm direct phải bằng 0 (nó là gốc của cặp) — ${r.overhead_s_per_item}`);
+    }
+  }
+  // A pair is the whole point of the probe: every omp row needs its direct twin.
+  for (const r of b.speed.filter((s) => s.side === "omp")) {
+    const twin = b.speed.find(
+      (o) => o.side === "direct" && o.arm === r.arm && o.dataset === r.dataset && o.n === r.n,
+    );
+    if (!twin) fail(`${r.arm}/${r.dataset}: dòng omp không có dòng direct cùng n=${r.n} để so`);
+  }
+  // `secondary_metrics` is OPTIONAL (an older block may predate it) but when
+  // present it must be arithmetically coherent — a mismatch means the file was
+  // hand-edited, which is exactly what the ladder exists to prevent.
+  if (b.secondary_metrics !== undefined) {
+    if (!Array.isArray(b.secondary_metrics)) fail("block .harness .secondary_metrics không phải mảng");
+    for (const m of b.secondary_metrics) {
+      if (!m.arm || !m.dataset || typeof m.n !== "number" || m.n <= 0) {
+        fail(`dòng .secondary_metrics không hợp lệ: ${JSON.stringify(m).slice(0, 120)}`);
+      }
+      const gap = Math.abs(m.wrapper_cost - (m.em_stripped - m.em_verbatim));
+      if (gap > 0.02) {
+        fail(`${m.arm}/${m.dataset}: wrapper_cost (${m.wrapper_cost}) ≠ em_stripped − em_verbatim (${gap.toFixed(2)})`);
+      }
+      if (m.em_stripped < m.em_verbatim) {
+        fail(`${m.arm}/${m.dataset}: EM sau cắt vỏ (${m.em_stripped}) < EM nguyên văn (${m.em_verbatim}) — bóc vỏ không thể làm điểm giảm`);
+      }
+    }
+  }
+  // `repeatability` is required once present in the schema: a table that omits
+  // the noise floor invites reading one run per cell as a measurement.
+  if (b.repeatability !== undefined) {
+    if (!Array.isArray(b.repeatability)) fail("block .harness .repeatability không phải mảng");
+    validateRepeatability(b.repeatability);
+  }
+  return b as HarnessBlock;
+}
+
+/** Validate the repeatability rows: the per-cell spread is what decides whether
+ *  a factorial contrast is a result or noise, so its arithmetic is checked. */
+function validateRepeatability(rows: HarnessRepeatRow[]): void {
+  const byCell = new Map<string, HarnessRepeatRow[]>();
+  for (const r of rows) {
+    if (!r.cell || !r.dataset || r.dataset_label === undefined) {
+      fail(`dòng .repeatability không hợp lệ: ${JSON.stringify(r).slice(0, 120)}`);
+    }
+    if (!Number.isInteger(r.n) || r.n <= 0) fail(`${r.cell}: n phải là số nguyên dương (${r.n})`);
+    if (!Number.isInteger(r.repeat) || r.repeat < 1) {
+      fail(`${r.cell}: repeat phải ≥ 1 (got ${r.repeat})`);
+    }
+    if (Math.abs(r.delta - (r.arm_b - r.arm_a)) > 0.02) {
+      fail(`${r.cell}/r${r.repeat}/n=${r.n}: delta (${r.delta}) ≠ arm_b − arm_a (${(r.arm_b - r.arm_a).toFixed(2)})`);
+    }
+    if (r.ci95_low > r.ci95_high) {
+      fail(`${r.cell}/r${r.repeat}: CI đảo ngược (${r.ci95_low} > ${r.ci95_high})`);
+    }
+    if (r.delta < r.ci95_low - 0.02 || r.delta > r.ci95_high + 0.02) {
+      fail(`${r.cell}/r${r.repeat}: delta ${r.delta} nằm NGOÀI CI ${r.ci95_low}..${r.ci95_high}`);
+    }
+    if (r.cell_spread !== undefined) {
+      if (r.cell_min === undefined || r.cell_max === undefined) {
+        fail(`${r.cell}: có cell_spread nhưng thiếu cell_min/cell_max`);
+      }
+      if (Math.abs(r.cell_spread - (r.cell_max! - r.cell_min!)) > 0.02) {
+        fail(`${r.cell}: cell_spread (${r.cell_spread}) ≠ cell_max − cell_min`);
+      }
+      if (r.cell_spread < 0) fail(`${r.cell}: cell_spread âm (${r.cell_spread})`);
+      const members = rows.filter((o) => o.cell === r.cell && o.n === r.n);
+      if (members.length !== r.cell_n) {
+        fail(`${r.cell}/n=${r.n}: cell_n=${r.cell_n} khác số dòng thật (${members.length})`);
+      }
+      if (members.some((o) => o.cell_spread !== r.cell_spread || o.cell_mean !== r.cell_mean)) {
+        fail(`${r.cell}/n=${r.n}: các lặp không cùng cell_mean/cell_spread — số phải dán nhãn nhất quán`);
+      }
+    }
+    const key = `${r.cell}|${r.dataset}|${r.n}`;
+    if (!byCell.has(key)) byCell.set(key, []);
+    byCell.get(key)!.push(r);
+  }
+  // A cell with repeats MUST be summarised, otherwise the table invites reading a
+  // single run as if it were the cell's value.
+  for (const [key, members] of byCell) {
+    if (members.length > 1 && members.some((m) => m.cell_spread === undefined)) {
+      fail(`${key}: có ${members.length} lặp nhưng thiếu cell_mean/cell_spread`);
+    }
+  }
+}
+
+/** Read + validate the harness block out of the benchmark blob. */
+export function readHarnessBlock(blob: unknown): HarnessBlock | null {
+  if (typeof blob !== "object" || blob === null) return null;
+  const h = (blob as { harness?: unknown }).harness;
+  if (h === undefined || h === null) return null;
+  return parseHarnessBlock(h);
+}
+
+/** Ladder rows for one dataset, harness arms first then the baseline. */
+export function rowsForDataset(block: HarnessBlock, dataset: string): HarnessRow[] {
+  return block.ladder.filter((r) => r.dataset === dataset);
+}
