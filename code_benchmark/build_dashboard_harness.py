@@ -76,7 +76,8 @@ ARMS = [
 DATASETS = ["reading400", "legal_mc", "legal_nli", "bidlqa_val", "vbench_agentic"]
 DATASET_LABEL = {"reading400": "reading-400 (EM)", "legal_mc": "legal-MC (accuracy)",
                  "legal_nli": "legal-NLI (accuracy)", "bidlqa_val": "ViBidLQA val (EM)",
-                 "vbench_agentic": "V-Bench agentic (schema validity — KHÔNG có gold)"}
+                 "vbench_agentic": "V-Bench agentic (schema validity — KHÔNG có gold)",
+                 "vbench_mc": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)"}
 
 
 def f2(value: str) -> float:
