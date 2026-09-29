@@ -1252,6 +1252,18 @@ def _agreement_ci(agree: list[int], iters: int = 10000, seed: int = 42) -> tuple
     return lo - 100.0, hi - 100.0
 
 
+def _agreement_flags(a_rows: dict, b_rows: dict, shared: list[str]) -> list[int]:
+    """Per-item agreement bits — the SAME predicate as the point estimate.
+
+    An empty answer is not an answer, so a blank-vs-blank pair counts as a
+    disagreement (arm B produced nothing) exactly as `same` counts it. Feeding
+    raw `a == b` to the bootstrap instead let the 9 blank-both rows agree in the
+    CI only, which put the interval's centre 0.23 points off its own delta
+    (found 2026-09-29, the first run to reach this branch).
+    """
+    return [int(bool(a_rows[k]) and a_rows[k] == b_rows[k]) for k in shared]
+
+
 def _mc_eval_path(folder: Path, dataset: str, slug: str) -> Path:
     """Per-item MC file for one arm, whatever naming that arm used.
 
@@ -1430,7 +1442,7 @@ def cmd_compare(args) -> None:
         blanks_b = sum(1 for k in shared if not b_rows[k])
         blanks_a = sum(1 for k in shared if not a_rows[k])
         rate = 100.0 * same / n
-        lo, hi = _agreement_ci([int(a_rows[k] == b_rows[k]) for k in shared])
+        lo, hi = _agreement_ci(_agreement_flags(a_rows, b_rows, shared))
         tag = f"_{args.tag}" if args.tag else ""
         out = [{"metric": "agreement_with_arm_A", "group": "ALL", "n": n,
                 "arm_a": "100.00", "arm_b": f"{rate:.2f}",
