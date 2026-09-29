@@ -98,6 +98,8 @@ from code_benchmark.seed_registries import (
 )
 from code_benchmark import run_harness_eval as harness
 from code_benchmark import build_dashboard_harness as dash
+from code_benchmark import llm
+from code_benchmark import run_legal_arm_a as legal_arm_a
 from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
@@ -2173,6 +2175,251 @@ class TestHarnessDashboard(unittest.TestCase):
         with unittest.mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=False):
             with unittest.mock.patch("urllib.request.urlopen", lambda *a, **kw: FakeResp()):
                 harness.preflight_endpoint(timeout=1.0)   # must not raise
+
+    def test_preflight_probes_the_arm_not_the_cost_pin(self):
+        # A preflight aimed at a different gateway is a green light for a dead
+        # run. `--model` is omp's provider-qualified name, so the probe has to
+        # strip the prefix: the wire answers "Model is unavailable" otherwise.
+        seen = {}
+
+        def fake_urlopen(req, timeout=None):
+            seen["url"] = req.full_url
+            seen["body"] = json.loads(req.data.decode())
+            seen["headers"] = {k.lower(): v for k, v in req.header_items()}
+
+            class FakeResp:
+                def read(self):
+                    return b"{}"
+                def __enter__(self):
+                    return self
+                def __exit__(self, *a):
+                    return False
+            return FakeResp()
+
+        env = {"OPENAI_API_KEY": "sk-test", "OPENAI_BASE_URL": "https://example.test/v1",
+               "OPENAI_EXTRA_HEADERS": json.dumps({"x-opencode-session": "s1"})}
+        with unittest.mock.patch.dict(os.environ, env, clear=False):
+            with unittest.mock.patch("urllib.request.urlopen", fake_urlopen):
+                harness.preflight_endpoint(model="zen-go/mimo-v2.5", api_key="k")
+        self.assertEqual(seen["body"]["model"], "mimo-v2.5")
+        self.assertEqual(seen["url"], "https://example.test/v1/chat/completions")
+        # the gateway's own requirement has to ride along, or the probe records
+        # a Cloudflare rejection instead of the answer
+        self.assertEqual(seen["headers"].get("x-opencode-session"), "s1")
+
+
+class TestScaffoldProjectInstructions(unittest.TestCase):
+    """The AGENTS.md leak (measured 2026-09-29) — the guard that now stops it.
+
+    The scratch default used to sit inside this repository, so omp walked up,
+    found the repo's own AGENTS.md and inlined 27.5k characters of it into every
+    item's system prompt. Every arm through MC-26 was measured that way. Nothing
+    in the artifacts showed it, because the request bytes were never captured.
+    """
+
+    def test_finds_instructions_above_a_sandbox(self):
+        with tempfile.TemporaryDirectory() as root:
+            (Path(root) / "AGENTS.md").write_text("x" * 100, encoding="utf-8")
+            nested = Path(root) / "a" / "b" / "c"
+            nested.mkdir(parents=True)
+            found = harness.project_instructions_above(nested)
+            self.assertTrue(any(p.endswith("AGENTS.md") for p in found))
+
+    def test_a_sandbox_outside_any_project_is_clean(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            # the tmp root itself must not sit under a repo; assert on the
+            # specific files rather than trusting the environment
+            found = [p for p in harness.project_instructions_above(Path(scratch))
+                     if Path(p).parent in (Path(scratch).resolve().parents)]
+            self.assertEqual(found, [])
+
+    def test_refuses_a_sandbox_inside_a_project(self):
+        with tempfile.TemporaryDirectory() as root:
+            (Path(root) / "CLAUDE.md").write_text("y" * 10, encoding="utf-8")
+            with self.assertRaises(SystemExit) as ctx:
+                harness.assert_no_project_instructions(Path(root), allow=False)
+            msg = str(ctx.exception)
+            self.assertIn("CLAUDE.md", msg)
+            self.assertIn("--scratch", msg)
+            self.assertIn("--allow-project-instructions", msg)
+
+    def test_the_escape_hatch_is_explicit(self):
+        with tempfile.TemporaryDirectory() as root:
+            (Path(root) / "AGENTS.md").write_text("z" * 10, encoding="utf-8")
+            harness.assert_no_project_instructions(Path(root), allow=True)  # no raise
+
+    def test_the_default_scratch_is_outside_the_repository(self):
+        src = Path("code_benchmark/run_harness_eval.py").read_text(encoding="utf-8")
+        self.assertNotIn('result_folder / "harness_scratch"', src)
+        self.assertIn("tempfile.gettempdir()", src)
+
+
+class TestExtraHeaders(unittest.TestCase):
+    """OPENAI_EXTRA_HEADERS — the two gateway requirements a bare client lacks."""
+
+    def test_absent_env_means_no_headers(self):
+        with unittest.mock.patch.dict(os.environ, {}, clear=True):
+            self.assertIsNone(llm.extra_headers())
+
+    def test_parses_a_json_object(self):
+        raw = json.dumps({"x-opencode-session": "abc", "Origin": "https://o.test"})
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": raw}, clear=True):
+            self.assertEqual(llm.extra_headers()["x-opencode-session"], "abc")
+
+    def test_invalid_json_fails_fast(self):
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": "{oops"}, clear=True):
+            with self.assertRaises(SystemExit) as ctx:
+                llm.extra_headers()
+        self.assertIn("not valid JSON", str(ctx.exception))
+
+    def test_non_string_values_fail_fast(self):
+        raw = json.dumps({"x-retry": 3})
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": raw}, clear=True):
+            with self.assertRaises(SystemExit):
+                llm.extra_headers()
+
+    def test_a_non_object_fails_fast(self):
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": "[1,2]"}, clear=True):
+            with self.assertRaises(SystemExit):
+                llm.extra_headers()
+
+
+class TestLegalArmA(unittest.TestCase):
+    """The missing arm-A producer for the legal sets (`run_legal_arm_a.py`).
+
+    Without it a second model cannot enter the harness arm at all, and the ladder
+    silently degrades into a comparison between two different models.
+    """
+
+    def test_final_path_is_the_name_the_harness_reads(self):
+        # derived from ARM_A, not re-typed: the writer and the reader must not drift
+        for dataset, expect in (("legal_mc", "full_evaluation_legal_S.csv"),
+                                ("legal_nli", "full_evaluation_nli_S.csv")):
+            self.assertEqual(legal_arm_a.final_path(dataset, "S").name, expect)
+
+    def test_prompt_parity_refuses_a_missing_reference(self):
+        with self.assertRaises(SystemExit) as ctx:
+            legal_arm_a.assert_prompt_parity(
+                [{"item_id": "LG-0001", "prompt": "p"}], "legal_mc", "no-such-slug")
+        self.assertIn("not found", str(ctx.exception))
+
+    def test_prompt_parity_refuses_drift(self):
+        with tempfile.TemporaryDirectory() as root:
+            ref = Path(root) / "full_evaluation_legal_ref.csv"
+            with open(ref, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["id", "prompt"])
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "prompt": "the bytes arm A sent"})
+            with unittest.mock.patch.object(legal_arm_a, "RESULTS_DIR", Path(root)):
+                with unittest.mock.patch.object(
+                        legal_arm_a, "final_path",
+                        lambda d, s: ref):
+                    with self.assertRaises(SystemExit) as ctx:
+                        legal_arm_a.assert_prompt_parity(
+                            [{"item_id": "LG-0001", "prompt": "different bytes"}],
+                            "legal_mc", "ref")
+        self.assertIn("prompt drift", str(ctx.exception))
+
+    def test_prompt_parity_accepts_identical_bytes(self):
+        with tempfile.TemporaryDirectory() as root:
+            ref = Path(root) / "full_evaluation_legal_ref.csv"
+            with open(ref, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["id", "prompt"])
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "prompt": "same bytes"})
+            with unittest.mock.patch.object(legal_arm_a, "final_path", lambda d, s: ref):
+                legal_arm_a.assert_prompt_parity(
+                    [{"item_id": "LG-0001", "prompt": "same bytes"}], "legal_mc", "ref")
+
+    def test_checkpoints_are_dataset_scoped(self):
+        # two legal sets for one slug would otherwise fight over raw_result_<n>_<slug>
+        self.assertNotEqual(legal_arm_a.CKPT_PREFIX.format(dataset="legal_mc"),
+                            legal_arm_a.CKPT_PREFIX.format(dataset="legal_nli"))
+        self.assertTrue(legal_arm_a.CKPT_PREFIX.format(dataset="legal_mc")
+                        .startswith("raw_result_legal_mc_"))
+
+    def test_a_smoke_run_never_writes_the_final_baseline_name(self):
+        src = Path("code_benchmark/run_legal_arm_a.py").read_text(encoding="utf-8")
+        self.assertIn(".smoke", src)   # --limit renames the output
+
+
+class TestAgreementCI(unittest.TestCase):
+    """The V-Bench MC agreement CI — a scale bug that shipped because no arm had
+    ever run that branch (found 2026-09-29, the first MiMo run to reach it)."""
+
+    def test_bootstrap_returns_percentages_not_fractions(self):
+        self.assertEqual(harness._paired_bootstrap([0, 0, 0, 0]), (0.0, 0.0))
+        self.assertEqual(harness._paired_bootstrap([1, 1, 1, 1]), (100.0, 100.0))
+
+    def test_agreement_ci_is_in_percentage_points_and_brackets_its_delta(self):
+        agree = [1] * 3214 + [0] * 927          # 77.61% agreement
+        lo, hi = harness._agreement_ci(agree)
+        delta = 100.0 * sum(agree) / len(agree) - 100.0
+        self.assertLessEqual(lo, delta)
+        self.assertLessEqual(delta, hi)
+        # and it is a plausible band around -22, not four orders of magnitude off
+        self.assertGreater(lo, -30.0)
+        self.assertLess(hi, -10.0)
+
+    def test_perfect_agreement_has_an_empty_interval_at_zero(self):
+        lo, hi = harness._agreement_ci([1] * 50)
+        self.assertEqual((lo, hi), (0.0, 0.0))
+
+
+class TestHarnessRegistry(unittest.TestCase):
+    """The arm registry (build_dashboard_harness.py) — invariants CI cannot see.
+
+    A ladder row is a comparison INSIDE one model, so the registry has to say
+    which model each arm measures; and a min…max range that silently spans two
+    models is exactly the failure this table exists to prevent.
+    """
+
+    def test_every_arm_declares_its_model(self):
+        shorts = {short for _k, _s, short, _l, _c in dash.ARMS}
+        self.assertEqual(shorts - set(dash.ARM_MODEL), set())
+
+    def test_two_models_are_actually_present(self):
+        """The point of the second model: a single-model block proves nothing."""
+        self.assertGreaterEqual(len(set(dash.ARM_MODEL.values())), 2)
+
+    def test_clean_and_representative_arms_exist(self):
+        shorts = {short for _k, _s, short, _l, _c in dash.ARMS}
+        self.assertTrue(set(dash.CLEAN_ARMS) <= shorts, set(dash.CLEAN_ARMS) - shorts)
+        self.assertTrue(set(dash.REPRESENTATIVE.values()) <= set(dash.CLEAN_ARMS))
+        # REPRESENTATIVE is keyed by MODEL and names the arm that represents it
+        self.assertTrue(set(dash.REPRESENTATIVE) <= set(dash.ARM_MODEL.values()))
+
+    def test_dataset_coverage_is_declared_per_arm(self):
+        slugs = {slug for _k, slug, _s, _l, _c in dash.ARMS}
+        self.assertTrue(set(dash.ARM_DATASETS) <= slugs, set(dash.ARM_DATASETS) - slugs)
+        for slug, datasets in dash.ARM_DATASETS.items():
+            for d in datasets:
+                self.assertIn(d, dash.DATASET_LABEL, f"{slug}: {d} chưa có nhãn")
+
+    def test_coverage_is_keyed_by_slug_not_by_display_id(self):
+        # Keying it by the short id made a caller's own arms inherit a coverage
+        # promise meant for a different arm that shared the id.
+        self.assertIn("ompM6clean_mimo-v2_5", dash.ARM_DATASETS)
+        self.assertNotIn("M6", dash.ARM_DATASETS)
+        self.assertEqual(dash.datasets_for("no-such-slug"), dash.DATASETS)
+
+    def test_vbench_mc_needs_a_paired_baseline(self):
+        # vbench_mc's "score" is agreement with the direct arm, so a harness arm
+        # needs its arm-A slug; the baseline computes it against itself.
+        self.assertIn("vbench_mc", dash.ARM_DATASETS["ompM6clean_mimo-v2_5"])
+        self.assertIn("vbench_mc", dash.ARM_DATASETS["mimo-v2_5"])
+
+    def test_no_registry_label_contains_double_asterisk(self):
+        # `**` is not markdown in this app: the ladder renders it literally, which
+        # is why the page used to show `**omp sạch**` with visible asterisks.
+        for _k, _s, short, label, _c in dash.ARMS:
+            self.assertNotIn("**", label, f"arm {short}: nhãn chứa ** sẽ hiện nguyên chữ")
+
+    def test_the_ablation_arm_is_not_counted_as_clean(self):
+        # M6L differs from M6 ONLY in having the repo's AGENTS.md injected, so it
+        # must stay out of the clean set or the headline range folds it in.
+        self.assertIn("M6", dash.CLEAN_ARMS)
+        self.assertNotIn("M6L", dash.CLEAN_ARMS)
 
 
 if __name__ == "__main__":

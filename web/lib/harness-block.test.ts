@@ -10,6 +10,7 @@ import { parseHarnessBlock, readHarnessBlock, rowsForDataset } from "./harness-b
 
 const row = (over: Record<string, unknown> = {}) => ({
   role: "harness",
+  model: "Qwen3.5-9B-28K",
   arm: "H5",
   arm_slug: "ompH5clean_Qwen3_5-9B-28K",
   label: "omp sạch",
@@ -123,10 +124,10 @@ const block = (ladder: unknown[] = [row(), row({ role: "baseline", arm: "A", del
   insight: {
     verdict: "V1",
     comparison: [
-      { dataset: "reading400", dataset_label: "reading-400 (EM)", metric: "EM", n: 400,
-        no_harness: 79.75, with_harness: 57.5, delta: -22.25 },
-      { dataset: "legal_mc", dataset_label: "legal-MC (accuracy)", metric: "accuracy", n: 146,
-        no_harness: 87.67, with_harness: 69.18, delta: -18.49 },
+      { model: "Qwen3.5-9B-28K", dataset: "reading400", dataset_label: "reading-400 (EM)",
+        metric: "EM", n: 400, no_harness: 79.75, with_harness: 57.5, delta: -22.25 },
+      { model: "Qwen3.5-9B-28K", dataset: "legal_mc", dataset_label: "legal-MC (accuracy)",
+        metric: "accuracy", n: 146, no_harness: 87.67, with_harness: 69.18, delta: -18.49 },
     ],
     claims: [
       { id: "penalty", title: "T1", body: "B1", evidence: [{ label: "L", value: "V" }] },
@@ -227,6 +228,28 @@ describe("insight.comparison (không harness vs có harness)", () => {
     expect(() => parseHarnessBlock({ ...block(), insight: { ...block().insight, comparison: [] } })).toThrow(
       /comparison rỗng/,
     );
+  });
+
+  test("accepts an agreement row and a second model in the ladder", () => {
+    const base = row({ role: "baseline", model: "MiMo V2.5", arm: "A2", dataset: "vbench_mc",
+      dataset_label: "V-Bench MC", metric: "agreement", n: 4141, arm_a: 100, arm_b: 100,
+      delta: 0, ci95_low: 0, ci95_high: 0, mcnemar_p: "" });
+    const b = block([row(), base, row({ model: "MiMo V2.5", arm: "M6", dataset: "vbench_mc",
+      dataset_label: "V-Bench MC", metric: "agreement", n: 4141, arm_a: 100, arm_b: 77.61,
+      delta: -22.39, ci95_low: -23.4, ci95_high: -20.91, mcnemar_p: "" })]);
+    expect(parseHarnessBlock(b).ladder).toHaveLength(3);
+    expect(rowsForDataset(parseHarnessBlock(b), "vbench_mc")).toHaveLength(2);
+  });
+
+  test("rejects a ladder row with no model — the row is meaningless across models", () => {
+    const { model, ...rowWithoutModel } = row();
+    expect(() => parseHarnessBlock(block([rowWithoutModel]))).toThrow(/thiếu .model/);
+  });
+
+  test("rejects a comparison row with no model — the row is meaningless across models", () => {
+    const { model, ...rowWithoutModel } = block().insight.comparison[0];
+    const bad = { ...block(), insight: { ...block().insight, comparison: [rowWithoutModel] } };
+    expect(() => parseHarnessBlock(bad)).toThrow(/thiếu .model/);
   });
 
   test("rejects a delta that is not with_harness − no_harness", () => {

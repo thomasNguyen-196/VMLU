@@ -931,6 +931,191 @@ Artifact: `all_res/ollama_result/ompV1clean_Qwen3_5-9B-28K/vbench_server_scores_
 5. **Không được quy**: đây là **một** lần chạy của arm B (chưa lặp), nên chưa có ước lượng nhiễu cho
    con số 30,80%. Và **không** so sánh với bất kỳ model nào khác (MC-2/MC-2b).
 
+## MC-29 — ⚠️ **ĐÍNH CHÍNH MC-15…MC-28**: `omp` không gửi `temperature`, và mọi arm đều bị nạp `AGENTS.md` của chính repo này
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-29` |
+| `ngay_chay` | 2026-09-29 (audit scaffold, không phải một lần chấm điểm) |
+| `dieu_kien` | Không có lần chấm nào. Đây là **đính chính điều kiện đo** của các card trước, dựa trên **đúng các byte request** mà `omp` gửi đi, bắt bằng `capture_scaffold.py` (log mới: `logs/`, capture: `/tmp/opencode/scaffold_real.json`). Không so với model nào. |
+
+### Phát hiện 1 — `omp` không gửi `temperature`, cũng không gửi `reasoning_effort`
+
+Request thật của một arm sạch (bắt qua proxy), các field ngoài `messages`:
+
+```
+temperature      : null            <- KHÔNG gửi
+other_keys       : [max_completion_tokens, model, stream, stream_options]
+max_tokens       : 64000
+```
+
+Mọi card MC-15…MC-28 mô tả điều kiện là **`temperature 0`**. Arm A (gọi thẳng) gửi `0`; arm B
+(`omp`) **không gửi gì**, nên để provider tự quyết. Với model suy luận (`MiMo V2.5`) hệ quả đo
+được ngay: arm B tiêu **109 reasoning token** cho một câu MC khi arm A là **0**.
+
+Không có đường nào từ phía `omp`: không có cờ `--temperature`, và `options:` trong `models.yml`
+bị **bỏ qua im lặng** (thử rồi, đo bằng proxy). Đây là lệch **hai** biến, không phải một.
+
+### Phát hiện 2 — mọi arm đều đọc `AGENTS.md` của chính repo này, trước mỗi câu hỏi
+
+Sandbox từng mặc định là `all_res/ollama_result/<label>/harness_scratch` — **nằm trong repo**.
+`omp` đi ngược lên thư mục cha, thấy `AGENTS.md`, và **nội tuyện đối** vào system message:
+
+```
+system message (arm "sạch", sandbox trong repo) : 27.501 ký tự
+  Answer the user's question.                     <- 28 ký tự trung tính ta đặt
+  <project><instructions><file path=".../VMLU/AGENTS.md">
+  # Repository Guidelines ... (26.914 byte)      <- toàn bộ AGENTS.md của repo
+system message (cùng arm, sandbox ở /tmp)       :    688 ký tự
+input token mỗi câu                              : 7.488  ->  994
+```
+
+`AGENTS.md` có từ 2026-08-27, và log của các arm đã ghi card cho thấy chúng **dùng** scratch
+trong repo (`ompH5clean`, `ompH5clean_r2`, …). Nghĩa là các arm "scaffold sạch" của MC-22/MC-23
+sạch về *persona* và về *tool menu*, nhưng **không sạch về chỉ dẫn dự án**. Trước một câu hỏi
+trắc nghiệm pháp luật, model được đọc 27k ký tự về pipeline VMLU, quy ước ruff, và gotchas.
+
+Cùng lớp rò với `APPEND_SYSTEM.md` của MC-22, nhưng lớn hơn nhiều, và **không ai thấy được**
+vì request bytes của condition sạch chưa từng được bắt.
+
+### Điều này có phủ định card nào không?
+
+| | Trạng thái |
+| --- | --- |
+| Arm A, prompt, parser, scorer, manifest, pre-registration | **Không đổi** — vẫn đúng |
+| MC-24 (chẩn đoán 2 kiểu sự cố endpoint) | **Không đổi** |
+| MC-19 / MC-25 (chi phí) | **Cần đọc lại**: chi phí token của arm B gồm ~6,5k token lệch |
+| MC-15…MC-18, MC-20…MC-23, MC-27 (điểm + CI) | **Số thì đúng đo, nhưng nhãn "scaffold sạch" sai**; và Δ so với arm A lẫn 2 biến lệch ở trên, nên **chưa được phép gọi là "harness effect"** |
+| MC-26 / MC-28 (V-Bench) | Cùng lập luận |
+
+**Chưa được quy**: phần thua còn lại (−11…−22đ) **do** `AGENTS.md` hay do vòng lặp agent. Rò
+thì **đã chứng minh có**, nhưng **độ lớn chưa quy cho Qwen** — cần một ablation
+(sandbox trong repo vs ngoài repo, cùng model) mới gán được. Với `MiMo V2.5` ablation đó đang
+chạy (`ompM6inrepo_` vs `ompM6clean_`, legal-MC 146).
+
+### Guard đã thêm (để lỗi này không lặp lại)
+
+1. `assert_no_project_instructions()` — **hard fail** khi sandbox nằm trong cây thư mục có
+   `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`/`.cursorrules`; `--allow-project-instructions` để đo
+   *có chủ đích* một agent theo phạm vi dự án.
+2. Mặc định `scratch` (cả `run` và `speed`) chuyển ra `/tmp` — nằm ngoài mọi cây dự án.
+3. `preflight_endpoint()` giờ hỏi **đúng endpoint và model của arm đang đo**, và gửi kèm
+   header mà gateway cần (trước đó nó hỏi endpoint ghim sẵn của cost probe).
+4. `capture_scaffold.py`: thêm `--upstream`, `--header`, `--pin`, một dòng **inventory cho mọi
+   request** (không chỉ request đầu), và sửa pass-through SSE từ 1 byte/lần lên 4 KiB/lần.
+5. `_agent_dir_token()` nhận mọi `*_API_KEY` trong `.env` của agent dir (trước chỉ nhận đúng
+   tên biến của IEC, nên agent dir của provider thứ hai bị đọc thành "không có token").
+6. Test offline: 17 test mới cho các guard trên (`TestScaffoldProjectInstructions`,
+   `TestExtraHeaders`, `TestLegalArmA`) — 147 test, xanh.
+
+## MC-30 — **Lặp lại toàn bộ thang đo với `MiMo V2.5`**: cùng scaffold, kết quả đảo chiều
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-30` |
+| `ngay_chay` | 2026-09-29: arm A 10:15→11:12 (4 tập + V-Bench 5.141), arm B 10:57→12:12 (6 tập, 6.319 item), ablation rò 10:58→11:05, speed/cost probe 12:2x một mình |
+| `model` | `MiMo V2.5` qua `https://opencode.ai/zen/go/v1` (OpenCode Zen Go), **không phải** IEC |
+| `dieu_kien` | Giữ nguyên mọi thứ của MC-22 và **thêm ba sửa của MC-29**: (1) `temperature=0` + `reasoning_effort="none"` **ghim bằng proxy** vì `omp` không gửi được; (2) sandbox ở `/tmp` nên **không** có `AGENTS.md` nạp vào; (3) system prompt trung tính, `--no-tools`, `HOME=/tmp/fakehome`. Arm A = gọi thẳng, `temperature 0`, seed 42, **prompt byte-identical** (cổng parity: 146/146 và 150/150 khớp với baseline Qwen). Slug arm A `mimo-v2_5`, slug arm B `ompM6clean_mimo-v2.5`. |
+| `phu_thu` | Không có endpoint nào ngoài OpenCode; không dùng key IEC. |
+
+### Arm A — gọi thẳng (chỉ để đặt mốc)
+
+| Tập | n | MiMo V2.5 | Qwen3.5-9B-28K (MC-22) |
+| --- | ---: | ---: | ---: |
+| legal-MC | 146 | **90,41** | 87,67 |
+| legal-NLI | 150 | **94,00** | 90,00 |
+| reading-400 (EM) | 400 | **58,25** | 79,75 |
+| ViBidLQA val (EM) | 482 | **41,70** | 32,78 |
+| V-Bench agentic (validity) | 1.000 | **99,40** | 100,00 |
+| V-Bench MC (mức **trùng khớp** với arm A, KHÔNG phải điểm) | 4.141 | xem dưới | — |
+
+⚠️ **58,25 ở reading-400 không phải vì model kém**: arm A trả lời bằng **câu** chứa đáp án
+(`"Midtown Manhattan, … nằm trên 53rd Street, giữa Fifth và Sixth Avenue."`) trong khi gold là
+đoạn trích, nên EM=0 dù nội dung đúng (F1 0,62). Không so 58,25 với 79,75 như hai con số năng lực.
+
+### Arm B — cùng scaffold, chỉ khác đường truy xuất
+
+| Tập | arm A | arm B | Δ | CI 95% | McNemar p |
+| --- | ---: | ---: | ---: | --- | ---: |
+| legal-MC (n=146) | 90,41 | 93,15 | **+2,74** | +0,00…+6,16 | 0,219 |
+| legal-NLI (n=150) | 94,00 | 94,00 | **0,00** | −4,67…+4,67 | 1,00 |
+| **reading-400 (n=400)** | 58,25 | 65,25 | **+7,00** | +3,50…+10,50 | **0,00018** |
+| ViBidLQA val (n=482) | 41,70 | 43,98 | **+2,28** | +0,00…+4,77 | 0,080 |
+| V-Bench agentic — schema validity (n=1.000) | 99,40 | 99,90 | **+0,50** | +0,00…+1,00 | 0,125 |
+| V-Bench MC — **mức trùng khớp** (n=4.141) | 100,00 | 77,61 | **−22,39** | −23,40…−20,91 | (không kiểm) |
+
+⚠️ **Hàng cuối KHÔNG phải mất 22 điểm.** Không có vàng cục bộ, nên đó là tỉ lệ câu trả lời mà
+agent cho **giống hệt** lời gọi trực tiếp trên cùng câu hỏi: trên 4.141 câu, agent **đổi chữ
+cái ở 927 câu**. Không nói được là đáp án mới tệ hơn hay tốt hơn — chỉ nói được là nó khác. Điểm
+thật của V-Bench do máy chủ chấm và **chưa** có snapshot cho arm này.
+
+Chỉ một ô vượt ngưỡng ý nghĩa (reading-400), và **ngưỡng có lợi cho arm B**. So với MC-22 của
+cùng scaffold trên đúng bốn tập: **−5,60…−22,25 điểm**.
+
+### Cơ chế, xem ở từng item (đây là bằng chứng, không phải suy đoán)
+
+41 câu reading-400 đi từ sai→đúng, 13 câu ngược lại. Bốn ví dụ trong nhóm lời:
+
+| gold | arm A | arm B |
+| --- | --- | --- |
+| `1999` | `năm 1999` | `1999` |
+| `'Touring'` | `kiểu thân station wagon, định vị trên thị trường là 'Touring'` | `'Touring'` |
+| `53rd Street, giữa Fifth và Sixth Avenue` | `Midtown Manhattan, Thành phố New York, nằm trên 53rd Street, giữa Fifth và Sixth Avenue.` | `53rd Street, giữa Fifth và Sixth Avenue` |
+| `thành phần hóa học của Trái Đất` | `Sự đa dạng và phong phú của các loại khoáng vận …` | `thành phần hóa học của Trái Đất` |
+
+Cùng một câu hỏi, cùng gold: arm A **diễn giải**, arm B **chép**. Trung vị độ dài reply 12 → 10 ký tự.
+Khung agent đẩy mô hình về phía *chép nguyên văn*, và bộ chấm extractive thưởng đúng cái đó.
+
+### Ablation của chính MC-29: `AGENTS.md` rò tốn tiền, **không** tốn điểm
+
+Cùng model, cùng agent, **chỉ khác vị trí sandbox** (legal-MC, n=146):
+
+| Sandbox | System prompt | Prompt token/câu | Accuracy |
+| --- | ---: | ---: | ---: |
+| `/tmp` (sạch) | 688 ký tự | 505 | 136/146 = **93,15** |
+| trong repo (rò `AGENTS.md`) | 27.501 ký tự | 7.508 | 137/146 = **93,84** |
+
+Δ = **+0,68 điểm** (6 câu đảo chữ cái, 3 vs 2) ⇒ **không có hiệu ứng điểm**. Nhưng prompt token
+tăng **+7.003/câu ≈ 15×**, tức chi phí input tăng tương ứng. Nói cách khác: MC-29 đúng về *rò*,
+nhưng **rò không giải thích** phần thua của Qwen.
+
+### Caveat thứ ba: ngân sách output lệch nhau (có sẵn từ trước, không phải do MC-29)
+
+Arm A có trần `max_tokens` 4 (MC) / 48 (reading); `omp` **không** gửi trần nào và model config
+khai `maxTokens: 128000` (request thật: `max_tokens: 64000`). Nên arm B không bị chặn. Trần 48 chỉ
+có thể làm hại arm A ở **≤ 7/400 item ⇒ ≤ 1,75 điểm**, và kiểm tra 2 item dài nhất cho thấy arm A
+trả về **cả câu trích đầy đủ**, không phải bị cắt. Δ +7,00 đứng vững.
+
+### Chi phí của scaffold sạch trên model này (speed probe, legal-MC, n=24, workers=4, chạy một mình)
+
+| Cánh | p50/câu | prompt tok | completion tok | overhead tiến trình |
+|---|---:|---:|---:|---:|
+| A gọi thẳng | 2,31s | 470 | 4 | 0,00s |
+| B qua omp | 4,54s | 508 | 2 | **1,59s** |
+
+Tức **×2,0 thời gian** nhưng **chỉ ×1,1 token**, và gần một nửa thời gian là **spawn tiến trình**
+không phải lời gọi model. So với MC-25 của Qwen (rò persona: +140 token, +4,00s, completion
+×118) và ablation rò `AGENTS.md` (+7.003 token/câu), scaffold sạch gần như **miễn phí về token**.
+
+### Chưa được quy
+
+1. **Chưa có sàn nhiễu cho MiMo.** Mỗi ô chạy **một** lần. MC-27 đo được 0,68–5,48đ cho Qwen ở
+   `temperature 0`; MiMo có thể khác, nên ô +2,74 và +2,28 (p = 0,22 và 0,080) **chưa** tách được
+   khỏi nhiễu — CI có chạm 0 là dấu hiệu đúng, không phải lỗi.
+2. **Arm đo qua một hop proxy trong suốt** (bắt buộc, vì `omp` không gửi được 2 field đó). Mọi pin
+   được ghi vào file capture.
+3. **`MiMo V2.5` là model có suy luận**, tắt bằng `reasoning_effort="none"`; đây là một condition
+   khác hẳn Qwen (không có reasoning). So sánh *giữa hai model* vì vậy là so hai condition, không
+   phải hai model — dùng để trả lời "harness tax có phải tính chất của scaffold không", không dùng
+   để xếp hạng model.
+
+### Kết luận của MC-29 + MC-30
+
+**Scaffold không có "giá".** Giá phụ thuộc model. Cùng một scaffold, cùng prompt, cùng bộ chấm:
+`Qwen3.5-9B-28K` thua **5,6…22,3 điểm**; `MiMo V2.5` thắng tới **+7,0** và trung tính ở ba tập còn
+lại. Cái bị đo trong MC-15…MC-28 là **ngân sách tuân thủ của một model 9B**, không phải chi phí
+của việc đi qua tiến trình agent. Và trên bài trích xuất, khung agent **giúp** model chép đúng hơn.
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

@@ -38,11 +38,11 @@ from pathlib import Path
 
 try:
     from code_benchmark.common import read_csv_checked
-    from code_benchmark.run_harness_eval import ARM_A, _mc_eval_path
+    from code_benchmark.run_harness_eval import (ARM_A, _mc_eval_path, _vbench_mc_letters)
     from code_benchmark.score_reading_eval import measurement_card_hash, score_pair
 except ImportError:
     from common import read_csv_checked
-    from run_harness_eval import ARM_A, _mc_eval_path
+    from run_harness_eval import (ARM_A, _mc_eval_path, _vbench_mc_letters)
     from score_reading_eval import measurement_card_hash, score_pair
 
 DASHBOARD = Path("web/public/benchmark-data.json")
@@ -62,22 +62,82 @@ ARMS = [
     ("ompH4_Qwen3_5-9B-28K", "ompH4_Qwen3_5-9B-28K", "H4",
      "omp: không tool + system prompt trung tính (có rò style)", "MC-21"),
     ("ompH5clean_Qwen3_5-9B-28K", "ompH5clean_Qwen3_5-9B-28K", "H5",
-     "**omp sạch**: không tool + system prompt trung tính, HOME override", "MC-22"),
+     "omp sạch: không tool + system prompt trung tính, HOME override", "MC-22"),
     ("ompH6clean_Qwen3_5-9B-28K", "ompH6clean_Qwen3_5-9B-28K", "H6",
-     "**omp sạch** + tool menu đầy đủ", "MC-23"),
+     "omp sạch + tool menu đầy đủ", "MC-23"),
     ("ompH7clean_Qwen3_5-9B-28K", "ompH7clean_Qwen3_5-9B-28K", "H7",
-     "**omp sạch** + system prompt của omp, không tool", "MC-23"),
+     "omp sạch + system prompt của omp, không tool", "MC-23"),
     ("ompH8clean_Qwen3_5-9B-28K", "ompH8clean_Qwen3_5-9B-28K", "H8",
-     "**omp sạch** + tool menu + system prompt của omp", "MC-23"),
+     "omp sạch + tool menu + system prompt của omp", "MC-23"),
     ("ompV1clean_Qwen3_5-9B-28K", "ompV1clean_Qwen3_5-9B-28K", "V1",
-     "**omp sạch** + tool menu đầy đủ, trên V-Bench function-calling (nơi scaffold "
+     "omp sạch + tool menu đầy đủ, trên V-Bench function-calling (nơi scaffold "
      "*có thể* thắng)", "MC-26"),
+    # ── model thứ hai (MC-30): cùng scaffold, model khác, điều kiện đã vá theo MC-29 ──
+    ("A2_direct_mimo", "mimo-v2_5", "A2",
+     "MiMo V2.5: gọi API trực tiếp (không harness)", None),
+    ("ompM6clean_mimo-v2.5", "ompM6clean_mimo-v2_5", "M6",
+     "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, "
+     "temperature 0 + reasoning tắt do proxy ghim", "MC-30"),
+    ("ompM6inrepo_mimo-v2.5", "ompM6inrepo_mimo-v2_5", "M6L",
+     "MiMo V2.5: đúng arm M6 nhưng sandbox đặt TRONG repo, nên `AGENTS.md` của chính repo "
+     "này bị nạp vào mọi item (ablation của MC-29)", "MC-30"),
 ]
+# Which MODEL each arm measures. A ladder row is only comparable inside one model:
+# the whole point of the arm is that model, prompt and scorer are held fixed, so a
+# delta that spans two models is not a delta at all.
+ARM_MODEL = {short: "Qwen3.5-9B-28K" for _k, _s, short, _l, _c in ARMS[:10]}
+ARM_MODEL.update({"A2": "MiMo V2.5", "M6": "MiMo V2.5", "M6L": "MiMo V2.5"})
+# The arms that carry the "clean scaffold" condition. An explicit set, not a
+# substring test on the slug: M6L is clean in every way EXCEPT that its sandbox sits
+# inside the repo, and a substring match would silently fold it into the headline.
+CLEAN_ARMS = {"H5", "H6", "H7", "H8", "V1", "M6"}
+# The one clean arm that represents its model in the with/without table.
+REPRESENTATIVE = {"Qwen3.5-9B-28K": "H5", "MiMo V2.5": "M6"}
 DATASETS = ["reading400", "legal_mc", "legal_nli", "bidlqa_val", "vbench_agentic"]
+# Per-arm coverage = what each arm ACTUALLY ran, declared. A dataset is only
+# claimed by an arm that has a paired compare for it; an arm that does not list a
+# dataset is never asked for it, and an arm that lists one but has no per-item
+# file aborts the build rather than silently shrinking the table. The Qwen arms
+# are deliberately uneven (the factorial cells ran 100 legal-MC items only; V1 ran
+# V-Bench only) — that is the run history, not an oversight.
+_ALL = DATASETS
+_FOUR = ["reading400", "legal_mc", "legal_nli", "bidlqa_val"]
+_MC = ["legal_mc"]
+# Keyed by SLUG, not by the short id: the slug is the arm's real identity (its
+# folder), so a caller passing its own `arms=` list can never inherit a coverage
+# promise meant for a different arm that happens to share a display id.
+ARM_DATASETS = {
+    "Qwen3_5-9B-28K": _ALL,
+    "ompH2_Qwen3_5-9B-28K": _FOUR, "ompH1_Qwen3_5-9B-28K": _MC,
+    "ompH3_Qwen3_5-9B-28K": _MC, "ompH4_Qwen3_5-9B-28K": _MC,
+    "ompH5clean_Qwen3_5-9B-28K": _FOUR, "ompH6clean_Qwen3_5-9B-28K": _MC,
+    "ompH7clean_Qwen3_5-9B-28K": _MC, "ompH8clean_Qwen3_5-9B-28K": _MC,
+    "ompV1clean_Qwen3_5-9B-28K": ["vbench_agentic"],
+    "mimo-v2_5": _ALL + ["vbench_mc"],
+    "ompM6clean_mimo-v2_5": _ALL + ["vbench_mc"],
+    "ompM6inrepo_mimo-v2_5": _MC,
+}
+
+
+def datasets_for(slug: str) -> list[str]:
+    """An arm's declared coverage; an arm nobody declared falls back to "try
+    everything", which is what an ad-hoc `arms=` list (the tests) wants."""
+    return ARM_DATASETS.get(slug, DATASETS)
 DATASET_LABEL = {"reading400": "reading-400 (EM)", "legal_mc": "legal-MC (accuracy)",
                  "legal_nli": "legal-NLI (accuracy)", "bidlqa_val": "ViBidLQA val (EM)",
                  "vbench_agentic": "V-Bench agentic (schema validity — KHÔNG có gold)",
                  "vbench_mc": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)"}
+
+
+def _int_or_blank(value: str) -> int | str:
+    """A paired cell that the track deliberately leaves empty stays empty.
+
+    The baseline arm already emits "" for those; a harness arm must not invent a
+    0, or the page shows "0 items where only arm A was right" for a track that
+    never computed that split.
+    """
+    text = (value or "").strip()
+    return int(text) if text else ""
 
 
 def f2(value: str) -> float:
@@ -100,7 +160,8 @@ def read_compare(folder: Path, dataset: str, tag: str = "vsA") -> dict | None:
     return rows[0]
 
 
-def arm_metrics(folder: Path, dataset: str, spec: dict, slug: str) -> dict | None:
+def arm_metrics(folder: Path, dataset: str, spec: dict, slug: str,
+                *, arm_a_slug: str | None = None) -> dict | None:
     """The arm's own score, recomputed from its per-item file (never from prose).
 
     Works for the direct-prompt baseline too: `_mc_eval_path` resolves both the
@@ -150,6 +211,32 @@ def arm_metrics(folder: Path, dataset: str, spec: dict, slug: str) -> dict | Non
                 out["server_correct"] = int(ag["correct"])
                 out["server_total"] = int(ag["total"])
         return out
+    if kind == "vbench_mc":
+        # No gold anywhere, so the pairable number is AGREEMENT with the direct
+        # arm: did routing the same prompt through the agent change the letter?
+        # Recomputed from both sides' per-item letters so the number cannot be
+        # inherited from a prose claim. The direct arm agrees with itself by
+        # construction, which is also why no paired test is reported for it.
+        if not arm_a_slug:
+            return None
+        # Arm A's letters live in ARM A's folder, not this arm's: a harness arm has
+        # no vbench_result_* checkpoint of its own, only a ledger.
+        a = _vbench_mc_letters(RESULTS_DIR / arm_a_slug, arm_a_slug, harness_arm=False)
+        if not a:
+            return None
+        b = _vbench_mc_letters(folder, slug, harness_arm=True) or {}
+        shared = [i for i in a if i in b] if b else list(a)
+        if not shared:
+            return None
+        # Two EMPTY answers are not agreement: an empty cell is not an answer, so
+        # it must count against the arm that produced it. 9 of the 4.141 rows are
+        # blank on both sides here, and counting them as agreeing inflated the
+        # recompute by 0.22 points against the compare row.
+        same = sum(1 for i in shared if b and a[i] and b[i] and a[i] == b[i]) if b else len(shared)
+        n = len(shared)
+        return {"n": n, "metric": "agreement", "score": round(100.0 * same / n, 2),
+                "correct": same, "blanks": n - same, "char_f1": None,
+                "unit": "cùng chữ cái với arm A"}
     name = "reading_scores_bidlqa_val" if dataset == "bidlqa_val" else "reading_scores"
     path = folder / f"{name}_{slug}.csv"
     if not path.exists():
@@ -229,16 +316,33 @@ def build_ladder(results_dir: Path, arms: list = ARMS) -> tuple[list[dict], list
     """
     rows: list[dict] = []
     costs: list[dict] = []
+    # The direct baseline of each model, so a harness arm can be scored against
+    # its OWN arm A — never against another model's.
+    baseline_slug = {ARM_MODEL[short]: slug for _k, slug, short, _l, _c in arms
+                     if short in ("A", "A2")}
     for _key, slug, short, label, card in arms:
         folder = results_dir / slug
         if not folder.exists():
             continue
-        baseline = short == "A"
-        for dataset in DATASETS:
-            own = arm_metrics(folder, dataset, ARM_A[dataset], slug)
+        baseline = short in ("A", "A2")
+        model = ARM_MODEL[short]
+        for dataset in datasets_for(slug):
+            own = arm_metrics(folder, dataset, ARM_A[dataset], slug,
+                              arm_a_slug=baseline_slug.get(model))
             if not own:
-                continue
+                if slug not in ARM_DATASETS:
+                    continue      # undeclared coverage: nothing promised here
+                # The registry says this arm covers this dataset, so a missing
+                # per-item file is an incomplete RUN, not a dataset to skip. Left
+                # unchecked, a half-finished arm quietly shrinks the table — the
+                # one failure mode this builder exists to prevent.
+                raise SystemExit(
+                    f"Error: {slug} declares dataset {dataset} but no per-item metrics "
+                    f"could be read from {folder}. Finish the run (or drop the dataset "
+                    f"from ARM_DATASETS['{slug}']) before rebuilding the block.")
+
             base = {"arm": short, "arm_slug": slug, "label": label, "card": card,
+                    "model": model,
                     "dataset": dataset, "dataset_label": DATASET_LABEL[dataset],
                     "metric": own["metric"], "n": own["n"],
                     "arm_b": own["score"], "char_f1": own.get("char_f1"),
@@ -273,11 +377,17 @@ def build_ladder(results_dir: Path, arms: list = ARMS) -> tuple[list[dict], list
             rows.append({**base, "role": "harness", "arm_a": f2(cmp_row["arm_a"]),
                          "delta": f2(cmp_row["delta"]), "ci95_low": lo, "ci95_high": hi,
                          "mcnemar_p": cmp_row["mcnemar_p"],
-                         "both": int(cmp_row["both"]), "a_only": int(cmp_row["a_only"]),
-                         "b_only": int(cmp_row["b_only"]), "neither": int(cmp_row["neither"])})
-        cost = arm_cost(folder, DATASETS)
+                         # Some tracks leave the paired cells empty on purpose
+                         # (V-Bench MC runs no McNemar and has no a_only/b_only
+                         # split), so an empty cell is "" here, never a fake 0.
+                         "both": _int_or_blank(cmp_row["both"]),
+                         "a_only": _int_or_blank(cmp_row["a_only"]),
+                         "b_only": _int_or_blank(cmp_row["b_only"]),
+                         "neither": _int_or_blank(cmp_row["neither"])})
+        cost = arm_cost(folder, datasets_for(slug))
         if cost:
-            costs.append({"arm": short, "arm_slug": slug, "label": label, **cost})
+            costs.append({"arm": short, "arm_slug": slug, "label": label,
+                          "model": model, **cost})
     if not rows:
         raise SystemExit(f"Error: no harness artifacts under {results_dir}")
     return rows, costs
@@ -323,7 +433,7 @@ def secondary_metrics(results_dir: Path, arms: list = ARMS) -> list[dict]:
         folder = results_dir / slug
         if not folder.exists():
             continue
-        for dataset in DATASETS:
+        for dataset in datasets_for(slug):
             if ARM_A[dataset]["kind"] != "reading":
                 continue
             led = sorted(folder.glob(f"harness_ledger_{dataset}_*.csv"))
@@ -389,7 +499,7 @@ def repeatability(results_dir: Path, arms: list = ARMS) -> list[dict]:
             base = by_slug.get(f"{cell}_Qwen3_5-9B-28K")
             short, label, card = (f"{cell}·r{repeat}", f"{base[1]} — lặp {repeat}" if base
                                   else slug, base[2] if base else None)
-        for dataset in DATASETS:
+        for dataset in datasets_for(slug):
             cmp_row = read_compare(folder, dataset)
             if cmp_row is None:
                 continue
@@ -434,45 +544,90 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
     Văn phong: tiếng Việt học thuật; thuật ngữ chuyên ngành không dịch được thì
     giữ nguyên tiếng Anh — chúng được giải thích ở mục "Thuật ngữ" của trang.
     """
-    clean = [r for r in ladder
-             if "clean" in r["arm_slug"] and r["role"] == "harness"
-             and r["dataset"] != "vbench_agentic"]
+    clean_by_model: dict[str, list[dict]] = {}
+    for r in ladder:
+        if r["role"] != "harness" or r["arm"] not in CLEAN_ARMS:
+            continue
+        if r["dataset"] == "vbench_agentic":     # validity, not accuracy: never mixed in
+            continue
+        clean_by_model.setdefault(r.get("model", ""), []).append(r)
     claims: list[dict] = []
 
-    # 1. Phạt chung của việc đi qua tiến trình agent
-    if clean:
-        deltas = sorted(r["delta"] for r in clean)
-        ds = sorted({r["dataset_label"].split(" (")[0] for r in clean})
-        excl0 = sum(1 for r in clean if r["ci95_high"] < 0 or r["ci95_low"] > 0)
+    # 1. Phạt của việc đi qua tiến trình agent — TÍNH RIÊNG cho từng model.
+    # Một dải min…max đi ngang hai model sẽ là con số vô nghĩa: đó là so hai
+    # condition khác nhau chứ không phải một hiệu ứng.
+    for model, rows_m in sorted(clean_by_model.items()):
+        deltas = sorted(r["delta"] for r in rows_m)
+        ds = sorted({r["dataset_label"].split(" (")[0] for r in rows_m})
+        excl0 = sum(1 for r in rows_m if r["ci95_high"] < 0 or r["ci95_low"] > 0)
+        worse = deltas[-1] < 0
         claims.append({
-            "id": "penalty",
-            "title": "Chi phí chung của việc đưa một prompt qua tiến trình agent",
-            "body": (f"Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi "
-                     f"đường truy xuất câu trả lời: các cấu hình scaffold sạch thua đường gọi trực tiếp "
-                     f"{deltas[0]:+.2f}…{deltas[-1]:+.2f} điểm trên {len(ds)} tập ({', '.join(ds)}). "
-                     f"Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system "
-                     f"prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong {len(clean)} phép so "
-                     f"sánh đó, {excl0} phép có khoảng tin cậy 95% loại trừ 0"
-                     + ("" if excl0 == len(clean) else
-                        f"; {len(clean) - excl0} phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy "
-                        f"còn ngang bằng bản thân khoản phạt")
+            "id": f"penalty:{model}",
+            "title": (f"{model}: chi phí của việc đưa một prompt qua tiến trình agent"
+                      if worse else
+                      f"{model}: đi qua tiến trình agent KHÔNG làm giảm điểm"),
+            "body": ("Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi "
+                     "đường truy xuất câu trả lời: các cấu hình scaffold sạch "
+                     + ("thua" if worse else f"có Δ từ {deltas[0]:+.2f} đến {deltas[-1]:+.2f} điểm")
+                     + f" trên {len(ds)} tập ({', '.join(ds)})"
+                     + ("" if worse else
+                        ", tức không tìm thấy khoản phạt nào ở đây")
+                     + f". Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn "
+                     f"system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong {len(rows_m)} "
+                     f"phép so sánh đó, {excl0} phép có khoảng tin cậy 95% loại trừ 0"
+                     + ("" if excl0 == len(rows_m) else
+                        f"; {len(rows_m) - excl0} phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin "
+                        f"cậy còn ngang bằng bản thân khoản thay đổi")
                      + "."),
             "evidence": [{"label": "Δ nhỏ nhất", "value": f"{deltas[0]:+.2f}"},
                          {"label": "Δ lớn nhất", "value": f"{deltas[-1]:+.2f}"},
-                         {"label": "CI 95% loại trừ 0", "value": f"{excl0}/{len(clean)}"},
-                         {"label": "tập nhỏ nhất", "value": f"n={min(r[chr(110)] for r in clean)}"}],
+                         {"label": "CI 95% loại trừ 0", "value": f"{excl0}/{len(rows_m)}"},
+                         {"label": "tập nhỏ nhất", "value": f"n={min(r['n'] for r in rows_m)}"}],
+        })
+
+    # 1b. Mệnh đề liên model: dấu của hiệu ứng thuộc về model, không thuộc về scaffold
+    if len(clean_by_model) > 1:
+        worst = {m: max(r["delta"] for r in rs) for m, rs in clean_by_model.items()}
+        best = {m: min(r["delta"] for r in rs) for m, rs in clean_by_model.items()}
+        flips = [m for m, rs in clean_by_model.items() if max(r["delta"] for r in rs) > 0]
+        claims.append({
+            "id": "model_dependent",
+            "title": "Scaffold không có một giá riêng: dấu của hiệu ứng đổi theo model",
+            "body": ("Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một "
+                     "đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: "
+                     + "; ".join(f"{m} dao động {best[m]:+.2f}…{worst[m]:+.2f} điểm" 
+                                 for m in sorted(clean_by_model))
+                     + ". Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, "
+                       "không phải chi phí của việc đi qua một tiến trình agent. "
+                     + (f"Trên {len(flips)}/{len(clean_by_model)} model, scaffold thậm chí còn tăng điểm."
+                        if flips else
+                        "Không model nào được scaffold giúp.")
+                     + " Hai model còn khác nhau ở chỗ có suy luận hay không, nên đây là so hai "
+                       "condition chứ không phải so thứ hạng model."),
+            "evidence": [{"label": f"{m}: Δ cao nhất", "value": f"{worst[m]:+.2f}đ"}
+                         for m in sorted(clean_by_model)]
+                        + [{"label": f"{m}: Δ thấp nhất", "value": f"{best[m]:+.2f}đ"}
+                           for m in sorted(clean_by_model)],
         })
 
     # 2. V-Bench: thống kê cục bộ gợi ý nhẹ hơn thực tế 3,4 lần
-    v_a = next((r for r in ladder if r["role"] == "baseline" and r["dataset"] == "vbench_agentic"), None)
-    v_b = next((r for r in ladder if r["dataset"] == "vbench_agentic" and r["role"] == "harness"), None)
-    if v_a and v_b and v_b.get("server_score") is not None:
+    models_seen = []
+    for model in sorted({r.get("model", "") for r in ladder}):
+        vb_pair = [r for r in ladder if r["dataset"] == "vbench_agentic" and r.get("model") == model]
+        v_a = next((r for r in vb_pair if r["role"] == "baseline"), None)
+        v_b = next((r for r in vb_pair if r["role"] == "harness"), None)
+        # The server grade exists only where a snapshot was recorded; without it
+        # the locally computable number is validity alone, which understates the
+        # damage several-fold — so the claim is skipped, never approximated.
+        if not (v_a and v_b and v_b.get("server_score") is not None):
+            continue
+        models_seen.append(model)
         vdelta = v_b["server_score"] - v_a["server_score"]
         ratio = abs(vdelta / v_b["delta"]) if v_b["delta"] else float("nan")
         claims.append({
-            "id": "vbench",
-            "title": "Trên bài function-calling — nơi scaffold duy nhất được lợi thế — vẫn chỉ thua, "
-                     "và thua nhiều hơn thống kê cục bộ gợi ý",
+            "id": f"vbench:{model}",
+            "title": f"{model}: trên bài function-calling — nơi scaffold duy nhất được lợi thế — "
+                     f"vẫn chỉ thua, và thua nhiều hơn thống kê cục bộ gợi ý",
             "body": (f"Trên {v_b['n']:.0f} câu lệnh gọi hàm: tính schema validity tại chỗ cho "
                      f"{v_a['arm_b']:.2f}% → {v_b['arm_b']:.2f}% ({v_b['delta']:+.2f} điểm), nhưng điểm "
                      f"chấm thật từ máy chủ là {v_a['server_score']:.2f}% → {v_b['server_score']:.2f}% "
@@ -492,7 +647,11 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         noise = max(spreads.values())
         contrast = means["ompH8clean"] - means["ompH5clean"]
         # Ngưỡng nhiễu chỉ đo được trên legal-MC, nên chỉ Δ của legal-MC mới đem ra so
-        matched = [r for r in clean if r["dataset"] == "legal_mc"]
+        # The repeats that produced those spreads are the Qwen factorial cells, so
+        # only that model's clean legal-MC deltas are comparable against them.
+        noise_model = ARM_MODEL["H5"]
+        matched = [r for r in clean_by_model.get(noise_model, [])
+                   if r["dataset"] == "legal_mc"]
         if matched:
             worst = min(abs(r["delta"]) for r in matched)
             best = max(abs(r["delta"]) for r in matched)
@@ -575,36 +734,66 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
     for r in ladder:
         if r["role"] != "baseline" or r["dataset"] == "vbench_agentic":
             continue
+        rep = REPRESENTATIVE.get(r.get("model", ""))
         arm_b = next((x for x in ladder if x["role"] == "harness" and x["dataset"] == r["dataset"]
-                      and x["arm_slug"].startswith("ompH5clean")), None)
+                      and x["arm"] == rep), None)
         if arm_b is None:
             continue
         comparison.append({
+            "model": r.get("model", ""),
             "dataset": r["dataset"], "dataset_label": r["dataset_label"], "metric": r["metric"],
             "n": r["n"], "no_harness": round(r["arm_a"], 2), "with_harness": round(arm_b["arm_b"], 2),
             "delta": round(arm_b["delta"], 2),
         })
-    vb = next((r for r in ladder if r["dataset"] == "vbench_agentic" and r["role"] == "harness"), None)
-    vb_a = next((r for r in ladder if r["dataset"] == "vbench_agentic" and r["role"] == "baseline"), None)
-    if vb and vb_a and vb.get("server_score") is not None:
+    for model in models_seen:
+        vb_pair = [r for r in ladder if r["dataset"] == "vbench_agentic" and r.get("model") == model]
+        vb = next((r for r in vb_pair if r["role"] == "harness"), None)
+        vb_a = next((r for r in vb_pair if r["role"] == "baseline"), None)
+        if not (vb and vb_a and vb.get("server_score") is not None):
+            continue
         comparison.append({
+            "model": model,
             "dataset": "vbench_agentic", "dataset_label": "V-Bench function-calling (điểm máy chủ)",
             "metric": "accuracy", "n": vb["n"],
             "no_harness": round(vb_a["server_score"], 2), "with_harness": round(vb["server_score"], 2),
             "delta": round(vb["server_score"] - vb_a["server_score"], 2),
         })
-    comparison.sort(key=lambda c: c["delta"])
+    # Never mixed across models, and an AGREEMENT row never sorts as if it were a
+    # quality loss: agreement measures "did the agent change the answer", not
+    # "is the answer better", so putting it at the top of a worst-first table
+    # would read as a 22-point accuracy drop that does not exist.
+    comparison.sort(key=lambda c: (c["model"], c["metric"] == "agreement", c["delta"]))
 
-    verdict = (
-        "Với model, prompt và bộ chấm đều giữ nguyên, việc trả lời qua một tiến trình agent làm giảm điểm "
-        "ở mọi tập đã đo, và không tầng cấu hình nào của scaffold chịu trách nhiệm cho phần này. Điều đáng "
-        "chú ý nhất là phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy "
-        "bị lọt vào scaffold chứ không phải từ bản thân omp; còn trên bài function-calling — nơi scaffold "
-        "được lợi thế rõ nhất — scaffold vẫn chỉ thua, và mức thua thật lớn hơn nhiều so với mức mà phép "
-        "kiểm tra tại chỗ gợi ý. Vì vậy, khi lập luận về chi phí của agent, điều cần tách trước là chi phí "
-        "của văn bản ép dài và chi phí của vòng lặp agent — chúng không cùng bản chất và cũng không cùng "
-        "loại tiền."
-    ) if claims else ""
+    if clean_by_model and len(clean_by_model) > 1:
+        rng = "; ".join(
+            f"{m} {min(r['delta'] for r in rs):+.2f}…{max(r['delta'] for r in rs):+.2f} điểm"
+            for m, rs in sorted(clean_by_model.items()))
+        helped = [m for m, rs in clean_by_model.items() if max(r["delta"] for r in rs) > 0]
+        verdict = (
+            f"Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm "
+            f"đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: {rng}. "
+            f"Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không "
+            f"phải chi phí của việc đi qua một tiến trình agent"
+            + (f" — và trên {len(helped)}/{len(clean_by_model)} model, scaffold còn tăng điểm."
+               if helped else ".")
+            + " Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn "
+              "token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách "
+              "tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình "
+              "trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp."
+        )
+    elif clean_by_model:
+        only = next(iter(clean_by_model))
+        rng = "; ".join(
+            f"{min(r['delta'] for r in rs):+.2f}…{max(r['delta'] for r in rs):+.2f} điểm"
+            for rs in clean_by_model.values())
+        verdict = (
+            f"Với model, prompt và bộ chấm đều giữ nguyên, việc trả lời qua một tiến trình agent đổi "
+            f"điểm {rng} trên {only}, và không tầng cấu hình nào của scaffold chịu trách nhiệm cho phần "
+            f"này. Phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy "
+            f"bị lọt vào scaffold chứ không phải từ bản thân omp."
+        )
+    else:
+        verdict = ""
     return {"verdict": verdict, "claims": claims, "comparison": comparison}
 
 
@@ -632,14 +821,19 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
         "path_escape_items": sum(c["path_escape_items"] for c in costs),
     }
     return {
-        "benchmark_name": "Harness arm — cùng model, khác scaffold (omp vs gọi API trực tiếp)",
-        "date": "2026-09-26",
-        "model_id": "Qwen3.5-9B-28K",
-        "endpoint": "https://llmapi.iec-uit.com/v1",
+        "benchmark_name": ("Harness arm — mỗi model so với chính nó "
+                               "(omp vs gọi API trực tiếp)"),
+        "date": "2026-09-26 → 2026-09-29",
+        "model_id": "Qwen3.5-9B-28K · MiMo V2.5",
+        "endpoint": ("https://llmapi.iec-uit.com/v1 (Qwen) · "
+                     "https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go)"),
         "harness": "omp (Oh My Pi) v18.2.7",
-        "condition": ("prompt byte-identical với arm A, temperature 0, seed 42, scorer đóng băng; "
-                      "khác duy nhất là đường elicitation"),
-        "measurement_card": "MC-15…MC-27",
+        "condition": ("prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; "
+                      "khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo: "
+                      "temperature 0 + reasoning tắt được GHIM BẰNG PROXY trong suốt vì omp không gửi "
+                      "được hai field đó; sandbox đặt ngoài repo nên không có AGENTS.md nạp vào "
+                      "(MC-29/MC-30)."),
+        "measurement_card": "MC-15…MC-30",
         "measurement_card_hash": measurement_card_hash(),
         "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
         "ladder": ladder,
@@ -669,6 +863,16 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
             "Bảng metric phụ (EM sau khi cắt vỏ) là để quy kết, KHÔNG thay số chính: nó bỏ vỏ "
             "markdown rồi chấm lại bằng đúng scorer đóng băng. Câu sai vẫn sai.",
             "Số arm A mang hash measurement card cũ; các card mới thêm sau khi chấm.",
+            "MC-29: sandbox từng mặc định nằm TRONG repo, nên omp nạp toàn bộ AGENTS.md của chính "
+            "repo này (27.501 ký tự, ~7k token) vào system prompt của MỌI item tới MC-28. Nhãn "
+            "\"scaffold sạch\" của các arm cũ nghĩa là sạch persona/tool, không có nghĩa là sạch chỉ "
+            "dẫn dự án. Ablation trên MiMo (cùng arm, khác vị trí sandbox): +7.003 token/câu, Δ +0,68 "
+            "điểm — tốn tiền, không tốn điểm.",
+            "omp KHÔNG gửi temperature và reasoning_effort (bắt bằng proxy; `options:` trong models.yml "
+            "bị bỏ qua im lặng). Các card ghi \"temperature 0\" là đúng cho arm A nhưng SAI cho mọi arm "
+            "B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
+            "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên "
+            "cùng câu hỏi. Điểm V-Bench thật do máy chủ chấm; ta không có vàng cục bộ.",
         ],
         "sources": {
             "runner": "code_benchmark/run_harness_eval.py (run | compare | speed)",

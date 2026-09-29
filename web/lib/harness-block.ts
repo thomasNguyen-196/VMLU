@@ -13,6 +13,8 @@
 export interface HarnessRow {
   /** "baseline" = the direct-prompt arm A (no paired stats), "harness" = an arm. */
   role: "baseline" | "harness";
+  /** The model this row measures. A row is only meaningful inside one model. */
+  model: string;
   arm: string;
   arm_slug: string;
   label: string;
@@ -21,7 +23,7 @@ export interface HarnessRow {
   dataset_label: string;
   /** `agreement_with_arm_A` = no local gold (V-Bench MC), so the pairable
    *  number is "did the agent change the answer?", never accuracy. */
-  metric: "accuracy" | "EM" | "valid_rate" | "agreement_with_arm_A";
+  metric: "accuracy" | "EM" | "valid_rate" | "agreement" | "agreement_with_arm_A";
   n: number;
   arm_a: number;
   arm_b: number;
@@ -134,9 +136,12 @@ export interface HarnessInsightClaim {
 
 /** One row of the direct comparison the study exists for: the same model and the
  *  same prompt with and without the agent in the path. `no_harness` is the direct
- *  API call; `with_harness` is the clean scaffold (H5). Sorted by delta so the
- *  worst case is the first thing read. */
+ *  API call of THE SAME MODEL; `with_harness` is that model's clean scaffold
+ *  (H5 for Qwen, M6 for MiMo). One row per (model, dataset) — a row is only
+ *  meaningful inside one model, because the arm holds the model fixed. Sorted by
+ *  model then delta, so the worst case of each model is the first thing read. */
 export interface HarnessComparisonRow {
+  model: string;
   dataset: string;
   dataset_label: string;
   metric: string;
@@ -195,6 +200,9 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
   if (!Array.isArray(b.caveats) || !b.caveats.length) fail("block .harness thiếu .caveats");
   if (!b.totals) fail("block .harness thiếu .totals");
   for (const row of b.ladder) {
+    if (!row.model) {
+      fail(`dòng .ladder thiếu .model: ${JSON.stringify(row).slice(0, 120)} — một dòng chỉ có nghĩa bên trong một model`);
+    }
     if (!row.arm || !row.dataset || typeof row.n !== "number" || row.n <= 0) {
       fail(`dòng .ladder không hợp lệ: ${JSON.stringify(row).slice(0, 120)}`);
     }
@@ -290,6 +298,7 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
     fail("block .harness .insight.comparison rỗng — đây chính là phép so sánh cốt lõi");
   }
   for (const c of b.insight.comparison) {
+    if (!c.model) fail(`dòng .comparison thiếu .model: ${JSON.stringify(c).slice(0, 100)} — một dòng so chỉ có nghĩa bên trong một model`);
     if (!c.dataset || !c.dataset_label || !c.metric) fail(`dòng .comparison thiếu nhãn: ${JSON.stringify(c).slice(0, 100)}`);
     if (!Number.isInteger(c.n) || c.n <= 0) fail(`${c.dataset}: n phải là số nguyên dương (${c.n})`);
     for (const k of ["no_harness", "with_harness"] as const) {

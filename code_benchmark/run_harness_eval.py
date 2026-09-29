@@ -78,7 +78,7 @@ try:  # package run (repo root) or direct run (cwd == code_benchmark)
                                                 split_config as bidlqa_split_config,
                                                 verify_join as verify_bidlqa_join)
     from code_benchmark.run_mc_eval import build_prompt, extract_answer
-    from code_benchmark.llm import build_client, verify_credentials
+    from code_benchmark.llm import build_client, extra_headers, verify_credentials
     from code_benchmark.run_vbench_eval import (build_agentic_prompt, extract_function_call,
                                                 extract_mc_answer, load_vbench)
     from code_benchmark.score_reading_eval import measurement_card_hash, score_pair
@@ -94,7 +94,7 @@ except ImportError:
                                  split_config as bidlqa_split_config,
                                  verify_join as verify_bidlqa_join)
     from run_mc_eval import build_prompt, extract_answer
-    from llm import build_client, verify_credentials
+    from llm import build_client, extra_headers, verify_credentials
     from run_vbench_eval import (build_agentic_prompt, extract_function_call,
                                   extract_mc_answer, load_vbench)
     from score_reading_eval import measurement_card_hash, score_pair
@@ -534,9 +534,28 @@ DEFAULT_SYSTEM_AGENT_DIR = Path.home() / ".omp" / "agent"
 # agent dir does NOT shadow the global one; only overriding HOME does). Each of
 # these silently changes the measured scaffold, so the runner shouts about it.
 LEAKY_GLOBAL_FILES = ("APPEND_SYSTEM.md",)
+# Files an agent picks up by walking UP from its working directory. Measured
+# 2026-09-29: with the scratch dir inside this repository, every item's system
+# prompt carried the repo's own AGENTS.md verbatim — 27.5k characters, ~7k
+# tokens, of VMLU pipeline instructions in front of a Vietnamese legal
+# multiple-choice question. Same class of leak as APPEND_SYSTEM.md and far
+# bigger, and it was in every arm up to MC-26 because the scratch default was
+# `all_res/ollama_result/<label>/harness_scratch`.
+PROJECT_INSTRUCTION_FILES = ("AGENTS.md", "CLAUDE.md", "GEMINI.md", ".cursorrules")
 
 
-def warn_about_scaffold_leaks(agent_dir: Path) -> list[str]:
+def project_instructions_above(scratch: Path) -> list[str]:
+    """Instruction files an agent would inherit from the sandbox's ancestors."""
+    found = []
+    for parent in [scratch.resolve(), *scratch.resolve().parents]:
+        for name in PROJECT_INSTRUCTION_FILES:
+            path = parent / name
+            if path.exists():
+                found.append(str(path))
+    return found
+
+
+def warn_about_scaffold_leaks(agent_dir: Path, scratch: Path | None = None) -> list[str]:
     """Loud guard: personal config that reaches the measured harness anyway.
 
     Found the hard way — a `PI_CODING_AGENT_DIR` harness still received the
@@ -557,6 +576,35 @@ def warn_about_scaffold_leaks(agent_dir: Path) -> list[str]:
             "PI_CODING_AGENT_DIR=%s. That file is part of the measured condition; run "
             "this with HOME=<sandbox> to measure omp without it.", path, agent_dir)
     return found
+
+
+def assert_no_project_instructions(scratch: Path, allow: bool) -> None:
+    """Hard-fail when the sandbox sits inside a tree carrying agent instructions.
+
+    The scratch default used to be `all_res/ollama_result/<label>/harness_scratch`
+    — inside this repository — so omp walked up, found the repo's own AGENTS.md
+    and inlined all 27.5k characters of it into every item's system prompt. Every
+    arm through MC-26 was measured that way, "clean scaffold" included, and the
+    request bytes were never captured, so nothing showed it. A benchmark item
+    must not be answered by a model that has just read the repository's own
+    instructions; the fix is to put the scratch outside any project tree.
+    """
+    if allow:
+        logging.warning("ALLOWING project instructions above the sandbox (%s) — this arm "
+                        "measures a project-scoped agent, NOT a bare scaffold", scratch)
+        return
+    found = project_instructions_above(scratch)
+    if not found:
+        return
+    listed = "\n  ".join(f"{p} ({Path(p).stat().st_size} bytes)" for p in found)
+    raise SystemExit(
+        f"Error: the item sandbox {scratch.resolve()} is inside a tree that carries "
+        f"agent instructions:\n  {listed}\n"
+        f"  omp inlines these into every item's system prompt, so they become part of "
+        f"the measured condition (this is what silently voided the arms up to MC-26).\n"
+        f"  Fix: --scratch <a path outside any project tree>, e.g. "
+        f"--scratch /tmp/vmlu-harness. Pass --allow-project-instructions only if a "
+        f"project-scoped agent is what you actually mean to measure.")
 
 
 def sandbox_payload(item: dict) -> dict:
@@ -756,25 +804,40 @@ def write_failures(rows: list[dict], dataset: str, slug: str, folder: Path) -> P
 
 
 # ── run ─────────────────────────────────────────────────────────────────
-def preflight_endpoint(timeout: float = 45.0) -> None:
+def preflight_endpoint(model: str | None = None, base_url: str | None = None,
+                       api_key: str | None = None, timeout: float = 45.0) -> None:
     """One cheap direct call before spending a single item.
 
     A harness arm has no retry of its own: each item is one `omp` process, and a
-    dead gateway turns every one of them into a 180-second timeout that would be
-    recorded as a legitimate-looking failure. The IEC gateway was observed
+    dead gateway turns every one of them into a 180-second timeout that would
+    be recorded as a legitimate-looking failure. The IEC gateway was observed
     accepting TCP while never answering HTTP (2026-09-27), so "reachable" is
     exactly the wrong thing to check — ask the model, and abort loudly.
+
+    It must ask the SAME gateway and model the arm will use: a probe aimed at a
+    different provider is a green light for a dead run. Falls back to the
+    cost-probe pins only when the caller has nothing better to say.
+
+    `--model` is omp's provider-qualified name (`provider/id`); the OpenAI wire
+    wants the bare id, and the gateway answers "Model is unavailable" for the
+    qualified one. So the prefix is stripped, and COST_MODEL stays the fallback
+    for a caller that has no model to offer.
     """
-    url, api_key, model = COST_BASE_URL, _agent_dir_token(DEFAULT_SYSTEM_AGENT_DIR), COST_MODEL
-    key = os.environ.get("IEC_LLM_API_KEY") or api_key or os.environ.get("OPENAI_API_KEY") or ""
+    url = base_url or os.environ.get("OPENAI_BASE_URL") or COST_BASE_URL
+    mdl = (model.split("/", 1)[1] if model and "/" in model else model) or COST_MODEL
+    key = (api_key or os.environ.get("OPENAI_API_KEY")
+           or _agent_dir_token(DEFAULT_SYSTEM_AGENT_DIR) or "")
     if not key:
         logging.warning("preflight skipped: no API key found in the environment")
         return
-    body = {"model": model, "messages": [{"role": "user", "content": "ping"}],
+    body = {"model": mdl, "messages": [{"role": "user", "content": "ping"}],
             "max_tokens": 1, "temperature": 0}
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    # Same headers the measured client sends: a gateway behind Cloudflare answers
+    # a bare request with 403 code 1010, and opencode-go needs x-opencode-session.
+    headers.update(extra_headers() or {})
     req = urllib.request.Request(f"{url}/chat/completions", data=json.dumps(body).encode(),
-                                 headers={"Authorization": f"Bearer {key}",
-                                          "Content-Type": "application/json"})
+                                 headers=headers)
     started = time.time()
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # nosec B310
@@ -817,11 +880,16 @@ def cmd_run(args) -> None:
         raise SystemExit(f"Error: omp agent dir not found: {agent_dir} "
                          "(see .omp-iec/models.yml — it pins the measured harness)")
     warn_about_scaffold_leaks(agent_dir)
-    scratch = Path(args.scratch) if args.scratch else result_folder / "harness_scratch"
+    # Outside any project tree on purpose: an in-repo scratch makes omp inline
+    # this repository's AGENTS.md into every item (see assert_no_project_instructions).
+    scratch = (Path(args.scratch) if args.scratch
+               else Path(tempfile.gettempdir()) / f"vmlu-harness-{slug}")
     scratch.mkdir(parents=True, exist_ok=True)
     scratch = scratch.resolve()
+    assert_no_project_instructions(scratch, args.allow_project_instructions)
 
-    preflight_endpoint()
+    preflight_endpoint(model=args.model,
+                       api_key=_agent_dir_token(agent_dir))
     items = load_items(args.dataset, args.arm_a_slug)
     items_by_id = {it["item_id"]: it for it in items}
     if args.limit:
@@ -957,13 +1025,24 @@ def resolve_system_prompt(args) -> str | None:
 
 
 def _agent_dir_token(agent_dir: Path) -> str:
-    """The gateway token, read from the harness's own .env (never hardcoded)."""
+    """The gateway token, read from the harness's own .env (never hardcoded).
+
+    Any `*_API_KEY=` line counts. The agent dir is provider-scoped by design
+    (one models.yml, one token), so whichever token sits next to that models.yml
+    IS that provider's token — matching on IEC's own variable name alone made a
+    second provider's agent dir read as "no token", which silently skipped the
+    preflight instead of failing it.
+    """
     env = agent_dir / ".env"
     if not env.exists():
         return ""
     for line in env.read_text(encoding="utf-8").splitlines():
-        if line.startswith("IEC_LLM_API_KEY="):
-            return line.split("=", 1)[1].strip().strip('"').strip("'")
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        name, _, value = stripped.partition("=")
+        if name.strip().endswith("_API_KEY") and value.strip():
+            return value.strip().strip('"').strip("'")
     return ""
 
 
@@ -1070,9 +1149,11 @@ def cmd_speed(args) -> None:
     result_folder, _, logs_folder = model_dirs(args.label)
     setup_logging(logs_folder / f"speed_{args.dataset}_{slug}.log")
     agent_dir = args.agent_dir.resolve()
-    scratch = (Path(args.scratch) if args.scratch else result_folder / "speed_scratch")
+    scratch = (Path(args.scratch) if args.scratch
+               else Path(tempfile.gettempdir()) / f"vmlu-harness-speed-{slug}")
     scratch.mkdir(parents=True, exist_ok=True)
     scratch = scratch.resolve()
+    assert_no_project_instructions(scratch, args.allow_project_instructions)
     warn_about_scaffold_leaks(agent_dir)
 
     base_url, api_key, model_a = resolve_cost_endpoint(args)
@@ -1159,6 +1240,18 @@ def _paired_bootstrap(diffs: list[int], iters: int = 10000, seed: int = 42) -> t
     return lo * 100, hi * 100
 
 
+def _agreement_ci(agree: list[int], iters: int = 10000, seed: int = 42) -> tuple[float, float]:
+    """95% CI of (agreement rate − 100%), in percentage points.
+
+    `_paired_bootstrap` already returns PERCENTAGES, so the −100 belongs here and
+    nowhere else. Doing the scaling at the call site is how this ended up printing
+    a CI of 7559…7808 for a rate of 77.61% — a branch with no artifact behind it
+    (no earlier arm ran V-Bench MC) and therefore nothing to catch it.
+    """
+    lo, hi = _paired_bootstrap(agree, iters=iters, seed=seed)
+    return lo - 100.0, hi - 100.0
+
+
 def _mc_eval_path(folder: Path, dataset: str, slug: str) -> Path:
     """Per-item MC file for one arm, whatever naming that arm used.
 
@@ -1237,12 +1330,14 @@ def _arm_a_correct_rows(dataset: str, arm_a: str) -> list[tuple[str, int]]:
     return [(item_key(r), int(r["em"])) for r in rows]
 
 
-def _vbench_mc_letters(folder: Path, slug: str, *, harness_arm: bool) -> dict | None:
+def _vbench_mc_letters(folder: Path, slug: str, *, harness_arm: bool,
+                       track: str = "mc") -> dict | None:
     """Per-item shipped LETTER for a V-Bench MC arm: {id: "A".."E" or ""}.
 
     No gold exists locally, so the pairable bit is agreement with arm A, not
     correctness. The direct arm's letters come from its own checkpoint (the same
     `answer` column its submission shipped); a harness arm's from the ledger.
+    `track` narrows a mixed `--track all` checkpoint to one track.
     """
     if harness_arm:
         path = folder / f"harness_ledger_vbench_mc_{slug}.csv"
@@ -1256,7 +1351,13 @@ def _vbench_mc_letters(folder: Path, slug: str, *, harness_arm: bool) -> dict | 
         return None
     latest = max(checkpoints, key=lambda p: int(re.search(r"vbench_result_(\d+)_", p.name).group(1)))
     with open(latest, encoding="utf-8", newline="") as f:
-        return {str(r["id"]): str(r.get("answer") or "") for r in csv.DictReader(f)}
+        rows = list(csv.DictReader(f))
+    # A `--track all` run puts BOTH tracks in one checkpoint (mc + agentic), so the
+    # MC reader has to pick its own rows: without this the MC arm reported 5.141
+    # items for a 4.141-item track and the agreement denominator was wrong.
+    if track and "track" in (rows[0] if rows else {}):
+        rows = [r for r in rows if r.get("track") == track]
+    return {str(r["id"]): str(r.get("answer") or "") for r in rows}
 
 
 def _arm_b_correct_rows(dataset: str, slug: str) -> list[tuple[str, int]]:
@@ -1329,12 +1430,12 @@ def cmd_compare(args) -> None:
         blanks_b = sum(1 for k in shared if not b_rows[k])
         blanks_a = sum(1 for k in shared if not a_rows[k])
         rate = 100.0 * same / n
-        lo, hi = _paired_bootstrap([int(a_rows[k] == b_rows[k]) for k in shared])
+        lo, hi = _agreement_ci([int(a_rows[k] == b_rows[k]) for k in shared])
         tag = f"_{args.tag}" if args.tag else ""
         out = [{"metric": "agreement_with_arm_A", "group": "ALL", "n": n,
                 "arm_a": "100.00", "arm_b": f"{rate:.2f}",
-                "delta": f"{rate - 100.0:+.2f}", "ci95_low": f"{lo * 100 - 100.0:.2f}",
-                "ci95_high": f"{hi * 100 - 100.0:.2f}",
+                "delta": f"{rate - 100.0:+.2f}", "ci95_low": f"{lo:.2f}",
+                "ci95_high": f"{hi:.2f}",
                 # arm A trivially agrees with itself: McNemar here would test
                 # "is the disagreement rate 50%?", which is not a question worth
                 # asking. Left empty on purpose.
@@ -1345,7 +1446,7 @@ def cmd_compare(args) -> None:
         write_csv_atomic(path, out, COMPARE_COLS)
         print(f"\n{args.dataset} (AGREEMENT with arm A — no local gold, so this is NOT "
               f"accuracy)\n  n={n} | trùng khớp {same} = {rate:.2f}% "
-              f"(CI {lo * 100 - 100.0:+.2f}..{hi * 100 - 100.0:+.2f}) | khác {n - same}"
+              f"(CI {lo:+.2f}..{hi:+.2f}) | khác {n - same}"
               f"\n  answer rỗng: arm A {blanks_a} · arm B {blanks_b}")
         print("  Accuracy chỉ có ở server: nộp file trong submissions/<slug>/ để lấy điểm."
               "\n  -> " + str(path) + "\n")
@@ -1426,6 +1527,10 @@ def parse_args():
     run.add_argument("--model", default=DEFAULT_MODEL,
                      help=f"omp model ref (default: {DEFAULT_MODEL})")
     run.add_argument("--omp-bin", default=DEFAULT_OMP)
+    run.add_argument("--allow-project-instructions", action="store_true",
+                     help="measure a PROJECT-scoped agent on purpose: the sandbox may sit "
+                          "inside a tree carrying AGENTS.md/CLAUDE.md, which then becomes "
+                          "part of the measured condition (default: refuse)")
     run.add_argument("--agent-dir", type=Path, default=AGENT_DIR_DEFAULT,
                      help="PI_CODING_AGENT_DIR pinning the measured harness (default: .omp-iec)")
     run.add_argument("--tools", default=DEFAULT_TOOLS,
@@ -1466,6 +1571,8 @@ def parse_args():
     sp.add_argument("--label", default=DEFAULT_LABEL)
     sp.add_argument("--model", default=DEFAULT_MODEL)
     sp.add_argument("--omp-bin", default=DEFAULT_OMP)
+    sp.add_argument("--allow-project-instructions", action="store_true",
+                    help="see run --allow-project-instructions")
     sp.add_argument("--agent-dir", type=Path, default=AGENT_DIR_DEFAULT)
     sp.add_argument("--tools", default=DEFAULT_TOOLS)
     sp.add_argument("--system-prompt", default=None,
