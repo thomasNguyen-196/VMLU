@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { InsightPanel } from "@/components/InsightPanel.tsx";
+import { OverviewTab } from "@/components/OverviewTab.tsx";
 import { summaryFromBlob } from "@/lib/insights.ts";
 import type {
   BenchmarkView,
@@ -159,7 +160,7 @@ export function viewToDashboardData(view: BenchmarkView): { data: BenchmarkData;
     caveat:
       datasetId === "legal-mc-146"
         ? "Baseline + by-gold đếm trực tiếp từ mc_items (majority là dữ liệu, không hardcode)."
-        : "NLI nhị phân Có→A / Không→B qua MC runner frozen; baseline 75/75 ≈ 50%.",
+        : "Phân loại nhị phân khả năng hỗ trợ Có→A / Không→B qua MC runner; tên lưu trữ vẫn là legal-nli-150.",
   });
   const withVm14kMeta = (block: DbVm14k | null): Vm14kBlock => ({
     ...(block ?? {
@@ -177,7 +178,7 @@ export function viewToDashboardData(view: BenchmarkView): { data: BenchmarkData;
     blank_ids: [],
     caveat:
       "Baseline + by-gold live từ mc_items; breakdown độ khó/số lựa chọn join manifest tiền đăng ký " +
-      "(data/vm14k_manifest.json). Public release lệch paper + không license; ~6% trùng lặp giữ nguyên; " +
+      "(data/vm14k_manifest.json). Bản phát hành cục bộ lệch mô tả paper, điều khoản license cần xác minh và ~6% trùng lặp được giữ nguyên; " +
       "chỉ đối chiếu hướng với V-Bench medicine.",
   });
   const withReadingMeta = (
@@ -441,13 +442,20 @@ export function BenchmarkDashboard({
   activeModelId: string;
   onModelChange: (id: string) => void;
 }) {
-  const [tab, setTab] = useState<"vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k">(
-    data.vmlu.overall.n > 0 ? "vmlu" : "legal",
+  const [tab, setTab] = useState<"overview" | "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k">(
+    "overview",
   );
 
   // Tabs render only when the model ran that dataset (DB has the block).
   // Badges are live numbers from Mongo, not frozen blob constants.
+  // "overview" luôn có: diễn giải tĩnh của mô hình tham chiếu Qwen3.5-9B.
   const tabs = [
+    {
+      id: "overview" as const,
+      label: "📊 Tổng hợp nhận xét",
+      badge: "AI · snapshot",
+      badgeClass: "bg-amber-100 text-amber-800",
+    },
     data.vmlu.overall.n > 0 && {
       id: "vmlu" as const,
       label: "🇻🇳 VMLU Benchmark",
@@ -474,7 +482,7 @@ export function BenchmarkDashboard({
     },
     data.legal_nli && data.legal_nli.overall.n > 0 && {
       id: "nli" as const,
-      label: "🔀 Legal NLI (150 câu)",
+      label: "🔀 Legal — khả năng hỗ trợ (150 câu)",
       badge: `${data.legal_nli.overall.accuracy.toFixed(2)}%`,
       badgeClass: "bg-violet-50 text-violet-700",
     },
@@ -496,7 +504,7 @@ export function BenchmarkDashboard({
       badge: `${data.vm14k.overall.accuracy.toFixed(2)}%`,
       badgeClass: "bg-cyan-50 text-cyan-700",
     },
-  ].filter((t): t is { id: "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k"; label: string; badge: string; badgeClass: string } => Boolean(t));
+  ].filter((t): t is { id: "overview" | "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k"; label: string; badge: string; badgeClass: string } => Boolean(t));
 
   // VMLU subject table filters
   const [vmluCat, setVmluCat] = useState<string>("ALL");
@@ -556,11 +564,11 @@ export function BenchmarkDashboard({
                     Benchmark Research Hub
                   </h1>
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    live · Mongo
+                    dữ liệu theo mô hình
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
-                  Số live từ Mongo — hero/cards/bảng từ summaries đã commit
+                  Các thẻ bộ dữ liệu dùng số trực tiếp từ Mongo; tab Tổng hợp nhận xét là snapshot tĩnh.
                 </p>
               </div>
             </div>
@@ -580,6 +588,11 @@ export function BenchmarkDashboard({
       {/* BODY: content + sticky dataset rail */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 items-start">
       <main className="min-w-0 flex-1 space-y-6">
+        {/* ========================================================== */}
+        {/* TAB 0: NHẬN XÉT CHUNG (behavioral overview, static curated) */}
+        {/* ========================================================== */}
+        {tab === "overview" && <OverviewTab modelId={activeModelId} />}
+
         {/* ========================================================== */}
         {/* TAB 1: VMLU */}
         {/* ========================================================== */}
@@ -1150,7 +1163,7 @@ export function BenchmarkDashboard({
           </div>
         )}
 
-        {/* NLI tab reuses the legal layout (binary A/B through the frozen MC runner) */}
+        {/* Tab answerability dùng lại bố cục pháp lý với nhãn nhị phân A/B. */}
         {tab === "nli" && data.legal_nli && (
           <div className="space-y-6">
             <div className="bg-gradient-to-r from-violet-900 via-purple-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
@@ -1158,7 +1171,7 @@ export function BenchmarkDashboard({
                 <div className="flex items-center gap-2 text-violet-300 text-xs font-semibold uppercase tracking-wider">
                   <span>Nhị phân Có→A / Không→B · seed 42 · MC runner frozen</span>
                 </div>
-                <h2 className="text-2xl font-bold">Suy luận entailment — {data.legal_nli.overall.n} câu</h2>
+                <h2 className="text-2xl font-bold">Khả năng văn bản hỗ trợ câu hỏi — {data.legal_nli.overall.n} câu</h2>
                 <p className="text-sm text-violet-100/80 leading-relaxed">
                   {data.legal_nli.condition}
                 </p>
@@ -1180,14 +1193,14 @@ export function BenchmarkDashboard({
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Hơn baseline</div>
+                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Chênh mốc đối chứng</div>
                   <div className="text-2xl font-black font-mono mt-1 text-emerald-300">
                     +{(data.legal_nli.overall.accuracy - data.legal_nli.baseline.majority_accuracy).toFixed(2)}
                   </div>
                   <div className="text-[11px] text-violet-200/70">điểm phần trăm</div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Valid (parse được)</div>
+                  <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Câu trả lời hợp lệ</div>
                   <div className="text-2xl font-black font-mono mt-1">{data.legal_nli.overall.valid}/{data.legal_nli.overall.n}</div>
                   <div className="text-[11px] text-violet-200/70 font-mono">
                     sai trong số parse được: {data.legal_nli.overall.wrong_parsed}
@@ -1196,7 +1209,7 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            <DatasetStrip meta={data.datasetMeta["legal-nli-150"]} headline={`Accuracy ${data.legal_nli.overall.accuracy.toFixed(2)}% (${data.legal_nli.overall.correct}/${data.legal_nli.overall.n}) · baseline ${data.legal_nli.baseline.majority_accuracy.toFixed(2)}%`} />
+            <DatasetStrip meta={data.datasetMeta["legal-nli-150"]} headline={`Accuracy ${data.legal_nli.overall.accuracy.toFixed(2)}% (${data.legal_nli.overall.correct}/${data.legal_nli.overall.n}) · mốc đối chứng ${data.legal_nli.baseline.majority_accuracy.toFixed(2)}%`} />
             <TabInsight datasetId="legal-nli-150" modelId={activeModelId} block={data.legal_nli} />
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">

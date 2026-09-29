@@ -2,9 +2,12 @@ import argparse
 import csv
 import json
 import random
+import re
 import shutil
 import subprocess  # nosec B404 — test harness shells out to local CLI/node only
 import hashlib
+import math
+import os
 import sys
 import tempfile
 import unittest
@@ -93,6 +96,11 @@ from code_benchmark.seed_registries import (
     make_run_id,
     seed,
 )
+from code_benchmark import run_harness_eval as harness
+from code_benchmark import build_dashboard_harness as dash
+from code_benchmark import llm
+from code_benchmark import run_legal_arm_a as legal_arm_a
+from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
     mc_item,
@@ -1584,6 +1592,975 @@ class TestResultsIdentity(unittest.TestCase):
                 mig.MIGRATION_PLAN = old_plan
                 mig.RESULTS_DIR = old_dir
                 mig.RUN_CONFIGS = old_cfg
+
+
+class TestHarnessRunner(unittest.TestCase):
+    """The omp harness arm (run_harness_eval.py) — offline, no endpoint needed.
+
+    Guards the four things that would silently invalidate the arm-vs-arm
+    comparison: the measured condition (argv), the sandbox isolation (no gold on
+    disk), the frozen parser delegation (no second parser), and the checkpoint
+    namespace (one condition per slug).
+    """
+
+    def _argv(self, **kw):
+        base = dict(omp_bin="omp", model="iec/Qwen3.5-9B-28K", prompt="P",
+                    workdir=Path("sandbox/one"), tools="read,bash", max_time=180,
+                    thinking="off", system_prompt=None)
+        base.update(kw)
+        return harness.build_argv(**base)
+
+    def test_argv_pins_the_measured_condition(self):
+        argv = self._argv()
+        # reproducibility: no session file, no title model call, no user config
+        for flag in ("--no-session", "--no-title", "--no-extensions", "--no-skills",
+                     "--no-rules", "--no-lsp"):
+            self.assertIn(flag, argv)
+        self.assertIn("--tools", argv)
+        self.assertEqual(argv[argv.index("--tools") + 1], "read,bash")
+        self.assertIn("--auto-approve", argv)
+        self.assertEqual(argv[argv.index("--max-time") + 1], "180")
+        self.assertEqual(argv[argv.index("--cwd") + 1], "sandbox/one")
+        self.assertEqual(argv[-1], "P")
+
+    def test_argv_never_grants_extra_directories(self):
+        # --add-dir would hand the model the repo (and with it the answer keys)
+        argv = self._argv()
+        self.assertNotIn("--add-dir", argv)
+        self.assertEqual(argv.count("--cwd"), 1)
+
+    def test_argv_no_tools_condition_drops_the_tool_menu(self):
+        # the H1 ablation must send NO tool schemas at all, not an empty list
+        for spelling in harness.NO_TOOLS:
+            argv = self._argv(tools=spelling)
+            self.assertIn("--no-tools", argv)
+            self.assertNotIn("--tools", argv)
+        full = self._argv(tools="read,bash")
+        self.assertNotIn("--no-tools", full)
+
+    def test_argv_minimal_persona_condition_replaces_the_system_prompt(self):
+        # H3 changes exactly ONE variable against the full-tool arm
+        argv = self._argv(system_prompt=harness.MINIMAL_SYSTEM_PROMPT)
+        self.assertIn("--system-prompt", argv)
+        self.assertEqual(argv[argv.index("--system-prompt") + 1],
+                         harness.MINIMAL_SYSTEM_PROMPT)
+        self.assertIn("--tools", argv)          # tool menu kept
+        self.assertNotIn("--no-tools", argv)
+        # the sentinel resolves to the one definition in code
+        args = argparse.Namespace(system_prompt="minimal")
+        self.assertEqual(harness.resolve_system_prompt(args),
+                         harness.MINIMAL_SYSTEM_PROMPT)
+        self.assertEqual(harness.resolve_system_prompt(
+            argparse.Namespace(system_prompt="MINIMAL ")), harness.MINIMAL_SYSTEM_PROMPT)
+        self.assertIsNone(harness.resolve_system_prompt(
+            argparse.Namespace(system_prompt=None)))   # H2 keeps omp's own
+        self.assertEqual(harness.resolve_system_prompt(
+            argparse.Namespace(system_prompt="You are a tax lawyer.")),
+            "You are a tax lawyer.")
+
+    def _stream(self, *events):
+        return [json.dumps(e, ensure_ascii=False) for e in events]
+
+    def _assistant(self, blocks, stop="stop", usage=None):
+        return {"type": "message_end", "message": {
+            "role": "assistant", "content": blocks, "stopReason": stop,
+            "usage": usage or {"input": 10, "output": 2, "cacheRead": 0}}}
+
+    def test_parse_transcript_reads_answer_usage_and_turns(self):
+        lines = self._stream(
+            {"type": "turn_start"},
+            self._assistant([{"type": "text", "text": "B"}],
+                            usage={"input": 11841, "output": 3, "cacheRead": 0}),
+            {"type": "turn_end"})
+        events, text, stats = harness.parse_transcript(lines)
+        self.assertEqual(text, "B")
+        self.assertEqual(stats["turns"], 1)
+        self.assertEqual(stats["input_tokens"], 11841)
+        self.assertEqual(stats["output_tokens"], 3)
+        self.assertEqual(stats["tool_calls"], 0)
+        self.assertEqual(stats["stop_reason"], "stop")
+        self.assertEqual(len(events), 3)
+
+    def test_parse_transcript_keeps_last_text_and_counts_tool_calls(self):
+        lines = self._stream(
+            {"type": "turn_start"},
+            self._assistant([{"type": "text", "text": "đang kiểm tra"},
+                             {"type": "toolCall", "name": "bash",
+                              "arguments": {"command": "ls"}}]),
+            {"type": "turn_start"},
+            self._assistant([{"type": "text", "text": "A"}]),
+        )
+        _, text, stats = harness.parse_transcript(lines)
+        self.assertEqual(text, "A")            # the LAST message is the answer
+        self.assertEqual(stats["tool_calls"], 1)
+        self.assertEqual(stats["tool_names"], ["bash"])
+        self.assertEqual(stats["turns"], 2)
+
+    def test_parse_transcript_survives_non_json_noise(self):
+        lines = ["omp: warming up", "", "not json either"] + self._stream(
+            self._assistant([{"type": "text", "text": "C"}]))
+        _, text, stats = harness.parse_transcript(lines)
+        self.assertEqual(text, "C")
+        self.assertEqual(stats["input_tokens"], 10)
+
+    def test_audit_flags_network_from_model_output_only(self):
+        events = [self._assistant([{"type": "text", "text": "tôi sẽ dùng curl https://x.io"}])]
+        net, esc = harness.audit_transcript(events)
+        self.assertIn("curl", net)
+        self.assertEqual(esc, "")             # prose is not a filesystem escape
+
+    def test_audit_flags_path_escape_only_from_tool_calls(self):
+        events = [self._assistant([{"type": "toolCall", "name": "read",
+                                     "arguments": {"path": "/home/x/all_res/gold.csv"}}])]
+        net, esc = harness.audit_transcript(events)
+        self.assertEqual(net, "")
+        self.assertIn("/home/", esc)
+        self.assertIn("all_res", esc)
+
+    def test_audit_ignores_the_runners_own_argv_and_prompt(self):
+        # regression: scanning the whole transcript flagged every item, because
+        # argv carries the repo path and the prompt carries '../'-style text
+        events = [{"type": "session", "cwd": "/home/nttung245/Downloads/Research/VMLU"},
+                  self._assistant([{"type": "text", "text": "đọc data/ và vmlu_mqa"}])]
+        self.assertEqual(harness.audit_transcript(events), ("", ""))
+
+    def test_sandbox_payload_never_carries_gold(self):
+        item = {"item_id": "LG-0001", "kind": "mc", "prompt": "P", "gold": "B",
+                "dataset": "legal_mc", "stratum": "legal", "question": "Q",
+                "prompt_sha256": "x"}
+        payload = harness.sandbox_payload(item)
+        self.assertNotIn("gold", json.dumps(payload, ensure_ascii=False))
+        self.assertEqual(payload["prompt"], "P")
+
+    def test_diagnose_names_the_failure_without_repairing(self):
+        good = {"exit_code": 0, "raw_response": "B", "kind": "mc", "answer": "B"}
+        self.assertEqual(harness.diagnose(good, ""), "")
+        self.assertIn("unparsed", harness.diagnose(dict(good, answer=""), ""))
+        self.assertIn("empty", harness.diagnose(dict(good, raw_response="", answer=""), ""))
+        self.assertIn("exit 1", harness.diagnose(dict(good, exit_code=1), "boom"))
+        self.assertTrue(harness.diagnose(
+            {"exit_code": 0, "raw_response": "  ", "kind": "reading", "answer": ""}, ""))
+
+    def test_mcnemar_known_values(self):
+        self.assertEqual(harness._mcnemar_p(0, 0), 1.0)
+        self.assertAlmostEqual(harness._mcnemar_p(5, 0), 2 * (0.5 ** 5), places=9)
+        self.assertAlmostEqual(harness._mcnemar_p(10, 10), 1.0, places=6)
+        self.assertLess(harness._mcnemar_p(20, 2), 0.01)
+
+    def test_paired_bootstrap_is_deterministic_and_brackets_the_shift(self):
+        diffs = [1] * 30 + [0] * 70
+        lo1, hi1 = harness._paired_bootstrap(diffs, iters=2000, seed=42)
+        lo2, hi2 = harness._paired_bootstrap(diffs, iters=2000, seed=42)
+        self.assertEqual((lo1, hi1), (lo2, hi2))          # same seed -> same interval
+        self.assertLessEqual(lo1, 30.0)                   # mean shift = +30 points
+        self.assertGreaterEqual(hi1, 30.0)
+        self.assertEqual(harness._paired_bootstrap([0] * 50, iters=500, seed=1), (0.0, 0.0))
+
+    def test_harness_checkpoint_namespace_is_never_shared(self):
+        with tempfile.TemporaryDirectory() as td:
+            tmp = Path(td)
+            prefix = "harness_reading400_result_"
+            name = harness.checkpoint_name("ompH2_Qwen3.5-9B-28K", 25, prefix=prefix)
+            self.assertEqual(name, f"{prefix}25_ompH2_Qwen3_5-9B-28K.csv")
+            (tmp / name).touch()
+            (tmp / f"{prefix}400_ompH1_Qwen3_5-9B-28K.csv").touch()   # other condition
+            (tmp / f"{prefix}400.csv").touch()                        # legacy, no identity
+            found = find_latest_checkpoint(tmp, "ompH2_Qwen3.5-9B-28K", prefix=prefix)
+            self.assertIsNotNone(found)
+            self.assertEqual(found.name, name)       # another condition is invisible
+            self.assertIsNone(find_latest_checkpoint(tmp, "ompH9_other", prefix=prefix))
+
+    def _rows(self, n=3):
+        return [{c: "" for c in harness.LEDGER_COLS} | {
+            "dataset": "squad", "item_id": str(i), "stratum": "short-direct",
+            "kind": "reading", "question": f"Q{i}?", "gold": "GOLD",
+            "raw_response": "GOLD", "answer": "GOLD", "correct": 1, "em": 1,
+            "f1": "1.000000"} for i in range(n)]
+
+    def test_projection_reading_is_gold_joinable(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            items = {str(i): {"prompt": "ctx " * 10} for i in range(3)}
+            path = harness.write_projection(self._rows(), "reading400", "reading",
+                                            "ompH2_X", folder, items)
+            self.assertEqual(path.name, "reading_answers_ompH2_X.csv")
+            got = read_csv_rows(path)
+            self.assertEqual(list(got[0]), harness.ANSWER_COLS)
+            # the frozen scorer joins gold on (dataset, item_id) -> the SOURCE
+            # dataset name must survive the projection, not the arm's own name
+            self.assertEqual({r["dataset"] for r in got}, {"squad"})
+
+    def test_projection_mc_keeps_the_frozen_columns(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            rows = self._rows(1)
+            rows[0].update({"dataset": "legal_mc", "kind": "mc", "answer": "B",
+                            "gold": "B", "correct": 1})
+            path = harness.write_projection(rows, "legal_mc", "mc", "ompH2_X", folder,
+                                            {"0": {"prompt": "PROMPT"}})
+            got = read_csv_rows(path)
+            self.assertEqual(list(got[0]), ["id", "question", "prompt", "raw_response",
+                                            "answer", "gold_answer", "correct"])
+            self.assertEqual(got[0]["prompt"], "PROMPT")
+            self.assertEqual(got[0]["answer"], "B")
+
+    def test_mc_eval_path_accepts_both_arm_namings(self):
+        # arm-vs-arm comparison: harness arms write the dataset-qualified name,
+        # the historical direct-prompt runs carry their own infix
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            legacy = folder / harness.ARM_A["legal_mc"]["eval"].format(a="Qwen3_5-9B-28K")
+            legacy.write_text("id\n", encoding="utf-8")
+            self.assertEqual(
+                harness._mc_eval_path(folder, "legal_mc", "Qwen3_5-9B-28K"), legacy)
+            harness_dir = folder / "ompH2_Qwen3_5-9B-28K"
+            harness_dir.mkdir()
+            modern = harness_dir / "full_evaluation_legal_mc_ompH2_Qwen3_5-9B-28K.csv"
+            modern.write_text("id\n", encoding="utf-8")
+            self.assertEqual(
+                harness._mc_eval_path(harness_dir, "legal_mc", "ompH2_Qwen3_5-9B-28K"), modern)
+            with self.assertRaises(SystemExit):     # neither naming present
+                harness._mc_eval_path(harness_dir, "legal_nli", "ompH9_x")
+
+    def test_scaffold_leak_guard_points_at_the_global_append(self):
+        # PI_CODING_AGENT_DIR does NOT stop omp reading the DEFAULT agent dir's
+        # APPEND_SYSTEM.md; the runner must say so out loud (card MC-22)
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            default = root / "default_agent"
+            custom = root / "custom_agent"
+            default.mkdir()
+            custom.mkdir()
+            (default / "APPEND_SYSTEM.md").write_text("# Global reply style\n", encoding="utf-8")
+            orig = harness.DEFAULT_SYSTEM_AGENT_DIR
+            harness.DEFAULT_SYSTEM_AGENT_DIR = default
+            try:
+                with self.assertLogs("root", level="WARNING") as cm:
+                    found = harness.warn_about_scaffold_leaks(custom)
+                self.assertEqual(len(found), 1)
+                self.assertIn("SCAFFOLD LEAK", "\n".join(cm.output))
+                # the default dir itself is not a leak, and a clean machine is silent
+                self.assertEqual(harness.warn_about_scaffold_leaks(default), [])
+                (default / "APPEND_SYSTEM.md").unlink()
+                with self.assertNoLogs("root", level="WARNING"):
+                    self.assertEqual(harness.warn_about_scaffold_leaks(custom), [])
+            finally:
+                harness.DEFAULT_SYSTEM_AGENT_DIR = orig
+
+    # ── speed / token cost probe ─────────────────────────────────────────
+    def _cost_row(self, arm, wall, prompt, completion, overhead=0.0, workers=4):
+        row = {c: "" for c in harness.SPEED_COLS}
+        row.update({"arm": arm, "dataset": "legal_mc", "item_id": "LG-0001",
+                    "kind": "mc", "workers": workers, "wall_s": wall, "model_s": wall,
+                    "overhead_s": overhead, "ttft_s": "", "calls": 1,
+                    "prompt_tokens": prompt, "fresh_prompt_tokens": prompt,
+                    "cache_read_tokens": 0, "completion_tokens": completion, "note": ""})
+        return row
+
+    def test_speed_summary_reports_means_not_medians_of_the_ratio(self):
+        rows = ([self._cost_row("A_direct", 1.0, 200, 2) for _ in range(4)]
+                + [self._cost_row("B_omp_h2", 10.0, 12000, 200, overhead=4.0) for _ in range(4)])
+        summary = harness._speed_summary(rows, "legal_mc", 4)
+        self.assertEqual([s["arm"] for s in summary], ["A_direct", "B_omp_h2"])
+        a, b = summary
+        self.assertEqual(a["wall_mean_s"], "1.00")
+        self.assertEqual(b["wall_mean_s"], "10.00")
+        self.assertEqual(b["overhead_s_per_item"], "4.00")   # harness process cost
+        self.assertEqual(b["total_tok_per_item"], "12200")
+        # throughput is per-worker, so it scales with the pool
+        self.assertEqual(a["items_per_min"], f"{60.0 / 1.0 * 4:.1f}")
+        self.assertEqual(b["items_per_min"], f"{60.0 / 10.0 * 4:.1f}")
+
+    def test_speed_summary_ignores_rows_from_another_worker_count(self):
+        rows = [self._cost_row("B_omp_h2", 10.0, 12000, 200, workers=1)]
+        self.assertEqual(harness._speed_summary(rows, "legal_mc", 4), [])
+
+    def test_pct_is_a_nearest_rank_percentile(self):
+        vals = [1.0, 2.0, 3.0, 4.0]
+        self.assertEqual(harness._pct(vals, 0.0), 1.0)
+        self.assertEqual(harness._pct(vals, 0.5), 3.0)
+        self.assertEqual(harness._pct(vals, 1.0), 4.0)       # never out of range
+        self.assertTrue(math.isnan(harness._pct([], 0.5)))
+
+    def test_cost_token_is_read_from_the_agent_dir_not_hardcoded(self):
+        with tempfile.TemporaryDirectory() as td:
+            agent = Path(td)
+            (agent / ".env").write_text('OTHER=1\nIEC_LLM_API_KEY="sk-test-123"\n',
+                                        encoding="utf-8")
+            args = argparse.Namespace(cost_base_url=None, cost_model=None,
+                                      cost_api_key=None, agent_dir=agent)
+            url, key, model = harness.resolve_cost_endpoint(args)
+            self.assertEqual(key, "sk-test-123")
+            self.assertEqual(url, harness.COST_BASE_URL)
+            self.assertEqual(model, harness.COST_MODEL)
+            # explicit flags win; no .env and no env var must fail fast, not guess
+            (agent / ".env").unlink()
+            args.cost_api_key = "sk-flag"
+            self.assertEqual(harness.resolve_cost_endpoint(args)[1], "sk-flag")
+            args.cost_api_key = None
+            with unittest.mock.patch.dict(os.environ, {}, clear=True):
+                with self.assertRaises(SystemExit):
+                    harness.resolve_cost_endpoint(args)
+
+
+class TestHarnessDashboard(unittest.TestCase):
+    """build_dashboard_harness.py — the block every harness number is displayed from."""
+
+    ARM = [("k", "ompH5clean_X", "H5", "omp sạch", "MC-22")]
+
+    def _write_arm(self, results_dir: Path, slug: str, *, n: int, correct: int,
+                   compare_delta: float = -10.0, ci=(0.0, 0.0), p: str = "0.01"):
+        """One arm's artifacts exactly where build_ladder looks for them."""
+        folder = results_dir / slug
+        folder.mkdir(parents=True, exist_ok=True)
+        with open(folder / f"full_evaluation_legal_mc_{slug}.csv", "w", newline="",
+                  encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["id", "question", "prompt", "raw_response",
+                                              "answer", "gold_answer", "correct"])
+            w.writeheader()
+            for i in range(n):
+                w.writerow({"id": f"LG-{i:04d}", "question": "q", "prompt": "p",
+                            "raw_response": "A", "answer": "A", "gold_answer": "A",
+                            "correct": 1 if i < correct else 0})
+        with open(folder / f"harness_compare_legal_mc_vsA_{slug}.csv", "w", newline="",
+                  encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=harness.COMPARE_COLS)
+            w.writeheader()
+            w.writerow({"metric": "accuracy", "group": "ALL", "n": n, "arm_a": "86.00",
+                        "arm_b": f"{100.0 * correct / n:.2f}", "delta": f"{compare_delta}",
+                        "ci95_low": f"{ci[0]}", "ci95_high": f"{ci[1]}", "mcnemar_p": p,
+                        "a_only": 1, "b_only": 0, "both": correct, "neither": 0,
+                        "arm_b_failures": 0, "measurement_card_hash": "h"})
+
+    def test_ladder_cross_checks_the_compare_against_the_per_item_file(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_arm(root, "ompH5clean_X", n=10, correct=7)
+            ladder, _costs = dash.build_ladder(root, self.ARM)
+            self.assertEqual(len(ladder), 1)
+            row = ladder[0]
+            self.assertEqual((row["role"], row["n"], row["arm_b"]), ("harness", 10, 70.0))
+            self.assertEqual(row["dataset"], "legal_mc")
+
+    def test_ladder_aborts_when_the_compare_disagrees_with_the_items(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_arm(root, "ompH5clean_X", n=10, correct=7)
+            # a hand-edited compare claiming a different score must not be displayed
+            path = root / "ompH5clean_X" / "harness_compare_legal_mc_vsA_ompH5clean_X.csv"
+            rows = list(csv.DictReader(open(path, encoding="utf-8")))
+            rows[0]["arm_b"] = "99.00"
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=harness.COMPARE_COLS)
+                w.writeheader()
+                w.writerows(rows)
+            with self.assertRaises(SystemExit) as ctx:
+                dash.build_ladder(root, self.ARM)
+            self.assertIn("recompute", str(ctx.exception))
+
+    def test_ladder_aborts_on_an_inverted_ci(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_arm(root, "ompH5clean_X", n=10, correct=7, ci=(5.0, -5.0))
+            with self.assertRaises(SystemExit) as ctx:
+                dash.build_ladder(root, self.ARM)
+            self.assertIn("CI", str(ctx.exception))
+
+    def test_ladder_requires_a_compare_for_every_harness_arm(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_arm(root, "ompH5clean_X", n=10, correct=7)
+            (root / "ompH5clean_X" / "harness_compare_legal_mc_vsA_ompH5clean_X.csv").unlink()
+            with self.assertRaises(SystemExit) as ctx:
+                dash.build_ladder(root, self.ARM)
+            self.assertIn("compare", str(ctx.exception))
+
+    def test_cost_aggregates_every_dataset_of_an_arm(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td) / "ompH5clean_X"
+            folder.mkdir(parents=True)
+            for dataset, n in (("legal_mc", 3), ("reading400", 2)):
+                with open(folder / f"harness_ledger_{dataset}_ompH5clean_X.csv", "w",
+                          newline="", encoding="utf-8") as f:
+                    w = csv.DictWriter(f, fieldnames=harness.LEDGER_COLS)
+                    w.writeheader()
+                    for i in range(n):
+                        row = {c: "" for c in harness.LEDGER_COLS}
+                        row.update({"dataset": dataset, "item_id": str(i), "kind": "mc",
+                                    "wall_s": "2.0", "turns": "1", "tool_calls": "0",
+                                    "input_tokens": "10", "cache_read_tokens": "0",
+                                    "output_tokens": "2", "failure": ""})
+                        if i == 0:
+                            row["tool_calls"] = "1"      # first row of each dataset
+                        w.writerow(row)
+            cost = dash.arm_cost(folder, ["legal_mc", "reading400"])
+            self.assertEqual(cost["n"], 5)
+            self.assertEqual(cost["tool_use_items"], 2)   # first row of each dataset
+            self.assertEqual(cost["wall_s_per_item"], 2.0)
+            self.assertEqual(cost["completion_tokens"], 10)
+            self.assertEqual(cost["datasets"], 2)
+
+    def _write_vbench_mc_checkpoint(self, root: Path, slug: str,
+                                    letters: dict[str, str]) -> None:
+        """The direct arm's V-Bench MC checkpoint, where _vbench_mc_letters reads it."""
+        folder = root / slug
+        folder.mkdir(parents=True, exist_ok=True)
+        with open(folder / f"vbench_result_1_{slug}.csv", "w", newline="",
+                  encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["id", "answer"])
+            w.writeheader()
+            for iid, letter in letters.items():
+                w.writerow({"id": iid, "answer": letter})
+
+    def test_vbench_mc_harness_arm_without_a_ledger_is_not_a_perfect_score(self):
+        # A harness arm that declares vbench_mc but has no ledger is an unfinished
+        # run. The ONLY arm allowed to score 100 by self-agreement is the direct
+        # arm; the harness side must return None so build_ladder's declared-
+        # coverage guard aborts instead of showing a perfect agreement nobody made.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_vbench_mc_checkpoint(root, "A", {"1": "A", "2": "B"})
+            (root / "H").mkdir()
+            self.assertIsNone(dash.arm_metrics(root / "H", "vbench_mc",
+                                               dash.ARM_A["vbench_mc"], "H", arm_a_slug="A"))
+
+    def test_vbench_mc_direct_arm_still_agrees_with_itself(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_vbench_mc_checkpoint(root, "A", {"1": "A", "2": "", "3": "B"})
+            own = dash.arm_metrics(root / "A", "vbench_mc", dash.ARM_A["vbench_mc"], "A",
+                                   arm_a_slug="A")
+            assert own is not None
+            self.assertEqual((own["n"], own["score"], own["blanks"]), (3, 100.0, 0))
+
+    def test_vbench_mc_reads_arm_a_from_the_same_results_root(self):
+        # The module's RESULTS_DIR points at the real repo (no fixture slug "A"
+        # there). A caller's --results-dir must be the only root consulted, or the
+        # agreement number silently comes from a different directory.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_vbench_mc_checkpoint(root, "A", {"1": "A", "2": "B"})
+            h = root / "H"
+            h.mkdir()
+            with open(h / "harness_ledger_vbench_mc_H.csv", "w", newline="",
+                      encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["item_id", "answer"])
+                w.writeheader()
+                w.writerow({"item_id": "1", "answer": "A"})
+                w.writerow({"item_id": "2", "answer": "A"})
+            own = dash.arm_metrics(h, "vbench_mc", dash.ARM_A["vbench_mc"], "H",
+                                   arm_a_slug="A")
+            assert own is not None
+            self.assertEqual((own["n"], own["score"]), (2, 50.0))
+
+    def test_insight_never_mixes_agreement_into_the_score_range(self):
+        # V-Bench MC's agreement delta is "the answer changed", not "the answer got
+        # worse": the verdict and the penalty claims talk about "điểm", so the row
+        # must stay out of them (it still lives in the comparison table).
+        def row(model, arm, dataset, label, metric, delta, lo, hi):
+            return {"role": "harness", "arm": arm, "arm_slug": f"{arm}_{model}",
+                    "model": model, "dataset": dataset, "dataset_label": label,
+                    "metric": metric, "n": 400, "delta": delta,
+                    "ci95_low": lo, "ci95_high": hi}
+
+        ladder = [
+            row("M1", "H5", "reading400", "reading-400 (EM)", "EM", 7.0, 3.5, 10.5),
+            row("M1", "H5", "vbench_mc",
+                "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+                "agreement", -22.39, -23.4, -20.91),
+            row("M2", "M6", "reading400", "reading-400 (EM)", "EM", -22.25, -25.0, -19.0),
+        ]
+        ins = dash.insight(ladder, [], [], [])
+        blob = ins["verdict"] + " " + " ".join(c["body"] for c in ins["claims"])
+        self.assertNotIn("22.39", blob)
+        penalty = next(c for c in ins["claims"] if c["id"] == "penalty:M1")
+        ev = {e["label"]: e["value"] for e in penalty["evidence"]}
+        self.assertEqual(ev["Δ nhỏ nhất"], "+7.00")
+        self.assertIn("trên 1 tập", penalty["body"])
+
+    def test_stripped_answer_peels_the_wrapper_without_fixing_anything(self):        # SECONDARY metric only: the headline EM stays on the verbatim reply
+        self.assertEqual(dash.stripped_answer("**1916**\n\n> Câu hỏi: ...\n> Trả lời: 1916"),
+                         "1916")
+        self.assertEqual(dash.stripped_answer("**Trả lời:** tổng hợp hạt nhân và phân rã"),
+                         "tổng hợp hạt nhân và phân rã")
+        self.assertEqual(dash.stripped_answer("**Verdict**: **C**\n\n**Why:** 1. …"), "C")
+        self.assertEqual(dash.stripped_answer("1. Đáp án là A"), "Đáp án là A")
+        self.assertEqual(dash.stripped_answer("```\nnoise\n```\n\n42"), "42")
+        self.assertEqual(dash.stripped_answer(""), "")
+        # a wrong answer is NOT rescued by stripping
+        self.assertEqual(dash.stripped_answer("**3**"), "3")
+
+    def test_render_html_escapes_labels_and_shows_the_leak_banner(self):
+        block = dash.build_block.__wrapped__ if hasattr(dash.build_block, "__wrapped__") else None
+        self.assertIsNone(block)   # build_block is not wrapped; build the block by hand
+        minimal = {
+            "benchmark_name": "<script>x</script>", "date": "2026-09-26",
+            "model_id": "m", "endpoint": "e", "harness": "h", "condition": "c",
+            "measurement_card": "MC-22", "measurement_card_hash": "hash",
+            "scorer": "s", "ladder": [dict(arm="H5", arm_slug="s", label="<b>omp</b>",
+                                           card="MC-22", dataset="legal_mc",
+                                           dataset_label="legal-MC", metric="accuracy",
+                                           n=10, arm_a=86.0, arm_b=70.0, delta=-16.0,
+                                           ci95_low=-20.0, ci95_high=-10.0, mcnemar_p="0.01",
+                                           both=60, a_only=20, b_only=2, neither=8,
+                                           char_f1=None, blanks=0, role="harness")],
+            "cost": [], "speed": [],
+            "totals": {"items_harness": 10, "failures": 0, "tool_use_items": 0,
+                       "net_attempt_items": 0, "path_escape_items": 0},
+            "leak": {"what": "w", "evidence": "e", "fix": "f", "guard": "g"},
+            "caveats": ["<i>caveat</i>"], "sources": {"report": "r", "docs": "d"},
+        }
+        out = dash.render_html(minimal)
+        self.assertNotIn("<script>", out)
+        self.assertIn("&lt;script&gt;", out)
+        self.assertIn("&lt;i&gt;caveat&lt;/i&gt;", out)
+        self.assertIn("Guard:", out)            # the leak banner renders every field
+        self.assertIn("Đọc MC-15", out)
+        self.assertIn("-16.00", out)
+
+
+    def test_vbench_validity_reads_the_harness_ledger_and_the_direct_checkpoint(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            # harness arm: the ledger's per-item `valid` bit is authoritative
+            hdir = root / "ompV1_X"
+            hdir.mkdir()
+            with open(hdir / "harness_ledger_vbench_agentic_ompV1_X.csv", "w", newline="",
+                      encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=harness.LEDGER_COLS)
+                w.writeheader()
+                for iid, valid in (("101", 1), ("102", 0)):
+                    row = {c: "" for c in harness.LEDGER_COLS}
+                    row.update({"dataset": "vbench_agentic", "item_id": iid, "kind": "vbench",
+                                "valid": valid, "answer": "{}" if valid else ""})
+                    w.writerow(row)
+            self.assertEqual(harness._vbench_validity(hdir, "ompV1_X", "vbench_agentic",
+                                                      harness_arm=True),
+                             {"101": 1, "102": 0})
+            # direct arm: validity = the shipped answer cell was non-empty
+            adir = root / "Qwen"
+            adir.mkdir()
+            (adir / "vbench_result_5141_Qwen.csv").write_text(
+                "id,domain,track,question,raw_response,answer\n"
+                "101,agentic,agentic,q,r,[{\"f\":{}}],[{\"f\":{}}]\n"
+                "102,agentic,agentic,q,nope,\n", encoding="utf-8")
+            self.assertEqual(harness._vbench_validity(adir, "Qwen", "vbench_agentic",
+                                                      harness_arm=False),
+                             {"101": 1, "102": 0})
+            # no checkpoint at all -> None so the caller degrades to aggregate-only
+            self.assertIsNone(harness._vbench_validity(root / "missing", "Qwen",
+                                                        "vbench_agentic", harness_arm=False))
+
+    def test_vbench_projection_writes_validity_summary_and_uploadable_submission(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            folder = root / "arm"
+            folder.mkdir()
+            rows = []
+            for iid, answer in (("7", '[{"f":{"a":1}}]'), ("3", "")):
+                row = {c: "" for c in harness.LEDGER_COLS}
+                row.update({"dataset": "vbench_agentic", "item_id": iid, "kind": "vbench",
+                            "answer": answer, "valid": int(bool(answer)), "raw_response": "x"})
+                rows.append(row)
+            items = {r["item_id"]: {"prompt": "p"} for r in rows}
+            summary = harness.write_projection(rows, "vbench_agentic", "vbench", "armX",
+                                              folder, items)
+            self.assertEqual(summary.name, "vbench_valid_summary_armX.csv")
+            got = read_csv_rows(summary)
+            self.assertEqual((got[0]["n"], got[0]["valid"], got[0]["valid_rate"]),
+                             ("2", "1", "50.00"))
+            sub = Path("submissions") / "armX" / "submission_vbench_armX.jsonl"
+            try:
+                lines = [json.loads(line) for line in sub.read_text(encoding="utf-8").splitlines()]
+                # sorted by id, invalid rows ship an empty answer (never a guess)
+                self.assertEqual([l["id"] for l in lines], [3, 7])
+                self.assertEqual(lines[0]["answer"], "")
+                self.assertEqual(lines[1]["answer"], [{"f": {"a": 1}}])
+            finally:
+                sub.unlink()
+                sub.parent.rmdir()
+
+    def test_repeatability_groups_a_cell_by_slug_without_the_model_suffix(self):
+        # Regression: `(ompH\d+clean?)` REQUIRES the literal "clea" (the ? binds to
+        # the n only), so ompH1…ompH4 never matched and every one of them fell back
+        # to the full slug as its "cell" — which is what the display showed.
+        cells = {}
+        for slug in ("ompH1_Qwen3_5-9B-28K", "ompH2_Qwen3_5-9B-28K", "ompH3_Qwen3_5-9B-28K",
+                     "ompH4_Qwen3_5-9B-28K", "ompH5clean_Qwen3_5-9B-28K",
+                     "ompH5clean_r2_Qwen3_5-9B-28K", "ompH8clean_r3_Qwen3_5-9B-28K"):
+            m = re.match(r"(ompH\d+(?:clean)?)(?:_r(\d+))?_Qwen", slug)
+            self.assertIsNotNone(m, f"{slug} phải match được")
+            cells[slug] = (m.group(1), int(m.group(2)) if m.group(2) else 1)
+        self.assertEqual(cells["ompH1_Qwen3_5-9B-28K"][0], "ompH1")
+        self.assertEqual(cells["ompH2_Qwen3_5-9B-28K"][0], "ompH2")
+        self.assertEqual(cells["ompH5clean_Qwen3_5-9B-28K"], ("ompH5clean", 1))
+        self.assertEqual(cells["ompH5clean_r2_Qwen3_5-9B-28K"], ("ompH5clean", 2))
+        self.assertEqual(cells["ompH8clean_r3_Qwen3_5-9B-28K"], ("ompH8clean", 3))
+        # a repeat must land in the SAME cell as its first run, or the spread is
+        # computed across two "different" cells and the noise floor is fiction
+        self.assertEqual(cells["ompH5clean_Qwen3_5-9B-28K"][0],
+                         cells["ompH5clean_r2_Qwen3_5-9B-28K"][0])
+
+    def test_speed_budget_table_has_a_vbench_entry(self):
+        self.assertEqual(harness.ARM_A_MAX_TOKENS["vbench"], 512)
+        self.assertEqual(harness.ARM_A["vbench_agentic"]["kind"], "vbench")
+
+    def test_preflight_aborts_a_run_against_a_dead_gateway(self):
+        # observed 2026-09-27: the IEC gateway accepted TCP but never answered
+        # HTTP, so every item would have become a 180s "model failure"
+        def boom(*a, **kw):
+            raise TimeoutError("The read operation timed out")
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=False):
+            with unittest.mock.patch("urllib.request.urlopen", boom):
+                with self.assertRaises(SystemExit) as ctx:
+                    harness.preflight_endpoint(timeout=0.01)
+        msg = str(ctx.exception)
+        self.assertIn("preflight failed", msg)
+        self.assertIn("did not answer a 1-token call", msg)
+        self.assertIn("--resume", msg)          # tells the operator nothing is lost
+
+    def test_preflight_names_an_http_error_as_an_upstream_outage(self):
+        # observed 2026-09-28: /v1/models answered but the inference backend was
+        # down — a clean 502, which looks nothing like the earlier silence and
+        # must not be reported as "the endpoint did not answer".
+        import io
+        import urllib.error
+
+        def boom(*a, **kw):
+            raise urllib.error.HTTPError("https://x/v1/chat/completions", 502, "Bad Gateway",
+                                         {}, io.BytesIO(b'{"detail":"Error connecting to '
+                                                              b'backend LLM server: "}'))
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=False):
+            with unittest.mock.patch("urllib.request.urlopen", boom):
+                with self.assertRaises(SystemExit) as ctx:
+                    harness.preflight_endpoint(timeout=0.01)
+        msg = str(ctx.exception)
+        self.assertIn("HTTP 502 Bad Gateway", msg)
+        self.assertIn("IS answering", msg)
+        self.assertIn("upstream outage", msg)
+        self.assertIn("Error connecting to backend LLM server", msg)   # the body is quoted
+        self.assertNotIn("did not answer a 1-token call", msg)         # the other branch
+
+    def test_preflight_passes_through_when_the_endpoint_answers(self):
+        class FakeResp:
+            def read(self):
+                return b"{}"
+            def __enter__(self):
+                return self
+            def __exit__(self, *a):
+                return False
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=False):
+            with unittest.mock.patch("urllib.request.urlopen", lambda *a, **kw: FakeResp()):
+                harness.preflight_endpoint(timeout=1.0)   # must not raise
+
+    def test_preflight_probes_the_arm_not_the_cost_pin(self):
+        # A preflight aimed at a different gateway is a green light for a dead
+        # run. `--model` is omp's provider-qualified name, so the probe has to
+        # strip the prefix: the wire answers "Model is unavailable" otherwise.
+        seen = {}
+
+        def fake_urlopen(req, timeout=None):
+            seen["url"] = req.full_url
+            seen["body"] = json.loads(req.data.decode())
+            seen["headers"] = {k.lower(): v for k, v in req.header_items()}
+
+            class FakeResp:
+                def read(self):
+                    return b"{}"
+                def __enter__(self):
+                    return self
+                def __exit__(self, *a):
+                    return False
+            return FakeResp()
+
+        env = {"OPENAI_API_KEY": "sk-test", "OPENAI_BASE_URL": "https://example.test/v1",
+               "OPENAI_EXTRA_HEADERS": json.dumps({"x-opencode-session": "s1"})}
+        with unittest.mock.patch.dict(os.environ, env, clear=False):
+            with unittest.mock.patch("urllib.request.urlopen", fake_urlopen):
+                harness.preflight_endpoint(model="zen-go/mimo-v2.5", api_key="k")
+        self.assertEqual(seen["body"]["model"], "mimo-v2.5")
+        self.assertEqual(seen["url"], "https://example.test/v1/chat/completions")
+        # the gateway's own requirement has to ride along, or the probe records
+        # a Cloudflare rejection instead of the answer
+        self.assertEqual(seen["headers"].get("x-opencode-session"), "s1")
+
+
+class TestScaffoldProjectInstructions(unittest.TestCase):
+    """The AGENTS.md leak (measured 2026-09-29) — the guard that now stops it.
+
+    The scratch default used to sit inside this repository, so omp walked up,
+    found the repo's own AGENTS.md and inlined 27.5k characters of it into every
+    item's system prompt. Every arm through MC-26 was measured that way. Nothing
+    in the artifacts showed it, because the request bytes were never captured.
+    """
+
+    def test_finds_instructions_above_a_sandbox(self):
+        with tempfile.TemporaryDirectory() as root:
+            (Path(root) / "AGENTS.md").write_text("x" * 100, encoding="utf-8")
+            nested = Path(root) / "a" / "b" / "c"
+            nested.mkdir(parents=True)
+            found = harness.project_instructions_above(nested)
+            self.assertTrue(any(p.endswith("AGENTS.md") for p in found))
+
+    def test_a_sandbox_outside_any_project_is_clean(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            # the tmp root itself must not sit under a repo; assert on the
+            # specific files rather than trusting the environment
+            found = [p for p in harness.project_instructions_above(Path(scratch))
+                     if Path(p).parent in (Path(scratch).resolve().parents)]
+            self.assertEqual(found, [])
+
+    def test_refuses_a_sandbox_inside_a_project(self):
+        with tempfile.TemporaryDirectory() as root:
+            (Path(root) / "CLAUDE.md").write_text("y" * 10, encoding="utf-8")
+            with self.assertRaises(SystemExit) as ctx:
+                harness.assert_no_project_instructions(Path(root), allow=False)
+            msg = str(ctx.exception)
+            self.assertIn("CLAUDE.md", msg)
+            self.assertIn("--scratch", msg)
+            self.assertIn("--allow-project-instructions", msg)
+
+    def test_the_escape_hatch_is_explicit(self):
+        with tempfile.TemporaryDirectory() as root:
+            (Path(root) / "AGENTS.md").write_text("z" * 10, encoding="utf-8")
+            harness.assert_no_project_instructions(Path(root), allow=True)  # no raise
+
+    def test_the_default_scratch_is_outside_the_repository(self):
+        src = Path("code_benchmark/run_harness_eval.py").read_text(encoding="utf-8")
+        self.assertNotIn('result_folder / "harness_scratch"', src)
+        self.assertIn("tempfile.gettempdir()", src)
+
+
+class TestExtraHeaders(unittest.TestCase):
+    """OPENAI_EXTRA_HEADERS — the two gateway requirements a bare client lacks."""
+
+    def test_absent_env_means_no_headers(self):
+        with unittest.mock.patch.dict(os.environ, {}, clear=True):
+            self.assertIsNone(llm.extra_headers())
+
+    def test_parses_a_json_object(self):
+        raw = json.dumps({"x-opencode-session": "abc", "Origin": "https://o.test"})
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": raw}, clear=True):
+            self.assertEqual(llm.extra_headers()["x-opencode-session"], "abc")
+
+    def test_invalid_json_fails_fast(self):
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": "{oops"}, clear=True):
+            with self.assertRaises(SystemExit) as ctx:
+                llm.extra_headers()
+        self.assertIn("not valid JSON", str(ctx.exception))
+
+    def test_non_string_values_fail_fast(self):
+        raw = json.dumps({"x-retry": 3})
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": raw}, clear=True):
+            with self.assertRaises(SystemExit):
+                llm.extra_headers()
+
+    def test_a_non_object_fails_fast(self):
+        with unittest.mock.patch.dict(os.environ, {"OPENAI_EXTRA_HEADERS": "[1,2]"}, clear=True):
+            with self.assertRaises(SystemExit):
+                llm.extra_headers()
+
+
+class TestLegalArmA(unittest.TestCase):
+    """The missing arm-A producer for the legal sets (`run_legal_arm_a.py`).
+
+    Without it a second model cannot enter the harness arm at all, and the ladder
+    silently degrades into a comparison between two different models.
+    """
+
+    def test_final_path_is_the_name_the_harness_reads(self):
+        # derived from ARM_A, not re-typed: the writer and the reader must not drift
+        for dataset, expect in (("legal_mc", "full_evaluation_legal_S.csv"),
+                                ("legal_nli", "full_evaluation_nli_S.csv")):
+            self.assertEqual(legal_arm_a.final_path(dataset, "S").name, expect)
+
+    def test_prompt_parity_refuses_a_missing_reference(self):
+        with self.assertRaises(SystemExit) as ctx:
+            legal_arm_a.assert_prompt_parity(
+                [{"item_id": "LG-0001", "prompt": "p"}], "legal_mc", "no-such-slug")
+        self.assertIn("not found", str(ctx.exception))
+
+    def test_prompt_parity_refuses_drift(self):
+        with tempfile.TemporaryDirectory() as root:
+            ref = Path(root) / "full_evaluation_legal_ref.csv"
+            with open(ref, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["id", "prompt"])
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "prompt": "the bytes arm A sent"})
+            with unittest.mock.patch.object(legal_arm_a, "RESULTS_DIR", Path(root)):
+                with unittest.mock.patch.object(
+                        legal_arm_a, "final_path",
+                        lambda d, s: ref):
+                    with self.assertRaises(SystemExit) as ctx:
+                        legal_arm_a.assert_prompt_parity(
+                            [{"item_id": "LG-0001", "prompt": "different bytes"}],
+                            "legal_mc", "ref")
+        self.assertIn("prompt drift", str(ctx.exception))
+
+    def test_prompt_parity_accepts_identical_bytes(self):
+        with tempfile.TemporaryDirectory() as root:
+            ref = Path(root) / "full_evaluation_legal_ref.csv"
+            with open(ref, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["id", "prompt"])
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "prompt": "same bytes"})
+            with unittest.mock.patch.object(legal_arm_a, "final_path", lambda d, s: ref):
+                legal_arm_a.assert_prompt_parity(
+                    [{"item_id": "LG-0001", "prompt": "same bytes"}], "legal_mc", "ref")
+
+    def test_checkpoints_are_dataset_scoped(self):
+        # two legal sets for one slug would otherwise fight over raw_result_<n>_<slug>
+        self.assertNotEqual(legal_arm_a.CKPT_PREFIX.format(dataset="legal_mc"),
+                            legal_arm_a.CKPT_PREFIX.format(dataset="legal_nli"))
+        self.assertTrue(legal_arm_a.CKPT_PREFIX.format(dataset="legal_mc")
+                        .startswith("raw_result_legal_mc_"))
+
+    def test_a_smoke_run_never_writes_the_final_baseline_name(self):
+        src = Path("code_benchmark/run_legal_arm_a.py").read_text(encoding="utf-8")
+        self.assertIn(".smoke", src)   # --limit renames the output
+
+    def test_resume_checkpoints_carry_the_resumed_rows_forward(self):
+        """A checkpoint written after a --resume must hold the UNION of answers.
+
+        find_latest_checkpoint picks the HIGHEST count, so if a resumed leg wrote
+        only its own rows, the file it leaves behind is smaller than the one it
+        replaced — and the next --resume loses the first leg. The reading and MC
+        runners write the cumulative union; this producer must not be the odd one.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            res = root / "res"
+            folder = res / "test-model"
+            folder.mkdir(parents=True)
+            with open(folder / "raw_result_legal_mc_1_test-model.csv", "w", newline="",
+                      encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=legal_arm_a.FINAL_COLS)
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "question": "q", "prompt": "p",
+                            "raw_response": "A", "answer": "A", "gold_answer": "A",
+                            "correct": 1})
+            items = [{"item_id": f"LG-{i:04d}", "question": "q", "prompt": "p", "gold": "A"}
+                     for i in range(1, 6)]
+            writes: list[tuple[Path, list[dict]]] = []
+
+            def capture(path, rows, cols):
+                writes.append((Path(path), [dict(r) for r in rows]))
+
+            with unittest.mock.patch.object(legal_arm_a, "RESULTS_DIR", res), \
+                    unittest.mock.patch.object(legal_arm_a, "LOGS_DIR", root / "logs"), \
+                    unittest.mock.patch.object(legal_arm_a, "resolve_endpoint",
+                                               lambda a: ("http://x/v1", "k", "test-model")), \
+                    unittest.mock.patch.object(legal_arm_a, "build_client", lambda *a: object()), \
+                    unittest.mock.patch.object(legal_arm_a, "verify_credentials", lambda *a: None), \
+                    unittest.mock.patch.object(legal_arm_a, "load", lambda d: items), \
+                    unittest.mock.patch.object(legal_arm_a, "assert_prompt_parity", lambda *a: None), \
+                    unittest.mock.patch.object(legal_arm_a, "setup_logging", lambda p: None), \
+                    unittest.mock.patch.object(legal_arm_a, "call_model_with_retry",
+                                               lambda **kw: "A"), \
+                    unittest.mock.patch.object(legal_arm_a, "write_csv_atomic", capture), \
+                    unittest.mock.patch("sys.argv", ["run_legal_arm_a", "--dataset", "legal_mc",
+                                                     "--limit", "5", "--resume"]):
+                legal_arm_a.main()
+
+            checkpoints = [(p, r) for p, r in writes if "raw_result_legal_mc" in p.name]
+            self.assertTrue(checkpoints, "không có checkpoint nào được ghi")
+            name, rows = checkpoints[-1]
+            self.assertEqual(name.name, "raw_result_legal_mc_5_test-model.csv")
+            self.assertEqual(len(rows), 5)      # 1 resumed + 4 new — the union
+            self.assertIn("LG-0001", {r["id"] for r in rows})
+            # and the resumed row's `correct` is an int again, or the final
+            # accuracy sum raises str+int after the file has been written
+            self.assertTrue(all(isinstance(r["correct"], int) for r in rows))
+
+
+class TestAgreementCI(unittest.TestCase):
+    """The V-Bench MC agreement CI — a scale bug that shipped because no arm had
+    ever run that branch (found 2026-09-29, the first MiMo run to reach it)."""
+
+    def test_bootstrap_returns_percentages_not_fractions(self):
+        self.assertEqual(harness._paired_bootstrap([0, 0, 0, 0]), (0.0, 0.0))
+        self.assertEqual(harness._paired_bootstrap([1, 1, 1, 1]), (100.0, 100.0))
+
+    def test_agreement_ci_is_in_percentage_points_and_brackets_its_delta(self):
+        agree = [1] * 3214 + [0] * 927          # 77.61% agreement
+        lo, hi = harness._agreement_ci(agree)
+        delta = 100.0 * sum(agree) / len(agree) - 100.0
+        self.assertLessEqual(lo, delta)
+        self.assertLessEqual(delta, hi)
+        # and it is a plausible band around -22, not four orders of magnitude off
+        self.assertGreater(lo, -30.0)
+        self.assertLess(hi, -10.0)
+
+    def test_perfect_agreement_has_an_empty_interval_at_zero(self):
+        lo, hi = harness._agreement_ci([1] * 50)
+        self.assertEqual((lo, hi), (0.0, 0.0))
+
+    def test_blank_vs_blank_is_not_agreement_in_the_ci(self):
+        # The CI must be built from the SAME predicate as the printed rate: an
+        # empty answer is not an answer, so a blank-both row is a disagreement.
+        a = {"1": "A", "2": "", "3": "B", "4": ""}
+        b = {"1": "A", "2": "", "3": "C", "4": "B"}
+        shared = list(a)
+        self.assertEqual(harness._agreement_flags(a, b, shared), [1, 0, 0, 0])
+        lo, hi = harness._agreement_ci(harness._agreement_flags(a, b, shared))
+        self.assertLessEqual(lo, -75.0)     # the point delta: 1/4 agreed
+        self.assertLessEqual(-75.0, hi)
+
+
+class TestHarnessRegistry(unittest.TestCase):
+    """The arm registry (build_dashboard_harness.py) — invariants CI cannot see.
+
+    A ladder row is a comparison INSIDE one model, so the registry has to say
+    which model each arm measures; and a min…max range that silently spans two
+    models is exactly the failure this table exists to prevent.
+    """
+
+    def test_every_arm_declares_its_model(self):
+        shorts = {short for _k, _s, short, _l, _c in dash.ARMS}
+        self.assertEqual(shorts - set(dash.ARM_MODEL), set())
+
+    def test_two_models_are_actually_present(self):
+        """The point of the second model: a single-model block proves nothing."""
+        self.assertGreaterEqual(len(set(dash.ARM_MODEL.values())), 2)
+
+    def test_clean_and_representative_arms_exist(self):
+        shorts = {short for _k, _s, short, _l, _c in dash.ARMS}
+        self.assertTrue(set(dash.CLEAN_ARMS) <= shorts, set(dash.CLEAN_ARMS) - shorts)
+        self.assertTrue(set(dash.REPRESENTATIVE.values()) <= set(dash.CLEAN_ARMS))
+        # REPRESENTATIVE is keyed by MODEL and names the arm that represents it
+        self.assertTrue(set(dash.REPRESENTATIVE) <= set(dash.ARM_MODEL.values()))
+
+    def test_dataset_coverage_is_declared_per_arm(self):
+        slugs = {slug for _k, slug, _s, _l, _c in dash.ARMS}
+        self.assertTrue(set(dash.ARM_DATASETS) <= slugs, set(dash.ARM_DATASETS) - slugs)
+        for slug, datasets in dash.ARM_DATASETS.items():
+            for d in datasets:
+                self.assertIn(d, dash.DATASET_LABEL, f"{slug}: {d} chưa có nhãn")
+
+    def test_coverage_is_keyed_by_slug_not_by_display_id(self):
+        # Keying it by the short id made a caller's own arms inherit a coverage
+        # promise meant for a different arm that shared the id.
+        self.assertIn("ompM6clean_mimo-v2_5", dash.ARM_DATASETS)
+        self.assertNotIn("M6", dash.ARM_DATASETS)
+        self.assertEqual(dash.datasets_for("no-such-slug"), dash.DATASETS)
+
+    def test_vbench_mc_needs_a_paired_baseline(self):
+        # vbench_mc's "score" is agreement with the direct arm, so a harness arm
+        # needs its arm-A slug; the baseline computes it against itself.
+        self.assertIn("vbench_mc", dash.ARM_DATASETS["ompM6clean_mimo-v2_5"])
+        self.assertIn("vbench_mc", dash.ARM_DATASETS["mimo-v2_5"])
+
+    def test_no_registry_label_contains_double_asterisk(self):
+        # `**` is not markdown in this app: the ladder renders it literally, which
+        # is why the page used to show `**omp sạch**` with visible asterisks.
+        for _k, _s, short, label, _c in dash.ARMS:
+            self.assertNotIn("**", label, f"arm {short}: nhãn chứa ** sẽ hiện nguyên chữ")
+
+    def test_the_ablation_arm_is_not_counted_as_clean(self):
+        # M6L differs from M6 ONLY in having the repo's AGENTS.md injected, so it
+        # must stay out of the clean set or the headline range folds it in.
+        self.assertIn("M6", dash.CLEAN_ARMS)
+        self.assertNotIn("M6L", dash.CLEAN_ARMS)
 
 
 if __name__ == "__main__":

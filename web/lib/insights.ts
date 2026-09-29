@@ -1,13 +1,14 @@
-/** Insight layer for /results — mỗi cặp (model × dataset) một nhận định chẩn đoán
- *  + hướng hành động, kèm bằng chứng số rút tự động từ summary của run.
+/** Lớp nhận xét cho /results — mỗi cặp (mô hình × bộ dữ liệu) có một diễn giải
+ *  + hướng kiểm chứng, kèm bằng chứng số rút tự động từ bản tổng hợp của lần chạy.
  *
  * Hai phần tách bạch:
- *  - `SEEDS`  — nhận định thủ công (chủ quan, có căn cứ số) viết theo taxonomy của
- *               đề cương KLTN: thiếu tri thức tham số vs quy chuẩn, hạn chế suy luận,
- *               ảo giác quy chuẩn; hành động bám các hướng được phép (grounding/RAG,
- *               ngân sách suy luận, định tuyến, chuẩn hoá định dạng, hiệu chỉnh) —
- *               KHÔNG đề xuất fine-tune (ngoài phạm vi đề cương).
- *  - `deriveEvidence` — số liệu lấy từ `summaries` lúc render (nguồn sự thật).
+ *  - `SEEDS`  — diễn giải chuyên biệt (chủ quan, có căn cứ số) theo taxonomy của
+ *               đề cương KLTN. Mọi nguyên nhân đều được diễn đạt là giả thuyết,
+ *               không phải kết luận nhân quả; hành động bám các hướng được phép
+ *               (cung cấp ngữ cảnh có căn cứ, ngân sách suy luận, định tuyến,
+ *               chuẩn hoá định dạng, kiểm chứng thiên lệch) — không đề xuất
+ *               fine-tune ngoài phạm vi đề cương.
+ *  - `deriveEvidence` — số liệu lấy từ `summaries` lúc render (nguồn số hiển thị).
  *
  * Lưu ý: vài con số neo trong `verdict` là số tại thời điểm viết (2026-09-21, các
  * card MC-1…MC-14b); khi lệch với bảng "Bằng chứng số" thì tin bảng.
@@ -22,30 +23,31 @@ export type InsightCause =
   | "robustness";
 
 export const CAUSE_LABEL: Record<InsightCause, string> = {
-  parametric: "Thiếu tri thức tham số",
-  normative: "Thiếu tri thức quy chuẩn",
-  reasoning: "Hạn chế suy luận",
-  format: "Định dạng / ngân sách token",
-  calibration: "Thiên lệch đáp án",
-  robustness: "Nhạy với cách hỏi / phân bố",
+  parametric: "Có thể chưa được huấn luyện đủ về mảng kiến thức này",
+  normative: "Có thể thiếu tri thức quy chuẩn hoặc bối cảnh bản địa",
+  reasoning: "Có thể gặp hạn chế ở bước suy luận",
+  format: "Có thể do lỗi định dạng hoặc giới hạn ngân sách",
+  calibration: "Thiên lệch nhãn đáp án",
+  robustness: "Nhạy với cách hỏi hoặc phân bố",
 };
 
-/** Mô tả 1 dòng cho mỗi nhóm nguyên nhân — hiển thị trong UI để dễ hiểu. */
+/** Mô tả 1 dòng cho mỗi nhóm nguyên nhân — hiển thị trong UI để dễ hiểu.
+ *  Đây là giả thuyết cần kiểm chứng, không phải nguyên nhân đã được chứng minh. */
 export const CAUSE_DESC: Record<InsightCause, string> = {
-  parametric: "Model chưa từng thấy mảng kiến thức này khi pretrain — hỏi lại theo cách khác vẫn sai.",
-  normative: "Thiếu tri thức quy chuẩn/bản địa VN (luật, thuế, nghiệp vụ) — cần grounding/RAG văn bản quy phạm.",
-  reasoning: "Đọc đúng thông tin nhưng sai ở bước suy luận (số học, so sánh, đếm, logic) — cần ngân sách suy luận/CoT có kiểm soát.",
-  format: "Tìm đúng thông tin nhưng trả lời sai định dạng, hoặc thinking ẩn ăn hết token budget gây blank — lỗi đo lường, sửa được bằng chuẩn hoá/ràng buộc span.",
-  calibration: "Thiên lệch đáp án có hệ thống (thiên về một nhãn) — cần hiệu chỉnh trước khi dùng cho routing/kiểm chứng.",
-  robustness: "Đáp án đổi khi đổi cách hỏi hoặc phân bố — mọi so sánh phải khóa một điều kiện hỏi.",
+  parametric: "Mô hình có thể chưa được huấn luyện đủ về mảng kiến thức này. Cần thử đổi cách hỏi hoặc cung cấp ngữ cảnh để kiểm chứng.",
+  normative: "Kết quả có thể liên quan đến tri thức quy chuẩn hoặc bối cảnh Việt Nam. Nên thử cung cấp văn bản có căn cứ và so với điều kiện không có ngữ cảnh.",
+  reasoning: "Mô hình có thể sai ở bước tính, so sánh, đếm hoặc suy luận. Cần phép thử có kiểm soát với ngân sách suy luận khác nhau.",
+  format: "Câu trả lời rỗng hoặc lệch chuẩn có thể liên quan đến định dạng, mẫu hỏi hoặc giới hạn token; cần lưu `finish_reason` và số token để xác định.",
+  calibration: "Phân bố dự đoán lệch theo nhãn. Chưa đủ gọi là hiệu chuẩn nếu chưa đo xác suất, lỗi phân loại chuẩn hóa (ECE) hoặc điểm Brier.",
+  robustness: "Đáp án thay đổi khi đổi cách hỏi hoặc phân bố. Mọi so sánh phải khóa điều kiện hỏi và báo cáo độ nhạy cảm.",
 };
 
 export interface InsightSeed {
-  /** Chẩn đoán 1–2 câu, có số neo. */
+  /** Diễn giải 1–2 câu, có số neo và giới hạn kết luận. */
   verdict: string;
-  /** Nhóm nguyên nhân khả nghi (taxonomy đề cương). */
+  /** Nhóm giả thuyết cần kiểm chứng theo đề cương. */
   causes: InsightCause[];
-  /** Hướng hành động + phương pháp cải thiện (không fine-tune). */
+  /** Hướng kiểm chứng và phương pháp cải thiện (không fine-tune). */
   actions: string[];
   /** Điều KHÔNG được suy diễn từ run này. */
   caveat?: string;
@@ -57,188 +59,192 @@ export interface Insight {
   causes: Array<{ tag: InsightCause; label: string; desc: string }>;
   actions: string[];
   caveat?: string;
-  /** true = có nhận định thủ công; false = chỉ có bằng chứng tự động. */
+  /** true = có diễn giải chuyên biệt; false = chỉ có bằng chứng tự động. */
   curated: boolean;
 }
 
 const FALLBACK_VERDICT =
-  "Chưa có nhận định thủ công cho cặp model × dataset này — bảng dưới là bằng chứng số rút tự động từ summary của run.";
+  "Chưa có diễn giải chuyên biệt cho cặp mô hình × bộ dữ liệu này. Bảng bên dưới chỉ là bằng chứng số rút tự động từ bản tổng hợp của lần chạy.";
 
-// ── Nhận định thủ công (model × dataset) ────────────────────────────────
-// dataset_id theo registry (code_benchmark/seed_registries.py); "*" = mọi model.
+// ── Diễn giải chuyên biệt (mô hình × bộ dữ liệu) ───────────────────────
+// dataset_id theo registry (code_benchmark/seed_registries.py); "*" = mọi mô hình.
 const SEEDS: Record<string, Record<string, InsightSeed>> = {
   "vmlu-mqa-all-gold": {
     "qwen3-5-9b-28k": {
       verdict:
-        "73,35% (768/1.047) nhưng phân hoá mạnh theo loại tri thức: STEM 79% còn nhóm quy chuẩn — Luật hành chính, Thuế, Nghiệp vụ công chức — chỉ 30–44%. Nút thắt là loại tri thức (quy chuẩn/bản địa), không phải tiếng Việt.",
+        "73,35% (768/1.047); điểm thấp tập trung ở một số môn quy chuẩn như Luật hành chính, Thuế và Nghiệp vụ công chức. Kết quả này phù hợp với giả thuyết thiếu tri thức bản địa, nhưng chưa có đối chứng song ngữ để kết luận đây không phải hạn chế về tiếng Việt.",
       causes: ["normative", "parametric"],
       actions: [
-        "Lấy nhóm môn dưới 50% làm tập hiệu chuẩn để chọn ngưỡng định tuyến RAG (hướng C3 của đề cương).",
-        "Thử grounding cho câu quy chuẩn (luật, thuế, nghiệp vụ) và đo lại có kiểm soát; giữ closed-book làm baseline C1.",
-        "Báo cáo theo môn kèm n của môn — không lấy 10–20 câu/môn làm đại diện cả mảng.",
+        "Dùng các môn dưới 50% làm tập nghiên cứu để kiểm tra tác động của việc cung cấp ngữ cảnh có căn cứ.",
+        "Chạy phép thử có/không có ngữ cảnh trên cùng câu hỏi; giữ điều kiện không có ngữ cảnh làm mốc đối chứng.",
+        "Báo cáo theo môn kèm cỡ mẫu và khoảng tin cậy; không dùng 10–20 câu/môn để đại diện cho cả một mảng.",
       ],
-      caveat: "1.047 câu dev+valid, không phải leaderboard; mỗi môn chỉ 10–20 câu.",
+      caveat: "Đây là 1.047 câu dev+valid, không phải điểm leaderboard; mỗi môn chỉ có 10–20 câu và chưa có phép thử song ngữ.",
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
-        "73,35% (768/1.047) — cùng profile trũng như mọi model: Luật hành chính 30%, Sư phạm mầm non 30%, Thuế 33%, Văn THPT 40%. So với Qwen3.5-9B: 54/58 môn trùng khớp tuyệt đối (gấp ~3 tham số không tạo khác biệt) — bằng chứng “capacity không phải nút thắt”.",
-      causes: ["normative", "parametric"],
+        "73,35% (768/1.047); 54/58 môn có cùng số câu đúng với Qwen3.5-9B. Đây là mô tả một cặp kết quả, chưa phải kiểm định tương đương: quy mô, lượng tử hóa, điều kiện suy luận và tính bất biến của dịch vụ đều cần được kiểm soát.",
+      causes: ["normative", "parametric", "robustness"],
       actions: [
-        "Dùng làm lập luận chuyển ngân sách từ tăng tham số sang grounding/định tuyến trong giai đoạn C.",
-        "Kiểm chứng chéo trên bộ khác dạng (V-Bench, VM14K) trước khi kết luận về khoảng trống.",
+        "Chạy lại hai mô hình trong cùng điều kiện với nhiều lần lặp hoặc dùng thiết kế ghép cặp trước khi so sánh.",
+        "Báo cáo mức chênh lệch và khoảng tin cậy; không kết luận về vai trò của quy mô khi chưa có phép thử tương đương.",
+        "Dùng bộ khác dạng để kiểm chứng xu hướng, nhưng không gộp điểm của các bộ không cùng thang đo.",
       ],
-      caveat: "Model đã rời endpoint 12/09 — không tái lập được (MC-4).",
+      caveat: "Mô hình đã rời endpoint ngày 12/09 nên không tái lập được nguyên trạng (MC-4).",
     },
   },
   "vmlu-mqa-valid": {
     "*": {
       verdict:
-        "744 câu valid có gold local — subset cùng phân bố với all_gold, dùng kiểm tra độ ổn định của điểm tổng (Qwen3.5: 540/744 = 72,58%).",
-      causes: ["normative"],
+        "744 câu valid có gold nội bộ; Qwen3.5 đạt 540/744 = 72,58%. Đây là kết quả mô tả của một lần chạy, chưa đủ đánh giá tính ổn định nếu không có các lần lặp cùng điều kiện.",
+      causes: [],
       actions: [
-        "Chỉ dùng để đối chiếu ổn định giữa các lần chạy; mọi kết luận theo môn lấy từ all_gold.",
+        "Dùng valid để đối chiếu giữa các lần chạy; lấy kết luận theo môn từ all_gold và luôn kèm cỡ mẫu.",
       ],
-      caveat: "Không so ngang với điểm leaderboard (test withheld).",
+      caveat: "Không so ngang trực tiếp với điểm leaderboard của tập test có gold bị giữ kín.",
     },
   },
   "vmlu-mqa-dev": {
     "*": {
       verdict:
-        "303 câu dev có gold local — subset nhỏ nhất, dùng làm smoke/probe điều kiện đo (Qwen3.5: 229/303 = 75,58%).",
+        "303 câu dev có gold nội bộ; Qwen3.5 đạt 229/303 = 75,58%. Tập này phù hợp để kiểm tra đầu-cuối và điều kiện hỏi, không phù hợp để kết luận chi tiết theo môn.",
       causes: ["robustness"],
       actions: [
-        "Giữ vai trò probe: chạy trước để kiểm tra endpoint/prompt, không dùng để kết luận năng lực.",
+        "Giữ vai trò kiểm tra đầu-cuối: xác nhận endpoint, mẫu hỏi, bộ phân tích đầu ra và câu trả lời rỗng trước khi chạy bộ lớn.",
       ],
-      caveat: "n nhỏ theo từng môn — không bẻ nhỏ thêm.",
+      caveat: "Cỡ mẫu nhỏ và không đều theo môn; không bẻ nhỏ thêm.",
     },
   },
   "vmlu-mqa-test": {
     "qwen3-5-9b-28k": {
       verdict:
-        "Leaderboard 67,87% (STEM 65,65 · SocSci 74,97 · Humanity 68,61 · Other 63,67) — thấp hơn dev+valid 73,35% khoảng 5,5 điểm; không có gold local nên chỉ đọc được cấu trúc điểm.",
-      causes: ["robustness", "normative"],
+        "Điểm leaderboard là 67,87% (STEM 65,65 · xã hội 74,97 · nhân văn 68,61 · nhóm khác 63,67), thấp hơn dev+valid khoảng 5,5 điểm. Chênh lệch này có thể do phân bố tập hoặc biến động điều kiện chạy; chưa đủ để ước lượng riêng độ khó của test.",
+      causes: ["robustness"],
       actions: [
-        "Dùng khoảng cách ~5,5 điểm như ước lượng độ khó phân bố test; không suy theo môn vì không có gold.",
-        "Muốn chẩn đoán theo môn trên test: cần BTC mở gold, hoặc thay bằng bộ gold local cùng miền.",
+        "Mô tả chênh lệch như một hiện tượng cần kiểm tra, không dùng ngay để kết luận test khó hơn.",
+        "Muốn chẩn đoán theo môn trên test cần gold độc lập hoặc bộ có gold nội bộ cùng phạm vi.",
       ],
-      caveat: "Điểm chỉ có sau submit; submission 9.833 dòng id khớp 1:1, 0 blank (MC-7).",
+      caveat: "Điểm chỉ có sau khi gửi tệp dự thi; tệp 9.833 dòng khớp id 1:1 và không có câu trả lời rỗng (MC-7).",
     },
   },
   "vbench-public-test": {
     "qwen3-5-9b-28k": {
       verdict:
-        "Macro 45,22 · micro 45,61% (2.345/5.141). Tách track: MC 47,04% vs agentic 39,70%; cú pháp gọi hàm 100% valid nhưng chỉ 391/1.000 khớp tham chiếu → nút thắt nằm ở ngữ nghĩa, không ở format.",
-      causes: ["reasoning", "robustness"],
+        "Tệp chấm cuối có macro 45,22 và micro 45,61% (2.345/5.141). Điểm agentic cuối gồm 14 câu được hỏi lại theo guided; điều kiện minimal thuần đạt 986/1.000 câu hợp lệ, còn guided đạt 1.000/1.000. Vì vậy điểm cuối không đại diện cho một điều kiện minimal thuần.",
+      causes: ["format", "reasoning", "robustness"],
       actions: [
-        "Hướng chính: kiểm chứng tham số trước khi gọi hàm (đối chiếu ngữ cảnh/grounding) — không chỉ đúng schema.",
-        "Giữ điều kiện minimal khi công bố; muốn thử detailed/guided thì phải là card riêng (đổi cách hỏi làm 42,2% câu agentic đổi đáp án).",
-        "Ghi nhãn 14 câu guided là điều kiện thứ 3 khi báo cáo, không trộn vào minimal.",
+        "Báo riêng kết quả minimal thuần, guided và điểm tổng của tệp cuối; không gọi toàn bộ tệp cuối là minimal.",
+        "Kiểm chứng các tham số chọn hàm bằng đối chiếu ngữ cảnh; độ hợp lệ cú pháp không chứng minh lựa chọn hàm hoặc tham số đúng.",
+        "Dùng phép đối chiếu minimal↔detailed trên 27B làm thí nghiệm độ nhạy của cách hỏi, tách khỏi so sánh điểm của mô hình 9B.",
       ],
-      caveat: "Điểm server-side (vbench.ai), không recompute local; valid ≠ correct.",
+      caveat: "Điểm do máy chủ vbench.ai chấm; hợp lệ về cú pháp không đồng nghĩa đúng nội dung, và 14 câu guided là điều kiện thứ ba.",
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
-        "Macro 44,97 · micro 45,46% — cùng cấu trúc lỗi như Qwen3.5-9B: toán 19,2 · logic 24,0 · lý 29,9; MC 47,0% vs agentic 39,1%. Từng miền lệch ≤2,1 điểm so với 9B dù lớn gấp 3 lần; đổi prompt minimal→detailed làm 42,2% câu agentic đổi đáp án.",
+        "Macro 44,97 · micro 45,46%; điểm các miền gần Qwen3.5-9B trong các lần chạy hiện có. Chênh lệch nhỏ không tự chứng minh hai mô hình tương đương. Riêng phép đối chiếu minimal→detailed trên mô hình 27B làm 42,2% câu agentic đổi đáp án.",
       causes: ["robustness", "reasoning"],
       actions: [
-        "Đọc như bằng chứng “prompt nhạy”: mọi so sánh phải khoá một điều kiện hỏi duy nhất.",
-        "Dùng ablation detailed làm cơ sở thiết kế C1/C2 (đo phần điểm thuê từ prompt).",
+        "Khóa một điều kiện hỏi cho mỗi phép so sánh và báo cáo độ nhạy cảm khi đổi mẫu hỏi.",
+        "Tách riêng kết quả của phép đối chiếu detailed khỏi điểm của một điều kiện.",
       ],
-      caveat: "Model đã rời endpoint; số là snapshot MC-2/MC-2b.",
+      caveat: "Mô hình đã rời endpoint; các số là snapshot MC-2/MC-2b.",
     },
   },
   "reading-400": {
     "qwen3-5-9b-28k": {
       verdict:
-        "EM 79,75% · char-F1 86,49% — Vi-SQuAD gần trần (EM 96,5%) nhưng Vi-DROP chỉ 63,0%; khoảng trống nằm ở suy luận số. Gần bằng Qwen3.8-27B (80,25/86,55) dù nhỏ hơn ~3 lần.",
-      causes: ["reasoning"],
+        "EM 79,75% · char-F1 86,49%; Vi-SQuAD đạt EM 96,5%, còn Vi-DROP 63,0%. Chênh lệch phù hợp với giả thuyết rằng các câu cần tính, so sánh hoặc đếm khó hơn, nhưng chưa tách được lỗi suy luận khỏi khác biệt về dạng câu, cách tạo gold và định dạng câu trả lời.",
+      causes: ["reasoning", "format"],
       actions: [
-        "Vi-DROP là điểm nghẽn chung của cả hai model → ưu tiên can thiệp suy luận số học (ngân sách/CoT có kiểm soát) thay vì tăng tham số.",
-        "Giữ cặp model làm đối chứng kích thước: cải tiến giúp cả hai = tín hiệu phương pháp; chỉ giúp model lớn = tín hiệu capacity.",
+        "Dựng lại gold độc lập, không nhìn thấy câu trả lời của mô hình, rồi chạy kiểm tra bởi ít nhất hai người.",
+        "So sánh các điều kiện có và không có ngân sách suy luận với cùng ngân sách tổng để đo tác động thay vì giả định nguyên nhân.",
+        "Báo cáo EM, char-F1 và đánh giá ngữ nghĩa riêng; char-F1 không tự chứng minh câu trả lời cùng nghĩa.",
       ],
-      caveat: "Run ghi nhận bổ sung tại MC-3b (chạy 20/09, cùng card hash MC-3); single-rater, chưa IAA.",
+      caveat: "Gold được duyệt bởi một người nhìn thấy câu trả lời của Qwen3.8; 321/400 câu dùng nguyên văn câu trả lời được Accept, nên điểm không độc lập hoàn toàn với quy trình chọn gold.",
     },
     "qwen3-8-27b-q4-k-m-gguf": {
       verdict:
-        "EM 80,25% · char-F1 86,55% nhưng tách nguồn lộ rõ: Vi-SQuAD EM 97,5% (gần trần trích xuất) vs Vi-DROP EM 63,0% (suy luận số). Khoảng trống nằm ở suy luận, không ở đọc hiểu.",
-      causes: ["reasoning"],
+        "EM 80,25% · char-F1 86,55%; Vi-SQuAD đạt EM 97,5%, còn Vi-DROP 63,0%. Chênh lệch cho thấy độ khó theo dạng nhiệm vụ khác nhau, nhưng không đủ để quy toàn bộ cho hạn chế suy luận.",
+      causes: ["reasoning", "format"],
       actions: [
-        "DROP là điểm nghẽn: 74 câu bị bác tập trung vào cộng/trừ 2 thành phần (23), so sánh (22), đếm (21) → ưu tiên ngân sách suy luận/CoT có kiểm soát cho dạng số học.",
-        "Giữ SQuAD làm đối chứng trần; không gộp điểm 2 nguồn thành một “năng lực chung”.",
-        "Thử chuẩn hoá câu trả lời để tách “sai nội dung” khỏi “sai định dạng”.",
+        "Kiểm chứng các cụm cộng/trừ, so sánh và đếm bằng phép thử có kiểm soát thay vì dùng tỷ lệ bị bác làm bằng chứng nguyên nhân.",
+        "Giữ Vi-SQuAD và Vi-DROP thành hai lát cắt mô tả riêng; không gộp thành một “năng lực đọc hiểu chung”.",
+        "Bổ sung đánh giá ngữ nghĩa của câu trả lời trước khi dùng char-F1 để kết luận rằng lỗi chỉ nằm ở định dạng.",
       ],
-      caveat: "single-rater, chưa có IAA; EM/F1 trên gold hiệu đính 1 người.",
+      caveat: "Điểm EM 80,25% trùng với 321 câu được Accept; một người duyệt và nhìn thấy câu trả lời của chính mô hình này, nên chưa có độ khớp giữa người đánh giá (IAA) hay gold độc lập.",
     },
   },
   "legal-mc-146": {
     "qwen3-5-9b-28k": {
       verdict:
-        "87,67% (128/146), baseline A 62,33% → +25,3 điểm; 0 blank (parse 146/146) — mảng Luật phổ thông không yếu như nhóm luật trên VMLU (30–44%).",
+        "87,67% (128/146), cao hơn mốc đối chứng A 62,33% là 25,3 điểm; 146/146 câu phân tích được và không có câu trả lời rỗng. Kết quả này chỉ mô tả LegalSLM-146, chưa đủ để kết luận về năng lực pháp luật nói chung.",
       causes: ["normative"],
       actions: [
-        "Giữ làm mốc closed-book cho mảng Luật; bước tiếp là thử RAG văn bản quy phạm (C3) và so có/không grounding.",
-        "Luôn báo kèm baseline vì mất cân bằng A=91/146; không so ngang % VMLU (suite khác dạng).",
+        "Dùng LegalSLM-146 làm mốc đối chứng có ngưỡng mô hình ≤4B; không so ngang trực tiếp với các môn luật của VMLU.",
+        "Thử cung cấp văn bản quy phạm và so với điều kiện không có ngữ cảnh trước khi giải thích chênh lệch.",
+        "Luôn báo kèm mốc đối chứng vì phân bố gold lệch mạnh: A=91, B=39, C=16, D=0.",
       ],
-      caveat: "Public-test 146 câu, model 9B vượt giới hạn ≤4B của suite — ghi rõ khi công bố.",
+      caveat: "Public-test có 146 câu; mô hình 9B vượt giới hạn ≤4B của bộ dữ liệu và cần được nêu rõ khi công bố.",
     },
     "qwen38-nothink": {
       verdict:
-        "82,88% (121/146) — thấp hơn Qwen3.5-9B 4,8 điểm; 21 câu blank (raw rỗng) dù đã nâng max_tokens lên 512 → vấn đề ngân sách/định dạng, không phải kiến thức.",
+        "82,88% (121/146), thấp hơn Qwen3.5-9B 4,8 điểm; 21 câu trả lời rỗng dù đã tăng giới hạn lên 512 token. Nguyên nhân có thể liên quan đến ngân sách, mẫu hỏi hoặc cấu hình suy luận, nhưng hiện chưa đủ dữ liệu để loại trừ hạn chế tri thức.",
       causes: ["format", "reasoning"],
       actions: [
-        "Trước khi dùng lại model này: probe budget lớn hơn hoặc tắt thinking ẩn, rồi mới kết luận năng lực luật.",
-        "Không cộng điểm bù cho 21 blank — giữ là sai như đã ghi trong MC-6.",
+        "Chạy kiểm tra có/không suy luận ẩn và lưu `finish_reason`, số token đầu ra cùng nội dung thô.",
+        "Giữ 21 câu trả lời rỗng là sai; không cộng điểm bù.",
       ],
-      caveat: "Model 27B > 4B của suite; đã rời endpoint.",
+      caveat: "Mô hình 27B vượt giới hạn ≤4B của bộ dữ liệu và đã rời endpoint.",
     },
   },
   "legal-nli-150": {
     "qwen3-5-9b-28k": {
       verdict:
-        "90,0% (135/150) vs baseline 50% → +40 điểm, nhưng lệch hệ thống: gold B đúng 100%, gold A chỉ 80% (model thiên “Không”).",
+        "Đây là phân loại khả năng hỗ trợ câu hỏi từ văn bản pháp lý dạng Có/Không, không phải NLI ba nhãn đầy đủ. Mô hình đạt 90,0% (135/150) so với mốc 50%; độ chính xác theo gold B là 100%, theo gold A là 80%.",
       causes: ["calibration", "reasoning"],
       actions: [
-        "Hiệu chỉnh thiên lệch B trước khi dùng cho định tuyến/kiểm chứng: đo lại trên split khác hoặc đảo nhãn (counterfactual).",
-        "Dùng NLI làm bước verification trong RAG (điều luật có trả lời được câu hỏi không) — hướng C3.",
+        "Kiểm tra thiên lệch nhãn trên tập độc lập và phép đảo nhãn trước khi dùng làm bước kiểm chứng trong RAG.",
+        "Chỉ gọi là hiệu chuẩn nếu có xác suất tin cậy và thước đo hiệu chuẩn phù hợp; ma trận nhầm lẫn hiện tại mới là bằng chứng thiên lệch nhãn.",
       ],
-      caveat: "Nhị phân 75/75; đoán bừa đã được 50%.",
+      caveat: "Tập nhị phân cân bằng 75/75; đoán ngẫu nhiên đạt 50%. Tên NLI trong giao diện không mô tả đầy đủ cấu trúc nhãn.",
     },
   },
   "bidlqa-val": {
     "qwen3-5-9b-28k": {
       verdict:
-        "EM 32,78% · char-F1 74,16% — 105/482 câu (21,8%) có F1≥0,8 nhưng EM=0, chỉ 2 câu F1=0. Lỗi chủ yếu là định dạng/độ dài câu trả lời, không phải không tìm được thông tin.",
-      causes: ["format", "reasoning"],
+        "EM 32,78% · char-F1 74,16%; 105/482 câu có char-F1≥0,8 nhưng EM=0. Đây là mức trùng lớn ở mặt chữ, chưa đủ chứng minh 105 câu có cùng ý nghĩa hoặc chỉ sai định dạng.",
+      causes: ["format", "robustness"],
       actions: [
-        "Thử ràng buộc trích span ngắn/nguyên văn (hoặc hạ token budget) — mục tiêu kéo 21,8% near-miss về EM.",
-        "Báo EM là cận dưới (file-gold chưa review 2 người); dùng F1 cho so sánh.",
-        "Đây là open-book: chạy thêm điều kiện closed-book nếu muốn tách “không biết” khỏi “không tìm thấy”.",
+        "Bổ sung kiểm tra ngữ nghĩa bằng người hoặc nhiều bộ chấm đã được hiệu chuẩn trước khi phân loại lỗi.",
+        "Thử ràng buộc trích nguyên văn và ghi `finish_reason`; không dùng char-F1 làm thước đo thay thế riêng cho EM.",
+        "Chạy thêm điều kiện không có ngữ cảnh nếu muốn tách kiến thức nền khỏi khả năng đọc ngữ cảnh.",
       ],
-      caveat: "Gold file-native, không phải reviewed-gold.",
+      caveat: "Gold lấy từ tệp nguồn, chưa qua hai người duyệt; điểm không nên được gọi là chấm ngữ nghĩa đầy đủ.",
     },
   },
   "bidlqa-test": {
     "qwen3-5-9b-28k": {
       verdict:
-        "EM 33,17% · char-F1 73,21% — lệch val chỉ 0,4 điểm EM → ổn định qua split unseen; 120/603 câu (19,9%) F1≥0,8 nhưng EM=0, cùng dạng lỗi định dạng như val.",
-      causes: ["format", "reasoning"],
+        "EM 33,17% · char-F1 73,21%, gần với val (32,78% · 74,16%). Hai điểm gần nhau là mô tả tương đồng trên một lần chạy, chưa đủ chứng minh tính ổn định hay khả năng tổng quát; 120/603 câu có char-F1≥0,8 nhưng EM=0.",
+      causes: ["format", "robustness"],
       actions: [
-        "Dùng cặp val/test làm kiểm tra độ ổn định của mọi cải tiến định dạng (một split để chọn, một để xác nhận).",
+        "Dùng val để chọn thay đổi và test để mô tả xác nhận, rồi lặp thêm nếu cần kết luận về tính ổn định.",
+        "Kiểm chứng ngữ nghĩa các câu có char-F1 cao trước khi quy chúng là lỗi định dạng.",
       ],
-      caveat: "Gold file-native; không so ngang model khác.",
+      caveat: "Gold lấy từ tệp nguồn; chưa có kiểm chứng hai người và chưa so ngang mô hình khác.",
     },
   },
   "vm14k-public-12488": {
     "qwen3-5-9b-28k": {
       verdict:
-        "64,79% (8.091/12.488), parse 100%, 0 blank; vượt baseline A (31,35%) +33,4 điểm. Giảm đơn điệu theo độ khó: Easy 67,19 → Medium 64,01 → Challenging 61,78 → Hard 56,67; câu 4 lựa chọn 64,16% (câu Đúng/Sai 69,84% kéo điểm lên).",
+        "Độ chính xác tổng 64,79% (8.091/12.488), cao hơn mốc A 31,35% là 33,4 điểm; 12.488/12.488 câu phân tích được. Điểm giảm theo nhãn độ khó (67,19 → 64,01 → 61,78 → 56,67), nhưng tổng hợp các câu 1–7 lựa chọn nên chỉ nên dùng như số mô tả, không phải kết luận về nguyên nhân.",
       causes: ["parametric", "reasoning"],
       actions: [
-        "Đối chiếu với V-Bench medicine của CÙNG model (38,57%, 189/490) chỉ theo “cùng/khác hướng”: VM14K 64,79 vs 38,57 là khác hướng mạnh — nghi do dạng câu/độ khó khác (nhiều câu Đúng/Sai, có câu 1 lựa chọn), KHÔNG được trừ hai phần trăm cho nhau.",
-        "Báo cáo bẻ theo difficulty (đã có trong manifest) để tách “khó” khỏi “không biết”; giữ 4-lựa-chọn làm số chính, nêu riêng Đúng/Sai.",
-        "Bản phát hành có caveat dữ liệu (1.377 dòng ≠ 4 lựa chọn, 34 dòng placeholder, ~6% trùng lặp) — muốn số sạch hơn thì pre-register bản lọc riêng (card mới), không tự ý sửa bộ raw.",
+        "Đối chiếu với V-Bench y khoa của cùng mô hình (38,57%, 189/490) chỉ như hai phép đo khác dạng; không trừ phần trăm của chúng cho nhau.",
+        "Báo riêng câu bốn lựa chọn làm số chính và Đúng/Sai làm lát cắt phụ; kèm cỡ mẫu, khoảng tin cậy và phân bố chuyên khoa.",
+        "Đăng ký trước một phiên bản đã lọc câu rỗng, câu giữ chỗ, số lựa chọn không hợp lệ và trùng lặp; không sửa bộ dữ liệu thô của MC-14b.",
       ],
-      caveat: "HF release lệch paper (12.488 vs 4k+10k+2k), không license; suite giới hạn ≤4B mà model 9B; đối chiếu V-Bench chỉ “cùng/khác hướng”.",
+      caveat: "Bản phát hành cục bộ lệch mô tả bài báo, có khoảng 6% trùng lặp và điều khoản cấp phép cần xác minh; mô hình 9B vượt giới hạn ≤4B.",
     },
   },
 };
@@ -259,7 +265,7 @@ const fmt = (v: unknown): string => (v == null ? "?" : String(v));
 function mcEvidence(rows: Row[]): string[] {
   const out: string[] = [];
   const overall = rows.find((r) => r.level === "overall");
-  if (overall) out.push(`Overall: ${fmt(overall.correct)}/${fmt(overall.n)} = ${fmt(overall.accuracy)}%`);
+  if (overall) out.push(`Tổng: ${fmt(overall.correct)}/${fmt(overall.n)} = ${fmt(overall.accuracy)}%`);
 
   const cats = rows.filter((r) => r.level === "category" && r.name !== "unknown");
   if (cats.length > 1) {
@@ -275,7 +281,7 @@ function mcEvidence(rows: Row[]): string[] {
     const pool = big.length ? big : subs;
     const sorted = [...pool].sort((a, b) => (num(a.accuracy) ?? 0) - (num(b.accuracy) ?? 0));
     out.push(
-      `Môn trũng nhất: ${sorted.slice(0, 3).map((r) => `${fmt(r.name)} ${fmt(r.accuracy)}% (n=${fmt(r.n)})`).join(" · ")}`,
+      `Môn thấp nhất: ${sorted.slice(0, 3).map((r) => `${fmt(r.name)} ${fmt(r.accuracy)}% (n=${fmt(r.n)})`).join(" · ")}`,
     );
     const below = subs.filter((r) => (num(r.accuracy) ?? 100) < 50).length;
     if (below) out.push(`${below}/${subs.length} môn dưới 50%`);
@@ -287,12 +293,12 @@ function readingEvidence(rows: Row[]): string[] {
   const out: string[] = [];
   const all = rows.find((r) => r.dataset === "ALL") ?? rows[0];
   if (all) {
-    out.push(`Tổng: EM ${fmt(all.em)}% · char-F1 ${fmt(all.char_f1)} (${fmt(all.em_count)}/${fmt(all.n)} exact)`);
+    out.push(`Tổng: EM ${fmt(all.em)}% · char-F1 ${fmt(all.char_f1)} (${fmt(all.em_count)}/${fmt(all.n)} khớp EM)`);
     const gap = (num(all.char_f1) ?? 0) - (num(all.em) ?? 0);
-    if (gap > 0) out.push(`Gap EM→F1: ${gap.toFixed(2)} điểm`);
+    if (gap > 0) out.push(`Chênh EM→char-F1: ${gap.toFixed(2)} điểm`);
   }
   for (const r of rows.filter((x) => x.dataset !== "ALL")) {
-    out.push(`${fmt(r.dataset)}: EM ${fmt(r.em)}% · F1 ${fmt(r.char_f1)} (n=${fmt(r.n)})`);
+    out.push(`${fmt(r.dataset)}: EM ${fmt(r.em)}% · char-F1 ${fmt(r.char_f1)} (n=${fmt(r.n)})`);
   }
   return out;
 }
@@ -301,7 +307,7 @@ function vbenchEvidence(valid: Row[], server: Row[]): string[] {
   const out: string[] = [];
   const total = server.reduce((a, r) => a + (num(r.total) ?? 0), 0);
   const correct = server.reduce((a, r) => a + (num(r.correct) ?? 0), 0);
-  if (total) out.push(`Micro (server rows): ${correct}/${total} = ${((100 * correct) / total).toFixed(2)}%`);
+  if (total) out.push(`Micro (máy chủ chấm): ${correct}/${total} = ${((100 * correct) / total).toFixed(2)}%`);
 
   const scored = server.filter((r) => num(r.score) != null);
   if (scored.length > 1) {
@@ -326,9 +332,9 @@ function vbenchEvidence(valid: Row[], server: Row[]): string[] {
       byTrack.set(t, cur);
     }
     const parts = [...byTrack.entries()].map(
-      ([t, v]) => `${t} ${v.valid}/${v.n} valid${v.n ? ` (${((100 * v.valid) / v.n).toFixed(1)}%)` : ""}`,
+      ([t, v]) => `${t} ${v.valid}/${v.n} hợp lệ${v.n ? ` (${((100 * v.valid) / v.n).toFixed(1)}%)` : ""}`,
     );
-    out.push(`Cú pháp: ${parts.join(" · ")}`);
+    out.push(`Độ hợp lệ cú pháp: ${parts.join(" · ")}`);
   }
   return out;
 }
@@ -342,7 +348,7 @@ export function deriveEvidence(summary: Record<string, unknown> | null): string[
   if (reading.length) out.push(...readingEvidence(reading));
   const server = asRows(summary.server_rows);
   if (server.length) out.push(...vbenchEvidence(asRows(summary.valid_rows), server));
-  if (!out.length) out.push(`Run không có bảng số precomputed (n=${fmt(summary.n)}; gold local withheld hoặc summary chưa migrate) — điểm chỉ đọc được từ nguồn chấm ngoài.`);
+  if (!out.length) out.push(`Lần chạy chưa có bảng số tổng hợp (n=${fmt(summary.n)}; gold nội bộ bị giữ kín hoặc bản tổng hợp chưa được chuyển sang) — điểm chỉ có thể đọc từ nguồn chấm bên ngoài.`);
   return out;
 }
 
