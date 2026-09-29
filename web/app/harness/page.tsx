@@ -9,6 +9,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { HARNESS_BLOB_HINT, readHarnessBlock, rowsForDataset, type HarnessBlock } from "@/lib/harness-block.ts";
 import ThemeToggle from "@/components/ThemeToggle.tsx";
+import TocNav, { type TocItem } from "@/components/TocNav.tsx";
 
 export const dynamic = "force-dynamic";
 
@@ -104,8 +105,41 @@ export default async function HarnessPage() {
   }
 
   const t = block.totals;
+  // Mục lục: chỉ những section thực sự có dữ liệu mới xuất hiện, theo đúng thứ
+  // tự render bên dưới — thêm/xóa section mà quên cập nhật ở đây là một chỗ
+  // lệch, nên mọi id đều được khai báo một lần ở đúng thẻ <section> của nó.
+  const toc: TocItem[] = [
+    { id: "so-sanh", label: "So sánh trực tiếp" },
+    { id: "nhan-xet", label: "Nhận xét" },
+  ];
+  for (const ds of DATASET_ORDER) {
+    const rows = rowsForDataset(block, ds);
+    if (rows.length) toc.push({ id: `tap-${ds}`, label: rows[0].dataset_label.split(" (")[0] });
+  }
+  toc.push({ id: "chi-phi", label: "Chi phí & kiểm định" });
+  toc.push({ id: "toc-do", label: "Tốc độ & token" });
+  if (block.secondary_metrics?.length) toc.push({ id: "metric-phu", label: "Metric phụ" });
+  if (block.repeatability?.length) toc.push({ id: "lap-lai", label: "Lặp lại" });
+  toc.push({ id: "thuat-ngu", label: "Thuật ngữ" });
+  toc.push({ id: "gioi-han", label: "Giới hạn khi trích" });
   return (
-    <main className="mx-auto max-w-[1100px] px-6 py-12">
+    <div className="mx-auto flex max-w-[1360px] items-start gap-6 px-6 py-12">
+      <aside className="hidden w-52 shrink-0 lg:block">
+        <TocNav items={toc} />
+      </aside>
+      <main className="min-w-0 max-w-[1060px] flex-1">
+      <details className="mb-6 rounded-lg border border-hair bg-card p-3 lg:hidden">
+        <summary className="cursor-pointer text-[13px] font-semibold">Mục lục</summary>
+        <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+          {toc.map((it) => (
+            <li key={it.id}>
+              <a href={`#${it.id}`} className="text-[12.5px] text-ink-2 underline-offset-2 hover:text-ink hover:underline">
+                {it.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-[24px] font-semibold">{block.benchmark_name}</h1>
         <ThemeToggle />
@@ -124,7 +158,7 @@ export default async function HarnessPage() {
         <b>Cách chặn:</b> {block.leak.fix} · <b>Guard:</b> {block.leak.guard}
       </div>
 
-      <section className="mt-6 rounded-lg border border-hair bg-card p-5">
+      <section id="so-sanh" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card p-5">
         <h2 className="text-[16px] font-semibold">So sánh trực tiếp: không dùng harness ⟷ dùng harness</h2>
         <p className="mt-1 text-[12.5px] text-ink-2">
           Cùng một model và cùng một prompt; chỉ khác ở chỗ có đưa câu hỏi qua tiến trình agent của{" "}
@@ -144,7 +178,8 @@ export default async function HarnessPage() {
           </thead>
           <tbody>
             {block.insight.comparison.map((c) => (
-              <tr key={c.dataset} className="border-b border-hair/60">
+              <tr key={`${c.model}/${c.dataset}`} className="border-b border-hair/60">
+                <td className="py-1.5 pr-2 text-ink-2">{c.model}</td>
                 <td className="py-1.5 pr-2">{c.dataset_label}</td>
                 <td className="py-1.5 pr-2 font-mono text-ink-2">{c.metric}</td>
                 <td className="py-1.5 pr-2 font-mono">{c.n}</td>
@@ -161,13 +196,21 @@ export default async function HarnessPage() {
           </tbody>
         </table>
         <p className="mt-2 text-[12.5px] text-ink-2">
-          Ở mọi tập đã đo, đưa câu hỏi qua agent đều làm giảm điểm. Mức giảm nhỏ nhất (
-          {block.insight.comparison[block.insight.comparison.length - 1]?.delta.toFixed(2)}) nằm trên
-          tập lớn nhất, nên nó đáng tin hơn các con số trên tập nhỏ.
+          Mỗi dòng là so trong <strong>một model</strong>: cùng model ở cả hai cột, chỉ khác
+          việc câu hỏi có đi qua tiến trình agent hay không. Dấu của Δ không cố định giữa các
+          model — đó là kết quả của phép so, không phải tiêu chí xếp hạng.{" "}
+          {block.insight.comparison.some((c) => c.metric === "agreement") && (
+            <>
+              Dòng <span className="font-mono">agreement</span> KHÔNG phải điểm: đó là tỉ lệ câu
+              trả lời mà agent cho <em>giống hệt</em> lời gọi trực tiếp trên cùng câu hỏi, nên nó
+              đo mức agent làm đổi đáp án chứ không đo chất lượng — V-Bench chấm điểm ở máy chủ, ta
+              không có vàng cục bộ.
+            </>
+          )}
         </p>
       </section>
 
-      <section className="mt-6 rounded-lg border border-hair bg-card p-5">
+      <section id="nhan-xet" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card p-5">
         <h2 className="text-[16px] font-semibold">Nhận xét — đọc kết quả này thành gì?</h2>
         <p className="mt-2 text-[14px] font-medium leading-relaxed">{block.insight.verdict}</p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -206,14 +249,27 @@ export default async function HarnessPage() {
       {DATASET_ORDER.map((ds) => {
         const rows = rowsForDataset(block, ds);
         if (!rows.length) return null;
-        const base = rows.find((r) => r.role === "baseline");
+        // Một tập có thể chứa hai model — mỗi model là một phép so riêng, nên mỗi
+        // model có tiêu đề và mốc arm A của chính nó. Trộn chung một bảng sẽ làm
+        // con số arm A của model này đội đầu bảng của model kia.
+        const models = [...new Set(rows.map((r) => r.model ?? ""))];
         return (
-          <section key={ds} className="mt-8">
-            <h2 className="text-[16px] font-semibold">
-              {rows[0].dataset_label}
-              {base ? <span className="ml-2 text-[13px] font-normal text-ink-2">arm A = {base.arm_b.toFixed(2)}%</span> : null}
-            </h2>
-            <table className="mt-2 w-full border-collapse text-[13px]">
+          <section key={ds} id={`tap-${ds}`} className="mt-8 scroll-mt-6">
+            <h2 className="text-[16px] font-semibold">{rows[0].dataset_label}</h2>
+            {models.map((m) => {
+              const mrows = rows.filter((r) => (r.model ?? "") === m);
+              const base = mrows.find((r) => r.role === "baseline");
+              return (
+                <div key={m} className="mt-2.5">
+                  <h3 className="text-[13.5px] font-semibold">
+                    {m || "—"}
+                    {base ? (
+                      <span className="ml-2 text-[12.5px] font-normal text-ink-2">
+                        arm A = {base.arm_b.toFixed(2)}%
+                      </span>
+                    ) : null}
+                  </h3>
+                  <table className="mt-1.5 w-full border-collapse text-[13px]">
               <thead>
                 <tr className="border-b border-hair text-left text-ink-2">
                   <th className="py-1.5 pr-2 font-medium">Arm</th>
@@ -228,7 +284,7 @@ export default async function HarnessPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {mrows.map((r) => (
                   <tr key={`${r.arm}-${r.dataset}`} className="border-b border-hair/60">
                     <td className="py-1.5 pr-2">{r.label}</td>
                     <td className="py-1.5 pr-2 font-mono">{r.n}</td>
@@ -264,11 +320,14 @@ export default async function HarnessPage() {
                 ))}
               </tbody>
             </table>
+                </div>
+              );
+            })}
           </section>
         );
       })}
 
-      <section className="mt-10">
+      <section id="chi-phi" className="mt-10 scroll-mt-6">
         <h2 className="text-[16px] font-semibold">Chi phí & kiểm định hiệu lực (gộp mọi tập)</h2>
         <table className="mt-2 w-full border-collapse text-[13px]">
           <thead>
@@ -305,7 +364,7 @@ export default async function HarnessPage() {
         </p>
       </section>
 
-      <section className="mt-10">
+      <section id="toc-do" className="mt-10 scroll-mt-6">
         <h2 className="text-[16px] font-semibold">
           Tốc độ &amp; token phát sinh — cặp trực tiếp <span className="font-normal text-ink-2">vs</span>{" "}
           cùng item trong omp
@@ -382,7 +441,7 @@ export default async function HarnessPage() {
       ) : null}
 
       {block.secondary_metrics?.length ? (
-        <section className="mt-10">
+        <section id="metric-phu" className="mt-10 scroll-mt-6">
           <h2 className="text-[16px] font-semibold">
             Metric phụ — EM nguyên văn vs EM sau khi cắt vỏ
           </h2>
@@ -435,7 +494,7 @@ export default async function HarnessPage() {
       ) : null}
 
       {block.repeatability?.length ? (
-        <section className="mt-10">
+        <section id="lap-lai" className="mt-10 scroll-mt-6">
           <h2 className="text-[16px] font-semibold">Lặp lại — nhiễu chạy-đến-chạy là mức sàn của mọi kết luận</h2>
           <p className="mt-1 text-[12.5px] text-ink-2">
             Cùng một điều kiện, chạy lại nhiều lần. <code>spread</code> = độ biến thiên của chính ô đó
@@ -508,7 +567,7 @@ export default async function HarnessPage() {
         </section>
       ) : null}
 
-      <section className="mt-10">
+      <section id="thuat-ngu" className="mt-10 scroll-mt-6">
         <h2 className="text-[16px] font-semibold">Thuật ngữ</h2>
         <p className="mt-1 text-[12.5px] text-ink-2">
           Các thuật ngữ chuyên ngành được giữ nguyên tiếng Anh trong phần nhận xét và trong bảng biểu,
@@ -528,7 +587,7 @@ export default async function HarnessPage() {
         </dl>
       </section>
 
-      <section className="mt-10">
+      <section id="gioi-han" className="mt-10 scroll-mt-6">
         <h2 className="text-[16px] font-semibold">Giới hạn phải nói khi trích</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] leading-relaxed text-ink-2">
           {block.caveats.map((c) => (
@@ -545,6 +604,7 @@ export default async function HarnessPage() {
           (bảng điểm chính) · bản offline: <code className="font-mono">harness_report.html</code>
         </p>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }

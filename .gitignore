@@ -71,3 +71,12 @@ web/.contract-test.ts
 
 # Clean-scaffold probe dir (APPEND_SYSTEM shadowing test)
 .omp-clean/
+
+# MiMo harness arm (opencode zen go) — agent dir for the model replication
+.omp-mimo/
+
+# Capture-only agent dir for the MiMo scaffold capture
+.omp-mimo-cap/
+
+# Measured MiMo agent dir whose provider points at the localhost pinning proxy
+.omp-mimo-pinned/
