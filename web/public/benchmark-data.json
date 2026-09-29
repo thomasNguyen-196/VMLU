@@ -4670,8 +4670,8 @@
         "role": "harness",
         "arm_a": 100.0,
         "delta": -22.39,
-        "ci95_low": -23.4,
-        "ci95_high": -20.91,
+        "ci95_low": -23.62,
+        "ci95_high": -21.13,
         "mcnemar_p": "",
         "both": 3214,
         "a_only": "",
@@ -5255,8 +5255,8 @@
         "arm_a": 100.0,
         "arm_b": 77.61,
         "delta": -22.39,
-        "ci95_low": -23.4,
-        "ci95_high": -20.91,
+        "ci95_low": -23.62,
+        "ci95_high": -21.13,
         "mcnemar_p": ""
       },
       {
@@ -5293,16 +5293,16 @@
       }
     ],
     "insight": {
-      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 -22.39…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/2 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
+      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/2 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
       "claims": [
         {
           "id": "penalty:MiMo V2.5",
           "title": "MiMo V2.5: đi qua tiến trình agent KHÔNG làm giảm điểm",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch có Δ từ -22.39 đến +7.00 điểm trên 5 tập (V-Bench MC 12 domain, ViBidLQA val, legal-MC, legal-NLI, reading-400), tức không tìm thấy khoản phạt nào ở đây. Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong 5 phép so sánh đó, 2 phép có khoảng tin cậy 95% loại trừ 0; 3 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch có Δ từ +0.00 đến +7.00 điểm trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400), tức không tìm thấy khoản phạt nào ở đây. Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong 4 phép so sánh đó, 1 phép có khoảng tin cậy 95% loại trừ 0; 3 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
-              "value": "-22.39"
+              "value": "+0.00"
             },
             {
               "label": "Δ lớn nhất",
@@ -5310,7 +5310,7 @@
             },
             {
               "label": "CI 95% loại trừ 0",
-              "value": "2/5"
+              "value": "1/4"
             },
             {
               "label": "tập nhỏ nhất",
@@ -5344,7 +5344,7 @@
         {
           "id": "model_dependent",
           "title": "Scaffold không có một giá riêng: dấu của hiệu ứng đổi theo model",
-          "body": "Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: MiMo V2.5 dao động -22.39…+7.00 điểm; Qwen3.5-9B-28K dao động -22.25…-5.60 điểm. Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, không phải chi phí của việc đi qua một tiến trình agent. Trên 1/2 model, scaffold thậm chí còn tăng điểm. Hai model còn khác nhau ở chỗ có suy luận hay không, nên đây là so hai condition chứ không phải so thứ hạng model.",
+          "body": "Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: MiMo V2.5 dao động +0.00…+7.00 điểm; Qwen3.5-9B-28K dao động -22.25…-5.60 điểm. Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, không phải chi phí của việc đi qua một tiến trình agent. Trên 1/2 model, scaffold thậm chí còn tăng điểm. Hai model còn khác nhau ở chỗ có suy luận hay không, nên đây là so hai condition chứ không phải so thứ hạng model.",
           "evidence": [
             {
               "label": "MiMo V2.5: Δ cao nhất",
@@ -5356,7 +5356,7 @@
             },
             {
               "label": "MiMo V2.5: Δ thấp nhất",
-              "value": "-22.39đ"
+              "value": "+0.00đ"
             },
             {
               "label": "Qwen3.5-9B-28K: Δ thấp nhất",

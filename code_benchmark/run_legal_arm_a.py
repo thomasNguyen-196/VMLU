@@ -109,6 +109,10 @@ def load_checkpoint(path: Path) -> dict[str, dict]:
         rid = str(r["id"])
         if rid:
             out[rid] = {c: r.get(c, "") for c in FINAL_COLS}
+            # Rehydrate the one numeric column: read_csv_checked hands back strings,
+            # and a resumed row mixed into `final` broke `sum(r["correct"] …)` with
+            # a str+int TypeError after the file was already written.
+            out[rid]["correct"] = int(r.get("correct") or 0)
     return out
 
 
@@ -151,7 +155,6 @@ def main() -> None:
             done = load_checkpoint(latest)
             print(f"resumed {len(done)} answers from {latest}")
 
-    rows: list[dict] = []
     remaining = [it for it in items if it["item_id"] not in done]
     print(f"remaining {len(remaining)}/{len(items)}")
 
@@ -169,15 +172,22 @@ def main() -> None:
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             futures = {pool.submit(one, it): it for it in remaining}
             for i, fut in enumerate(as_completed(futures), start=1):
-                rows.append(fut.result())
-                if i % 25 == 0 or i == len(remaining):
-                    with lock:
+                row = fut.result()
+                with lock:
+                    # `done` is CUMULATIVE — resumed rows plus this leg's — so the
+                    # newest checkpoint is always the union of everything answered.
+                    # Writing only this leg's rows made a second --resume lose the
+                    # first leg: find_latest_checkpoint picks the highest count, and
+                    # after a resume that file held fewer answers than the one it
+                    # replaced. The reading/MC runners both write the union.
+                    done[str(row["id"])] = row
+                    if i % 25 == 0 or i == len(remaining):
                         write_csv_atomic(
-                            result_folder / checkpoint_name(slug, i + len(done), ckpt_prefix),
-                            rows, FINAL_COLS)
+                            result_folder / checkpoint_name(slug, len(done), ckpt_prefix),
+                            list(done.values()), FINAL_COLS)
         print(f"inference {time.time() - start:.1f}s")
 
-    by_id = {str(r["id"]): r for r in rows} | dict(done)
+    by_id = dict(done)
     final = [by_id[it["item_id"]] for it in items if it["item_id"] in by_id]
     if len(final) != len(items):
         missing = [it["item_id"] for it in items if it["item_id"] not in by_id]

@@ -220,19 +220,31 @@ def arm_metrics(folder: Path, dataset: str, spec: dict, slug: str,
         if not arm_a_slug:
             return None
         # Arm A's letters live in ARM A's folder, not this arm's: a harness arm has
-        # no vbench_result_* checkpoint of its own, only a ledger.
-        a = _vbench_mc_letters(RESULTS_DIR / arm_a_slug, arm_a_slug, harness_arm=False)
+        # no vbench_result_* checkpoint of its own, only a ledger. `folder.parent`
+        # (not the module's RESULTS_DIR) keeps a caller's --results-dir honored.
+        a = _vbench_mc_letters(folder.parent / arm_a_slug, arm_a_slug, harness_arm=False)
         if not a:
             return None
-        b = _vbench_mc_letters(folder, slug, harness_arm=True) or {}
-        shared = [i for i in a if i in b] if b else list(a)
+        b = _vbench_mc_letters(folder, slug, harness_arm=True)
+        if not b:
+            # Only the DIRECT arm may fall back to self-agreement: it agrees with
+            # itself by construction, and that 100 is the reference its model's
+            # harness row is read against. A harness arm with no ledger is not a
+            # 100 — it is an unfinished run, so return None and let build_ladder's
+            # declared-coverage guard abort, instead of displaying a perfect score
+            # that no answer stands behind.
+            if slug != arm_a_slug:
+                return None
+            b = None
+        shared = list(a) if b is None else [i for i in a if i in b]
         if not shared:
             return None
         # Two EMPTY answers are not agreement: an empty cell is not an answer, so
         # it must count against the arm that produced it. 9 of the 4.141 rows are
         # blank on both sides here, and counting them as agreeing inflated the
         # recompute by 0.22 points against the compare row.
-        same = sum(1 for i in shared if b and a[i] and b[i] and a[i] == b[i]) if b else len(shared)
+        same = (len(shared) if b is None
+                else sum(1 for i in shared if a[i] and b[i] and a[i] == b[i]))
         n = len(shared)
         return {"n": n, "metric": "agreement", "score": round(100.0 * same / n, 2),
                 "correct": same, "blanks": n - same, "char_f1": None,
@@ -549,6 +561,11 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         if r["role"] != "harness" or r["arm"] not in CLEAN_ARMS:
             continue
         if r["dataset"] == "vbench_agentic":     # validity, not accuracy: never mixed in
+            continue
+        # Agreement ("did the agent change the answer?") is not a score either, so
+        # it must not stretch a range the sentence calls "điểm" (MC-30). The row
+        # still appears in the comparison table, where its own note reads it.
+        if r["metric"] == "agreement":
             continue
         clean_by_model.setdefault(r.get("model", ""), []).append(r)
     claims: list[dict] = []

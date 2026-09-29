@@ -2000,8 +2000,85 @@ class TestHarnessDashboard(unittest.TestCase):
             self.assertEqual(cost["completion_tokens"], 10)
             self.assertEqual(cost["datasets"], 2)
 
-    def test_stripped_answer_peels_the_wrapper_without_fixing_anything(self):
-        # SECONDARY metric only: the headline EM stays on the verbatim reply
+    def _write_vbench_mc_checkpoint(self, root: Path, slug: str,
+                                    letters: dict[str, str]) -> None:
+        """The direct arm's V-Bench MC checkpoint, where _vbench_mc_letters reads it."""
+        folder = root / slug
+        folder.mkdir(parents=True, exist_ok=True)
+        with open(folder / f"vbench_result_1_{slug}.csv", "w", newline="",
+                  encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["id", "answer"])
+            w.writeheader()
+            for iid, letter in letters.items():
+                w.writerow({"id": iid, "answer": letter})
+
+    def test_vbench_mc_harness_arm_without_a_ledger_is_not_a_perfect_score(self):
+        # A harness arm that declares vbench_mc but has no ledger is an unfinished
+        # run. The ONLY arm allowed to score 100 by self-agreement is the direct
+        # arm; the harness side must return None so build_ladder's declared-
+        # coverage guard aborts instead of showing a perfect agreement nobody made.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_vbench_mc_checkpoint(root, "A", {"1": "A", "2": "B"})
+            (root / "H").mkdir()
+            self.assertIsNone(dash.arm_metrics(root / "H", "vbench_mc",
+                                               dash.ARM_A["vbench_mc"], "H", arm_a_slug="A"))
+
+    def test_vbench_mc_direct_arm_still_agrees_with_itself(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_vbench_mc_checkpoint(root, "A", {"1": "A", "2": "", "3": "B"})
+            own = dash.arm_metrics(root / "A", "vbench_mc", dash.ARM_A["vbench_mc"], "A",
+                                   arm_a_slug="A")
+            assert own is not None
+            self.assertEqual((own["n"], own["score"], own["blanks"]), (3, 100.0, 0))
+
+    def test_vbench_mc_reads_arm_a_from_the_same_results_root(self):
+        # The module's RESULTS_DIR points at the real repo (no fixture slug "A"
+        # there). A caller's --results-dir must be the only root consulted, or the
+        # agreement number silently comes from a different directory.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_vbench_mc_checkpoint(root, "A", {"1": "A", "2": "B"})
+            h = root / "H"
+            h.mkdir()
+            with open(h / "harness_ledger_vbench_mc_H.csv", "w", newline="",
+                      encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["item_id", "answer"])
+                w.writeheader()
+                w.writerow({"item_id": "1", "answer": "A"})
+                w.writerow({"item_id": "2", "answer": "A"})
+            own = dash.arm_metrics(h, "vbench_mc", dash.ARM_A["vbench_mc"], "H",
+                                   arm_a_slug="A")
+            assert own is not None
+            self.assertEqual((own["n"], own["score"]), (2, 50.0))
+
+    def test_insight_never_mixes_agreement_into_the_score_range(self):
+        # V-Bench MC's agreement delta is "the answer changed", not "the answer got
+        # worse": the verdict and the penalty claims talk about "điểm", so the row
+        # must stay out of them (it still lives in the comparison table).
+        def row(model, arm, dataset, label, metric, delta, lo, hi):
+            return {"role": "harness", "arm": arm, "arm_slug": f"{arm}_{model}",
+                    "model": model, "dataset": dataset, "dataset_label": label,
+                    "metric": metric, "n": 400, "delta": delta,
+                    "ci95_low": lo, "ci95_high": hi}
+
+        ladder = [
+            row("M1", "H5", "reading400", "reading-400 (EM)", "EM", 7.0, 3.5, 10.5),
+            row("M1", "H5", "vbench_mc",
+                "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+                "agreement", -22.39, -23.4, -20.91),
+            row("M2", "M6", "reading400", "reading-400 (EM)", "EM", -22.25, -25.0, -19.0),
+        ]
+        ins = dash.insight(ladder, [], [], [])
+        blob = ins["verdict"] + " " + " ".join(c["body"] for c in ins["claims"])
+        self.assertNotIn("22.39", blob)
+        penalty = next(c for c in ins["claims"] if c["id"] == "penalty:M1")
+        ev = {e["label"]: e["value"] for e in penalty["evidence"]}
+        self.assertEqual(ev["Δ nhỏ nhất"], "+7.00")
+        self.assertIn("trên 1 tập", penalty["body"])
+
+    def test_stripped_answer_peels_the_wrapper_without_fixing_anything(self):        # SECONDARY metric only: the headline EM stays on the verbatim reply
         self.assertEqual(dash.stripped_answer("**1916**\n\n> Câu hỏi: ...\n> Trả lời: 1916"),
                          "1916")
         self.assertEqual(dash.stripped_answer("**Trả lời:** tổng hợp hạt nhân và phân rã"),
@@ -2342,6 +2419,59 @@ class TestLegalArmA(unittest.TestCase):
         src = Path("code_benchmark/run_legal_arm_a.py").read_text(encoding="utf-8")
         self.assertIn(".smoke", src)   # --limit renames the output
 
+    def test_resume_checkpoints_carry_the_resumed_rows_forward(self):
+        """A checkpoint written after a --resume must hold the UNION of answers.
+
+        find_latest_checkpoint picks the HIGHEST count, so if a resumed leg wrote
+        only its own rows, the file it leaves behind is smaller than the one it
+        replaced — and the next --resume loses the first leg. The reading and MC
+        runners write the cumulative union; this producer must not be the odd one.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            res = root / "res"
+            folder = res / "test-model"
+            folder.mkdir(parents=True)
+            with open(folder / "raw_result_legal_mc_1_test-model.csv", "w", newline="",
+                      encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=legal_arm_a.FINAL_COLS)
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "question": "q", "prompt": "p",
+                            "raw_response": "A", "answer": "A", "gold_answer": "A",
+                            "correct": 1})
+            items = [{"item_id": f"LG-{i:04d}", "question": "q", "prompt": "p", "gold": "A"}
+                     for i in range(1, 6)]
+            writes: list[tuple[Path, list[dict]]] = []
+
+            def capture(path, rows, cols):
+                writes.append((Path(path), [dict(r) for r in rows]))
+
+            with unittest.mock.patch.object(legal_arm_a, "RESULTS_DIR", res), \
+                    unittest.mock.patch.object(legal_arm_a, "LOGS_DIR", root / "logs"), \
+                    unittest.mock.patch.object(legal_arm_a, "resolve_endpoint",
+                                               lambda a: ("http://x/v1", "k", "test-model")), \
+                    unittest.mock.patch.object(legal_arm_a, "build_client", lambda *a: object()), \
+                    unittest.mock.patch.object(legal_arm_a, "verify_credentials", lambda *a: None), \
+                    unittest.mock.patch.object(legal_arm_a, "load", lambda d: items), \
+                    unittest.mock.patch.object(legal_arm_a, "assert_prompt_parity", lambda *a: None), \
+                    unittest.mock.patch.object(legal_arm_a, "setup_logging", lambda p: None), \
+                    unittest.mock.patch.object(legal_arm_a, "call_model_with_retry",
+                                               lambda **kw: "A"), \
+                    unittest.mock.patch.object(legal_arm_a, "write_csv_atomic", capture), \
+                    unittest.mock.patch("sys.argv", ["run_legal_arm_a", "--dataset", "legal_mc",
+                                                     "--limit", "5", "--resume"]):
+                legal_arm_a.main()
+
+            checkpoints = [(p, r) for p, r in writes if "raw_result_legal_mc" in p.name]
+            self.assertTrue(checkpoints, "không có checkpoint nào được ghi")
+            name, rows = checkpoints[-1]
+            self.assertEqual(name.name, "raw_result_legal_mc_5_test-model.csv")
+            self.assertEqual(len(rows), 5)      # 1 resumed + 4 new — the union
+            self.assertIn("LG-0001", {r["id"] for r in rows})
+            # and the resumed row's `correct` is an int again, or the final
+            # accuracy sum raises str+int after the file has been written
+            self.assertTrue(all(isinstance(r["correct"], int) for r in rows))
+
 
 class TestAgreementCI(unittest.TestCase):
     """The V-Bench MC agreement CI — a scale bug that shipped because no arm had
@@ -2364,6 +2494,17 @@ class TestAgreementCI(unittest.TestCase):
     def test_perfect_agreement_has_an_empty_interval_at_zero(self):
         lo, hi = harness._agreement_ci([1] * 50)
         self.assertEqual((lo, hi), (0.0, 0.0))
+
+    def test_blank_vs_blank_is_not_agreement_in_the_ci(self):
+        # The CI must be built from the SAME predicate as the printed rate: an
+        # empty answer is not an answer, so a blank-both row is a disagreement.
+        a = {"1": "A", "2": "", "3": "B", "4": ""}
+        b = {"1": "A", "2": "", "3": "C", "4": "B"}
+        shared = list(a)
+        self.assertEqual(harness._agreement_flags(a, b, shared), [1, 0, 0, 0])
+        lo, hi = harness._agreement_ci(harness._agreement_flags(a, b, shared))
+        self.assertLessEqual(lo, -75.0)     # the point delta: 1/4 agreed
+        self.assertLessEqual(-75.0, hi)
 
 
 class TestHarnessRegistry(unittest.TestCase):
