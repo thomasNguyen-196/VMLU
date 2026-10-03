@@ -84,6 +84,50 @@ export interface HarnessSpeedRow {
   note: string;
 }
 
+/** One stratum cut of a paired comparison (1.2): the same predicate as the
+ *  ALL row, restricted to one stratum. Small-n groups keep their wide CIs —
+ *  the interval speaks, hiding them would be editorializing. */
+export interface HarnessBreakdownGroup {
+  group: string;
+  n: number;
+  arm_a: number;
+  arm_b: number;
+  delta: number;
+  ci95_low: number;
+  ci95_high: number;
+  mcnemar_p: string;
+}
+
+export interface HarnessBreakdown {
+  arm: string;
+  arm_slug: string;
+  label: string;
+  model: string;
+  dataset: string;
+  dataset_label: string;
+  metric: string;
+  groups: HarnessBreakdownGroup[];
+}
+
+/** Partial argument credit per agentic arm (1.3): required-arg fill rate and
+ *  supplied-arg precision beside the 0/1 validity the headline uses. Both
+ *  rates are micro-averaged with their denominators shown. */
+export interface HarnessArgCredit {
+  arm: string;
+  arm_slug: string;
+  label: string;
+  model: string;
+  n_items: number;
+  n_attempted: number;
+  n_required_slots: number;
+  n_required_ok: number;
+  required_fill_rate: number;
+  n_supplied: number;
+  n_supplied_ok: number;
+  arg_precision: number;
+  n_unparseable: number;
+}
+
 /** SECONDARY attribution metric: EM on the verbatim reply vs EM on the same
  *  reply with the harness's wrapper peeled off. Never replaces the headline EM. */
 export interface HarnessSecondaryRow {
@@ -149,6 +193,11 @@ export interface HarnessComparisonRow {
   no_harness: number;
   with_harness: number;
   delta: number;
+  /** Số câu trống/unparseable mỗi phía (1.1) — chỉ có nghĩa với metric
+   *  accuracy/EM. Optional để blob cũ vẫn đọc được; khi có phải là số
+   *  nguyên ≥ 0. */
+  a_blanks?: number;
+  b_blanks?: number;
 }
 
 export interface HarnessInsight {
@@ -172,6 +221,12 @@ export interface HarnessBlock {
   speed: HarnessSpeedRow[];
   secondary_metrics: HarnessSecondaryRow[];
   repeatability: HarnessRepeatRow[];
+  /** Per-stratum paired cuts (1.2). Optional like secondary_metrics: an older
+   *  block predates it, but when present every group must add up. */
+  breakdown?: HarnessBreakdown[];
+  /** Partial argument credit (1.3). Optional; when present the rates must
+   *  match their fractions. */
+  arg_credit?: HarnessArgCredit[];
   insight: HarnessInsight;
   totals: {
     items_harness: number;
@@ -275,6 +330,46 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
       }
     }
   }
+  // `breakdown` is OPTIONAL (an older block may predate it) but when present
+  // every group must be arithmetically coherent with its headline row.
+  if (b.breakdown !== undefined) {
+    if (!Array.isArray(b.breakdown)) fail("block .harness .breakdown không phải mảng");
+    for (const d of b.breakdown) {
+      if (!d.arm || !d.dataset || !Array.isArray(d.groups) || !d.groups.length) {
+        fail(`dòng .breakdown không hợp lệ: ${JSON.stringify(d).slice(0, 120)}`);
+      }
+      for (const g of d.groups) {
+        if (!g.group || !Number.isInteger(g.n) || g.n <= 0) {
+          fail(`${d.arm}/${d.dataset}: nhóm không hợp lệ (${JSON.stringify(g).slice(0, 80)})`);
+        }
+        if (Math.abs(g.delta - (g.arm_b - g.arm_a)) > 0.02) {
+          fail(`${d.arm}/${d.dataset}/${g.group}: delta (${g.delta}) ≠ arm_b − arm_a`);
+        }
+        if (g.ci95_low > g.ci95_high) {
+          fail(`${d.arm}/${d.dataset}/${g.group}: CI đảo ngược (${g.ci95_low} > ${g.ci95_high})`);
+        }
+      }
+    }
+  }
+  // `arg_credit` is OPTIONAL but when present the two rates must match their
+  // fractions, and attempted + unparseable must equal n_items.
+  if (b.arg_credit !== undefined) {
+    if (!Array.isArray(b.arg_credit)) fail("block .harness .arg_credit không phải mảng");
+    for (const a of b.arg_credit) {
+      if (!a.arm || !Number.isInteger(a.n_items) || a.n_items <= 0) {
+        fail(`dòng .arg_credit không hợp lệ: ${JSON.stringify(a).slice(0, 120)}`);
+      }
+      if (a.n_attempted + a.n_unparseable !== a.n_items) {
+        fail(`${a.arm}: attempted (${a.n_attempted}) + unparseable (${a.n_unparseable}) ≠ n_items (${a.n_items})`);
+      }
+      if (a.n_required_slots > 0 && Math.abs(a.required_fill_rate - (100 * a.n_required_ok) / a.n_required_slots) > 0.02) {
+        fail(`${a.arm}: required_fill_rate (${a.required_fill_rate}) ≠ 100·ok/slots`);
+      }
+      if (a.n_supplied > 0 && Math.abs(a.arg_precision - (100 * a.n_supplied_ok) / a.n_supplied) > 0.02) {
+        fail(`${a.arm}: arg_precision (${a.arg_precision}) ≠ 100·ok/supplied`);
+      }
+    }
+  }
   // The insight layer is the page's actual answer, so an empty one is a broken
   // page, not a cosmetic gap.
   if (!b.insight || !Array.isArray(b.insight.claims) || !b.insight.claims.length) {
@@ -306,6 +401,12 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
     }
     if (Math.abs(c.delta - (c.with_harness - c.no_harness)) > 0.02) {
       fail(`${c.dataset}: delta (${c.delta}) ≠ with_harness − no_harness`);
+    }
+    for (const k of ["a_blanks", "b_blanks"] as const) {
+      const v = c[k];
+      if (v !== undefined && (!Number.isInteger(v) || v < 0)) {
+        fail(`${c.dataset}: ${k} = ${v} phải là số nguyên ≥ 0`);
+      }
     }
   }
   // `repeatability` is required once present in the schema: a table that omits

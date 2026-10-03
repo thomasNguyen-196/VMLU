@@ -76,6 +76,19 @@ def read_agent_token(agent_dir: Path) -> str:
     raise SystemExit(f"Error: no *_API_KEY in {env}")
 
 
+def check_upstream(url: str, allow_http: bool) -> str:
+    """Fail-fast on the upstream scheme. https always passes; plain http only
+    with the explicit opt-in, which exists for provider-documented LAN endpoints
+    (e.g. a gateway that only serves plain HTTP inside a VPN tunnel — the token
+    then travels inside the tunnel's encryption, never the open internet)."""
+    if url.startswith("https://"):
+        return url.rstrip("/")
+    if allow_http and url.startswith("http://"):
+        return url.rstrip("/")
+    raise SystemExit(f"Error: --upstream must be https (or pass "
+                     f"--allow-http-upstream for a LAN endpoint), got {url}")
+
+
 class Handler(BaseHTTPRequestHandler):
     token = ""  # nosec B105 — class-level default, never a literal secret
     out: Path | None = None
@@ -216,6 +229,10 @@ def main() -> None:
     ap.add_argument("--upstream", default=DEFAULT_UPSTREAM,
                     help="https base URL of the gateway the arm is measured against "
                          f"(default: {DEFAULT_UPSTREAM})")
+    ap.add_argument("--allow-http-upstream", action="store_true",
+                    help="permit a plain-http --upstream: only for a "
+                         "provider-documented LAN endpoint reached inside a VPN "
+                         "tunnel (default: refuse, fail fast)")
     ap.add_argument("--header", action="append", default=[],
                     metavar="NAME:VALUE",
                     help="extra request header the gateway needs; repeatable")
@@ -235,8 +252,6 @@ def main() -> None:
         except json.JSONDecodeError as e:
             raise SystemExit(f"Error: --pin {key.strip()}: {raw!r} is not JSON: {e}") from e
 
-    if not args.upstream.startswith("https://"):
-        raise SystemExit(f"Error: --upstream must be https, got {args.upstream}")
     extra = {}
     for item in args.header:
         name, sep, value = item.partition(":")
@@ -246,7 +261,7 @@ def main() -> None:
 
     Handler.token = read_agent_token(args.agent_dir.resolve())
     Handler.out = args.out
-    Handler.upstream = args.upstream.rstrip("/")
+    Handler.upstream = check_upstream(args.upstream, args.allow_http_upstream)
     Handler.extra_headers = extra
     Handler.pin = pin
     args.out.parent.mkdir(parents=True, exist_ok=True)

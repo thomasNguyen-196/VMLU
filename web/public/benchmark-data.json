@@ -3895,13 +3895,13 @@
   },
   "harness": {
     "benchmark_name": "Harness arm — mỗi model so với chính nó (omp vs gọi API trực tiếp)",
-    "date": "2026-09-26 → 2026-09-29",
-    "model_id": "Qwen3.5-9B-28K · MiMo V2.5",
-    "endpoint": "https://llmapi.iec-uit.com/v1 (Qwen) · https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go)",
+    "date": "2026-09-26 → 2026-10-02",
+    "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
+    "endpoint": "https://llmapi.iec-uit.com/v1 (Qwen 28K, lúc còn sống) · https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go) · http://llmapi.iec/v1 (Qwen 65K, nội bộ qua VPN)",
     "harness": "omp (Oh My Pi) v18.2.7",
-    "condition": "prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo: temperature 0 + reasoning tắt được GHIM BẰNG PROXY trong suốt vì omp không gửi được hai field đó; sandbox đặt ngoài repo nên không có AGENTS.md nạp vào (MC-29/MC-30).",
-    "measurement_card": "MC-15…MC-30",
-    "measurement_card_hash": "989d4ed19a96bbe84d00a57ded04a31a290dd92145e562e73959601253f9964c",
+    "condition": "prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo và Qwen-65K: temperature 0 (+ reasoning tắt cho MiMo) được GHIM BẰNG PROXY trong suốt vì omp không gửi được các field đó; sandbox đặt ngoài repo nên không có AGENTS.md nạp vào (MC-29/MC-30).",
+    "measurement_card": "MC-15…MC-32",
+    "measurement_card_hash": "e5c230b13510815793c63d032ea445c8d643bd9355a9a936e72e9edb7ab7055b",
     "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
     "ladder": [
       {
@@ -4701,6 +4701,294 @@
         "a_only": 2,
         "b_only": 7,
         "neither": 7
+      },
+      {
+        "arm": "A3",
+        "arm_slug": "Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)",
+        "card": null,
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "metric": "EM",
+        "n": 400,
+        "arm_b": 72.25,
+        "char_f1": 83.45,
+        "blanks": 0,
+        "role": "baseline",
+        "arm_a": 72.25,
+        "delta": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "",
+        "both": "",
+        "a_only": "",
+        "b_only": "",
+        "neither": ""
+      },
+      {
+        "arm": "A3",
+        "arm_slug": "Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)",
+        "card": null,
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "metric": "accuracy",
+        "n": 146,
+        "arm_b": 89.04,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "baseline",
+        "arm_a": 89.04,
+        "delta": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "",
+        "both": "",
+        "a_only": "",
+        "b_only": "",
+        "neither": ""
+      },
+      {
+        "arm": "A3",
+        "arm_slug": "Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)",
+        "card": null,
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_nli",
+        "dataset_label": "legal-NLI (accuracy)",
+        "metric": "accuracy",
+        "n": 150,
+        "arm_b": 92.0,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "baseline",
+        "arm_a": 92.0,
+        "delta": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "",
+        "both": "",
+        "a_only": "",
+        "b_only": "",
+        "neither": ""
+      },
+      {
+        "arm": "A3",
+        "arm_slug": "Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)",
+        "card": null,
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "bidlqa_val",
+        "dataset_label": "ViBidLQA val (EM)",
+        "metric": "EM",
+        "n": 482,
+        "arm_b": 29.25,
+        "char_f1": 73.49,
+        "blanks": 0,
+        "role": "baseline",
+        "arm_a": 29.25,
+        "delta": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "",
+        "both": "",
+        "a_only": "",
+        "b_only": "",
+        "neither": ""
+      },
+      {
+        "arm": "A3",
+        "arm_slug": "Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)",
+        "card": null,
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "vbench_agentic",
+        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "metric": "valid_rate",
+        "n": 1000,
+        "arm_b": 98.6,
+        "char_f1": null,
+        "blanks": 14,
+        "role": "baseline",
+        "arm_a": 98.6,
+        "delta": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "",
+        "both": "",
+        "a_only": "",
+        "b_only": "",
+        "neither": ""
+      },
+      {
+        "arm": "A3",
+        "arm_slug": "Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)",
+        "card": null,
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "vbench_mc",
+        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "metric": "agreement",
+        "n": 4141,
+        "arm_b": 100.0,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "baseline",
+        "arm_a": 100.0,
+        "delta": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "",
+        "both": "",
+        "a_only": "",
+        "b_only": "",
+        "neither": ""
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "metric": "EM",
+        "n": 400,
+        "arm_b": 57.75,
+        "char_f1": 76.43,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 72.25,
+        "delta": -14.5,
+        "ci95_low": -19.25,
+        "ci95_high": -10.0,
+        "mcnemar_p": "6.424e-09",
+        "both": 209,
+        "a_only": 80,
+        "b_only": 22,
+        "neither": 89
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "metric": "accuracy",
+        "n": 146,
+        "arm_b": 73.97,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 89.04,
+        "delta": -15.07,
+        "ci95_low": -21.92,
+        "ci95_high": -8.9,
+        "mcnemar_p": "1.049e-05",
+        "both": 106,
+        "a_only": 24,
+        "b_only": 2,
+        "neither": 14
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_nli",
+        "dataset_label": "legal-NLI (accuracy)",
+        "metric": "accuracy",
+        "n": 150,
+        "arm_b": 88.0,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 92.0,
+        "delta": -4.0,
+        "ci95_low": -8.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "0.1094",
+        "both": 130,
+        "a_only": 8,
+        "b_only": 2,
+        "neither": 10
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "bidlqa_val",
+        "dataset_label": "ViBidLQA val (EM)",
+        "metric": "EM",
+        "n": 482,
+        "arm_b": 23.24,
+        "char_f1": 68.61,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 29.25,
+        "delta": -6.02,
+        "ci95_low": -9.54,
+        "ci95_high": -2.7,
+        "mcnemar_p": "0.0009143",
+        "both": 90,
+        "a_only": 51,
+        "b_only": 22,
+        "neither": 319
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "vbench_agentic",
+        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "metric": "valid_rate",
+        "n": 1000,
+        "arm_b": 48.5,
+        "char_f1": null,
+        "blanks": 515,
+        "role": "harness",
+        "arm_a": 98.6,
+        "delta": -50.1,
+        "ci95_low": -53.3,
+        "ci95_high": -47.0,
+        "mcnemar_p": "1.855e-141",
+        "both": 479,
+        "a_only": 507,
+        "b_only": 6,
+        "neither": 8
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "vbench_mc",
+        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "metric": "agreement",
+        "n": 4141,
+        "arm_b": 63.37,
+        "char_f1": null,
+        "blanks": 1517,
+        "role": "harness",
+        "arm_a": 100.0,
+        "delta": -36.63,
+        "ci95_low": -38.13,
+        "ci95_high": -35.16,
+        "mcnemar_p": "",
+        "both": 2624,
+        "a_only": "",
+        "b_only": "",
+        "neither": 1517
       }
     ],
     "secondary_metrics": [
@@ -4762,6 +5050,26 @@
         "n": 482,
         "em_verbatim": 43.98,
         "em_stripped": 43.98,
+        "wrapper_cost": 0.0
+      },
+      {
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "n": 400,
+        "em_verbatim": 57.75,
+        "em_stripped": 57.75,
+        "wrapper_cost": 0.0
+      },
+      {
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "dataset": "bidlqa_val",
+        "dataset_label": "ViBidLQA val (EM)",
+        "n": 482,
+        "em_verbatim": 23.24,
+        "em_stripped": 23.24,
         "wrapper_cost": 0.0
       }
     ],
@@ -5276,6 +5584,102 @@
         "mcnemar_p": "0.1797"
       },
       {
+        "cell": "ompT65_Qwen3_5-9B-65K",
+        "repeat": 1,
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "n": 146,
+        "arm_a": 89.04,
+        "arm_b": 73.97,
+        "delta": -15.07,
+        "ci95_low": -21.92,
+        "ci95_high": -8.9,
+        "mcnemar_p": "1.049e-05"
+      },
+      {
+        "cell": "ompT65_Qwen3_5-9B-65K",
+        "repeat": 1,
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "dataset": "legal_nli",
+        "dataset_label": "legal-NLI (accuracy)",
+        "n": 150,
+        "arm_a": 92.0,
+        "arm_b": 88.0,
+        "delta": -4.0,
+        "ci95_low": -8.0,
+        "ci95_high": 0.0,
+        "mcnemar_p": "0.1094"
+      },
+      {
+        "cell": "ompT65_Qwen3_5-9B-65K",
+        "repeat": 1,
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "n": 400,
+        "arm_a": 72.25,
+        "arm_b": 57.75,
+        "delta": -14.5,
+        "ci95_low": -19.25,
+        "ci95_high": -10.0,
+        "mcnemar_p": "6.424e-09"
+      },
+      {
+        "cell": "ompT65_Qwen3_5-9B-65K",
+        "repeat": 1,
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "dataset": "bidlqa_val",
+        "dataset_label": "ViBidLQA val (EM)",
+        "n": 482,
+        "arm_a": 29.25,
+        "arm_b": 23.24,
+        "delta": -6.02,
+        "ci95_low": -9.54,
+        "ci95_high": -2.7,
+        "mcnemar_p": "0.0009143"
+      },
+      {
+        "cell": "ompT65_Qwen3_5-9B-65K",
+        "repeat": 1,
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "dataset": "vbench_agentic",
+        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "n": 1000,
+        "arm_a": 98.6,
+        "arm_b": 48.5,
+        "delta": -50.1,
+        "ci95_low": -53.3,
+        "ci95_high": -47.0,
+        "mcnemar_p": "1.855e-141"
+      },
+      {
+        "cell": "ompT65_Qwen3_5-9B-65K",
+        "repeat": 1,
+        "arm": "T65",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "card": "MC-31/32",
+        "dataset": "vbench_mc",
+        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "n": 4141,
+        "arm_a": 100.0,
+        "arm_b": 63.37,
+        "delta": -36.63,
+        "ci95_low": -38.13,
+        "ci95_high": -35.16,
+        "mcnemar_p": ""
+      },
+      {
         "cell": "ompV1clean_Qwen3_5-9B-28K",
         "repeat": 1,
         "arm": "V1",
@@ -5292,8 +5696,848 @@
         "mcnemar_p": "2.98e-08"
       }
     ],
+    "breakdown": [
+      {
+        "arm": "H2",
+        "arm_slug": "ompH2_Qwen3_5-9B-28K",
+        "label": "omp: tool đầy đủ + system prompt của omp (có rò style)",
+        "model": "Qwen3.5-9B-28K",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "metric": "EM",
+        "groups": [
+          {
+            "group": "add_sub",
+            "n": 55,
+            "arm_a": 58.18,
+            "arm_b": 7.27,
+            "delta": -50.91,
+            "ci95_low": -63.64,
+            "ci95_high": -38.18,
+            "mcnemar_p": "7.451e-09"
+          },
+          {
+            "group": "comparison",
+            "n": 57,
+            "arm_a": 61.4,
+            "arm_b": 12.28,
+            "delta": -49.12,
+            "ci95_low": -63.16,
+            "ci95_high": -35.09,
+            "mcnemar_p": "5.774e-08"
+          },
+          {
+            "group": "count",
+            "n": 40,
+            "arm_a": 47.5,
+            "arm_b": 5.0,
+            "delta": -42.5,
+            "ci95_low": -60.0,
+            "ci95_high": -25.0,
+            "mcnemar_p": "7.629e-05"
+          },
+          {
+            "group": "long-direct",
+            "n": 46,
+            "arm_a": 97.83,
+            "arm_b": 39.13,
+            "delta": -58.7,
+            "ci95_low": -71.74,
+            "ci95_high": -43.48,
+            "mcnemar_p": "1.49e-08"
+          },
+          {
+            "group": "long-infer",
+            "n": 5,
+            "arm_a": 100.0,
+            "arm_b": 20.0,
+            "delta": -80.0,
+            "ci95_low": -100.0,
+            "ci95_high": -40.0,
+            "mcnemar_p": "0.125"
+          },
+          {
+            "group": "mid-direct",
+            "n": 47,
+            "arm_a": 97.87,
+            "arm_b": 42.55,
+            "delta": -55.32,
+            "ci95_low": -70.21,
+            "ci95_high": -40.43,
+            "mcnemar_p": "2.98e-08"
+          },
+          {
+            "group": "mid-infer",
+            "n": 5,
+            "arm_a": 80.0,
+            "arm_b": 40.0,
+            "delta": -40.0,
+            "ci95_low": -80.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.5"
+          },
+          {
+            "group": "other",
+            "n": 7,
+            "arm_a": 28.57,
+            "arm_b": 0.0,
+            "delta": -28.57,
+            "ci95_low": -57.14,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.5"
+          },
+          {
+            "group": "selection",
+            "n": 41,
+            "arm_a": 92.68,
+            "arm_b": 43.9,
+            "delta": -48.78,
+            "ci95_low": -65.85,
+            "ci95_high": -31.71,
+            "mcnemar_p": "1.097e-05"
+          },
+          {
+            "group": "short-direct",
+            "n": 92,
+            "arm_a": 95.65,
+            "arm_b": 38.04,
+            "delta": -57.61,
+            "ci95_low": -67.39,
+            "ci95_high": -47.83,
+            "mcnemar_p": "2.22e-16"
+          },
+          {
+            "group": "short-infer",
+            "n": 5,
+            "arm_a": 100.0,
+            "arm_b": 20.0,
+            "delta": -80.0,
+            "ci95_low": -100.0,
+            "ci95_high": -40.0,
+            "mcnemar_p": "0.125"
+          }
+        ]
+      },
+      {
+        "arm": "H5",
+        "arm_slug": "ompH5clean_Qwen3_5-9B-28K",
+        "label": "omp sạch: không tool + system prompt trung tính, HOME override",
+        "model": "Qwen3.5-9B-28K",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "metric": "EM",
+        "groups": [
+          {
+            "group": "add_sub",
+            "n": 55,
+            "arm_a": 58.18,
+            "arm_b": 34.55,
+            "delta": -23.64,
+            "ci95_low": -36.36,
+            "ci95_high": -12.73,
+            "mcnemar_p": "0.0009766"
+          },
+          {
+            "group": "comparison",
+            "n": 57,
+            "arm_a": 61.4,
+            "arm_b": 40.35,
+            "delta": -21.05,
+            "ci95_low": -35.09,
+            "ci95_high": -7.02,
+            "mcnemar_p": "0.007538"
+          },
+          {
+            "group": "count",
+            "n": 40,
+            "arm_a": 47.5,
+            "arm_b": 35.0,
+            "delta": -12.5,
+            "ci95_low": -27.5,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.1797"
+          },
+          {
+            "group": "long-direct",
+            "n": 46,
+            "arm_a": 97.83,
+            "arm_b": 76.09,
+            "delta": -21.74,
+            "ci95_low": -34.78,
+            "ci95_high": -10.87,
+            "mcnemar_p": "0.001953"
+          },
+          {
+            "group": "long-infer",
+            "n": 5,
+            "arm_a": 100.0,
+            "arm_b": 80.0,
+            "delta": -20.0,
+            "ci95_low": -60.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "1"
+          },
+          {
+            "group": "mid-direct",
+            "n": 47,
+            "arm_a": 97.87,
+            "arm_b": 70.21,
+            "delta": -27.66,
+            "ci95_low": -40.43,
+            "ci95_high": -14.89,
+            "mcnemar_p": "0.0002441"
+          },
+          {
+            "group": "mid-infer",
+            "n": 5,
+            "arm_a": 80.0,
+            "arm_b": 40.0,
+            "delta": -40.0,
+            "ci95_low": -80.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.5"
+          },
+          {
+            "group": "other",
+            "n": 7,
+            "arm_a": 28.57,
+            "arm_b": 0.0,
+            "delta": -28.57,
+            "ci95_low": -57.14,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.5"
+          },
+          {
+            "group": "selection",
+            "n": 41,
+            "arm_a": 92.68,
+            "arm_b": 78.05,
+            "delta": -14.63,
+            "ci95_low": -26.83,
+            "ci95_high": -2.44,
+            "mcnemar_p": "0.07031"
+          },
+          {
+            "group": "short-direct",
+            "n": 92,
+            "arm_a": 95.65,
+            "arm_b": 69.57,
+            "delta": -26.09,
+            "ci95_low": -35.87,
+            "ci95_high": -17.39,
+            "mcnemar_p": "8.047e-07"
+          },
+          {
+            "group": "short-infer",
+            "n": 5,
+            "arm_a": 100.0,
+            "arm_b": 80.0,
+            "delta": -20.0,
+            "ci95_low": -60.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "1"
+          }
+        ]
+      },
+      {
+        "arm": "M6",
+        "arm_slug": "ompM6clean_mimo-v2_5",
+        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "model": "MiMo V2.5",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "metric": "EM",
+        "groups": [
+          {
+            "group": "add_sub",
+            "n": 55,
+            "arm_a": 38.18,
+            "arm_b": 45.45,
+            "delta": 7.27,
+            "ci95_low": 0.0,
+            "ci95_high": 16.36,
+            "mcnemar_p": "0.2188"
+          },
+          {
+            "group": "comparison",
+            "n": 57,
+            "arm_a": 47.37,
+            "arm_b": 54.39,
+            "delta": 7.02,
+            "ci95_low": -1.75,
+            "ci95_high": 17.54,
+            "mcnemar_p": "0.2891"
+          },
+          {
+            "group": "count",
+            "n": 40,
+            "arm_a": 22.5,
+            "arm_b": 35.0,
+            "delta": 12.5,
+            "ci95_low": 0.0,
+            "ci95_high": 25.0,
+            "mcnemar_p": "0.125"
+          },
+          {
+            "group": "long-direct",
+            "n": 46,
+            "arm_a": 67.39,
+            "arm_b": 84.78,
+            "delta": 17.39,
+            "ci95_low": 4.35,
+            "ci95_high": 30.43,
+            "mcnemar_p": "0.03857"
+          },
+          {
+            "group": "long-infer",
+            "n": 5,
+            "arm_a": 40.0,
+            "arm_b": 40.0,
+            "delta": 0.0,
+            "ci95_low": 0.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "1"
+          },
+          {
+            "group": "mid-direct",
+            "n": 47,
+            "arm_a": 74.47,
+            "arm_b": 82.98,
+            "delta": 8.51,
+            "ci95_low": 0.0,
+            "ci95_high": 19.15,
+            "mcnemar_p": "0.2188"
+          },
+          {
+            "group": "mid-infer",
+            "n": 5,
+            "arm_a": 20.0,
+            "arm_b": 20.0,
+            "delta": 0.0,
+            "ci95_low": 0.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "1"
+          },
+          {
+            "group": "other",
+            "n": 7,
+            "arm_a": 42.86,
+            "arm_b": 42.86,
+            "delta": 0.0,
+            "ci95_low": 0.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "1"
+          },
+          {
+            "group": "selection",
+            "n": 41,
+            "arm_a": 70.73,
+            "arm_b": 75.61,
+            "delta": 4.88,
+            "ci95_low": -4.88,
+            "ci95_high": 14.63,
+            "mcnemar_p": "0.625"
+          },
+          {
+            "group": "short-direct",
+            "n": 92,
+            "arm_a": 78.26,
+            "arm_b": 79.35,
+            "delta": 1.09,
+            "ci95_low": -5.43,
+            "ci95_high": 7.61,
+            "mcnemar_p": "1"
+          },
+          {
+            "group": "short-infer",
+            "n": 5,
+            "arm_a": 60.0,
+            "arm_b": 60.0,
+            "delta": 0.0,
+            "ci95_low": -60.0,
+            "ci95_high": 60.0,
+            "mcnemar_p": "1"
+          }
+        ]
+      },
+      {
+        "arm": "M6",
+        "arm_slug": "ompM6clean_mimo-v2_5",
+        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "model": "MiMo V2.5",
+        "dataset": "vbench_mc",
+        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "metric": "agreement_with_arm_A",
+        "groups": [
+          {
+            "group": "chemistry",
+            "n": 334,
+            "arm_a": 100.0,
+            "arm_b": 72.75,
+            "delta": -27.25,
+            "ci95_low": -32.04,
+            "ci95_high": -22.46,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "computer_science",
+            "n": 188,
+            "arm_a": 100.0,
+            "arm_b": 90.96,
+            "delta": -9.04,
+            "ci95_low": -13.3,
+            "ci95_high": -5.32,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "culture",
+            "n": 217,
+            "arm_a": 100.0,
+            "arm_b": 74.65,
+            "delta": -25.35,
+            "ci95_low": -31.34,
+            "ci95_high": -19.82,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "dialect",
+            "n": 562,
+            "arm_a": 100.0,
+            "arm_b": 88.08,
+            "delta": -11.92,
+            "ci95_low": -14.77,
+            "ci95_high": -9.25,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "laws",
+            "n": 191,
+            "arm_a": 100.0,
+            "arm_b": 87.43,
+            "delta": -12.57,
+            "ci95_low": -17.28,
+            "ci95_high": -8.38,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "literature",
+            "n": 601,
+            "arm_a": 100.0,
+            "arm_b": 74.38,
+            "delta": -25.62,
+            "ci95_low": -29.12,
+            "ci95_high": -22.3,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "logics",
+            "n": 225,
+            "arm_a": 100.0,
+            "arm_b": 59.11,
+            "delta": -40.89,
+            "ci95_low": -47.56,
+            "ci95_high": -34.67,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "mathematics",
+            "n": 125,
+            "arm_a": 100.0,
+            "arm_b": 61.6,
+            "delta": -38.4,
+            "ci95_low": -47.2,
+            "ci95_high": -29.6,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "medicine",
+            "n": 490,
+            "arm_a": 100.0,
+            "arm_b": 72.65,
+            "delta": -27.35,
+            "ci95_low": -31.43,
+            "ci95_high": -23.27,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "philosophy",
+            "n": 263,
+            "arm_a": 100.0,
+            "arm_b": 90.49,
+            "delta": -9.51,
+            "ci95_low": -12.93,
+            "ci95_high": -6.08,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "physics",
+            "n": 147,
+            "arm_a": 100.0,
+            "arm_b": 69.39,
+            "delta": -30.61,
+            "ci95_low": -38.1,
+            "ci95_high": -23.13,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "psychology",
+            "n": 798,
+            "arm_a": 100.0,
+            "arm_b": 78.07,
+            "delta": -21.93,
+            "ci95_low": -24.81,
+            "ci95_high": -19.17,
+            "mcnemar_p": ""
+          }
+        ]
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "reading400",
+        "dataset_label": "reading-400 (EM)",
+        "metric": "EM",
+        "groups": [
+          {
+            "group": "add_sub",
+            "n": 55,
+            "arm_a": 43.64,
+            "arm_b": 41.82,
+            "delta": -1.82,
+            "ci95_low": -14.55,
+            "ci95_high": 10.91,
+            "mcnemar_p": "1"
+          },
+          {
+            "group": "comparison",
+            "n": 57,
+            "arm_a": 57.89,
+            "arm_b": 42.11,
+            "delta": -15.79,
+            "ci95_low": -28.07,
+            "ci95_high": -3.51,
+            "mcnemar_p": "0.03516"
+          },
+          {
+            "group": "count",
+            "n": 40,
+            "arm_a": 45.0,
+            "arm_b": 30.0,
+            "delta": -15.0,
+            "ci95_low": -30.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.1094"
+          },
+          {
+            "group": "long-direct",
+            "n": 46,
+            "arm_a": 86.96,
+            "arm_b": 67.39,
+            "delta": -19.57,
+            "ci95_low": -34.78,
+            "ci95_high": -4.35,
+            "mcnemar_p": "0.03516"
+          },
+          {
+            "group": "long-infer",
+            "n": 5,
+            "arm_a": 80.0,
+            "arm_b": 40.0,
+            "delta": -40.0,
+            "ci95_low": -80.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.5"
+          },
+          {
+            "group": "mid-direct",
+            "n": 47,
+            "arm_a": 93.62,
+            "arm_b": 72.34,
+            "delta": -21.28,
+            "ci95_low": -34.04,
+            "ci95_high": -10.64,
+            "mcnemar_p": "0.001953"
+          },
+          {
+            "group": "mid-infer",
+            "n": 5,
+            "arm_a": 80.0,
+            "arm_b": 40.0,
+            "delta": -40.0,
+            "ci95_low": -100.0,
+            "ci95_high": 40.0,
+            "mcnemar_p": "0.625"
+          },
+          {
+            "group": "other",
+            "n": 7,
+            "arm_a": 28.57,
+            "arm_b": 28.57,
+            "delta": 0.0,
+            "ci95_low": 0.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "1"
+          },
+          {
+            "group": "selection",
+            "n": 41,
+            "arm_a": 92.68,
+            "arm_b": 82.93,
+            "delta": -9.76,
+            "ci95_low": -21.95,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.2188"
+          },
+          {
+            "group": "short-direct",
+            "n": 92,
+            "arm_a": 84.78,
+            "arm_b": 70.65,
+            "delta": -14.13,
+            "ci95_low": -25.0,
+            "ci95_high": -4.35,
+            "mcnemar_p": "0.01463"
+          },
+          {
+            "group": "short-infer",
+            "n": 5,
+            "arm_a": 80.0,
+            "arm_b": 40.0,
+            "delta": -40.0,
+            "ci95_low": -80.0,
+            "ci95_high": 0.0,
+            "mcnemar_p": "0.5"
+          }
+        ]
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "vbench_mc",
+        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "metric": "agreement_with_arm_A",
+        "groups": [
+          {
+            "group": "chemistry",
+            "n": 334,
+            "arm_a": 100.0,
+            "arm_b": 65.57,
+            "delta": -34.43,
+            "ci95_low": -39.52,
+            "ci95_high": -29.64,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "computer_science",
+            "n": 188,
+            "arm_a": 100.0,
+            "arm_b": 70.21,
+            "delta": -29.79,
+            "ci95_low": -36.17,
+            "ci95_high": -23.4,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "culture",
+            "n": 217,
+            "arm_a": 100.0,
+            "arm_b": 55.76,
+            "delta": -44.24,
+            "ci95_low": -50.69,
+            "ci95_high": -37.79,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "dialect",
+            "n": 562,
+            "arm_a": 100.0,
+            "arm_b": 72.24,
+            "delta": -27.76,
+            "ci95_low": -31.49,
+            "ci95_high": -24.02,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "laws",
+            "n": 191,
+            "arm_a": 100.0,
+            "arm_b": 74.35,
+            "delta": -25.65,
+            "ci95_low": -31.94,
+            "ci95_high": -19.9,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "literature",
+            "n": 601,
+            "arm_a": 100.0,
+            "arm_b": 51.58,
+            "delta": -48.42,
+            "ci95_low": -52.41,
+            "ci95_high": -44.43,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "logics",
+            "n": 225,
+            "arm_a": 100.0,
+            "arm_b": 70.67,
+            "delta": -29.33,
+            "ci95_low": -35.56,
+            "ci95_high": -23.56,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "mathematics",
+            "n": 125,
+            "arm_a": 100.0,
+            "arm_b": 57.6,
+            "delta": -42.4,
+            "ci95_low": -51.2,
+            "ci95_high": -33.6,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "medicine",
+            "n": 490,
+            "arm_a": 100.0,
+            "arm_b": 58.98,
+            "delta": -41.02,
+            "ci95_low": -45.31,
+            "ci95_high": -36.73,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "philosophy",
+            "n": 263,
+            "arm_a": 100.0,
+            "arm_b": 70.34,
+            "delta": -29.66,
+            "ci95_low": -35.36,
+            "ci95_high": -23.95,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "physics",
+            "n": 147,
+            "arm_a": 100.0,
+            "arm_b": 69.39,
+            "delta": -30.61,
+            "ci95_low": -38.1,
+            "ci95_high": -23.13,
+            "mcnemar_p": ""
+          },
+          {
+            "group": "psychology",
+            "n": 798,
+            "arm_a": 100.0,
+            "arm_b": 61.03,
+            "delta": -38.97,
+            "ci95_low": -42.36,
+            "ci95_high": -35.59,
+            "mcnemar_p": ""
+          }
+        ]
+      }
+    ],
+    "arg_credit": [
+      {
+        "arm": "A",
+        "arm_slug": "Qwen3_5-9B-28K",
+        "label": "Gọi API trực tiếp (không harness)",
+        "model": "Qwen3.5-9B-28K",
+        "n_items": 1000,
+        "n_attempted": 986,
+        "n_required_slots": 4649,
+        "n_required_ok": 4648,
+        "required_fill_rate": 99.98,
+        "n_supplied": 5310,
+        "n_supplied_ok": 5309,
+        "arg_precision": 99.98,
+        "n_unparseable": 14
+      },
+      {
+        "arm": "V1",
+        "arm_slug": "ompV1clean_Qwen3_5-9B-28K",
+        "label": "omp sạch + tool menu đầy đủ, trên V-Bench function-calling (nơi scaffold *có thể* thắng)",
+        "model": "Qwen3.5-9B-28K",
+        "n_items": 1000,
+        "n_attempted": 987,
+        "n_required_slots": 4690,
+        "n_required_ok": 4672,
+        "required_fill_rate": 99.62,
+        "n_supplied": 5268,
+        "n_supplied_ok": 5250,
+        "arg_precision": 99.66,
+        "n_unparseable": 13
+      },
+      {
+        "arm": "A2",
+        "arm_slug": "mimo-v2_5",
+        "label": "MiMo V2.5: gọi API trực tiếp (không harness)",
+        "model": "MiMo V2.5",
+        "n_items": 1000,
+        "n_attempted": 995,
+        "n_required_slots": 4691,
+        "n_required_ok": 4688,
+        "required_fill_rate": 99.94,
+        "n_supplied": 5411,
+        "n_supplied_ok": 5408,
+        "arg_precision": 99.94,
+        "n_unparseable": 5
+      },
+      {
+        "arm": "M6",
+        "arm_slug": "ompM6clean_mimo-v2_5",
+        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "model": "MiMo V2.5",
+        "n_items": 1000,
+        "n_attempted": 1000,
+        "n_required_slots": 4696,
+        "n_required_ok": 4694,
+        "required_fill_rate": 99.96,
+        "n_supplied": 5424,
+        "n_supplied_ok": 5422,
+        "arg_precision": 99.96,
+        "n_unparseable": 0
+      },
+      {
+        "arm": "A3",
+        "arm_slug": "Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)",
+        "model": "Qwen3.5-9B-65K",
+        "n_items": 1000,
+        "n_attempted": 995,
+        "n_required_slots": 4711,
+        "n_required_ok": 4698,
+        "required_fill_rate": 99.72,
+        "n_supplied": 5384,
+        "n_supplied_ok": 5372,
+        "arg_precision": 99.78,
+        "n_unparseable": 5
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "model": "Qwen3.5-9B-65K",
+        "n_items": 1000,
+        "n_attempted": 504,
+        "n_required_slots": 2458,
+        "n_required_ok": 2434,
+        "required_fill_rate": 99.02,
+        "n_supplied": 2787,
+        "n_supplied_ok": 2727,
+        "arg_precision": 97.85,
+        "n_unparseable": 496
+      }
+    ],
     "insight": {
-      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/2 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
+      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm; Qwen3.5-9B-65K -15.07…-4.00 điểm. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/3 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
       "claims": [
         {
           "id": "penalty:MiMo V2.5",
@@ -5342,9 +6586,32 @@
           ]
         },
         {
+          "id": "penalty:Qwen3.5-9B-65K",
+          "title": "Qwen3.5-9B-65K: chi phí của việc đưa một prompt qua tiến trình agent",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong 4 phép so sánh đó, 3 phép có khoảng tin cậy 95% loại trừ 0; 1 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
+          "evidence": [
+            {
+              "label": "Δ nhỏ nhất",
+              "value": "-15.07"
+            },
+            {
+              "label": "Δ lớn nhất",
+              "value": "-4.00"
+            },
+            {
+              "label": "CI 95% loại trừ 0",
+              "value": "3/4"
+            },
+            {
+              "label": "tập nhỏ nhất",
+              "value": "n=146"
+            }
+          ]
+        },
+        {
           "id": "model_dependent",
           "title": "Scaffold không có một giá riêng: dấu của hiệu ứng đổi theo model",
-          "body": "Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: MiMo V2.5 dao động +0.00…+7.00 điểm; Qwen3.5-9B-28K dao động -22.25…-5.60 điểm. Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, không phải chi phí của việc đi qua một tiến trình agent. Trên 1/2 model, scaffold thậm chí còn tăng điểm. Hai model còn khác nhau ở chỗ có suy luận hay không, nên đây là so hai condition chứ không phải so thứ hạng model.",
+          "body": "Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: MiMo V2.5 dao động +0.00…+7.00 điểm; Qwen3.5-9B-28K dao động -22.25…-5.60 điểm; Qwen3.5-9B-65K dao động -15.07…-4.00 điểm. Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, không phải chi phí của việc đi qua một tiến trình agent. Trên 1/3 model, scaffold thậm chí còn tăng điểm. Các model còn khác nhau ở chỗ có suy luận hay không, nên đây là so các condition chứ không phải so thứ hạng model.",
           "evidence": [
             {
               "label": "MiMo V2.5: Δ cao nhất",
@@ -5355,12 +6622,20 @@
               "value": "-5.60đ"
             },
             {
+              "label": "Qwen3.5-9B-65K: Δ cao nhất",
+              "value": "-4.00đ"
+            },
+            {
               "label": "MiMo V2.5: Δ thấp nhất",
               "value": "+0.00đ"
             },
             {
               "label": "Qwen3.5-9B-28K: Δ thấp nhất",
               "value": "-22.25đ"
+            },
+            {
+              "label": "Qwen3.5-9B-65K: Δ thấp nhất",
+              "value": "-15.07đ"
             }
           ]
         },
@@ -5450,7 +6725,9 @@
           "n": 150,
           "no_harness": 94.0,
           "with_harness": 94.0,
-          "delta": 0.0
+          "delta": 0.0,
+          "a_blanks": 0,
+          "b_blanks": 0
         },
         {
           "model": "MiMo V2.5",
@@ -5460,7 +6737,9 @@
           "n": 482,
           "no_harness": 41.7,
           "with_harness": 43.98,
-          "delta": 2.28
+          "delta": 2.28,
+          "a_blanks": 0,
+          "b_blanks": 0
         },
         {
           "model": "MiMo V2.5",
@@ -5470,7 +6749,9 @@
           "n": 146,
           "no_harness": 90.41,
           "with_harness": 93.15,
-          "delta": 2.74
+          "delta": 2.74,
+          "a_blanks": 0,
+          "b_blanks": 0
         },
         {
           "model": "MiMo V2.5",
@@ -5480,7 +6761,9 @@
           "n": 400,
           "no_harness": 58.25,
           "with_harness": 65.25,
-          "delta": 7.0
+          "delta": 7.0,
+          "a_blanks": 0,
+          "b_blanks": 0
         },
         {
           "model": "MiMo V2.5",
@@ -5490,7 +6773,9 @@
           "n": 4141,
           "no_harness": 100.0,
           "with_harness": 77.61,
-          "delta": -22.39
+          "delta": -22.39,
+          "a_blanks": 0,
+          "b_blanks": 927
         },
         {
           "model": "Qwen3.5-9B-28K",
@@ -5500,7 +6785,9 @@
           "n": 400,
           "no_harness": 79.75,
           "with_harness": 57.5,
-          "delta": -22.25
+          "delta": -22.25,
+          "a_blanks": 0,
+          "b_blanks": 0
         },
         {
           "model": "Qwen3.5-9B-28K",
@@ -5510,7 +6797,9 @@
           "n": 146,
           "no_harness": 87.67,
           "with_harness": 69.18,
-          "delta": -18.49
+          "delta": -18.49,
+          "a_blanks": 0,
+          "b_blanks": 0
         },
         {
           "model": "Qwen3.5-9B-28K",
@@ -5520,7 +6809,9 @@
           "n": 150,
           "no_harness": 90.0,
           "with_harness": 78.67,
-          "delta": -11.33
+          "delta": -11.33,
+          "a_blanks": 0,
+          "b_blanks": 0
         },
         {
           "model": "Qwen3.5-9B-28K",
@@ -5530,7 +6821,9 @@
           "n": 1000,
           "no_harness": 39.7,
           "with_harness": 30.8,
-          "delta": -8.9
+          "delta": -8.9,
+          "a_blanks": 0,
+          "b_blanks": 26
         },
         {
           "model": "Qwen3.5-9B-28K",
@@ -5540,7 +6833,69 @@
           "n": 482,
           "no_harness": 32.78,
           "with_harness": 27.18,
-          "delta": -5.6
+          "delta": -5.6,
+          "a_blanks": 0,
+          "b_blanks": 0
+        },
+        {
+          "model": "Qwen3.5-9B-65K",
+          "dataset": "legal_mc",
+          "dataset_label": "legal-MC (accuracy)",
+          "metric": "accuracy",
+          "n": 146,
+          "no_harness": 89.04,
+          "with_harness": 73.97,
+          "delta": -15.07,
+          "a_blanks": 0,
+          "b_blanks": 0
+        },
+        {
+          "model": "Qwen3.5-9B-65K",
+          "dataset": "reading400",
+          "dataset_label": "reading-400 (EM)",
+          "metric": "EM",
+          "n": 400,
+          "no_harness": 72.25,
+          "with_harness": 57.75,
+          "delta": -14.5,
+          "a_blanks": 0,
+          "b_blanks": 0
+        },
+        {
+          "model": "Qwen3.5-9B-65K",
+          "dataset": "bidlqa_val",
+          "dataset_label": "ViBidLQA val (EM)",
+          "metric": "EM",
+          "n": 482,
+          "no_harness": 29.25,
+          "with_harness": 23.24,
+          "delta": -6.02,
+          "a_blanks": 0,
+          "b_blanks": 0
+        },
+        {
+          "model": "Qwen3.5-9B-65K",
+          "dataset": "legal_nli",
+          "dataset_label": "legal-NLI (accuracy)",
+          "metric": "accuracy",
+          "n": 150,
+          "no_harness": 92.0,
+          "with_harness": 88.0,
+          "delta": -4.0,
+          "a_blanks": 0,
+          "b_blanks": 0
+        },
+        {
+          "model": "Qwen3.5-9B-65K",
+          "dataset": "vbench_mc",
+          "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+          "metric": "agreement",
+          "n": 4141,
+          "no_harness": 100.0,
+          "with_harness": 63.37,
+          "delta": -36.63,
+          "a_blanks": 0,
+          "b_blanks": 1517
         }
       ]
     },
@@ -5731,6 +7086,23 @@
         "reported_input_tokens": 199101,
         "reported_cache_read": 897024,
         "completion_tokens": 292
+      },
+      {
+        "arm": "T65",
+        "arm_slug": "ompT65_Qwen3_5-9B-65K",
+        "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+        "model": "Qwen3.5-9B-65K",
+        "n": 6319,
+        "datasets": 7,
+        "wall_s_per_item": 26.76,
+        "turns_per_item": 1.49,
+        "failures": 664,
+        "tool_use_items": 509,
+        "net_attempt_items": 11,
+        "path_escape_items": 1,
+        "reported_input_tokens": 11736621,
+        "reported_cache_read": 113786879,
+        "completion_tokens": 591888
       }
     ],
     "speed": [
@@ -6056,11 +7428,11 @@
       }
     ],
     "totals": {
-      "items_harness": 10421,
-      "failures": 1,
-      "tool_use_items": 4,
-      "net_attempt_items": 7,
-      "path_escape_items": 3
+      "items_harness": 16740,
+      "failures": 665,
+      "tool_use_items": 513,
+      "net_attempt_items": 18,
+      "path_escape_items": 4
     },
     "leak": {
       "what": "~/.omp/agent/APPEND_SYSTEM.md lọt vào mọi arm dù đã đặt PI_CODING_AGENT_DIR; đó là luật trả lời 'verdict → why → the test → the rule' của máy",
@@ -6078,7 +7450,8 @@
       "Số arm A mang hash measurement card cũ; các card mới thêm sau khi chấm.",
       "MC-29: sandbox từng mặc định nằm TRONG repo, nên omp nạp toàn bộ AGENTS.md của chính repo này (27.501 ký tự, ~7k token) vào system prompt của MỌI item tới MC-28. Nhãn \"scaffold sạch\" của các arm cũ nghĩa là sạch persona/tool, không có nghĩa là sạch chỉ dẫn dự án. Ablation trên MiMo (cùng arm, khác vị trí sandbox): +7.003 token/câu, Δ +0,68 điểm — tốn tiền, không tốn điểm.",
       "omp KHÔNG gửi temperature và reasoning_effort (bắt bằng proxy; `options:` trong models.yml bị bỏ qua im lặng). Các card ghi \"temperature 0\" là đúng cho arm A nhưng SAI cho mọi arm B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
-      "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên cùng câu hỏi. Điểm V-Bench thật do máy chủ chấm; ta không có vàng cục bộ."
+      "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên cùng câu hỏi. Điểm V-Bench thật do máy chủ chấm; ta không có vàng cục bộ.",
+      "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, 2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi cổng ngoài sập cert."
     ],
     "sources": {
       "runner": "code_benchmark/run_harness_eval.py (run | compare | speed)",

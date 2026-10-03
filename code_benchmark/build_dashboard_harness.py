@@ -81,18 +81,29 @@ ARMS = [
     ("ompM6inrepo_mimo-v2.5", "ompM6inrepo_mimo-v2_5", "M6L",
      "MiMo V2.5: đúng arm M6 nhưng sandbox đặt TRONG repo, nên `AGENTS.md` của chính repo "
      "này bị nạp vào mọi item (ablation của MC-29)", "MC-30"),
+    # ── model thứ ba (MC-31/MC-32): Qwen3.5-9B-65K, node duy nhất còn chạy ──
+    ("A3_direct", "Qwen3_5-9B-65K", "A3",
+     "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)", None),
+    ("ompT65_Qwen3_5-9B-65K", "ompT65_Qwen3_5-9B-65K", "T65",
+     "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
+     "MC-31/32"),
 ]
+# Short ids of the direct-prompt baselines (one per model). A harness arm is
+# scored against its OWN arm A, so a new model must extend this tuple — the two
+# `in ("A", "A2")` checks below both read it.
+BASELINE_SHORTS = ("A", "A2", "A3")
 # Which MODEL each arm measures. A ladder row is only comparable inside one model:
 # the whole point of the arm is that model, prompt and scorer are held fixed, so a
 # delta that spans two models is not a delta at all.
 ARM_MODEL = {short: "Qwen3.5-9B-28K" for _k, _s, short, _l, _c in ARMS[:10]}
 ARM_MODEL.update({"A2": "MiMo V2.5", "M6": "MiMo V2.5", "M6L": "MiMo V2.5"})
+ARM_MODEL.update({"A3": "Qwen3.5-9B-65K", "T65": "Qwen3.5-9B-65K"})
 # The arms that carry the "clean scaffold" condition. An explicit set, not a
 # substring test on the slug: M6L is clean in every way EXCEPT that its sandbox sits
 # inside the repo, and a substring match would silently fold it into the headline.
-CLEAN_ARMS = {"H5", "H6", "H7", "H8", "V1", "M6"}
+CLEAN_ARMS = {"H5", "H6", "H7", "H8", "V1", "M6", "T65"}
 # The one clean arm that represents its model in the with/without table.
-REPRESENTATIVE = {"Qwen3.5-9B-28K": "H5", "MiMo V2.5": "M6"}
+REPRESENTATIVE = {"Qwen3.5-9B-28K": "H5", "MiMo V2.5": "M6", "Qwen3.5-9B-65K": "T65"}
 DATASETS = ["reading400", "legal_mc", "legal_nli", "bidlqa_val", "vbench_agentic"]
 # Per-arm coverage = what each arm ACTUALLY ran, declared. A dataset is only
 # claimed by an arm that has a paired compare for it; an arm that does not list a
@@ -116,6 +127,8 @@ ARM_DATASETS = {
     "mimo-v2_5": _ALL + ["vbench_mc"],
     "ompM6clean_mimo-v2_5": _ALL + ["vbench_mc"],
     "ompM6inrepo_mimo-v2_5": _MC,
+    "Qwen3_5-9B-65K": _ALL + ["vbench_mc"],
+    "ompT65_Qwen3_5-9B-65K": _ALL + ["vbench_mc"],
 }
 
 
@@ -331,12 +344,12 @@ def build_ladder(results_dir: Path, arms: list = ARMS) -> tuple[list[dict], list
     # The direct baseline of each model, so a harness arm can be scored against
     # its OWN arm A — never against another model's.
     baseline_slug = {ARM_MODEL[short]: slug for _k, slug, short, _l, _c in arms
-                     if short in ("A", "A2")}
+                     if short in BASELINE_SHORTS}
     for _key, slug, short, label, card in arms:
         folder = results_dir / slug
         if not folder.exists():
             continue
-        baseline = short in ("A", "A2")
+        baseline = short in BASELINE_SHORTS
         model = ARM_MODEL[short]
         for dataset in datasets_for(slug):
             own = arm_metrics(folder, dataset, ARM_A[dataset], slug,
@@ -431,6 +444,90 @@ def stripped_answer(raw: str) -> str:
         if line:
             return line
     return ""
+
+
+def arg_credit(results_dir: Path, arms: list = ARMS) -> list[dict]:
+    """Partial argument credit per arm (1.3): required-arg fill rate and
+    supplied-arg precision beside the 0/1 validity the headline uses. Both
+    rates are micro-averaged with their denominators shown — an unparseable
+    reply contributes to neither rate and is counted openly as unparseable.
+    Arms without a credit file (never ran the agentic track) are skipped."""
+    out = []
+    for _key, slug, short, label, _card in arms:
+        paths = sorted((results_dir / slug).glob(f"vbench_arg_credit_{slug}.csv"))
+        if not paths:
+            continue
+        rows = read_csv_checked(paths[-1], required={
+            "n_items", "n_attempted", "n_required_slots", "n_required_ok",
+            "required_fill_rate", "n_supplied", "n_supplied_ok",
+            "arg_precision", "n_unparseable"}, label=f"arg_credit {slug}")
+        if len(rows) != 1:
+            raise SystemExit(f"Error: {paths[-1]} has {len(rows)} rows, want exactly 1")
+        r = rows[0]
+        n_items, n_attempted, n_unp = int(r["n_items"]), int(r["n_attempted"]), int(r["n_unparseable"])
+        if n_attempted + n_unp != n_items:
+            raise SystemExit(f"Error: {slug}: attempted {n_attempted} + unparseable {n_unp} "
+                             f"!= n_items {n_items}")
+        n_req, n_req_ok = int(r["n_required_slots"]), int(r["n_required_ok"])
+        if n_req and abs(f2(r["required_fill_rate"]) - 100.0 * n_req_ok / n_req) > 0.02:
+            raise SystemExit(f"Error: {slug}: required_fill_rate {r['required_fill_rate']} "
+                             f"!= 100*{n_req_ok}/{n_req}")
+        n_sup, n_sup_ok = int(r["n_supplied"]), int(r["n_supplied_ok"])
+        if n_sup and abs(f2(r["arg_precision"]) - 100.0 * n_sup_ok / n_sup) > 0.02:
+            raise SystemExit(f"Error: {slug}: arg_precision {r['arg_precision']} "
+                             f"!= 100*{n_sup_ok}/{n_sup}")
+        out.append({"arm": short, "arm_slug": slug, "label": label,
+                    "model": ARM_MODEL[short], "n_items": n_items,
+                    "n_attempted": n_attempted, "n_required_slots": n_req,
+                    "n_required_ok": n_req_ok,
+                    "required_fill_rate": f2(r["required_fill_rate"]),
+                    "n_supplied": n_sup, "n_supplied_ok": n_sup_ok,
+                    "arg_precision": f2(r["arg_precision"]), "n_unparseable": n_unp})
+    return out
+
+
+def breakdown(results_dir: Path, arms: list = ARMS) -> list[dict]:
+    """Per-group paired deltas (1.2): the same predicates as the ALL row, cut by
+    stratum. A group row is only meaningful beside its headline — the sum of
+    group n must equal the compare ALL n, or the cut silently lost items.
+    Arms/datasets without a breakdown file contribute nothing (their stratum
+    is constant: legal, bidlqa_val, vbench_agentic)."""
+    out = []
+    for _key, slug, short, label, _card in arms:
+        folder = results_dir / slug
+        if not folder.exists():
+            continue
+        for dataset in datasets_for(slug):
+            paths = sorted(folder.glob(f"harness_breakdown_{dataset}_vsA_{slug}.csv"))
+            if not paths:
+                continue
+            rows = read_csv_checked(
+                paths[-1],
+                required={"metric", "group", "n", "arm_a", "arm_b", "delta",
+                          "ci95_low", "ci95_high", "mcnemar_p"},
+                label=f"breakdown {slug}/{dataset}")
+            groups = []
+            for r in rows:
+                lo, hi = f2(r["ci95_low"]), f2(r["ci95_high"])
+                if lo > hi:
+                    raise SystemExit(f"Error: {slug}/{dataset}/{r['group']}: "
+                                     f"CI inverted ({lo} > {hi})")
+                if abs(f2(r["delta"]) - (f2(r["arm_b"]) - f2(r["arm_a"]))) > 0.02:
+                    raise SystemExit(f"Error: {slug}/{dataset}/{r['group']}: "
+                                     f"delta {r['delta']} != arm_b - arm_a")
+                groups.append({"group": r["group"], "n": int(r["n"]),
+                               "arm_a": f2(r["arm_a"]), "arm_b": f2(r["arm_b"]),
+                               "delta": f2(r["delta"]), "ci95_low": lo,
+                               "ci95_high": hi, "mcnemar_p": r["mcnemar_p"]})
+            cmp_row = read_compare(folder, dataset)
+            if cmp_row is not None and sum(g["n"] for g in groups) != int(cmp_row["n"]):
+                raise SystemExit(f"Error: {slug}/{dataset}: breakdown groups sum to "
+                                 f"{sum(g['n'] for g in groups)} but compare n={cmp_row['n']}")
+            out.append({"arm": short, "arm_slug": slug, "label": label,
+                        "model": ARM_MODEL[short], "dataset": dataset,
+                        "dataset_label": DATASET_LABEL[dataset],
+                        "metric": rows[0]["metric"], "groups": groups})
+    return out
 
 
 def secondary_metrics(results_dir: Path, arms: list = ARMS) -> list[dict]:
@@ -619,7 +716,7 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
                      + (f"Trên {len(flips)}/{len(clean_by_model)} model, scaffold thậm chí còn tăng điểm."
                         if flips else
                         "Không model nào được scaffold giúp.")
-                     + " Hai model còn khác nhau ở chỗ có suy luận hay không, nên đây là so hai "
+                     + " Các model còn khác nhau ở chỗ có suy luận hay không, nên đây là so các "
                        "condition chứ không phải so thứ hạng model."),
             "evidence": [{"label": f"{m}: Δ cao nhất", "value": f"{worst[m]:+.2f}đ"}
                          for m in sorted(clean_by_model)]
@@ -761,6 +858,9 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
             "dataset": r["dataset"], "dataset_label": r["dataset_label"], "metric": r["metric"],
             "n": r["n"], "no_harness": round(r["arm_a"], 2), "with_harness": round(arm_b["arm_b"], 2),
             "delta": round(arm_b["delta"], 2),
+            # Trống/unparseable của mỗi phía (1.1): số chữ cái trích được.
+            # Ngữ nghĩa theo metric — accuracy/EM mới hiện ở trang.
+            "a_blanks": r.get("blanks", ""), "b_blanks": arm_b.get("blanks", ""),
         })
     for model in models_seen:
         vb_pair = [r for r in ladder if r["dataset"] == "vbench_agentic" and r.get("model") == model]
@@ -774,6 +874,7 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
             "metric": "accuracy", "n": vb["n"],
             "no_harness": round(vb_a["server_score"], 2), "with_harness": round(vb["server_score"], 2),
             "delta": round(vb["server_score"] - vb_a["server_score"], 2),
+            "a_blanks": vb_a.get("blanks", ""), "b_blanks": vb.get("blanks", ""),
         })
     # Never mixed across models, and an AGREEMENT row never sorts as if it were a
     # quality loss: agreement measures "did the agent change the answer", not
@@ -830,6 +931,8 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
                 speed_rows.append({**row, "arm": short, "label": label})
     secondary = secondary_metrics(results_dir, arms)
     reps = repeatability(results_dir, arms)
+    groups = breakdown(results_dir, arms)
+    credit = arg_credit(results_dir, arms)
     totals = {
         "items_harness": sum(c["n"] for c in costs),
         "failures": sum(c["failures"] for c in costs),
@@ -840,22 +943,25 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
     return {
         "benchmark_name": ("Harness arm — mỗi model so với chính nó "
                                "(omp vs gọi API trực tiếp)"),
-        "date": "2026-09-26 → 2026-09-29",
-        "model_id": "Qwen3.5-9B-28K · MiMo V2.5",
-        "endpoint": ("https://llmapi.iec-uit.com/v1 (Qwen) · "
-                     "https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go)"),
+        "date": "2026-09-26 → 2026-10-02",
+        "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
+        "endpoint": ("https://llmapi.iec-uit.com/v1 (Qwen 28K, lúc còn sống) · "
+                     "https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go) · "
+                     "http://llmapi.iec/v1 (Qwen 65K, nội bộ qua VPN)"),
         "harness": "omp (Oh My Pi) v18.2.7",
         "condition": ("prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; "
-                      "khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo: "
-                      "temperature 0 + reasoning tắt được GHIM BẰNG PROXY trong suốt vì omp không gửi "
-                      "được hai field đó; sandbox đặt ngoài repo nên không có AGENTS.md nạp vào "
-                      "(MC-29/MC-30)."),
-        "measurement_card": "MC-15…MC-30",
+                      "khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo và "
+                      "Qwen-65K: temperature 0 (+ reasoning tắt cho MiMo) được GHIM BẰNG PROXY trong "
+                      "suốt vì omp không gửi được các field đó; sandbox đặt ngoài repo nên không có "
+                      "AGENTS.md nạp vào (MC-29/MC-30)."),
+        "measurement_card": "MC-15…MC-32",
         "measurement_card_hash": measurement_card_hash(),
         "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
         "ladder": ladder,
         "secondary_metrics": secondary,
         "repeatability": reps,
+        "breakdown": groups,
+        "arg_credit": credit,
         "insight": insight(ladder, secondary, reps, speed_rows),
         "cost": costs,
         "speed": speed_rows,
@@ -890,6 +996,9 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
             "B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
             "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên "
             "cùng câu hỏi. Điểm V-Bench thật do máy chủ chấm; ta không có vàng cục bộ.",
+            "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, "
+            "2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi "
+            "cổng ngoài sập cert.",
         ],
         "sources": {
             "runner": "code_benchmark/run_harness_eval.py (run | compare | speed)",

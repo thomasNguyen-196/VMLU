@@ -108,6 +108,11 @@ DEFAULT_TOOLS = "read,bash,edit,write,grep,glob"
 # The no-tool ablation condition: scaffolding without a tool menu. Maps to
 # omp's own --no-tools (see build_argv).
 NO_TOOLS = ("", "none", "--no-tools", "no_tools")
+# The as-shipped tool condition: OMIT the flag entirely so omp's own default
+# menu is what runs. A literal list here would freeze today's menu into the
+# measurement and silently drift from what omp actually ships (the captured
+# inventory — 11 tools — is recorded with the card instead).
+ALL_TOOLS = ("all",)
 # The no-persona ablation condition (H3): a neutral one-line system prompt that
 # says nothing about answering style, verbosity or output format. One source of
 # truth so the card, the argv and the tests cannot drift apart. `--system-prompt
@@ -164,13 +169,15 @@ VBENCH_SOURCE = Path("v_bench/public-test.jsonl")
 
 # The ledger: one row per item, the single source of truth for a harness run.
 # Everything the report needs is here; the arm-A-shaped answer files are
-# projections of it, and the transcripts live beside it.
+# projections of it, and the transcripts live beside it. `condition` records
+# which tool condition produced the row (none | explicit menu | all) so a
+# consumer can tell the three apart without consulting the slug.
 LEDGER_COLS = [
     "dataset", "item_id", "stratum", "kind", "question", "prompt_sha256",
     "raw_response", "answer", "gold", "correct", "em", "f1", "valid",
     "turns", "tool_calls", "tool_names", "net_attempt", "path_escape",
     "input_tokens", "output_tokens", "cache_read_tokens", "wall_s",
-    "exit_code", "stop_reason", "failure",
+    "exit_code", "stop_reason", "failure", "condition",
 ]
 COMPARE_COLS = ["metric", "group", "n", "arm_a", "arm_b", "delta",
                 "ci95_low", "ci95_high", "mcnemar_p", "a_only", "b_only",
@@ -402,6 +409,18 @@ def load_items(dataset: str, arm_a_slug: str) -> list[dict]:
 
 
 # ── the harness call ────────────────────────────────────────────────────
+def resolve_tools(tools: str) -> tuple[list[str], str]:
+    """(tool argv, condition label) for one tool condition. Three-valued:
+    `none` (no menu at all), an explicit menu, or `all` (omit the flag so omp's
+    own default menu runs). The label is what a ledger row records."""
+    key = tools.strip().lower()
+    if key in NO_TOOLS:
+        return ["--no-tools"], "none"
+    if key in ALL_TOOLS:
+        return [], "all"
+    return ["--tools", tools], tools
+
+
 def build_argv(*, omp_bin: str, model: str, prompt: str, workdir: Path,
                tools: str, max_time: int, thinking: str,
                system_prompt: str | None = None) -> list[str]:
@@ -409,7 +428,9 @@ def build_argv(*, omp_bin: str, model: str, prompt: str, workdir: Path,
 
     `tools` selects the tool condition; NO_TOOLS ("none") is the ablation arm that
     isolates the scaffolding from the tool menu, and it maps to omp's own
-    `--no-tools` rather than an empty `--tools` list.
+    `--no-tools` rather than an empty `--tools` list. ALL_TOOLS ("all") is the
+    as-shipped condition: the flag is omitted entirely, so whatever menu omp
+    ships is what runs (see resolve_tools).
 
     `system_prompt` is the no-persona ablation arm (H3): it REPLACES omp's
     coding-agent system prompt with a neutral line, so the only variable that
@@ -421,7 +442,7 @@ def build_argv(*, omp_bin: str, model: str, prompt: str, workdir: Path,
     point of the full-tool arm is the full tool menu, and a harness that stops
     at every tool call is not the harness being measured.
     """
-    tool_args = ["--no-tools"] if tools.strip().lower() in NO_TOOLS else ["--tools", tools]
+    tool_args, _condition = resolve_tools(tools)
     persona_args = (["--system-prompt", system_prompt] if system_prompt else [])
     return [
         omp_bin, "-p",
@@ -631,7 +652,7 @@ def run_item(item: dict, *, omp_bin: str, model: str, tools: str, max_time: int,
     row.update({"dataset": item["dataset"], "item_id": item["item_id"],
                 "stratum": item["stratum"], "kind": item["kind"],
                 "question": item["question"], "prompt_sha256": item["prompt_sha256"],
-                "gold": item["gold"]})
+                "gold": item["gold"], "condition": resolve_tools(tools)[1]})
     # The sandbox holds the prompt and nothing else: no gold, no dataset, no repo.
     (workdir / "item.json").write_text(
         json.dumps(sandbox_payload(item), ensure_ascii=False, indent=2), encoding="utf-8")
@@ -899,8 +920,8 @@ def cmd_run(args) -> None:
     logging.info("harness=%s label=%s omp=%s model=%s", args.label, slug, args.omp_bin,
                  args.model)
     logging.info("dataset=%s kind=%s n=%d workers=%d tools=%s max_time=%d thinking=%s",
-                 args.dataset, kind, total, args.workers, args.tools, args.max_time,
-                 args.thinking)
+                 args.dataset, kind, total, args.workers,
+                 resolve_tools(args.tools)[1], args.max_time, args.thinking)
     logging.info("agent_dir=%s (isolated: config+providers+caches) scratch=%s",
                  agent_dir, scratch)
 
@@ -1300,9 +1321,21 @@ def _vbench_validity(folder: Path, slug: str, dataset: str, *, harness_arm: bool
         return None
     counts = [(int(m.group(1)), p) for p in checkpoints
               if (m := re.search(r"vbench_result_(\d+)_", p.name))]
-    latest = max(counts)[1]
-    with open(latest, encoding="utf-8", newline="") as f:
-        rows = list(csv.DictReader(f))
+    # The same folder holds BOTH tracks' checkpoints (e.g. a 1.000-row agentic
+    # file next to a 4.141-row mc file), so "latest = biggest count" picks the
+    # wrong track. Select by most rows matching this dataset's track instead.
+    want = {"vbench_agentic": "agentic"}.get(dataset)
+    rows: list[dict] = []
+    for _, path in sorted(counts, reverse=True):
+        with open(path, encoding="utf-8", newline="") as f:
+            cand = list(csv.DictReader(f))
+        if want and cand and "track" in cand[0]:
+            cand = [r for r in cand if r.get("track") == want]
+        if cand:
+            rows = cand
+            break
+    if not rows:
+        return None
     return {str(r["id"]): int(bool(str(r.get("answer", "")).strip())) for r in rows}
 
 
@@ -1361,14 +1394,22 @@ def _vbench_mc_letters(folder: Path, slug: str, *, harness_arm: bool,
                    if re.search(r"vbench_result_(\d+)_", p.name)]
     if not checkpoints:
         return None
-    latest = max(checkpoints, key=lambda p: int(re.search(r"vbench_result_(\d+)_", p.name).group(1)))
-    with open(latest, encoding="utf-8", newline="") as f:
-        rows = list(csv.DictReader(f))
-    # A `--track all` run puts BOTH tracks in one checkpoint (mc + agentic), so the
-    # MC reader has to pick its own rows: without this the MC arm reported 5.141
-    # items for a 4.141-item track and the agreement denominator was wrong.
-    if track and "track" in (rows[0] if rows else {}):
-        rows = [r for r in rows if r.get("track") == track]
+    counts = [(int(re.search(r"vbench_result_(\d+)_", p.name).group(1)), p)
+              for p in checkpoints]
+    rows: list[dict] = []
+    for _, path in sorted(counts, reverse=True):
+        with open(path, encoding="utf-8", newline="") as f:
+            cand = list(csv.DictReader(f))
+        # A `--track all` run puts BOTH tracks in one checkpoint (mc + agentic),
+        # and the folder can also hold the other track's own checkpoints, so pick
+        # this track's rows instead of assuming the biggest file is ours: without
+        # this the MC arm reported 5.141 items for a 4.141-item track and the
+        # agreement denominator was wrong.
+        if track and cand and "track" in cand[0]:
+            cand = [r for r in cand if r.get("track") == track]
+        if cand:
+            rows = cand
+            break
     return {str(r["id"]): str(r.get("answer") or "") for r in rows}
 
 
@@ -1398,6 +1439,79 @@ def _arm_b_correct_rows(dataset: str, slug: str) -> list[tuple[str, int]]:
         return [(str(r["id"]), int(r["correct"])) for r in rows]
     rows = read_csv_checked(path, required={"dataset", "item_id", "em"}, label="arm B")
     return [(item_key(r), int(r["em"])) for r in rows]
+
+
+def _breakdown_rows(dataset: str, slug: str, a_rows: dict, b_rows: dict,
+                   shared: list, kind: str, metric: str,
+                   card_hash: str) -> list[dict]:
+    """Per-group paired rows (1.2): the SAME predicates as the ALL row, cut by
+    the harness ledger's `stratum` column.
+
+    A group is only a reporting cut — every number here must be reproducible
+    from the two sides' per-item values, exactly like the headline row.
+    Returns [] when the stratum is constant (legal_mc/nli, bidlqa_val,
+    vbench_agentic: nothing to cut) or when no ledger exists. Empty stratum
+    lands in an explicit "unknown" bucket (never silently dropped, never
+    guessed). Small-n groups are kept with their wide CIs — the interval
+    speaks; hiding them would be editorializing.
+    """
+    led_path = RESULTS_DIR / slug / f"harness_ledger_{dataset}_{slug}.csv"
+    if not led_path.exists():
+        return []
+    led = read_csv_checked(led_path, required={"item_id", "stratum"}, label="ledger")
+    if kind == "reading":
+        def key_of(r):
+            return f"{r['dataset']}:{r['item_id']}"
+    else:  # vbench_mc + mc key on the bare item id
+        def key_of(r):
+            return str(r["item_id"])
+    stratum = {key_of(r): (r["stratum"] or "unknown") for r in led}
+    groups: dict[str, list] = {}
+    for k in shared:
+        groups.setdefault(stratum.get(k, "unknown"), []).append(k)
+    if len(groups) < 2:
+        if all(k not in stratum for k in shared):
+            raise SystemExit(f"Error: ledger covers none of the {len(shared)} shared "
+                             f"keys in {dataset} — refusing a vacuous cut")
+        return []
+    unmapped = [k for k in shared if k not in stratum]
+    if unmapped:
+        raise SystemExit(f"Error: {len(unmapped)} shared keys have no ledger row "
+                         f"(e.g. {unmapped[0]!r}) — cannot cut {dataset} by stratum")
+    out = []
+    for group in sorted(groups):
+        keys = groups[group]
+        if kind == "vbench_mc":
+            same = sum(1 for k in keys if a_rows[k] and a_rows[k] == b_rows[k])
+            n = len(keys)
+            rate = 100.0 * same / n
+            lo, hi = _agreement_ci(_agreement_flags(a_rows, b_rows, keys))
+            out.append({"metric": metric, "group": group, "n": n,
+                        "arm_a": "100.00", "arm_b": f"{rate:.2f}",
+                        "delta": f"{rate - 100.0:+.2f}", "ci95_low": f"{lo:.2f}",
+                        "ci95_high": f"{hi:.2f}",
+                        "mcnemar_p": "", "a_only": "", "b_only": "",
+                        "both": same, "neither": n - same,
+                        "arm_b_failures": sum(1 for k in keys if not b_rows[k]),
+                        "measurement_card_hash": card_hash})
+            continue
+        both = sum(1 for k in keys if a_rows[k] and b_rows[k])
+        a_only = sum(1 for k in keys if a_rows[k] and not b_rows[k])
+        b_only = sum(1 for k in keys if not a_rows[k] and b_rows[k])
+        n = len(keys)
+        rate_a = (both + a_only) / n * 100
+        rate_b = (both + b_only) / n * 100
+        lo, hi = _paired_bootstrap([b_rows[k] - a_rows[k] for k in keys])
+        out.append({"metric": metric, "group": group, "n": n,
+                    "arm_a": f"{rate_a:.2f}", "arm_b": f"{rate_b:.2f}",
+                    "delta": f"{rate_b - rate_a:+.2f}", "ci95_low": f"{lo:.2f}",
+                    "ci95_high": f"{hi:.2f}",
+                    "mcnemar_p": f"{_mcnemar_p(a_only, b_only):.4g}",
+                    "a_only": a_only, "b_only": b_only, "both": both,
+                    "neither": n - both - a_only - b_only,
+                    "arm_b_failures": "",
+                    "measurement_card_hash": card_hash})
+    return out
 
 
 def cmd_compare(args) -> None:
@@ -1462,6 +1576,14 @@ def cmd_compare(args) -> None:
               f"\n  answer rỗng: arm A {blanks_a} · arm B {blanks_b}")
         print("  Accuracy chỉ có ở server: nộp file trong submissions/<slug>/ để lấy điểm."
               "\n  -> " + str(path) + "\n")
+        bd = _breakdown_rows(args.dataset, slug, a_rows, b_rows, shared,
+                             "vbench_mc", "agreement_with_arm_A", card_hash)
+        if bd:
+            bd_path = RESULTS_DIR / slug / f"harness_breakdown_{args.dataset}{tag}_{slug}.csv"
+            write_csv_atomic(bd_path, bd, COMPARE_COLS)
+            print(f"  breakdown by stratum ({len(bd)} groups) -> {bd_path}")
+            for r in bd:
+                print(f"    {r['group']}: n={r['n']} A {r['arm_a']} B {r['arm_b']} Δ {r['delta']}")
         return
 
     shared = [k for k in a_rows if k in b_rows]
@@ -1523,6 +1645,14 @@ def cmd_compare(args) -> None:
               f"{cost['tool_use']} | network attempts {cost['net_attempt']} "
               f"| path escapes {cost['path_escape']}")
     print(f"  -> {path}\n")
+    bd = _breakdown_rows(args.dataset, slug, a_rows, b_rows, shared,
+                         ARM_A[args.dataset]["kind"], metric, card_hash)
+    if bd:
+        bd_path = RESULTS_DIR / slug / f"harness_breakdown_{args.dataset}{tag}_{slug}.csv"
+        write_csv_atomic(bd_path, bd, COMPARE_COLS)
+        print(f"  breakdown by stratum ({len(bd)} groups) -> {bd_path}")
+        for r in bd:
+            print(f"    {r['group']}: n={r['n']} A {r['arm_a']} B {r['arm_b']} Δ {r['delta']}")
 
 
 # ── cli ─────────────────────────────────────────────────────────────────
@@ -1546,7 +1676,8 @@ def parse_args():
     run.add_argument("--agent-dir", type=Path, default=AGENT_DIR_DEFAULT,
                      help="PI_CODING_AGENT_DIR pinning the measured harness (default: .omp-iec)")
     run.add_argument("--tools", default=DEFAULT_TOOLS,
-                     help="tool menu, or 'none' for the no-tool ablation arm (H1)")
+                     help="tool menu, 'none' for the no-tool ablation arm (H1), or "
+                          "'all' for omp's own default menu (the --tools flag is omitted)")
     run.add_argument("--system-prompt", default=None,
                      help="'minimal' for the no-persona ablation arm (H3) — replaces "
                           f"omp's coding-agent system prompt with {MINIMAL_SYSTEM_PROMPT!r}; "
@@ -1586,7 +1717,8 @@ def parse_args():
     sp.add_argument("--allow-project-instructions", action="store_true",
                     help="see run --allow-project-instructions")
     sp.add_argument("--agent-dir", type=Path, default=AGENT_DIR_DEFAULT)
-    sp.add_argument("--tools", default=DEFAULT_TOOLS)
+    sp.add_argument("--tools", default=DEFAULT_TOOLS,
+                    help="tool menu, 'none', or 'all' (omp default; see run --tools)")
     sp.add_argument("--system-prompt", default=None,
                     help="'minimal' for the no-persona arm (H3)")
     sp.add_argument("--thinking", default="off")
