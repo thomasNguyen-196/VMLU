@@ -18,9 +18,10 @@ quoting the source sha256 and the shuffled-input sha256.
 - **WHEN** the adapter runs twice on the same source with the same seed
 - **THEN** both output files are byte-identical.
 
-#### Scenario: Input order does not matter
-- **WHEN** source rows are fed in a different order
-- **THEN** each item's shuffled choices and remapped gold are unchanged.
+#### Scenario: Subset runs reproduce per-item output
+- **WHEN** only the first k source rows are fed (e.g. a `--limit` run)
+- **THEN** each of those items' shuffled choices and remapped gold equal the
+  full-run output for the same id.
 
 ### Requirement: Gold follows the text, never the letter
 The shuffled gold letter SHALL point at the same choice text as the original

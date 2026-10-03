@@ -39,8 +39,10 @@ they cannot be the thing being *edited*.
 - `SHUFFLE_SEED = 1234` (fixed; distinct from data seed 42; recorded in shuffle
   manifest + MC-35).
 - Permutation per item from `random.Random(f"{SHUFFLE_SEED}:{item_id}")` —
-  deterministic **and order-independent** (resume/`--limit` safe, unlike one
-  global shuffle).
+  deterministic and **subset-stable**: any prefix/`--limit` run reproduces the
+  same per-item output (no sequential RNG stream). It is NOT invariant under
+  source reordering (ids are positional: `LG-i` = i-th source row) — the
+  source-sha pin is what forbids silent reordering.
 - Gold remap by **text identity**: gold text = raw choices[gold index]; new gold
   = its index in the shuffled list. Adapter hard-fails if an item's choice
   texts are not unique (remap would be ambiguous) or if the gold text is lost.

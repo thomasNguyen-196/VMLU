@@ -102,6 +102,7 @@ from code_benchmark import build_dashboard_harness as dash
 from code_benchmark import capture_scaffold as scaffold
 from code_benchmark import llm
 from code_benchmark import run_legal_arm_a as legal_arm_a
+from code_benchmark import make_shuffled_mc_input as shuffled_mc
 from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
@@ -2765,6 +2766,115 @@ class TestLegalArmA(unittest.TestCase):
             # and the resumed row's `correct` is an int again, or the final
             # accuracy sum raises str+int after the file has been written
             self.assertTrue(all(isinstance(r["correct"], int) for r in rows))
+
+
+class TestShuffledMcInput(unittest.TestCase):
+    """Position-bias shuffle adapter (`make_shuffled_mc_input.py`, group 2.1).
+
+    The shuffle is the pre-registered condition: per-item deterministic,
+    order-independent, gold following its text. Anything weaker (global
+    shuffle, letter-following remap) silently measures a different condition.
+    """
+
+    def _rows(self, n_items=6, n_choices=4):
+        rows = []
+        for i in range(n_items):
+            texts = [f"choice-{i}-{j}" for j in range(n_choices)]
+            gold_idx = (i * 2 + 1) % n_choices
+            rows.append({"question": f"q{i}",
+                         "choices": texts,
+                         "answer": gold_idx,
+                         "answer_choice_letter": "ABCDE"[gold_idx]})
+        return rows
+
+    def _golds(self, rows):
+        return {f"LG-{i + 1:04d}": "ABCDE"[r["answer"]] for i, r in enumerate(rows)}
+
+    def test_deterministic_same_seed_same_output(self):
+        rows = self._rows()
+        out1 = shuffled_mc.build(rows, self._golds(rows), 1234)
+        out2 = shuffled_mc.build(rows, self._golds(rows), 1234)
+        self.assertEqual(out1, out2)
+
+    def test_subset_stable_per_item(self):
+        # limit/prefix runs must reproduce the same per-item output: the RNG
+        # is keyed by positional id, never by a sequential stream. (Full
+        # reordering would reassign positional ids, so it is NOT stable — and
+        # the source sha pin is what forbids silent reordering.)
+        rows = self._rows()
+        golds = self._golds(rows)
+        inp_full, items_full = shuffled_mc.build(rows, golds, 1234)
+        sub = rows[:3]
+        sub_golds = {f"LG-{i + 1:04d}": "ABCDE"[r["answer"]] for i, r in enumerate(sub)}
+        inp_sub, items_sub = shuffled_mc.build(sub, sub_golds, 1234)
+        self.assertEqual(inp_sub, inp_full[:3])
+        self.assertEqual(items_sub, items_full[:3])
+
+    def test_gold_follows_its_text(self):
+        rows = self._rows()
+        inp, items = shuffled_mc.build(rows, self._golds(rows), 1234)
+        for in_row, item, src in zip(inp, items, rows, strict=True):
+            gold_text = src["choices"][src["answer"]]
+            new_idx = "ABCDE".index(item["gold_new"])
+            # the lettered choice at the new gold position ends with the gold text
+            self.assertTrue(in_row["choices"][new_idx].endswith(gold_text),
+                            f"{item['id']}: gold text lost in shuffle")
+            self.assertEqual(item["perm"][new_idx], src["answer"])
+            self.assertEqual(in_row["answer"], item["gold_new"])
+            # choice-text set preserved (integrity check the compare relies on)
+            got = [c.split(". ", 1)[1] for c in in_row["choices"]]
+            self.assertEqual(sorted(got), sorted(src["choices"]))
+
+    def test_lettering_format_and_verbatim_question(self):
+        rows = self._rows(n_items=2, n_choices=3)
+        inp, _ = shuffled_mc.build(rows, self._golds(rows), 1234)
+        for in_row, src in zip(inp, rows, strict=True):
+            self.assertEqual(in_row["question"], src["question"])
+            for j, c in enumerate(in_row["choices"]):
+                self.assertTrue(c.startswith(f"{'ABCDE'[j]}. "))
+
+    def test_supports_two_and_three_choice_items(self):
+        rows = self._rows(n_items=2, n_choices=2) + self._rows(n_items=2, n_choices=3)
+        golds = {f"LG-{i + 1:04d}": "ABCDE"[r["answer"]] for i, r in enumerate(rows)}
+        inp, items = shuffled_mc.build(rows, golds, 1234)
+        self.assertEqual(len(inp), 4)
+        self.assertTrue(all(len(r["choices"]) in (2, 3) for r in inp))
+
+    def test_duplicate_choice_texts_abort(self):
+        rows = [{"question": "q", "choices": ["same", "same", "other", "x"],
+                 "answer": 2, "answer_choice_letter": "C"}]
+        with self.assertRaises(SystemExit) as ctx:
+            shuffled_mc.build(rows, {"LG-0001": "C"}, 1234)
+        self.assertIn("duplicate", str(ctx.exception))
+
+    def test_source_answer_fields_must_agree(self):
+        base = {"question": "q", "choices": ["a", "b", "c"], "answer": 1,
+                "answer_choice_letter": "B"}
+        # index vs letter disagree
+        bad = dict(base, answer_choice_letter="C")
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build([bad], {"LG-0001": "B"}, 1234)
+        # source vs orig-manifest gold disagree
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build([dict(base)], {"LG-0001": "A"}, 1234)
+        # missing manifest gold
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build([dict(base)], {}, 1234)
+
+    def test_exceeds_letter_contract_aborts(self):
+        rows = [{"question": "q", "choices": [f"c{j}" for j in range(6)],
+                 "answer": 0, "answer_choice_letter": "A"}]
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build(rows, {"LG-0001": "A"}, 1234)
+
+    def test_different_seeds_differ_somewhere(self):
+        rows = self._rows(n_items=8)
+        golds = self._golds(rows)
+        _, items_a = shuffled_mc.build(rows, golds, 1234)
+        _, items_b = shuffled_mc.build(rows, golds, 9999)
+        perms_a = [tuple(i["perm"]) for i in items_a]
+        perms_b = [tuple(i["perm"]) for i in items_b]
+        self.assertNotEqual(perms_a, perms_b)
 
 
 class TestAgreementCI(unittest.TestCase):

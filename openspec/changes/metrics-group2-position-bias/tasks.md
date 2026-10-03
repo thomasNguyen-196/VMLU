@@ -1,6 +1,6 @@
 ## 1. Shuffle adapter (offline, no model calls)
 
-- [ ] 1.1 Add `code_benchmark/make_shuffled_mc_input.py` (stdlib + sha check
+- [x] 1.1 Add `code_benchmark/make_shuffled_mc_input.py` (stdlib + sha check
   only): per-item RNG `random.Random(f"{SHUFFLE_SEED}:{item_id}")`
   (`SHUFFLE_SEED=1234` constant), source sha256 verified against
   `data/legal_slm_multichoice_manifest.json`, uniqueness + gold-preservation
@@ -8,12 +8,18 @@
   (`data/legal_slm_multichoice_shuffled_s1234_manifest.json`) with
   `input_sha256`. Verify: regenerate twice → byte-identical; `--help` documents
   the seed.
-- [ ] 1.2 Add offline unit tests in `code_benchmark/test_suite.py`
+  - **Bằng chứng:** module + dry-run trên source thật ra `/tmp` (chưa commit):
+    146 dòng, gold_old A91/B39/C16 → gold_new A33/B45/C36/D32, gold-text
+    preservation 146/146, scorable shape OK.
+- [x] 1.2 Add offline unit tests in `code_benchmark/test_suite.py`
   (`TestShuffledMcInput`): determinism (same seed+id → same perm),
-  order-independence (input order permuted → same per-item output),
-  gold-remap correctness on a hand-made 4-choice item, duplicate-choices
+  subset-stability (prefix run reproduces full-run per-item output),
+  gold-remap correctness on hand-made items, duplicate-choices
   hard-fail, different seeds differ. Verify `python -m unittest
   code_benchmark.test_suite` green + `ruff check .` clean.
+  - **Bằng chứng:** 9 tests (`TestShuffledMcInput`) xanh; full suite 189
+    tests OK; `test_parsing.py` OK; ruff sạch. Design/spec đính chính kèm:
+    subset-stable thay vì order-independent (id là positional).
 
 ## 2. Pre-register (before ANY shuffled infer)
 
