@@ -152,6 +152,52 @@ describe("parseHarnessBlock", () => {
     expect(b.totals.items_harness).toBe(2956);
   });
 
+  test("comparison blanks: absent is fine, negative is not", () => {
+    const good = block();
+    good.insight.comparison[0].a_blanks = 0;
+    good.insight.comparison[0].b_blanks = 12;
+    expect(() => parseHarnessBlock(good)).not.toThrow();
+    const bad = block();
+    bad.insight.comparison[1].b_blanks = -1;
+    expect(() => parseHarnessBlock(bad)).toThrow(/b_blanks/);
+  });
+
+  test("arg_credit: rates must match fractions", () => {
+    const row = () => ({
+      arm: "T65", arm_slug: "ompT65", label: "omp", model: "Qwen3.5-9B-65K",
+      n_items: 1000, n_attempted: 504, n_required_slots: 2458, n_required_ok: 2434,
+      required_fill_rate: 99.02, n_supplied: 2787, n_supplied_ok: 2727,
+      arg_precision: 97.85, n_unparseable: 496,
+    });
+    const withCredit = (rows: unknown[]) => {
+      const b = block() as Record<string, unknown>;
+      b.arg_credit = rows;
+      return b;
+    };
+    expect(() => parseHarnessBlock(withCredit([row()]))).not.toThrow();
+    expect(() => parseHarnessBlock(withCredit([{ ...row(), required_fill_rate: 50 }]))).toThrow(/required_fill_rate/);
+    expect(() => parseHarnessBlock(withCredit([{ ...row(), n_unparseable: 0 }]))).toThrow(/attempted/);
+  });
+
+  test("breakdown: groups must add up, absent is fine", () => {
+    const group = (over = {}) => ({
+      group: "laws", n: 191, arm_a: 100, arm_b: 87.43, delta: -12.57,
+      ci95_low: -17.8, ci95_high: -7.33, mcnemar_p: "", ...over,
+    });
+    const withBreakdown = (groups: unknown[]) => {
+      const b = block() as Record<string, unknown>;
+      b.breakdown = [{
+        arm: "T65", arm_slug: "ompT65", label: "omp", model: "Qwen3.5-9B-65K",
+        dataset: "vbench_mc", dataset_label: "V-Bench MC", metric: "agreement", groups,
+      }];
+      return b;
+    };
+    expect(() => parseHarnessBlock(withBreakdown([group()]))).not.toThrow();
+    expect(() => parseHarnessBlock(block())).not.toThrow();
+    expect(() => parseHarnessBlock(withBreakdown([group({ delta: -99.99 })]))).toThrow(/delta/);
+    expect(() => parseHarnessBlock(withBreakdown([group({ ci95_low: 1, ci95_high: -1 })]))).toThrow(/CI/);
+  });
+
   test("rejects a block with no ladder", () => {
     expect(() => parseHarnessBlock(block([]))).toThrow(/thiếu .ladder/);
   });

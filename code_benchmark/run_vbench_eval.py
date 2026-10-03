@@ -417,6 +417,78 @@ _CHOICE_NUM = re.compile(r"(?<![\w.])(\d{1,2})(?![\w])(?!\.\d)")
 _SKIP_ANSWERS = {"0", "-", "bo qua", "bỏ qua", "skip", "khong", "không"}
 
 
+def grade_agentic_args(raw: str, functions: list[dict]) -> dict:
+    """Partial credit for one agentic reply (1.3): how many of the attempted
+    call's arguments are schema-legal, scored at the SAME level the pipeline
+    gate checks (top-level keys + verbatim enums — nested objects are opaque
+    to _validate_call, so they are opaque here too).
+
+    Rule (fixed before any number was computed): take the FIRST call-shaped
+    candidate with a known function name and dict args in the same scan order
+    extract_function_call uses (fenced block, whole text, raw_decode scan,
+    braceless repair). Score its top-level args:
+      required_fill  = enum-valid required args present / required args
+      arg_precision  = schema-legal supplied args / supplied args
+    A reply with no identifiable call contributes nothing to either rate and
+    counts as unparseable (reported separately — excluding it from the
+    denominator is honest only when the exclusion is shown beside the rate).
+    An unknown function name has no schema to score against: also unparseable.
+    This never ship/not-ship anything — it only grades what was attempted.
+    """
+    dec = json.JSONDecoder()
+    names = {fn.get("name") for fn in functions}
+    candidates: list[tuple[str, dict]] = []
+
+    def harvest(obj) -> None:
+        if isinstance(obj, dict):
+            calls = [obj]
+        elif isinstance(obj, list) and obj:
+            calls = obj
+        else:
+            return
+        for call in calls:
+            if isinstance(call, dict) and len(call) == 1:
+                name, args = next(iter(call.items()))
+                if name in names and isinstance(args, dict):
+                    candidates.append((name, args))
+
+    for cand in _iter_json_candidates(raw or ""):
+        harvest(_as_object(cand))
+        if candidates:
+            break
+    if not candidates:
+        for m in re.finditer(r'"([^\W"]{2,})"\s*:\s*(?=\{)', raw or ""):
+            try:
+                args, _ = dec.raw_decode(raw, m.end())
+            except ValueError:
+                continue
+            if m.group(1) in names and isinstance(args, dict):
+                candidates.append((m.group(1), args))
+                break
+    if not candidates:
+        return {"parseable": False, "function": "", "n_required": 0,
+                "n_required_ok": 0, "n_supplied": 0, "n_supplied_ok": 0,
+                "n_hallucinated": 0, "n_off_enum": 0, "n_missing": 0}
+    name, args = candidates[0]
+    schema = next(fn for fn in functions if fn.get("name") == name)
+    props = (schema.get("parameters") or {}).get("properties") or {}
+    required = (schema.get("parameters") or {}).get("required") or []
+
+    def enum_ok(key, val) -> bool:
+        enum = props[key].get("enum") if isinstance(props.get(key), dict) else None
+        return enum is None or val in enum
+
+    n_required_ok = sum(1 for r in required if r in args and r in props and enum_ok(r, args[r]))
+    n_hallucinated = sum(1 for k in args if k not in props)
+    n_off_enum = sum(1 for k in args if k in props and not enum_ok(k, args[k]))
+    n_supplied_ok = sum(1 for k in args if k in props and enum_ok(k, args[k]))
+    return {"parseable": True, "function": name, "n_required": len(required),
+            "n_required_ok": n_required_ok, "n_supplied": len(args),
+            "n_supplied_ok": n_supplied_ok, "n_hallucinated": n_hallucinated,
+            "n_off_enum": n_off_enum,
+            "n_missing": sum(1 for r in required if r not in args)}
+
+
 def parse_choice(raw: str, n: int) -> int | None:
     """Numbered-choice answer -> 1-based index: first standalone number in
     range wins ('2', 'Đáp án: 2', '2. …'). None when nothing in 1..n appears

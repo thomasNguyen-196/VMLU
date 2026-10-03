@@ -80,3 +80,8 @@ web/.contract-test.ts
 
 # Measured MiMo agent dir whose provider points at the localhost pinning proxy
 .omp-mimo-pinned/
+
+# Qwen3.5-9B-65K harness arm (MC-31): token holder + measured proxy-pinned dir
+.omp-qwen65k-real/
+.omp-qwen65k-pinned/
+

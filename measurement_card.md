@@ -1116,6 +1116,248 @@ không phải lời gọi model. So với MC-25 của Qwen (rò persona: +140 to
 lại. Cái bị đo trong MC-15…MC-28 là **ngân sách tuân thủ của một model 9B**, không phải chi phí
 của việc đi qua tiến trình agent. Và trên bài trích xuất, khung agent **giúp** model chép đúng hơn.
 
+## MC-31 — **Qwen3.5-9B-65K @ IEC: baseline mới + arm B `--tools all`** (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-31` |
+| `ngay_chay` | Pre-register 2026-09-30 (card ghi xong **trước** mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có `--resume` |
+| `model` | `Qwen3.5-9B-65K` @ `https://llmapi.iec-uit.com/v1` — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 `Compute Node 'RTX3060-8GB' is offline`) |
+| `dieu_kien` | **Arm A**: gọi thẳng, prompt byte-frozen như mọi card, temperature 0, seed 42. **Arm B**: `omp sạch` — `--tools all` (bỏ hẳn cờ `--tools`, menu default của omp), system prompt trung tính, `HOME=/tmp/fakehome`, sandbox `/tmp`, `temperature=0` ghim bằng proxy (MC-29); không tool-schema nào bị sửa tay. |
+| `slug` | arm A `Qwen3_5-9B-65K` · arm B `ompT65_Qwen3_5-9B-65K` — **một condition một slug**, không trộn với `Qwen3_5-9B-28K`/`ompH*`/`ompM*` |
+| `tap` | legal_mc 146 · legal_nli 150 · reading400 400 · bidlqa_val 482 · vbench_agentic 1.000 · vbench_mc 4.141 |
+| `workers` | 4 (trần 6) — vì tổng thông lượng prefill **không tăng** theo số luồng (xem khối server); chạy từng tập + `--resume` |
+| `scoring` | Không đổi: MC exact-letter, reading EM/char-F1, vbench_agentic = schema validity, vbench_mc = mức **trùng khớp** với arm A (không có gold cục bộ) |
+| `khong_so_voi` | Mọi số `Qwen3.5-9B-28K` (MC-15…MC-30): tag khác = condition khác (MC-4/MC-29) |
+| `trang_thai` | 🔄 arm A **xong**; arm B xong 5/6 tập + compare; `vbench_mc` dở ở 1.275/4.141 — gateway đang sập cert nên chưa resume được |
+
+### Bằng chứng server đo trước khi chạy (2026-09-30, cùng ngày pre-register)
+
+| Phép đo | Kết quả |
+| --- | --- |
+| Backend | lớp llama.cpp sau nginx/1.18.0; fingerprint `b11243-fc07d781e`; `timings` fields chuẩn llama.cpp |
+| Context limit | **65.024 token** — gateway trả về nguyên văn: `request (69027 tokens) exceeds the available context size (65024 tokens)` |
+| Prefill | ~3,2–3,6k tok/s (2.327 tok → 0,71s; 9.227 → 2,10s; 27.627 → 5,93s) |
+| Decode | ~105 tok/s (80 tok → 749ms) |
+| Request arm B (bắt qua proxy) | **14.177 prompt token**: 11 tool (`read, bash, edit, eval, glob, grep, task, hub, todo, web_search, write`), **50.348 ký tự** schema, system 690 ký tự, user 283 ký tự; `max_completion_tokens` 4.096; `temperature: 0` do proxy ghim (`pinned_by_proxy` ghi trong capture `/tmp/opencode/qwen65k_capture.json`) |
+| Round trip 1 item | 4,4–4,8s (TTFT 4,4–4,6s) ⇒ **prefill-bound**, decode không đáng kể |
+| Prefix cache | Tuần tự có dùng lại (`cache_n 4.752`); mixed song song `cache_n 0` ⇒ **không tính cache** vào ngân sách |
+| Song song | Prompt nhỏ (cache) đạt ~14,5 req/s ở 8 luồng; prompt mixed **không tăng** tổng thông lượng (~3,1k tok/s); probe 32 luồng (96 request 4k) làm gateway "câm" ~6 phút (TCP nhận, HTTP không trả) rồi tự hồi |
+| Ngân sách arm B | 6.319 item × ~14,2–15k token ≈ **90M prompt token ≈ 8–10h** server time; `vbench_mc` (4.141) chiếm ~2/3 |
+| Thứ tự chạy | arm A (rẻ) → legal_mc → legal_nli → reading400 → bidlqa_val → vbench_agentic → **vbench_mc cuối** |
+
+### Kết quả tạm (ghi khi arm B còn đang chạy — số điểm cuối cùng bổ sung sau)
+
+**Arm A — Qwen3.5-9B-65K, gọi thẳng** (prompt byte-frozen; parity legal 146/146, 150/150):
+
+| Tập | Kết quả |
+| --- | --- |
+| legal_mc | 130/146 = **89,04%** |
+| legal_nli | 138/150 = **92,00%** |
+| reading400 · bidlqa_val | answers xong (400 + 482, 0 rỗng); chấm EM/char-F1 ở bước `compare` |
+| vbench_agentic | **986/1.000 = 98,6%** validity (14 invalid, cùng loại lỗi MC-8) |
+| vbench_mc | 4.141/4.141 parse được (0 rỗng) |
+
+**Arm B — `omp sạch` + `--tools all`** (0 lỗi ở cả 4 tập đầu, 0 tool call):
+
+| Tập | n | Lỗi | wall/item | Ghi chú |
+| --- | ---: | ---: | ---: | --- |
+| legal_mc | 146/146 | 0 | 2,8s | 0 tool call |
+| legal_nli | 150/150 | 0 | 2,7s | 0 tool call |
+| reading400 | 400/400 | 0 | 2,8s | 0 tool call |
+| bidlqa_val | 482/482 | 0 | 3,5s | 0 tool call |
+| vbench_agentic | **xong 1.000/1.000** | **480** (474 abort ở trần 180s + 6 tin rỗng) | 116s mean | validity **485/1.000 = 48,5%** (arm A 98,6%) |
+| vbench_mc | dở 1.275/4.141 (máy tắt ngang) | 120 (106 abort 180s dù 0 tool call + 14 tin rỗng) | — | chưa compare; chờ gateway hồi mới resume |
+
+### Phát hiện giữa chừng — menu default-all **kích hoạt vòng tool** trên tập function-calling
+
+Trên `vbench_agentic`, khác hẳn mọi card trước (MC-28 với menu 6 tool: **0** tool call), model
+**gọi tool thật**: 83/150 item dùng tool, mean **3,56 call**, max 21, turns mean 4,48 — chủ yếu
+`eval` (152), `todo` (129), `read` (122), `bash` (57), `web_search` (32), `task` (18). Hệ quả đo
+được trên 150 item đầu: 24/25 lỗi là **abort ở `--max-time 180`** (vòng lặp không kết thúc),
+validity tạm thời 112/150 = 74,7% (so với 98,6% của arm A). Đây là hành vi thật của condition
+"as shipped" — không sửa điều kiện giữa chừng; các item hỏng nằm verbatim trong ledger + failures.
+
+**Cache prefix hoạt động trong run thật**: arm B dùng lại ~13,9k token/item (`cache_read`), chỉ
+~500 token tươi mỗi item (câu hỏi), nên 4 tập đầu chạy ~1,4 item/s chứ không phải ~0,25 item/s như
+ước tính không-cache trong bảng trên; `vbench_agentic` chậm vì **vòng tool**, không phải prefill.
+
+### So sánh arm A − arm B (`compare --tag vsA`, 5/6 tập; `vbench_mc` chờ resume)
+
+| Tập | Arm A | Arm B | Δ (CI 95%) | McNemar p |
+| --- | ---: | ---: | ---: | --- |
+| legal_mc (acc) | 89,04% | 73,97% | **−15,07** (−21,92..−8,90) | ≈1e−05 — có ý nghĩa |
+| legal_nli (acc) | 92,00% | 88,00% | −4,00 (−8,00..+0,00) | 0,11 — không có ý nghĩa |
+| reading400 (EM) | 72,25% | 57,75% | **−14,50** (−19,25..−10,00) | ≈6e−09 — có ý nghĩa |
+| bidlqa_val (EM) | 29,25% | 23,24% | **−6,02** (−9,54..−2,70) | ≈9e−04 — có ý nghĩa |
+| vbench_agentic (validity) | 98,60% | 48,50% | **−50,10** (−53,30..−47,00) | ≈2e−141 — có ý nghĩa |
+
+Audit `vbench_agentic` arm B: 480 lỗi · 507/1.000 item dùng tool · **11 network attempt**
+(`web_search`) · **1 path escape** (audit ghi nhận theo convention — `bash` vẫn `cd` ra được,
+đúng như AGENTS.md đã cảnh báo). Ba tập MC/reading/bidlqa: 0 lỗi, 0 tool call, 0 network,
+0 escape.
+
+### Sự cố hạ tầng trong lúc chạy (ghi để sau này khỏi đoán)
+
+- **2026-09-30 ~17:43, máy tắt đột ngột**: chain chết tại `vbench_mc` 1.275/4.141; `/tmp`
+  (tmpfs) bị xoá — mất chain log, proxy capture json/log. Nội dung condition đã nằm trong
+  card; bằng chứng per-item còn nguyên trong ledger. **Không mất artifact nào trên đĩa**
+  (đã kiểm row-count bằng csv parser: 146 / 150 / 400 / 482 / 1.000 / 1.275).
+- **Gateway sập kiểu mới, chặn resume**: IP hiện serve cert `challenges.iec-uit.com` **hết hạn
+  từ 16-08-2026** → preflight lỗi `CERTIFICATE_VERIFY_FAILED`. Runner không bỏ qua verify
+  (đúng — bỏ qua là trỏ request sang nhầm vhost). Chờ IEC sửa cert rồi resume một lệnh.
+- **2026-10-01: chuyển sang endpoint nội bộ `http://llmapi.iec/v1`** (đúng tài liệu chính thức
+  của gateway). VPN lên 14:07, `llmapi.iec` → 172.16.50.172; cổng ngoài https vẫn cert sai với
+  cả 2 SNI nên không cứu được. Preflight 1-token OK; `/v1/models` xác nhận 65K `running`,
+  28K `offline`. Đây là **sửa đường truyền, không đổi condition** (cùng model/backend, cùng
+  params) — ghi minh bạch: 1.275 item mc đầu qua URL cũ, 2.866 item sau qua URL mới.
+  `.env` + `.omp-qwen65k-real/models.yml` + proxy `--upstream` đã chuyển tương ứng; proxy
+  thêm cờ `--allow-http-upstream` (guard cũ chỉ cho https — endpoint LAN trong VPN tunnel
+  được tài liệu provider cho phép http) + hàm pure `check_upstream` + 3 test. Suite 172 OK,
+  ruff sạch.
+- **Bug compare (đã sửa trong change này)**: `_vbench_validity` / `_vbench_mc_letters` chọn
+  checkpoint theo count lớn nhất nên khi thư mục arm A có cả 2 track (1.000 agentic +
+  4.141 mc) thì compare agentic đọc nhầm file mc → "no shared items". Đã sửa thành chọn theo
+  đúng track + 3 test hồi quy (`test_vbench_validity_picks_the_agentic_checkpoint`,
+  `test_vbench_mc_letters_skips_a_bigger_agentic_checkpoint`,
+  `test_vbench_readers_split_a_mixed_track_all_file`). Suite 169 test OK, ruff sạch.
+- Soi thêm: 106 abort-180s trên `vbench_mc` dù **0 tool call** — không phải vòng tool mà là
+  server không trả lời (giống mẫu outage 27-09: nhận TCP, không trả HTTP). Resume sẽ cho biết
+  tỉ lệ này có lặp lại không.
+
+### Không được quy
+
+1. Chưa có kết quả — khối này KHÔNG có số điểm nào; mọi số trong bảng trên là số **server/hạ tầng**, không phải năng lực model.
+2. Một lần chạy mỗi ô (nhiễu chưa đo cho 65K); arm B đi qua một hop proxy trong suốt.
+3. `--tools all` = menu default của chính `omp` tại thời điểm chạy (11 tool trong cấu hình flag hiện tại); omp nâng cấp làm menu đổi thì capture phải bắt lại, không giả định.
+
+## MC-32 — **Qwen3.5-9B-65K: hoàn tất `vbench_mc` + bảng so sánh công bằng 6 tập**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-32` |
+| `ngay_chay` | 2026-10-02 22:50–23:22 (+07), resume từ checkpoint 1.775/4.141 (MC-31) |
+| `model` | `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1` (nội bộ qua VPN; cổng https công cộng treo sau Server-hello nên không dùng) |
+| `dieu_kien` | Y hệt arm B của MC-31: `omp sạch` + `--tools all` + system prompt trung tính + `HOME=/tmp/fakehome` + sandbox `/tmp` + `temperature=0` ghim bằng proxy. Một condition một slug, không trộn. |
+| `slug` | arm A `Qwen3_5-9B-65K` · arm B `ompT65_Qwen3_5-9B-65K` |
+| `tap` | `vbench_mc` 4.141 (5 tập còn lại lấy nguyên compare MC-31 — không chạy lại) |
+| `workers` | 6 · `preflight` OK 0,2s · nhịp thật 2,12 item/s sau khi hạ tầng sạch |
+
+### Hạ tầng trong lần resume (ghi để tái lập, và để phân biệt lỗi hạ tầng với lỗi model)
+
+1. **VPN**: file `.ovpn` gốc `proto udp` chỉ gửi không nhận (`BYTES_OUT`-only, reconnect liên tục);
+   server thật ra nghe TCP → bản `proto tcp`, `tun0 172.16.30.10/24`, ping gateway 4–5ms.
+2. **DNS**: `llmapi.iec` chỉ phân giải qua DNS tunnel (`172.16.30.1` → `172.16.50.172`);
+   `systemd-resolved` không gắn DNS cho `tun0`, `resolvectl` cần quyền → shim
+   `sitecustomize` qua `PYTHONPATH=/tmp/opencode/pyshim` (map ở mức socket, giữ nguyên
+   Host header; http thuần nên vhost nginx OK). Probe 1-token qua venv OpenAI client OK.
+   Không sudo, không đổi code pipeline.
+3. **Sự cố bwrap (đã dọn sạch, không còn dấu trong ledger)**: lần resume đầu chạy trong
+   `bwrap` để override `/etc/hosts` làm `bun`/`omp` crash `exit -6` cho toàn bộ 2.366 item
+   mới — dấu hiệu nhận biết: tốc độ "ảo" ~100 item/s + `exit_code -6` hàng loạt. Đã kill,
+   xóa mọi checkpoint/ledger/failures/answers/projection của run lỗi, resume lại từ
+   checkpoint 1.775 nguyên vẹn (đã kiểm exit-code trước khi xóa).
+4. **Quên proxy pinning**: 12 phút đầu `omp` retry vào `127.0.0.1:8799` không ai nghe
+   (proxy mất sau reboot cùng `/tmp`). Đã dựng lại
+   (`--upstream http://llmapi.iec/v1 --allow-http-upstream --pin temperature=0`,
+   capture mới `/tmp/opencode/qwen65k_capture_resume3.json` vì file cũ mất theo tmpfs) →
+   các item đang treo được cứu qua retry, về nhịp 2,12 item/s.
+5. **Đường truyền đổi giữa chừng** (đã khai ở MC-31, nhắc lại): 1.275 item đầu qua URL https
+   công cộng, 2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường
+   truyền. Đoạn resume sạch hơn hẳn (64 lỗi thêm/2.866 so với 120/1.275, trong đó 106
+   abort-180s dù 0 tool call) — ủng hộ giả thuyết abort cũ là do server/đường truyền,
+   không phải scaffold.
+
+### Kết quả `vbench_mc` arm B (cuối cùng)
+
+`4.141/4.141`, `failures=184` (170 `omp exit 1` rỗng + 14 tin rỗng), `tool_use=2` item,
+`net_attempt=0`, `path_escape=0`, `wall/item=11,9s`. Ledger đã kiểm: 3.971 `exit 0`,
+không còn hàng `-6` nào.
+
+### So sánh công bằng arm A − arm B, Qwen3.5-9B-65K (`compare --tag vsA`, đủ 6/6 tập)
+
+| Tập | Arm A | Arm B | Δ (CI 95%) | McNemar p |
+| --- | ---: | ---: | ---: | --- |
+| legal_mc (acc) | 89,04% | 73,97% | **−15,07** (−21,92..−8,90) | ≈1e−05 — có ý nghĩa |
+| legal_nli (acc) | 92,00% | 88,00% | −4,00 (−8,00..+0,00) | 0,11 — không có ý nghĩa |
+| reading400 (EM) | 72,25% | 57,75% | **−14,50** (−19,25..−10,00) | ≈6e−09 — có ý nghĩa |
+| bidlqa_val (EM) | 29,25% | 23,24% | **−6,02** (−9,54..−2,70) | ≈9e−04 — có ý nghĩa |
+| vbench_agentic (validity) | 98,60% | 48,50% | **−50,10** (−53,30..−47,00) | ≈2e−141 — có ý nghĩa |
+| vbench_mc (trùng khớp A) | 100,00% | 64,04% | **−35,96** (−37,43..−34,51) | (trống cố ý — arm A tự trùng chính nó) |
+
+### Đặt cạnh các model trước (chỉ đặt cạnh — KHÔNG trừ qua lại)
+
+Delta chỉ có nghĩa trong cùng một model (cùng model, prompt, scorer, endpoint-era).
+Baseline arm A đã khác nhau (28K: legal_mc 87,67% · 65K: 89,04% · MiMo: 90,41%),
+thời điểm/endpoint cũng khác (28K đo qua https công cộng lúc còn sống; 65K nửa sau qua
+http nội bộ). Vì vậy bảng dưới là **bảng đặt cạnh**, mỗi Δ đọc dọc trong model của nó:
+
+| Tập | 28K H5 sạch (Δ vs A) | 65K T65 (Δ vs A) | MiMo M6 sạch (Δ vs A) |
+| --- | ---: | ---: | ---: |
+| legal_mc | −18,49 (−26,71..−10,96) * | −15,07 (−21,92..−8,90) * | +2,74 (0,00..6,16) ns |
+| legal_nli | −11,33 (−18,67..−4,00) * | −4,00 (−8,00..0,00) ns | +0,00 (−4,67..4,67) ns |
+| reading400 | −22,25 (−26,75..−17,75) * | −14,50 (−19,25..−10,00) * | +7,00 (3,50..10,50) * |
+| bidlqa_val | −5,60 (−9,34..−2,07) * | −6,02 (−9,54..−2,70) * | +2,28 (0,00..4,77) ns |
+| vbench_agentic | (V1, arm khác) | −50,10 * | +0,50 (0,00..1,00) ns |
+| vbench_mc | (không chạy) | −35,96 (trùng khớp) | −22,39 (trúng khớp) |
+
+`*` = McNemar có ý nghĩa ở 5%; `ns` = không. Mẫu hình nhất quán: scaffold `omp` làm Qwen
+mất điểm ở mọi tập MC/reading (cả 28K lẫn 65K), trong khi MiMo giữ nguyên hoặc nhỉnh hơn —
+cùng hướng với kết luận MC-30, nay lặp lại trên model thứ ba (65K) với tập thứ sáu.
+
+### Không được quy
+
+1. `vbench_mc` là **mức trùng khớp**, không phải accuracy (không có gold cục bộ); McNemar
+   trống là cố ý theo thiết kế compare.
+2. Mỗi ô 65K mới chạy một lần (chưa đo sàn nhiễu cho model này); arm B đi qua một hop
+   proxy trong suốt, arm A không.
+3. 184 câu trả lời rỗng phía B tính là "khác A" — đúng luật unparsed = sai, đã áp dụng
+   như nhau cho mọi arm.
+
+## MC-33 — **Đính chính MC-32: `vbench_mc` 65K là 63,37% (không phải 64,04%)**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-33` |
+| `ngay_chay` | 2026-10-02 23:23–23:40 (+07), không chạy model — chỉ chạy lại `compare` + rebuild dashboard |
+| `noi_dung` | Lệnh `compare` trong MC-32 thiếu `--arm-a-slug` nên rơi về default
+`Qwen3_5-9B-28K` — tức so arm B của model này với arm A của model khác, đúng điều cấm
+kỵ của MC-4/MC-29. Builder `build_dashboard_harness.py` từ chối số đó
+(`compare arm_b=64.04 but per-item recompute=63.37`) — fail-fast hoạt động đúng.
+Chạy lại `compare --dataset vbench_mc --label ompT65_Qwen3_5-9B-65K --arm-a-slug
+Qwen3_5-9B-65K --tag vsA` → **trùng khớp 2.624/4.141 = 63,37%, Δ −36,63
+(CI −38,13..−35,16)**. Submission/profile không ảnh hưởng (chỉ đọc ledger arm B).
+Bảng đúng của hàng `vbench_mc` trong MC-32: A 100% → B 63,37%, Δ **−36,63**. |
+| `dashboard` | Đã mở rộng registry (`ARMS` + `A3`/`T65`, `ARM_MODEL`, `CLEAN_ARMS`, `REPRESENTATIVE`,
+`ARM_DATASETS`, `BASELINE_SHORTS`, metadata block, 1 caveat về đổi đường truyền 65K):
+block `.harness` 45 dòng/3 model, claim `penalty:Qwen3.5-9B-65K` + `model_dependent` 3 model
+tự sinh từ artifact. Kiểm: suite 172 OK, ruff sạch, `bun test` 51 pass, `tsc` sạch,
+blob thật validate qua `parseHarnessBlock`. Phía TS không đổi (validator/page generic). |
+
+## MC-34 — **Nhóm metric 1 xong: trống riêng, cắt theo nhóm, điểm từng phần**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-34` |
+| `ngay_chay` | 2026-10-03, offline trên artifact cũ — 0 lần gọi model mới |
+| `lam_gi` | 1.1: dòng comparison mang `a_blanks`/`b_blanks` (đếm sẵn trong ladder),
+hiện "(trống X)" dưới % ở các hàng accuracy/EM. 1.2: `compare` viết thêm
+`harness_breakdown_<dataset>_vsA_<slug>.csv` (cùng predicate với dòng ALL, cắt theo
+`stratum`; stratum hằng → không viết file; bucket "unknown" cho stratum rỗng;
+nhóm nhỏ giữ CI rộng, không giấu). 1.3: `grade_agentic_args` + `score_arg_credit.py`
+→ `vbench_arg_credit_<slug>.csv` (required_fill + precision, xem MC-32 phân tích).
+Dashboard thêm 3 mục (breakdown + điểm từng phần dạng accordion, trống dưới %
+comparison); TS validator mở rộng tương ứng. |
+| `ket_qua_moi` | V-Bench MC T65 chênh từ −9,5 (philosophy) tới −42,4 (mathematics) — aggregate
+−36,6 che mất. Arg credit: arm trực tiếp fill ~99,9% (hỏng validity là do không ra
+call: 5–14 câu); T65 chỉ ra được 504/1.000 call nhưng call nào ra thì fill 99,0% —
+sập validity là do vòng tool/unparseable, không phải điền sai tham số. |
+| `dieu_chinh` | So với plan nhóm 1: bỏ cắt theo subject cho legal_mc (source không có metadata
+subject — stratum hằng, trung thực báo ALL-only). Compare cũ tái chạy để sinh breakdown
+giữ nguyên số, chỉ refresh hash (deterministic, seed 42). |
+| `kiem` | Suite 178 OK, ruff sạch, `bun test` 54 pass, `tsc` sạch, blob thật validate
+(45 ladder / 6 breakdown / 6 arg_credit). |
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

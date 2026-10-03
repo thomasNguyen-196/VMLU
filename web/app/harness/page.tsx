@@ -109,9 +109,11 @@ export default async function HarnessPage() {
   // tự render bên dưới — thêm/xóa section mà quên cập nhật ở đây là một chỗ
   // lệch, nên mọi id đều được khai báo một lần ở đúng thẻ <section> của nó.
   const toc: TocItem[] = [
-    { id: "so-sanh", label: "So sánh trực tiếp" },
     { id: "nhan-xet", label: "Nhận xét" },
+    { id: "so-sanh", label: "So sánh trực tiếp" },
   ];
+  if (block.breakdown?.length) toc.push({ id: "cat-nhom", label: "Chênh lệch theo nhóm" });
+  if (block.arg_credit?.length) toc.push({ id: "diem-tung-phan", label: "Điểm từng phần" });
   for (const ds of DATASET_ORDER) {
     const rows = rowsForDataset(block, ds);
     if (rows.length) toc.push({ id: `tap-${ds}`, label: rows[0].dataset_label.split(" (")[0] });
@@ -124,7 +126,7 @@ export default async function HarnessPage() {
   toc.push({ id: "gioi-han", label: "Giới hạn khi trích" });
   return (
     <div className="mx-auto flex max-w-[1360px] items-start gap-6 px-6 py-12">
-      <aside className="hidden w-52 shrink-0 lg:block">
+      <aside className="hidden w-52 shrink-0 self-stretch lg:block">
         <TocNav items={toc} />
       </aside>
       <main className="min-w-0 max-w-[1060px] flex-1">
@@ -157,58 +159,6 @@ export default async function HarnessPage() {
         <br />
         <b>Cách chặn:</b> {block.leak.fix} · <b>Guard:</b> {block.leak.guard}
       </div>
-
-      <section id="so-sanh" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card p-5">
-        <h2 className="text-[16px] font-semibold">So sánh trực tiếp: không dùng harness ⟷ dùng harness</h2>
-        <p className="mt-1 text-[12.5px] text-ink-2">
-          Cùng một model và cùng một prompt; chỉ khác ở chỗ có đưa câu hỏi qua tiến trình agent của{" "}
-          <code className="font-mono">{block.harness}</code> hay không. Cột bên phải là cấu hình scaffold
-          sạch (trung tính × không công cụ), theo thứ tự từ nặng đến nhẹ.
-        </p>
-        <table className="mt-2.5 w-full border-collapse text-[13px]">
-          <thead>
-            <tr className="border-b border-hair text-left text-ink-2">
-              <th className="py-1.5 pr-2 font-medium">Tập dữ liệu</th>
-              <th className="py-1.5 pr-2 font-medium">Tiêu chí</th>
-              <th className="py-1.5 pr-2 font-medium">n</th>
-              <th className="py-1.5 pr-2 font-medium">Không dùng harness</th>
-              <th className="py-1.5 pr-2 font-medium">Dùng harness</th>
-              <th className="py-1.5 font-medium">Chênh lệch</th>
-            </tr>
-          </thead>
-          <tbody>
-            {block.insight.comparison.map((c) => (
-              <tr key={`${c.model}/${c.dataset}`} className="border-b border-hair/60">
-                <td className="py-1.5 pr-2 text-ink-2">{c.model}</td>
-                <td className="py-1.5 pr-2">{c.dataset_label}</td>
-                <td className="py-1.5 pr-2 font-mono text-ink-2">{c.metric}</td>
-                <td className="py-1.5 pr-2 font-mono">{c.n}</td>
-                <td className="py-1.5 pr-2 font-mono">{c.no_harness.toFixed(2)}%</td>
-                <td className="py-1.5 pr-2 font-mono font-semibold">{c.with_harness.toFixed(2)}%</td>
-                <td className="py-1.5 font-mono">
-                  <span className={c.delta < 0 ? "text-flag" : "text-ok"}>
-                    {c.delta >= 0 ? "+" : ""}
-                    {c.delta.toFixed(2)}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="mt-2 text-[12.5px] text-ink-2">
-          Mỗi dòng là so trong <strong>một model</strong>: cùng model ở cả hai cột, chỉ khác
-          việc câu hỏi có đi qua tiến trình agent hay không. Dấu của Δ không cố định giữa các
-          model — đó là kết quả của phép so, không phải tiêu chí xếp hạng.{" "}
-          {block.insight.comparison.some((c) => c.metric === "agreement") && (
-            <>
-              Dòng <span className="font-mono">agreement</span> KHÔNG phải điểm: đó là tỉ lệ câu
-              trả lời mà agent cho <em>giống hệt</em> lời gọi trực tiếp trên cùng câu hỏi, nên nó
-              đo mức agent làm đổi đáp án chứ không đo chất lượng — V-Bench chấm điểm ở máy chủ, ta
-              không có vàng cục bộ.
-            </>
-          )}
-        </p>
-      </section>
 
       <section id="nhan-xet" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card p-5">
         <h2 className="text-[16px] font-semibold">Nhận xét — đọc kết quả này thành gì?</h2>
@@ -245,6 +195,219 @@ export default async function HarnessPage() {
           nên phần diễn giải không thể lệch với dữ liệu.
         </p>
       </section>
+
+      <section id="so-sanh" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card p-5">
+        <h2 className="text-[16px] font-semibold">So sánh trực tiếp: không dùng harness ⟷ dùng harness</h2>
+        <p className="mt-1 text-[12.5px] text-ink-2">
+          Cùng một model và cùng một prompt; chỉ khác ở chỗ có đưa câu hỏi qua tiến trình agent của{" "}
+          <code className="font-mono">{block.harness}</code> hay không. Cột bên phải là cấu hình scaffold
+          sạch (trung tính × không công cụ), xếp theo từng model, trong mỗi model từ nặng đến nhẹ.
+        </p>
+        {[...new Set(block.insight.comparison.map((c) => c.model))].map((m) => {
+          const mrows = block.insight.comparison.filter((c) => c.model === m);
+          return (
+            <div key={m} className="mt-4">
+              <h3 className="text-[13.5px] font-semibold">
+                {m}{" "}
+                <span className="font-normal text-ink-2">— cùng model ở cả hai cột</span>
+              </h3>
+              <table className="mt-1.5 w-full border-collapse text-[13px]">
+                <thead>
+                  <tr className="border-b border-hair text-left text-ink-2">
+                    <th className="py-1.5 pr-2 font-medium">Tập dữ liệu</th>
+                    <th className="py-1.5 pr-2 font-medium">Thước đo</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">n</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Không dùng harness</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Dùng harness</th>
+                    <th className="py-1.5 text-right font-medium tabular-nums">Δ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mrows.map((c) => (
+                    <tr key={`${c.model}/${c.dataset}`} className="border-b border-hair/60 last:border-0">
+                      <td className="py-1.5 pr-2">{c.dataset_label}</td>
+                      <td className="py-1.5 pr-2">
+                        <span
+                          className="inline-block rounded-full border border-hair px-1.5 py-px font-mono text-[11px] text-ink-2"
+                          title={
+                            c.metric === "agreement"
+                              ? "Không phải điểm: tỉ lệ agent cho giống hệt lời gọi trực tiếp"
+                              : `Thước đo của tập này: ${c.metric}`
+                          }
+                        >
+                          {c.metric}
+                        </span>
+                      </td>
+                      <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{c.n}</td>
+                      <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
+                        {c.no_harness.toFixed(2)}%
+                        {(c.metric === "accuracy" || c.metric === "EM") &&
+                        typeof c.a_blanks === "number" &&
+                        c.a_blanks > 0 ? (
+                          <span className="block text-[11px] font-normal text-ink-2">
+                            trống {c.a_blanks}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="py-1.5 pr-2 text-right font-mono font-semibold tabular-nums">
+                        {c.with_harness.toFixed(2)}%
+                        {(c.metric === "accuracy" || c.metric === "EM") &&
+                        typeof c.b_blanks === "number" &&
+                        c.b_blanks > 0 ? (
+                          <span className="block text-[11px] font-normal text-ink-2">
+                            trống {c.b_blanks}
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="py-1.5 text-right font-mono tabular-nums">
+                        <span
+                          className={
+                            c.delta < 0
+                              ? "inline-block min-w-[68px] rounded-full bg-flag-soft/70 px-2 py-px text-center text-flag"
+                              : "inline-block min-w-[68px] rounded-full border border-hair px-2 py-px text-center"
+                          }
+                        >
+                          {c.delta >= 0 ? "+" : ""}
+                          {c.delta.toFixed(2)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+        <p className="mt-2 text-[12.5px] text-ink-2">
+          Mỗi dòng là so trong <strong>một model</strong>: cùng model ở cả hai cột, chỉ khác
+          việc câu hỏi có đi qua tiến trình agent hay không. Dấu của Δ không cố định giữa các
+          model — đó là kết quả của phép so, không phải tiêu chí xếp hạng.{" "}
+          {block.insight.comparison.some((c) => c.metric === "agreement") && (
+            <>
+              Dòng <span className="font-mono">agreement</span> KHÔNG phải điểm: đó là tỉ lệ câu
+              trả lời mà agent cho <em>giống hệt</em> lời gọi trực tiếp trên cùng câu hỏi, nên nó
+              đo mức agent làm đổi đáp án chứ không đo chất lượng — V-Bench chấm điểm ở máy chủ, ta
+              không có vàng cục bộ.
+            </>
+          )}
+        </p>
+      </section>
+
+      {block.breakdown?.length ? (
+        <details id="cat-nhom" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card px-5 py-3">
+          <summary className="cursor-pointer text-[16px] font-semibold">
+            Chênh lệch theo nhóm — cùng một phép so, cắt theo từng nhóm câu hỏi
+          </summary>
+          <p className="mt-1 text-[12.5px] text-ink-2">
+            Mỗi dòng vẫn là so ghép cặp trong <strong>cùng model</strong>, chỉ thu hẹp xuống một
+            nhóm (domain V-Bench, dạng câu reading). Nhóm nhỏ giữ nguyên CI rộng của nó — khoảng
+            tin cậy nói thay cho việc giấu đi.
+          </p>
+          {block.breakdown.map((d) => (
+            <div key={`${d.arm_slug}/${d.dataset}`} className="mt-4">
+              <h3 className="text-[13.5px] font-semibold">
+                {d.model} · {d.dataset_label}{" "}
+                <span className="font-normal text-ink-2">— {d.label}</span>
+              </h3>
+              <table className="mt-1.5 w-full border-collapse text-[13px]">
+                <thead>
+                  <tr className="border-b border-hair text-left text-ink-2">
+                    <th className="py-1.5 pr-2 font-medium">Nhóm</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">n</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Không dùng</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Dùng</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Δ</th>
+                    <th className="py-1.5 text-right font-medium tabular-nums">CI 95%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...d.groups]
+                    .sort((a, b) => a.delta - b.delta)
+                    .map((g) => (
+                      <tr key={g.group} className="border-b border-hair/60 last:border-0">
+                        <td className="py-1.5 pr-2 font-mono text-[12.5px]">{g.group}</td>
+                        <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{g.n}</td>
+                        <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
+                          {g.arm_a.toFixed(2)}%
+                        </td>
+                        <td className="py-1.5 pr-2 text-right font-mono font-semibold tabular-nums">
+                          {g.arm_b.toFixed(2)}%
+                        </td>
+                        <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
+                          <span
+                            className={
+                              g.delta < 0
+                                ? "inline-block min-w-[68px] rounded-full bg-flag-soft/70 px-2 py-px text-center text-flag"
+                                : "inline-block min-w-[68px] rounded-full border border-hair px-2 py-px text-center"
+                            }
+                          >
+                            {g.delta >= 0 ? "+" : ""}
+                            {g.delta.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="py-1.5 text-right font-mono text-[12px] text-ink-2 tabular-nums">
+                          {g.ci95_low.toFixed(2)}..{g.ci95_high.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </details>
+      ) : null}
+
+      {block.arg_credit?.length ? (
+        <details id="diem-tung-phan" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card px-5 py-3">
+          <summary className="cursor-pointer text-[16px] font-semibold">
+            Điểm từng phần — tham số đúng bao nhiêu, không chỉ gọi được hay không
+          </summary>
+          <p className="mt-1 text-[12.5px] text-ink-2">
+            Validity 0/1 gộp hai lỗi khác nhau (không ra được call nào vs ra call nhưng sai tham
+            số). Ở đây chấm từng tham số ở đúng tầng mà cổng pipeline kiểm tra:{" "}
+            <code>required_fill</code> = tham số bắt buộc điền đúng / tham số bắt buộc (trên các
+            câu đã ra được call), <code>precision</code> = tham số hợp lệ / tham số đã đưa ra.
+            Câu không ra call không đóng góp vào tỉ lệ nào và được đếm riêng ở cột cuối.
+          </p>
+          <table className="mt-2 w-full border-collapse text-[13px]">
+            <thead>
+              <tr className="border-b border-hair text-left text-ink-2">
+                <th className="py-1.5 pr-2 font-medium">Arm</th>
+                <th className="py-1.5 pr-2 text-right font-medium tabular-nums">n</th>
+                <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Ra được call</th>
+                <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Bắt buộc điền đúng</th>
+                <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Precision tham số</th>
+                <th className="py-1.5 text-right font-medium tabular-nums">Không ra call</th>
+              </tr>
+            </thead>
+            <tbody>
+              {block.arg_credit.map((a) => (
+                <tr key={a.arm_slug} className="border-b border-hair/60 last:border-0">
+                  <td className="py-1.5 pr-2">
+                    <span className="font-mono text-[12.5px]">{a.arm}</span>{" "}
+                    <span className="text-ink-2">{a.model}</span>
+                  </td>
+                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{a.n_items}</td>
+                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{a.n_attempted}</td>
+                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
+                    <span className="font-semibold">{a.required_fill_rate.toFixed(2)}%</span>{" "}
+                    <span className="text-[11.5px] text-ink-2">
+                      ({a.n_required_ok}/{a.n_required_slots})
+                    </span>
+                  </td>
+                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
+                    <span className="font-semibold">{a.arg_precision.toFixed(2)}%</span>{" "}
+                    <span className="text-[11.5px] text-ink-2">
+                      ({a.n_supplied_ok}/{a.n_supplied})
+                    </span>
+                  </td>
+                  <td className="py-1.5 text-right font-mono tabular-nums">{a.n_unparseable}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+      ) : null}
 
       {DATASET_ORDER.map((ds) => {
         const rows = rowsForDataset(block, ds);

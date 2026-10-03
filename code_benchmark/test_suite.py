@@ -59,6 +59,7 @@ from code_benchmark.run_vbench_eval import (
     build_agentic_prompt as vb_build_agentic_prompt,
     build_submission_rows as vb_build_submission_rows,
     diagnose_rejection as vb_diagnose_rejection,
+    grade_agentic_args as vb_grade_agentic_args,
     parse_choice as vb_parse_choice,
     parse_value as vb_parse_value,
     guided_call as vb_guided_call,
@@ -98,6 +99,7 @@ from code_benchmark.seed_registries import (
 )
 from code_benchmark import run_harness_eval as harness
 from code_benchmark import build_dashboard_harness as dash
+from code_benchmark import capture_scaffold as scaffold
 from code_benchmark import llm
 from code_benchmark import run_legal_arm_a as legal_arm_a
 from code_benchmark.score_reading_eval import read_csv_rows
@@ -822,6 +824,44 @@ class TestVbenchRunner(unittest.TestCase):
         self.assertEqual(vb_classify_track({"id": 3, "choices": [], "function": [], "domain": "hatespeech"}), "safety")
         with self.assertRaises(SystemExit):   # tracks are disjoint in the release
             vb_classify_track({"id": 4, "choices": ["A"], "function": [self.FN], "domain": "d"})
+
+    def test_agentic_arg_credit_grades_the_attempt_not_the_outcome(self):        # 1.3: partial credit scores the FIRST identifiable call at the same
+        # level the ship-gate checks (top-level keys + verbatim enums).
+        g = vb_grade_agentic_args(
+            self._agentic_raw({"loai": "chuyen_khoan", "ma_khu_vuc": "VN-HN"}),
+            [self.FN])
+        self.assertTrue(g["parseable"])
+        self.assertEqual((g["n_required"], g["n_required_ok"],
+                          g["n_supplied"], g["n_supplied_ok"],
+                          g["n_hallucinated"], g["n_off_enum"], g["n_missing"]),
+                         (1, 1, 2, 2, 0, 0, 0))
+        # missing required + hallucinated + off-enum, each counted once
+        g = vb_grade_agentic_args(
+            self._agentic_raw({"ma_khu_vuc": "VN-HN", "cot_ma": 1}),
+            [self.FN])
+        self.assertEqual((g["n_required_ok"], g["n_hallucinated"], g["n_missing"]),
+                         (0, 1, 1))
+        g = vb_grade_agentic_args(self._agentic_raw({"loai": "sai_enum"}), [self.FN])
+        self.assertEqual((g["n_required_ok"], g["n_off_enum"]), (0, 1))
+        # no identifiable call: contributes nothing, flagged unparseable
+        for raw in ("tôi không thể trả lời", "",
+                    json.dumps([{"ham_khong_ton_tai": {"loai": "chuyen_khoan"}}]),
+                    self._agentic_raw({"loai": "chuyen_khoan"})[:20]):
+            g = vb_grade_agentic_args(raw, [self.FN])
+            self.assertFalse(g["parseable"], f"parsed: {raw[:40]}")
+            self.assertEqual(g["n_supplied"], 0)
+
+    def test_arg_credit_summarize_refuses_dup_and_nonnumeric_ids(self):
+        from code_benchmark.score_arg_credit import summarize
+        fns = {8142: [{"name": "f", "parameters": {"properties": {"a": {}}, "required": ["a"]}}]}
+        raw = json.dumps([{"f": {"a": 1}}])
+        out = summarize([("8142", raw)], fns)
+        self.assertEqual((out["n_items"], out["n_attempted"], out["n_unparseable"]), (1, 1, 0))
+        self.assertEqual(out["required_fill_rate"], 100.0)
+        with self.assertRaises(SystemExit):
+            summarize([("8142", raw), ("8142", raw)], fns)
+        with self.assertRaises(SystemExit):
+            summarize([("LG-0001", raw)], fns)
 
     def test_mc_letter_clamped_to_row_choices(self):
         # frozen extract_answer accepts A-E; the submission label must exist on THIS row
@@ -1638,6 +1678,76 @@ class TestHarnessRunner(unittest.TestCase):
         full = self._argv(tools="read,bash")
         self.assertNotIn("--no-tools", full)
 
+    def test_argv_all_condition_omits_the_tool_flag(self):
+        # the as-shipped condition: neither --tools nor --no-tools, so omp's own
+        # default menu runs. Omitting the flag IS the condition — not an empty menu.
+        for spelling in harness.ALL_TOOLS:
+            argv = self._argv(tools=spelling)
+            self.assertNotIn("--tools", argv)
+            self.assertNotIn("--no-tools", argv)
+            self.assertEqual(argv[-1], "P")     # argv still well-formed
+
+    def test_resolve_tools_is_three_valued_and_labelled(self):
+        # the label is what a ledger row records, so it must distinguish the three
+        self.assertEqual(harness.resolve_tools("none"), (["--no-tools"], "none"))
+        self.assertEqual(harness.resolve_tools("all"), ([], "all"))
+        self.assertEqual(harness.resolve_tools("read,bash"),
+                         (["--tools", "read,bash"], "read,bash"))
+        self.assertEqual(harness.resolve_tools(" ALL "), ([], "all"))
+
+    def _vbench_dir(self, tmp, files):
+        d = Path(tmp) / "arm"
+        d.mkdir()
+        for name, rows in files.items():
+            with open(d / name, "w", encoding="utf-8", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+                w.writeheader()
+                w.writerows(rows)
+        return d
+
+    def _vb_rows(self, ids, track, answers):
+        return [{"id": i, "domain": "d", "track": track, "question": "q",
+                 "raw_response": "r", "answer": a}
+                for i, a in zip(ids, answers, strict=True)]
+
+    def test_vbench_validity_picks_the_agentic_checkpoint(self):
+        # regression: "latest = biggest count" picked the 4.141-row mc file for
+        # the agentic compare, so the arms shared no items
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self._vbench_dir(tmp, {
+                "vbench_result_1000_T65.csv":
+                    self._vb_rows(["8142", "8143"], "agentic", ['[{"f":{}}]', ""]),
+                "vbench_result_4141_T65.csv":
+                    self._vb_rows(["1", "2"], "mc", ["A", "B"]),
+            })
+            got = harness._vbench_validity(d, "T65", "vbench_agentic",
+                                            harness_arm=False)
+            self.assertEqual(got, {"8142": 1, "8143": 0})
+
+    def test_vbench_mc_letters_skips_a_bigger_agentic_checkpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self._vbench_dir(tmp, {
+                "vbench_result_5000_T65.csv":
+                    self._vb_rows(["8142"], "agentic", ['[{"f":{}}]']),
+                "vbench_result_4141_T65.csv":
+                    self._vb_rows(["1", "2"], "mc", ["A", ""]),
+            })
+            got = harness._vbench_mc_letters(d, "T65", harness_arm=False)
+            self.assertEqual(got, {"1": "A", "2": ""})
+
+    def test_vbench_readers_split_a_mixed_track_all_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self._vbench_dir(tmp, {
+                "vbench_result_5141_T65.csv":
+                    self._vb_rows(["8142"], "agentic", ['[{"f":{}}]']) +
+                    self._vb_rows(["1"], "mc", ["C"]),
+            })
+            self.assertEqual(
+                harness._vbench_validity(d, "T65", "vbench_agentic",
+                                          harness_arm=False), {"8142": 1})
+            self.assertEqual(
+                harness._vbench_mc_letters(d, "T65", harness_arm=False), {"1": "C"})
+
     def test_argv_minimal_persona_condition_replaces_the_system_prompt(self):
         # H3 changes exactly ONE variable against the full-tool arm
         argv = self._argv(system_prompt=harness.MINIMAL_SYSTEM_PROMPT)
@@ -1903,6 +2013,27 @@ class TestHarnessRunner(unittest.TestCase):
                     harness.resolve_cost_endpoint(args)
 
 
+class TestCaptureScaffoldUpstream(unittest.TestCase):
+    """The pinning proxy's upstream guard: https by default, plain http only
+    with the explicit opt-in (provider-documented LAN endpoint inside a VPN)."""
+
+    def test_https_upstream_passes_and_strips_slash(self):
+        self.assertEqual(
+            scaffold.check_upstream("https://llmapi.iec-uit.com/v1/", False),
+            "https://llmapi.iec-uit.com/v1")
+
+    def test_http_upstream_needs_the_opt_in(self):
+        with self.assertRaises(SystemExit):
+            scaffold.check_upstream("http://llmapi.iec/v1", False)
+        self.assertEqual(scaffold.check_upstream("http://llmapi.iec/v1", True),
+                         "http://llmapi.iec/v1")
+
+    def test_non_http_scheme_never_passes(self):
+        for url in ("ftp://x/v1", "llmapi.iec/v1", ""):
+            with self.assertRaises(SystemExit):
+                scaffold.check_upstream(url, True)
+
+
 class TestHarnessDashboard(unittest.TestCase):
     """build_dashboard_harness.py — the block every harness number is displayed from."""
 
@@ -2077,6 +2208,169 @@ class TestHarnessDashboard(unittest.TestCase):
         ev = {e["label"]: e["value"] for e in penalty["evidence"]}
         self.assertEqual(ev["Δ nhỏ nhất"], "+7.00")
         self.assertIn("trên 1 tập", penalty["body"])
+
+    def test_comparison_carries_blanks_per_side(self):
+        # 1.1: số câu trống/unparseable của mỗi phía đi theo dòng so sánh để
+        # trang hiện mà không phải đoán lại từ đâu.
+        def row(role, arm, blanks):
+            return {"role": role, "arm": arm, "arm_slug": f"{arm}_M9",
+                    "model": "M9", "dataset": "legal_mc", "dataset_label": "legal-MC",
+                    "metric": "accuracy", "n": 146, "arm_a": 89.0, "arm_b": 74.0,
+                    "delta": -15.0, "ci95_low": -21.0, "ci95_high": -9.0,
+                    "mcnemar_p": "0.01", "both": 100, "a_only": 20, "b_only": 2,
+                    "neither": 24, "char_f1": None, "blanks": blanks,
+                    "label": arm, "card": None}
+        real_rep = dict(dash.REPRESENTATIVE)
+        real_model = dict(dash.ARM_MODEL)
+        dash.REPRESENTATIVE["M9"] = "HB"
+        dash.ARM_MODEL["HB"] = "M9"
+        try:
+            ins = dash.insight([row("baseline", "A9", 3), row("harness", "HB", 12)],
+                               [], [], [])
+        finally:
+            dash.REPRESENTATIVE.clear(); dash.REPRESENTATIVE.update(real_rep)
+            dash.ARM_MODEL.clear(); dash.ARM_MODEL.update(real_model)
+        self.assertEqual(len(ins["comparison"]), 1)
+        self.assertEqual((ins["comparison"][0]["a_blanks"],
+                          ins["comparison"][0]["b_blanks"]), (3, 12))
+
+    def test_breakdown_cuts_by_stratum_with_the_same_predicate(self):
+        # 1.2: per-group rows reuse the ALL predicate; groups partition shared.
+        import code_benchmark.run_harness_eval as harness_mod
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            slug = "ompX_M"
+            (root / slug).mkdir()
+            with open(root / slug / f"harness_ledger_reading400_{slug}.csv",
+                      "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["dataset", "item_id", "stratum"])
+                w.writeheader()
+                w.writerow({"dataset": "squad", "item_id": "1", "stratum": "short-direct"})
+                w.writerow({"dataset": "squad", "item_id": "2", "stratum": "short-direct"})
+                w.writerow({"dataset": "squad", "item_id": "3", "stratum": ""})
+            old = harness_mod.RESULTS_DIR
+            harness_mod.RESULTS_DIR = root
+            try:
+                a = {"squad:1": 1, "squad:2": 0, "squad:3": 1}
+                b = {"squad:1": 0, "squad:2": 0, "squad:3": 1}
+                rows = harness_mod._breakdown_rows(
+                    "reading400", slug, a, b, list(a), "reading", "EM", "hash")
+            finally:
+                harness_mod.RESULTS_DIR = old
+        by_group = {r["group"]: r for r in rows}
+        self.assertEqual(set(by_group), {"short-direct", "unknown"})
+        self.assertEqual(by_group["short-direct"]["n"], 2)
+        self.assertEqual(by_group["unknown"]["n"], 1)
+        self.assertEqual(sum(r["n"] for r in rows), 3)
+
+    def test_breakdown_skips_gracefully_when_ledger_covers_nothing(self):
+        # Ledger from a different run covering none of the shared keys: loud,
+        # not a vacuous single-"unknown"-group cut.
+        import code_benchmark.run_harness_eval as harness_mod
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            slug = "ompX_M"
+            (root / slug).mkdir()
+            with open(root / slug / f"harness_ledger_legal_mc_{slug}.csv",
+                      "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["item_id", "stratum"])
+                w.writeheader()
+                w.writerow({"item_id": "OTHER-1", "stratum": "legal"})
+            old = harness_mod.RESULTS_DIR
+            harness_mod.RESULTS_DIR = root
+            try:
+                with self.assertRaises(SystemExit):
+                    harness_mod._breakdown_rows(
+                        "legal_mc", slug, {"LG-0001": 1}, {"LG-0001": 1},
+                        ["LG-0001"], "mc", "accuracy", "hash")
+            finally:
+                harness_mod.RESULTS_DIR = old
+
+    def test_breakdown_skips_a_constant_stratum(self):
+        import code_benchmark.run_harness_eval as harness_mod
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            slug = "ompX_M"
+            (root / slug).mkdir()
+            with open(root / slug / f"harness_ledger_legal_mc_{slug}.csv",
+                      "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["item_id", "stratum"])
+                w.writeheader()
+                w.writerow({"item_id": "LG-0001", "stratum": "legal"})
+                w.writerow({"item_id": "LG-0002", "stratum": "legal"})
+            old = harness_mod.RESULTS_DIR
+            harness_mod.RESULTS_DIR = root
+            try:
+                rows = harness_mod._breakdown_rows(
+                    "legal_mc", slug, {"LG-0001": 1, "LG-0002": 0},
+                    {"LG-0001": 1, "LG-0002": 1}, ["LG-0001", "LG-0002"],
+                    "mc", "accuracy", "hash")
+            finally:
+                harness_mod.RESULTS_DIR = old
+        self.assertEqual(rows, [])
+
+    def test_builder_arg_credit_validates_the_fractions(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            slug = "TMPSLUG"
+            (root / slug).mkdir()
+            cols = ["n_items", "n_attempted", "n_required_slots", "n_required_ok",
+                    "required_fill_rate", "n_supplied", "n_supplied_ok",
+                    "arg_precision", "n_unparseable"]
+            good = {"n_items": 10, "n_attempted": 9, "n_required_slots": 18,
+                    "n_required_ok": 17, "required_fill_rate": 94.44,
+                    "n_supplied": 20, "n_supplied_ok": 19, "arg_precision": 95.0,
+                    "n_unparseable": 1}
+            with open(root / slug / f"vbench_arg_credit_{slug}.csv",
+                      "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=cols)
+                w.writeheader()
+                w.writerow(good)
+            out = dash.arg_credit(root, [("k", slug, "H5", "lbl", None)])
+            self.assertEqual(len(out), 1)
+            self.assertEqual(out[0]["required_fill_rate"], 94.44)
+            bad = dict(good, required_fill_rate=50.0)
+            with open(root / slug / f"vbench_arg_credit_{slug}.csv",
+                      "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=cols)
+                w.writeheader()
+                w.writerow(bad)
+            with self.assertRaises(SystemExit):
+                dash.arg_credit(root, [("k", slug, "H5", "lbl", None)])
+
+    def test_builder_breakdown_groups_sum_to_all(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            slug = "TMPSLUG"
+            (root / slug).mkdir()
+            with open(root / slug / f"harness_compare_reading400_vsA_{slug}.csv",
+                      "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["metric", "group", "n", "arm_a",
+                                                  "arm_b", "delta", "ci95_low",
+                                                  "ci95_high", "mcnemar_p"])
+                w.writeheader()
+                w.writerow({"metric": "EM", "group": "ALL", "n": 3,
+                            "arm_a": "66.67", "arm_b": "33.33", "delta": "-33.33",
+                            "ci95_low": "-60.00", "ci95_high": "0.00",
+                            "mcnemar_p": "0.5"})
+            with open(root / slug / f"harness_breakdown_reading400_vsA_{slug}.csv",
+                      "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=["metric", "group", "n", "arm_a",
+                                                  "arm_b", "delta", "ci95_low",
+                                                  "ci95_high", "mcnemar_p"])
+                w.writeheader()
+                w.writerow({"metric": "EM", "group": "g1", "n": 2,
+                            "arm_a": "50.00", "arm_b": "0.00", "delta": "-50.00",
+                            "ci95_low": "-70.00", "ci95_high": "-10.00",
+                            "mcnemar_p": "0.5"})
+                w.writerow({"metric": "EM", "group": "g2", "n": 1,
+                            "arm_a": "100.00", "arm_b": "100.00", "delta": "+0.00",
+                            "ci95_low": "0.00", "ci95_high": "0.00",
+                            "mcnemar_p": "1"})
+            out = dash.breakdown(root, [("k", slug, "H5", "lbl", None)])
+            self.assertEqual(len(out), 1)
+            self.assertEqual([g["group"] for g in out[0]["groups"]], ["g1", "g2"])
+            self.assertEqual(out[0]["groups"][0]["delta"], -50.0)
 
     def test_stripped_answer_peels_the_wrapper_without_fixing_anything(self):        # SECONDARY metric only: the headline EM stays on the verbatim reply
         self.assertEqual(dash.stripped_answer("**1916**\n\n> Câu hỏi: ...\n> Trả lời: 1916"),
