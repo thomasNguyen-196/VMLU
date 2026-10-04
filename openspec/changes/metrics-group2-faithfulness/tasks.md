@@ -46,17 +46,28 @@
 
 ## 4. Live answers + frozen scoring
 
-- [ ] 4.1 Preflight IEC; run the citation condition (400 items, `--resume`);
+- [x] 4.1 Preflight IEC; run the citation condition (400 items, `--resume`);
   verify 400 rows, compliance counted, blanks verbatim.
-- [ ] 4.2 Score with the frozen `score_reading_eval.py` on the answer field;
+  - **Bằng chứng:** smoke 5 câu (plumbing: model lặp đúng 2 nhãn, extraction
+    sạch) → full 400 trong 243,3s; **0 blank answer, 0 blank citation,
+    compliance 100%**; checkpoint `reading_cite_result_*` park đúng namespace.
+- [x] 4.2 Score with the frozen `score_reading_eval.py` on the answer field;
   verify summary carries `measurement_card_hash`; EM reported as its own
   condition (no row-to-row comparison with MC-31).
+  - **Bằng chứng:** `reading_cite_summary_*`: squad EM 81,00 (162/200) · drop
+    EM 49,00 (98/200) · ALL EM 65,00 (260/400) · char-F1 80,07; hash
+    `dba4a46a…`; `score_pair` identity test đảm bảo dùng đúng scorer đóng băng.
 
 ## 5. Validation gate (the plan's stop condition)
 
-- [ ] 5.1 Generate the blind sheet; human labels committed to a tracked file
+- [x] 5.1 Generate the blind sheet; human labels committed to a tracked file
   (same pre-registration discipline as the review records). Judge verdicts for
   these items stay uncomputed until labels are frozen.
+  - **Bằng chứng:** sheet 60 câu đúng 15×(squad/drop × EM1/EM0), seed 42; HTML
+    labeler (localStorage + export CSV) tại
+    `all_res/ollama_result/Qwen3_5-9B-65K/faithfulness_sheet_Qwen3_5-9B-65K-cite.html`;
+    scaffold `data/faithfulness_labels_Qwen3_5-9B-65K-cite.csv` committed
+    (human_supports trống) — **chờ người gán nhãn**.
 - [ ] 5.2 Run the judge on the 60 items; `validate` → agreement + κ. Record the
   gate decision. Fail → one documented prompt iteration, re-validate; fail
   again → STOP, write the instrument-failure result, close 2.2.
