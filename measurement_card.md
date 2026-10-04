@@ -1383,6 +1383,50 @@ giữ nguyên số, chỉ refresh hash (deterministic, seed 42). |
 > hai bên mới tách được hai cơ chế. n=146 ⇒ CI ~±7đ: Δ nhỏ hơn nhiễu ghi là "dưới độ phân giải",
 > không mở follow-up.
 
+## MC-36 — **Position bias legal_mc-146: kết quả** (Qwen3.5-9B-65K, shuffle s1234)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-36` |
+| `ngay_chay` | 2026-10-04 10:24:48→10:27:17 (+07); pre-register MC-35 commit `556334f` **trước** infer |
+| `dieu_kien` | Y hệt MC-35: input shuffle s1234 (sha `4c722b7f…`), frozen runner, temp 0, seed 42, max_tokens 4, workers 4, model `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1` (VPN nội bộ; DNS shim `PYTHONPATH` — MC-32) |
+| `infer` | 146/146 item, 149,53s (2,49 phút), **0 blank**, 8 lần retry thoáng qua đều tự hồi (không item nào hỏng); submission `submission_shuffled_s1234.csv` (không upload) |
+
+### Kết quả (nguồn: `position_bias_legal_mc_s1234_compare.csv`)
+
+| Chỉ số | Giá trị |
+| --- | --- |
+| accuracy gốc | **130/146 = 89,04%** (recompute khớp MC-31, gate pre-registered pass) |
+| accuracy shuffle | **130/146 = 89,04%** |
+| **Δ** | **+0,00** (CI95 **−5,48..+5,48**; McNemar exact **p=1**) |
+| 2×2 (a=gốc, b=shuffle) | both 121 · a-only 9 · b-only 9 · neither 7 |
+| flip chữ cái | 112/146 (76,7%) |
+| **stability theo TEXT** | **same_text 126 (86,3%)** · letter_anchored **4 (2,7%)** · neither 16 (11,0%) |
+| accuracy theo gold (gốc) | A 84/91=92,31 · B 32/39=82,05 · C 14/16=87,50 |
+| accuracy theo gold (shuffle) | A 28/33=84,85 · B 40/45=88,89 · C 31/36=86,11 · D 31/32=96,88 |
+| histogram đáp án model | gốc A88/B32/C21/D5 · shuffle A30/B43/C34/D39 (gold: A91/B39/C16 → A33/B45/C36/D32) |
+| `measurement_card_hash` | `2669c665…634fb0` (bản card lúc compare chạy — có MC-35, chưa có khối này) |
+
+### Đọc kết quả
+
+1. **Không phát hiện position bias ở mức accuracy** — câu hỏi pre-registered: Δ = +0,00, CI chứa 0,
+   p = 1, và 2×2 **đối xứng 9/9**. Gold đổi từ majority-A 62,3% sang gần đều (majority-B 30,8%)
+   mà điểm không nhúc nhích ⇒ con số 89,04% **không bị thổi bởi "A hay đúng"**.
+2. **Cơ chế: model bám nội dung, không bám vị trí.** 126/146 item giữ nguyên **text** được chọn;
+   letter_anchored chỉ 4 item (2,7%). Histogram đáp án **đi theo histogram gold** (A88 khi gold A91 →
+   A30 khi gold A33; B32 khi gold B39 → B43 khi gold B45) — dấu hiệu content-driven rõ nhất.
+3. **112 flip chữ cái không phải bất ổn**: phần lớn là đáp án đúng "cưỡi" text gold sang chữ cái mới
+   (both 121 item). Đây là lý do bảng stability-theo-text là bảng chính, không phải flip count.
+4. **Phần dư chưa quy**: 16 item "neither" + chênh lệch 9/9 không tách được giữa nhạy cảm nội dung
+   thật và noise chạy-lại (arm A 65K **chưa có repeat** — MC-27 mới đo noise cho harness arm 28K).
+   CI ±5,48đ trên n=146; mọi kết luận nhỏ hơn ngưỡng này ghi là **dưới độ phân giải**.
+
+### Mốc dừng (theo `docs/metrics-plan-3-nhom.md`)
+
+- VMLU-1047 shuffle: **ĐÓNG** — CI của Δ chứa 0, không có tín hiệu để đuổi theo.
+- Harness-arm shuffle (`omp` có khuếch đại bias không): **ĐÓNG** — không cần cho claim nào hiện tại.
+- 2.2 faithfulness (reading + judge) là task nhóm 2 còn lại, độc lập với khối này.
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

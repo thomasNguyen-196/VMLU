@@ -26,7 +26,7 @@
 
 ---
 
-## 1. Ba phát hiện xuyên suốt
+## 1. Bốn phát hiện xuyên suốt
 
 ### 1.1. Capacity KHÔNG phải nút thắt trên các bộ hiện có
 
@@ -65,6 +65,19 @@ Bổ sung **VM14K (Y, 12.488 câu, MC-14b)**: 64,79% — cao hơn hẳn V-Bench 
 | Legal MC (qwen38-nothink) | 21/146 blank (14,4%) dù đã nâng max_tokens 512 |
 
 → Phần lớn "sai" không phải vì không biết/không tìm thấy, mà vì **ngữ nghĩa gọi hàm** và **định dạng câu trả lời**. Đây là loại lỗi sửa được bằng can thiệp suy luận (kiểm chứng tham số, chuẩn hoá span), không cần đổi model.
+
+### 1.4. Position bias: điểm MC không bị thổi bởi vị trí đáp án (MC-35/36, mới 2026-10-04)
+
+| Bằng chứng | Số |
+| --- | --- |
+| Gold gốc legal_mc lệch A | A 91 / B 39 / C 16 (**62,3%**) — shuffle s1234 đưa về A33/B45/C36/D32 (30,8%) |
+| Accuracy gốc vs shuffle (Qwen3.5-9B-65K, cùng mọi thứ khác) | **130/146 = 89,04% → 130/146 = 89,04%**, Δ **+0,00** (CI −5,48..+5,48; p=1) |
+| Stability theo **text** được chọn | **same_text 126/146 (86,3%)** · letter_anchored 4 (2,7%) · neither 16 |
+| Histogram đáp án model | đi theo histogram gold (A88 khi gold A91 → A30 khi gold A33) |
+
+→ Model **bám nội dung, không bám vị trí**: 112/146 chữ cái đổi chỉ vì text gold di chuyển, không phải
+bất ổn. Kết luận validity: các con số MC không cần hệ số hiệu chỉnh vị trí. Phần dư 16 item "neither"
+chưa tách được khỏi noise chạy-lại (arm A 65K chưa có repeat) — ghi là limitation, không suy diễn.
 
 ---
 
@@ -154,7 +167,7 @@ Bổ sung **VM14K (Y, 12.488 câu, MC-14b)**: 64,79% — cao hơn hẳn V-Bench 
 | Hạn chế **suy luận** | DROP 63 vs SQuAD 96,5; toán 20 · logic 24,9 · lý 28,6 (V-Bench) | **Nặng nhất, lặp ở cả 2 model** |
 | **Ảo giác quy chuẩn** | Chưa đo trực tiếp (ViHallu chưa có dữ liệu — xem `docs/agents/measurement-gaps.md`) | Chưa xác định |
 | **Định dạng / ngân sách** | BidLQA near-miss ~20%; qwen38 21 blank | Rõ, sửa được |
-| **Thiên lệch đáp án** | NLI A 80% vs B 100% | Rõ ở NLI |
+| **Thiên lệch đáp án** | NLI A 80% vs B 100% · MC legal: **không** thấy bias vị trí (MC-36: Δ=0, same-text 86,3%) | Rõ ở NLI, sạch ở MC |
 | **Nhạy điều kiện** | 42,2% đổi đáp án; test −5,5 | Rõ, cần kiểm soát thực nghiệm |
 
 ---

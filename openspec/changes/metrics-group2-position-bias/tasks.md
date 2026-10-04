@@ -60,23 +60,39 @@
 
 ## 4. Live run (needs VPN + IEC gateway)
 
-- [ ] 4.1 Preflight endpoint/model (1-token call); record OK in run log. If
+- [x] 4.1 Preflight endpoint/model (1-token call); record OK in run log. If
   down → stop, no partial files presented as results (pending, per MC-24 rule).
-- [ ] 4.2 Run wrapper (146 items, ~minutes). Verify ledger/final row-count 146,
+  - **Bằng chứng:** VPN `openvpn3` session `iec-tcp` (proto tcp, `tun0`
+    172.16.30.7/24); DNS shim `/tmp/opencode/pyshim` (map `llmapi.iec` →
+    172.16.50.172); probe 1-token `'A'` OK 2026-10-04 10:2x.
+- [x] 4.2 Run wrapper (146 items, ~minutes). Verify ledger/final row-count 146,
   0 blank `raw_response` unexplained, shuffled accuracy file present, orig
   arm-A files untouched (`git status` on `all_res/` shows only new shuffled
   names).
-- [ ] 4.3 Run compare; verify per-item choice-set equality check passes
+  - **Bằng chứng:** 146/146, 149,53s, **0 blank**; 8 retry thoáng qua tự hồi;
+    `full_evaluation_shuffled_s1234_*` + `accuracy_shuffled_s1234_*` +
+    2 checkpoint park; `full_evaluation_legal_*` (arm A) nguyên vẹn.
+- [x] 4.3 Run compare; verify per-item choice-set equality check passes
   (shuffled set == orig set for all 146) and acc_orig recompute = 130/146.
+  - **Bằng chứng:** compare pass toàn bộ fail-fast (id set, multiset,
+    gold-text, baseline gate); stdout: Δ +0,00, CI −5,48..+5,48, p=1,
+    stability same_text 126 / letter_anchored 4 / neither 16.
 
 ## 5. Record
 
-- [ ] 5.1 Write MC-36 (results block): acc_orig/acc_shuffled/Δ/CI/p, flip
+- [x] 5.1 Write MC-36 (results block): acc_orig/acc_shuffled/Δ/CI/p, flip
   table, accuracy-by-gold-position, answer histograms, blanks, cost (wall +
   tokens from log), `measurement_card_hash` in outputs. Verify numbers
   recompute from the committed compare CSV (second pair of eyes: rerun compare
   → identical stdout).
-- [ ] 5.2 Append the one-paragraph verdict to `docs/model-insights.md`
+  - **Bằng chứng:** MC-36 trong `measurement_card.md`; compare chạy lại 2 lần
+    (lần 2 sau khi thêm cột stability) ra cùng số; hash `2669c665…` ghi trong
+    summary CSV. **Bổ sung so với plan:** cột stability theo text
+    (same_text/letter_anchored/neither) — thêm vào compare + spec + design
+    ngày 2026-10-04 vì flip-count thuần không tách được nội dung khỏi vị trí.
+- [x] 5.2 Append the one-paragraph verdict to `docs/model-insights.md`
   (position-bias section): exploit-A vs position-sensitivity reading + whether
   the VMLU-1047-shuffle and harness-shuffle follow-ups are opened or closed.
   Dashboard: no change (non-goal, proposal).
+  - **Bằng chứng:** §1.4 "Position bias" + cập nhật taxonomy §5; mốc dừng ghi
+    trong MC-36: cả hai follow-up **ĐÓNG**.

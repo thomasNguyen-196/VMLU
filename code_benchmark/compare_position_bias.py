@@ -12,9 +12,16 @@ Outputs (under the model folder):
   position_bias_compare_legal_mc_s1234.csv    one summary row (stats family of
                                               the harness compare, + blanks/flips)
   position_bias_items_legal_mc_s1234.csv      per-item audit rows (gold text
-                                              per side, flips, both correctness)
+                                              per side, chosen text per side,
+                                              stability class, both correctness)
   position_bias_breakdown_legal_mc_s1234.csv  long format: accuracy by gold
                                               letter + answer histograms
+
+The summary carries a choice-TEXT stability decomposition next to the letter
+flips: `same_text` (content-anchored), `letter_anchored` (same letter, other
+text), `neither`. The raw flip count alone is dominated by correct answers
+riding the gold text to a new letter, so it cannot distinguish a content
+model from a position-anchored one; this decomposition can.
 
 Fail-fast (a wrong pairing must never print a number):
   * id sets must match each other AND the pre-registered shuffle manifest;
@@ -51,9 +58,11 @@ TAG_DEFAULT = "s1234"
 EXPECTED_ORIG = (130, 146)  # MC-31 arm A, legal_mc — pre-registered gate
 SUMMARY_COLS = ["n", "acc_orig", "acc_shuffled", "delta", "ci95_low", "ci95_high",
                 "mcnemar_p", "both", "a_only", "b_only", "neither", "flipped",
+                "same_text", "letter_anchored", "neither_choice",
                 "blanks_orig", "blanks_shuffled", "measurement_card_hash"]
 ITEM_COLS = ["id", "gold_old", "gold_new", "gold_text", "answer_orig",
-             "answer_shuffled", "correct_orig", "correct_shuffled", "flipped"]
+             "answer_shuffled", "answer_text_orig", "answer_text_shuffled",
+             "stability", "correct_orig", "correct_shuffled", "flipped"]
 BREAKDOWN_COLS = ["section", "side", "key", "n", "correct", "accuracy"]
 LETTERS = "ABCDE"
 
@@ -136,13 +145,29 @@ def compare(orig_rows: dict[str, dict], shuff_rows: dict[str, dict],
                              f"('{gold_text_o}' vs '{gold_text_s}')")
         c_o = 1 if str(o["correct"]).strip() == "1" else 0
         c_s = 1 if str(s["correct"]).strip() == "1" else 0
+        a_o = str(o["answer"]).strip().upper()
+        a_s = str(s["answer"]).strip().upper()
+        # Choice-TEXT stability — the sharp version of "flip analysis". The
+        # letter flip count alone is dominated by correct answers riding the
+        # gold text to a new letter; what separates a content-anchored model
+        # from a position-anchored one is whether the chosen TEXT moved.
+        t_o = oc[LETTERS.index(a_o)] if a_o in LETTERS else None
+        t_s = sc[LETTERS.index(a_s)] if a_s in LETTERS else None
+        if t_o is None or t_s is None:
+            stability = "blank"
+        elif t_o == t_s:
+            stability = "same_text"
+        elif a_o == a_s:
+            stability = "letter_anchored"
+        else:
+            stability = "neither"
         pair = {"id": k, "gold_old": gold_old, "gold_new": gold_new,
                 "gold_text": gold_text_o,
-                "answer_orig": str(o["answer"]).strip().upper(),
-                "answer_shuffled": str(s["answer"]).strip().upper(),
+                "answer_orig": a_o, "answer_shuffled": a_s,
+                "answer_text_orig": t_o or "", "answer_text_shuffled": t_s or "",
+                "stability": stability,
                 "correct_orig": c_o, "correct_shuffled": c_s,
-                "flipped": int(str(o["answer"]).strip().upper()
-                               != str(s["answer"]).strip().upper())}
+                "flipped": int(a_o != a_s)}
         paired.append(pair)
 
     correct_o = sum(p["correct_orig"] for p in paired)
@@ -188,6 +213,9 @@ def compare(orig_rows: dict[str, dict], shuff_rows: dict[str, dict],
             "mcnemar_p": f"{p_val:.4g}",
             "both": both, "a_only": a_only, "b_only": b_only, "neither": neither,
             "flipped": sum(p["flipped"] for p in paired),
+            "same_text": sum(p["stability"] == "same_text" for p in paired),
+            "letter_anchored": sum(p["stability"] == "letter_anchored" for p in paired),
+            "neither_choice": sum(p["stability"] == "neither" for p in paired),
             "blanks_orig": sum(1 for p in paired if p["answer_orig"] not in LETTERS),
             "blanks_shuffled": sum(1 for p in paired if p["answer_shuffled"] not in LETTERS),
         },
@@ -250,6 +278,8 @@ def main() -> None:
           f"neither {s['neither']}")
     print(f"flipped {s['flipped']}/{s['n']} · blanks orig {s['blanks_orig']} / "
           f"shuffled {s['blanks_shuffled']}")
+    print(f"choice stability: same text {s['same_text']} · letter-anchored "
+          f"{s['letter_anchored']} · neither {s['neither_choice']}")
     print("accuracy by gold letter:")
     for row in res["breakdown"]:
         if row["section"] == "by_gold_letter":

@@ -82,6 +82,13 @@ stdout summary:
 4. Model answer-position histogram both sides (does it over-predict A?);
    blanks/unparseable counted separately per MC-34 doctrine, never folded
    into the Δ.
+5. **Choice-TEXT stability decomposition** (the sharp flip analysis): per item,
+   did the model pick the same TEXT (`same_text`), the same letter but a
+   different text (`letter_anchored`), or neither (`neither`)? The raw letter
+   flip count is dominated by correct answers riding the gold text to a new
+   letter — it cannot separate a content-anchored model from a position-anchored
+   one, this decomposition can. (Added 2026-10-04 after the first legal_mc run:
+   112/146 letter flips, but 126 same-text vs 4 letter-anchored.)
 - Prompt-parity gate is **inverted on purpose**: shuffled prompts MUST differ
   from arm A. Integrity check instead: per-item choice-text set equality
   (shuffled set == orig set) + gold-text-follows-gold-letter recompute.

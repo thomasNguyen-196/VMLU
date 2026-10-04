@@ -52,3 +52,14 @@ estimate plus the accuracy-by-gold-position breakdown.
 - **WHEN** the 95% CI of Δ includes 0
 - **THEN** the card reports "below resolution at n=146" and follow-up shuffles
   stay closed.
+
+### Requirement: Choice-text stability decomposition
+The comparison SHALL classify every item by the chosen TEXT on both sides —
+`same_text`, `letter_anchored` (same letter, different text), `neither` — and
+report the counts alongside the letter-flip count, so a content-anchored model
+is never read as unstable merely because correct letters moved with the gold.
+
+#### Scenario: Correct answer rides the gold text
+- **WHEN** the model picks the gold text on both sides and the shuffle moved
+  that text to a different letter
+- **THEN** the item counts as `same_text` (a letter flip alone is not churn).

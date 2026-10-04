@@ -3028,6 +3028,17 @@ class TestPositionBiasCompare(unittest.TestCase):
         self.assertEqual(s["flipped"], 4)
         self.assertEqual(s["blanks_orig"], 0)
 
+    def test_choice_text_stability_decomposition(self):
+        """Planted fixture: flipped items answer 'B' on the shuffled side, and
+        with perm=[2,0,3,1] shuffled-B == texts[0] == orig-A's text — so all 4
+        flips are content-stable; the 16 same-letter items now point at a
+        different text, i.e. letter-anchored."""
+        orig, shuff, man = self._build(flips=4)
+        s = posbias.compare(orig, shuff, man, expected_orig=(10, 20))["summary"]
+        self.assertEqual(s["same_text"], 4)
+        self.assertEqual(s["letter_anchored"], 16)
+        self.assertEqual(s["neither_choice"], 0)
+
     def test_refuses_baseline_drift(self):
         orig, shuff, man = self._build()
         with self.assertRaises(SystemExit) as ctx:
