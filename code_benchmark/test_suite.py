@@ -108,6 +108,7 @@ from code_benchmark import compare_position_bias as posbias
 from code_benchmark import run_reading_cite_eval as cite
 from code_benchmark import judge_faithfulness as judge
 from code_benchmark import label_faithfulness as labeler
+from code_benchmark import run_mc_calibration_eval as cal
 from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
@@ -3421,6 +3422,53 @@ class TestFaithfulnessLabelTool(unittest.TestCase):
                 srv.shutdown()
                 srv.server_close()
                 t.join(timeout=5)
+
+
+class TestMcCalibration(unittest.TestCase):
+    """`run_mc_calibration_eval.py` — the pure parts: letter distribution from
+    logprobs, ECE/reliability, and the summary math (group 3.1)."""
+
+    def test_letter_probs_normalizes_over_letters_only(self):
+        import math
+        top = [{"token": "B", "logprob": math.log(0.5)},
+               {"token": "A", "logprob": math.log(0.2)},
+               {"token": "C", "logprob": math.log(0.25)},
+               {"token": " x", "logprob": math.log(0.9)},   # non-letter ignored
+               {"token": "D", "logprob": math.log(0.05)}]
+        p = cal.letter_probs(top)
+        self.assertAlmostEqual(sum(p.values()), 1.0)
+        self.assertAlmostEqual(p["B"], 0.5, places=6)
+        self.assertAlmostEqual(p["A"], 0.2, places=6)
+        self.assertEqual(p["E"], 0.0)                        # absent -> 0, not invented
+
+    def test_letter_probs_empty_is_all_zero(self):
+        self.assertEqual(set(cal.letter_probs([]).values()), {0.0})
+
+    def test_ece_hand_computed(self):
+        ece, rows = cal.ece_and_reliability([0.9, 0.9, 0.1, 0.1], [1, 1, 0, 0], bins=10)
+        self.assertAlmostEqual(ece, 0.1, places=6)
+        self.assertEqual(len(rows), 10)
+        self.assertEqual(sum(r["n"] for r in rows), 4)
+
+    def test_build_report_summary_math(self):
+        items = [
+            {"id": "1", "gold": "A", "answer": "A", "correct": 1, "n_letters_found": 5,
+             "p_A": "0.9", "p_B": "0.1", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": "0.9"},
+            {"id": "2", "gold": "A", "answer": "B", "correct": 0, "n_letters_found": 5,
+             "p_A": "0.2", "p_B": "0.8", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": "0.8"},
+            {"id": "3", "gold": "C", "answer": "", "correct": 0, "n_letters_found": 0,
+             "p_A": "0", "p_B": "0", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": ""},
+        ]
+        summary, rows = cal.build_report(items, "legal_mc", "h", bins=10)
+        self.assertEqual(summary["n"], 3)
+        self.assertEqual(summary["n_usable"], 2)              # item 3 has no distribution
+        self.assertEqual(summary["accuracy"], "33.33")        # 1/3, unparsed counts wrong
+        self.assertEqual(summary["mean_confidence"], "85.00")
+        # confidence Brier: ((0.9-1)^2 + (0.8-0)^2)/2 = (0.01+0.64)/2 = 0.325
+        self.assertEqual(summary["brier_confidence"], "0.3250")
+        # overconfidence = 0.85 - 0.3333 = +51.67
+        self.assertEqual(summary["overconfidence"], "+51.67")
+        self.assertEqual(len(rows), 10)
 
 
 class TestAgreementCI(unittest.TestCase):

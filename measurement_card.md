@@ -1596,6 +1596,22 @@ thẳng nhãn dev làm cổng thì đã "qua" bằng một con số bị thổi;
 unlabeled=1) · `faithfulness_judge_dev_kimik3.csv` · `faithfulness_validation_dev_kimik3.csv` (κ 0,666,
 chẩn đoán) · `data/faithfulness_labels_*_test.csv` (tracked, 59/60) · MC-37/38 artifacts (điều kiện cite).
 
+## MC-41 — **Calibration 3.1: probe logprobs + pre-register** (Qwen3.5-9B-65K, legal_mc)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-41` |
+| `ngay_chay` | Probe 2026-10-04; calibration pre-register cùng ngày (**trước** mọi lần chạy calibration) |
+| `probe_ket_qua` | **Gateway IEC CÓ trả `logprobs`** cho `Qwen3.5-9B-65K`: `logprobs=true, top_logprobs=5` → `choices[0].logprobs.content[0].top_logprobs` có `token`+`logprob`; token đầu **là chữ cái trần** (`"B"`), top@0 chứa đủ A–E. `Qwen3.5-9B-28K` offline (503). ⇒ nhánh "không có thì dừng" không kích hoạt |
+| `dieu_kien` | `legal_mc-146`, model `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1`; frozen `build_prompt`/`extract_answer`; temperature 0.0, seed 42, `max_tokens=4`, workers 4, **`logprobs=true, top_logprobs=20`** (option chỉ-đọc, không đổi prompt/parser) |
+| `phan_bo_A-E` | Từ `top_logprobs[0]`: lấy token **đúng bằng** một trong A–E, `p=exp(logprob)`, chuẩn hoá lại trên các chữ có mặt; chữ vắng = 0 (không bịa). `n_letters_found` ghi lại; item có < 2 chữ ⇒ **unusable** (loại khỏi metric calibration, vẫn tính sai trong mẫu số accuracy). `confidence = p[chữ đã chọn]` |
+| `metrics` | accuracy (scorer đóng băng) · mean_confidence · **ECE** (10 bin đều) · **Brier** (confidence + multiclass) · bảng reliability (bin, n, conf, acc) · **overconfidence** = mean_conf − accuracy |
+| `sanity` | accuracy in ra và **ghi cạnh** MC-31 arm A (130/146) — không phải cổng (backend không tất định tuyệt đối ở temp 0) |
+| `pham_vi` | Lượt đầu: `legal_mc-146` (1 miền, 146 câu — đường cong thô, ghi là hạn chế). `vmlu-mqa-all-gold` (1.047) là mở rộng tùy chọn, không thuộc card này |
+| `output` | `mc_calibration_items_legal_mc_<label>.csv` · `mc_calibration_summary_legal_mc_<label>.csv` · `mc_calibration_reliability_legal_mc_<label>.csv` (label `Qwen3_5-9B-65K-cal`) |
+| `khong_lam` | Không safety (3.2 — cần rubric/gold mới); không đổi decoding; không claim calibration toàn phân bố ngoài phân bố token-đầu |
+| `trang_thai` | 📌 **PRE-REGISTERED** — code (sha `6959d5ef…`) + card commit trước khi chạy; kết quả ở **MC-42** |
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
