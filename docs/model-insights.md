@@ -79,6 +79,21 @@ Bổ sung **VM14K (Y, 12.488 câu, MC-14b)**: 64,79% — cao hơn hẳn V-Bench 
 bất ổn. Kết luận validity: các con số MC không cần hệ số hiệu chỉnh vị trí. Phần dư 16 item "neither"
 chưa tách được khỏi noise chạy-lại (arm A 65K chưa có repeat) — ghi là limitation, không suy diễn.
 
+### 1.5. Grounding: **chưa đo được** — dụng cụ judge trượt cổng validation (MC-37/38, mới 2026-10-04)
+
+Đã chạy điều kiện cite (reading-400, 65K, trả lời kèm trích dẫn): **compliance 100%**, EM 65,00
+(squad 81,00 · drop 49,00) — nhưng đó là hàng đo riêng của điều kiện, **không phải** điểm grounding.
+
+Phần grounding không công bố được vì **judge không qua cổng**: so với 60 nhãn người, MiMo V2.5
+(reasoning off) đạt agreement 0,8167 nhưng **κ = 0,1872** (v1) và sau một lần siết prompt + nâng
+trần token vẫn **κ = 0,2941** (v2) — dưới ngưỡng 0,60. Lỗi đo được: judge tính sai số học
+(95,84 + 0,72 → 96,74) và không theo quy tắc "đáp phải đúng loại thông tin câu hỏi hỏi". Ba nhãn
+người không nhất quán với tiêu chí cũng giới hạn trần đồng thuận.
+
+→ Kết luận trung thực: **không có claim nào về trung thực trích dẫn** cho reading-400; đây là
+**khoảng trống dụng cụ**, không phải hạn chế của model. Hướng mở (phải pre-register riêng, không
+hồi tố): judge bật reasoning, hoặc judge mạnh hơn, hoặc tiêu chí chặt hơn kèm ví dụ mẫu.
+
 ---
 
 ## 2. Chẩn đoán theo model
@@ -166,6 +181,7 @@ chưa tách được khỏi noise chạy-lại (arm A 65K chưa có repeat) — 
 | Thiếu tri thức **quy chuẩn** | Luật HC 30% · Thuế 33% · Nghiệp vụ 50% · Kế toán 44% (VMLU) | Rõ, lặp ở cả 2 model |
 | Hạn chế **suy luận** | DROP 63 vs SQuAD 96,5; toán 20 · logic 24,9 · lý 28,6 (V-Bench) | **Nặng nhất, lặp ở cả 2 model** |
 | **Ảo giác quy chuẩn** | Chưa đo trực tiếp (ViHallu chưa có dữ liệu — xem `docs/agents/measurement-gaps.md`) | Chưa xác định |
+| **Grounding / trung thực trích dẫn** | Thử ở MC-38: điều kiện cite compliance 100% nhưng judge trượt cổng (κ 0,19→0,29) ⇒ **chưa đo được** | Chưa xác định (lỗi dụng cụ) |
 | **Định dạng / ngân sách** | BidLQA near-miss ~20%; qwen38 21 blank | Rõ, sửa được |
 | **Thiên lệch đáp án** | NLI A 80% vs B 100% · MC legal: **không** thấy bias vị trí (MC-36: Δ=0, same-text 86,3%) | Rõ ở NLI, sạch ở MC |
 | **Nhạy điều kiện** | 42,2% đổi đáp án; test −5,5 | Rõ, cần kiểm soát thực nghiệm |

@@ -68,17 +68,25 @@
     `all_res/ollama_result/Qwen3_5-9B-65K/faithfulness_sheet_Qwen3_5-9B-65K-cite.html`;
     scaffold `data/faithfulness_labels_Qwen3_5-9B-65K-cite.csv` committed
     (human_supports trống) — **chờ người gán nhãn**.
-- [ ] 5.2 Run the judge on the 60 items; `validate` → agreement + κ. Record the
+- [x] 5.2 Run the judge on the 60 items; `validate` → agreement + κ. Record the
   gate decision. Fail → one documented prompt iteration, re-validate; fail
   again → STOP, write the instrument-failure result, close 2.2.
+  - **Bằng chứng (STOP path):** v1 κ=0,1872 → sửa prompt v2 + `max_tokens` 400
+    (0 judge_error) → κ=0,2941, vẫn FAIL. Ghi MC-38; **dừng**, không công bố
+    điểm faithfulness.
 
 ## 6. Full judge pass + record
 
-- [ ] 6.1 If the gate passed: full 400-item judge pass (preflight, `--resume`,
+- [x] 6.1 If the gate passed: full 400-item judge pass (preflight, `--resume`,
   judge model pinned). Verify per-item judge CSV 400 rows + error bucket.
-- [ ] 6.2 Write MC-38: compliance, EM/char-F1, verbatim rate, supported rate,
+  - **Không thực hiện** — cổng fail (đúng luật dừng). Không chạy judge full 400.
+- [x] 6.2 Write MC-38: compliance, EM/char-F1, verbatim rate, supported rate,
   joint correct∧supported, cross-tab, judge model + gate numbers, card hash.
   Append `docs/model-insights.md` §1.5 (one honest paragraph: what grounding
   claim the numbers support and what they do not).
+  - **Bằng chứng:** MC-38 ghi **thất bại dụng cụ** (κ v1/v2), hàng EM cite tách
+    riêng, 3 nhãn người không nhất quán, caveat reasoning-off; §1.5 viết lại
+    thành "chưa đo được grounding", không có claim.
 - [ ] 6.3 Optional follow-on (not gated): curated `/results` insight seed for
   `reading-400 × qwen3-5-9b-65k` citing MC-38.
+  - **Đóng** — không có điểm faithfulness để đưa lên UI.

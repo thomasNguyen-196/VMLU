@@ -3210,6 +3210,10 @@ class TestFaithfulnessJudge(unittest.TestCase):
         self.assertIn("Chỉ trả về JSON đúng định dạng:", p)
         self.assertIn('{"verdict": "supported" hoặc "unsupported", "reason": "<một câu ngắn>"}', p)
         self.assertTrue(p.endswith("Trích dẫn: C."))
+        # v2 rules the human validation forced in (MC-38)
+        self.assertIn("đúng loại thông tin", p)     # answer-type must fit the question
+        self.assertIn("khớp chính xác", p)           # arithmetic checked, "gần đúng" rejected
+        self.assertIn("nhất quán với kết luận", p)   # verdict must follow its own reason
         # empty fields render as an explicit marker, not as blanks the judge
         # could read as "no instruction"
         self.assertIn("Câu trả lời: (trống)", judge.build_judge_prompt("CTX", "Q?", "", "C."))

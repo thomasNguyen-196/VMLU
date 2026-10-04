@@ -73,13 +73,30 @@ METRIC_COLS = ["dataset", "n", "compliant_count", "compliance", "em", "char_f1",
 
 
 def build_judge_prompt(context: str, question: str, answer: str, citation: str) -> str:
-    """The judge prompt — bytes pre-registered in MC-37. A change here is a new
-    instrument version and must be recorded (the validation gate re-runs)."""
+    """The judge prompt — pre-registered in MC-37 (v1), revised ONCE per the
+    MC-37 gate rule (v2, MC-38) to close defects the human validation exposed:
+    unchecked arithmetic ("gần đúng" accepted), answer-type mismatch (a bare
+    number where the question asks which one), a verdict contradicting its own
+    reason, and no rule for a correct "not in the passage" answer. Still one
+    frozen string; any further change is a new instrument version."""
     return (
         "Bạn là giám khảo cho bài đọc hiểu. Cho đoạn văn, câu hỏi, câu trả lời "
         "của mô hình và đoạn trích dẫn của mô hình.\n"
-        "Đánh giá: đoạn trích dẫn có trực tiếp chống đỡ câu trả lời "
-        "(chứa thông tin trả lời, hoặc suy ra trực tiếp từ đoạn trích) không?\n"
+        "Đánh giá: đoạn trích dẫn có trực tiếp chống đỡ câu trả lời như một câu "
+        "trả lời cho câu hỏi không?\n"
+        "Quy tắc:\n"
+        "- Đoạn trích phải chứa thông tin trả lời, hoặc cho phép suy ra trực tiếp "
+        "bằng đúng một bước từ chính các con số/dữ kiện trong đoạn trích.\n"
+        "- Câu trả lời phải đúng loại thông tin mà câu hỏi hỏi. Nếu câu hỏi hỏi "
+        "\"cái nào / tỷ lệ nào / năm nào\" mà câu trả lời chỉ là một con số không "
+        "kèm lựa chọn, thì coi là unsupported, trừ khi đoạn trích tự nêu rõ lựa chọn.\n"
+        "- Nếu câu trả lời là kết quả một phép tính, tự tính lại từ các con số trong "
+        "đoạn trích; chỉ supported khi kết quả khớp chính xác (gần đúng không tính).\n"
+        "- Câu trả lời mâu thuẫn với đoạn trích thì unsupported.\n"
+        "- Đoạn trích đúng chủ đề nhưng không mang thông tin trả lời thì unsupported.\n"
+        "- Nếu câu trả lời nói không có thông tin trong đoạn văn và đoạn trích thật "
+        "sự không chứa thông tin câu hỏi hỏi thì supported.\n"
+        "- Lý do phải nhất quán với kết luận.\n"
         "Chỉ trả về JSON đúng định dạng:\n"
         '{"verdict": "supported" hoặc "unsupported", "reason": "<một câu ngắn>"}\n\n'
         "Đoạn văn:\n" + context.strip()
@@ -208,6 +225,9 @@ def parse_args() -> argparse.Namespace:
     rn.add_argument("--judge-api-key", default=None, help="default: JUDGE_API_KEY env")
     rn.add_argument("--judge-reasoning-effort", default="none",
                     help="pinned reasoning_effort sent to the judge (default: none)")
+    rn.add_argument("--judge-max-tokens", type=int, default=400,
+                    help="judge reply budget; 200 truncated a reasoning judge into invalid "
+                         "JSON (MC-38 iteration), so v2 gives it room (default: %(default)s)")
     rn.add_argument("--sheet", type=Path, default=None,
                     help="judge only the items in this sheet (validation pass)")
     rn.add_argument("--out", type=Path, default=None,
@@ -301,7 +321,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         raw = call_model_with_retry(
             client=client, model=judge_model,
             prompt=build_judge_prompt(ctx[key], r["question"], r["answer"], r["citation"]),
-            temperature=0.0, seed=42, max_tokens=200,
+            temperature=0.0, seed=42, max_tokens=args.judge_max_tokens,
             extra_body={"reasoning_effort": args.judge_reasoning_effort})
         verdict, reason, err = parse_judge_verdict(raw)
         return {"dataset": key[0], "item_id": key[1], "judge_model": judge_model,

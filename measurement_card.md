@@ -1485,6 +1485,51 @@ Trích dẫn: <citation>
 | `khong_lam` | Không đụng `build_reading_prompt`/`score_reading_eval.py` (byte-frozen); không sửa câu trả lời; không nhét unparsed/judge_error vào bất kỳ tử/mẫu nào; không so ngang MC-31 |
 | `trang_thai` | 📌 **PRE-REGISTERED** — code + card commit trước mọi lần chạy cite; kết quả + quyết định gate ghi ở **MC-38** |
 
+## MC-38 — **Faithfulness: cổng validation FAIL → DỪNG, không công bố điểm grounding**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-38` |
+| `ngay_chay` | 2026-10-04 (infer 10:5x; label người; judge v1 + v2; validate) |
+| `dieu_kien` | Y hệt MC-37 (điều kiện cite + judge MiMo). Không có số hậu nghiệm nào trong MC-37 |
+| `ket_qua_cite` | 400/400 trong 243,3s · **compliance 100%** (0 blank answer/citation) · EM **squad 81,00** (162/200) · **drop 49,00** (98/200) · **ALL 65,00** (260/400) · char-F1 80,07 — đây là **hàng đo mô tả của điều kiện cite**, KHÔNG so ngang MC-31 (prompt khác) và **KHÔNG phải** điểm grounding |
+| `nhan_nguoi` | 60 câu (seed 42, 15×4 ô), commit `data/faithfulness_labels_Qwen3_5-9B-65K-cite.csv` **trước** khi chấm judge: yes 49 / no 11, 8 note |
+
+### Cổng validation — FAIL cả hai lần (theo luật MC-37: 1 lần sửa, fail lần hai thì dừng)
+
+| | agreement | Cohen's κ | Kết luận |
+| --- | ---: | ---: | --- |
+| judge v1 (prompt MC-37) | 0,8167 (49/60) | **0,1872** | FAIL (κ < 0,60) |
+| judge v2 (prompt siết + `max_tokens` 400) | 0,8333 (50/60) | **0,2941** | FAIL (κ < 0,60) |
+
+Ma trận (human/judge): v1 `yes/sup 47 · yes/uns 2 · no/sup 9 · no/uns 2`; v2 `47 · 2 · 8 · 3`.
+
+**vì sao κ thấp dù agreement > 0,80:** nhãn người lệch mạnh về "yes" (49/60) và judge cũng gần như luôn "supported" ⇒ phần lớn đồng thuận là do **cùng nói yes**, không phải do phân biệt được. κ trừ đúng phần may mắn đó — đây là lý do cổng yêu cầu κ chứ không chỉ agreement.
+
+### Lỗi của dụng cụ (đo được, không suy đoán)
+
+1. **Số học sai**: `drop:8335` judge nói "95,84% + 0,72% = 96,74%" (đúng phải 96,56); `drop:1870` lý do "268+285=…" rồi vẫn ra supported; `drop:6607` nhận "gần khớp" 32.100 vs 32.200. Prompt v2 yêu cầu tính lại và khớp chính xác — không sửa được.
+2. **Không theo quy tắc loại thông tin**: `drop:5493/6525/2295` hỏi "tỷ lệ nào / cái nào lớn hơn" mà đáp một con số; judge vẫn supported.
+3. **Truncation**: v1 với `max_tokens=200` cắt JSON của `drop:1870` thành lỗi parse (1 judge_error) → v2 nâng 400.
+4. **Ba nhãn người không nhất quán với tiêu chí** (ghi nhận, KHÔNG sửa — nhãn đã đóng băng): `squad:2941`, `squad:1107` (trích dẫn chứa nguyên văn đáp án mà chấm "không"), `drop:1865` (trích dẫn nói ngược đáp án mà chấm "có"). Ba ca này giới hạn trần đồng thuận khả đạt.
+
+### Quyết định (theo mốc dừng MC-37)
+
+- **DỪNG đo faithfulness.** **Không công bố điểm grounding nào.** Judge MiMo V2.5 (reasoning off) không qua cổng với cả prompt v1 lẫn bản sửa v2.
+- `drop:2741` là ca duy nhất v2 lật đúng; `drop:6755` v2 lật ngược thành bất đồng — v2 không phải cải thiện đủ.
+- Hàng EM điều kiện cite (65,00) vẫn là **phép đo hợp lệ** của condition đó, nhưng tách khỏi mọi claim "grounded".
+
+### Không được quy
+
+1. **Không** suy "65,00% là điểm faithfulness" — không có điểm faithfulness nào được công bố.
+2. **Không** quy thất bại cho model bị chấm (Qwen3.5-9B-65K): đây là thất bại **dụng cụ đo** (judge), đã kiểm chứng bằng nhãn người.
+3. Judge chạy `reasoning_effort="none"` (theo MC-37). Một judge bật reasoning, hoặc model mạnh hơn, **chưa được thử** — là dụng cụ mới, phải pre-register riêng (MC-39 nếu mở), không được hồi tố để "cho qua" cổng này.
+4. `measurement_card_hash` của các artifact cite/judge thuộc bản card lúc chạy (MC-37), không phải bản có MC-38.
+
+### Artifact
+
+`reading_cite_answers_*` · `reading_cite_scores_*` · `reading_cite_summary_*` · `faithfulness_sheet_*` (csv+html) · `faithfulness_judge_validation_*` (v1) · `faithfulness_judge_validation_v2_*` · `faithfulness_validation_*` (κ 0,2941, gate_pass=0) · `data/faithfulness_labels_*` (tracked).
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
