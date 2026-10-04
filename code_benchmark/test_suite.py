@@ -103,6 +103,8 @@ from code_benchmark import capture_scaffold as scaffold
 from code_benchmark import llm
 from code_benchmark import run_legal_arm_a as legal_arm_a
 from code_benchmark import make_shuffled_mc_input as shuffled_mc
+from code_benchmark import run_shuffled_mc as shuffled_run
+from code_benchmark import compare_position_bias as posbias
 from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
@@ -2875,6 +2877,205 @@ class TestShuffledMcInput(unittest.TestCase):
         perms_a = [tuple(i["perm"]) for i in items_a]
         perms_b = [tuple(i["perm"]) for i in items_b]
         self.assertNotEqual(perms_a, perms_b)
+
+
+class TestRunShuffledMcWrapper(unittest.TestCase):
+    """`run_shuffled_mc.py` — the condition-collision guards and the
+    rename/park dance. Offline: no subprocess ever runs here."""
+
+    SLUG = "M"
+
+    def _fake_outputs(self, folder: Path):
+        for name in (f"full_evaluation_{self.SLUG}.csv", f"accuracy_{self.SLUG}.csv"):
+            (folder / name).write_text("col\n1\n", encoding="utf-8")
+        for n in (100, 146):
+            (folder / f"raw_result_{n}_{self.SLUG}.csv").write_text("col\n1\n", encoding="utf-8")
+
+    def test_conflicts_catch_leftovers_and_existing_shuffled_outputs(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            self._fake_outputs(folder)
+            got = "\n".join(shuffled_run.conflicts(folder, self.SLUG, "s1234"))
+            self.assertIn(f"raw_result_146_{self.SLUG}.csv", got)
+            self.assertIn(f"full_evaluation_{self.SLUG}.csv", got)
+            # and with a clean folder plus existing shuffled outputs:
+            folder2 = Path(td) / "b"
+            folder2.mkdir()
+            (folder2 / f"full_evaluation_shuffled_s1234_{self.SLUG}.csv").write_text("x", encoding="utf-8")
+            got2 = "\n".join(shuffled_run.conflicts(folder2, self.SLUG, "s1234"))
+            self.assertIn("shuffled output already exists", got2)
+
+    def test_conflicts_ignore_the_dataset_scoped_namespace(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            # legal arm-A / harness files share the folder but NOT the resume namespace
+            for name in (f"raw_result_legal_mc_146_{self.SLUG}.csv",
+                         f"raw_result_legal_nli_150_{self.SLUG}.csv",
+                         f"full_evaluation_legal_{self.SLUG}.csv"):
+                (folder / name).write_text("col\n1\n", encoding="utf-8")
+            self.assertEqual(shuffled_run.conflicts(folder, self.SLUG, "s1234"), [])
+
+    def test_argv_is_frozen_and_never_resumes(self):
+        argv = shuffled_run.build_runner_argv(
+            python="/py", folder="data", file="shuffled.jsonl", model="M",
+            submission_out=Path("subs/submission_shuffled_s1234.csv"))
+        self.assertNotIn("--resume", argv)
+        for flag, val in (("--temperature", "0.0"), ("--seed", "42"),
+                          ("--max-tokens", "4"), ("--workers", "4")):
+            self.assertEqual(argv[argv.index(flag) + 1], val)
+        self.assertTrue(any(a.endswith("submission_shuffled_s1234.csv") for a in argv))
+
+    def test_rename_and_park_happy_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            self._fake_outputs(folder)
+            shuffled_run.execute_renames(shuffled_run.plan_renames(folder, self.SLUG, "s1234"))
+            moved = shuffled_run.park_checkpoints(folder, self.SLUG, "s1234")
+            self.assertEqual(len(moved), 2)
+            self.assertTrue((folder / f"full_evaluation_shuffled_s1234_{self.SLUG}.csv").exists())
+            self.assertTrue((folder / f"accuracy_shuffled_s1234_{self.SLUG}.csv").exists())
+            self.assertFalse((folder / f"full_evaluation_{self.SLUG}.csv").exists())
+            parked = sorted(p.name for p in (folder / "shuffled_checkpoints").iterdir())
+            self.assertEqual(parked, [f"raw_result_100_{self.SLUG}.csv",
+                                      f"raw_result_146_{self.SLUG}.csv"])
+            # the leftovers are gone, but a re-run is still refused — the
+            # shuffled measurement itself now exists (never overwritten silently)
+            got = shuffled_run.conflicts(folder, self.SLUG, "s1234")
+            self.assertEqual(len(got), 1)
+            self.assertIn("already exists", got[0])
+
+    def test_missing_fresh_output_fails_without_renaming(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            (folder / f"accuracy_{self.SLUG}.csv").write_text("col\n1\n", encoding="utf-8")
+            pairs = shuffled_run.plan_renames(folder, self.SLUG, "s1234")
+            with self.assertRaises(SystemExit) as ctx:
+                shuffled_run.execute_renames(pairs)
+            self.assertIn("missing after the run", str(ctx.exception))
+            # nothing was renamed (the accuracy file is still at its original name)
+            self.assertTrue((folder / f"accuracy_{self.SLUG}.csv").exists())
+            self.assertFalse((folder / f"accuracy_shuffled_s1234_{self.SLUG}.csv").exists())
+
+    def test_park_refuses_to_overwrite(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            (folder / f"raw_result_146_{self.SLUG}.csv").write_text("new", encoding="utf-8")
+            park = folder / "shuffled_checkpoints"
+            park.mkdir()
+            (park / f"raw_result_146_{self.SLUG}.csv").write_text("old", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                shuffled_run.park_checkpoints(folder, self.SLUG, "s1234")
+            self.assertEqual((park / f"raw_result_146_{self.SLUG}.csv").read_text(encoding="utf-8"),
+                             "old")  # the parked measurement is untouched
+
+
+class TestPositionBiasCompare(unittest.TestCase):
+    """`compare_position_bias.py` — integrity gates + paired stats, offline.
+
+    Every fixture goes through the real frozen `build_prompt`, so the tests
+    fail if the prompt contract and the compare parser ever drift apart.
+    """
+
+    def _pair(self, item_id: str, texts: list[str], gold_idx: int, perm: list[int],
+              answer_orig: str, answer_shuffled: str,
+              correct_orig: int, correct_shuffled: int) -> tuple[dict, dict, dict]:
+        question = f"Question {item_id}?"
+        gold_old = "ABCDE"[gold_idx]
+        gold_new = "ABCDE"[perm.index(gold_idx)]
+        oc = [f"{'ABCDE'[j]}. {t}" for j, t in enumerate(texts)]
+        sc = [f"{'ABCDE'[j]}. {texts[p]}" for j, p in enumerate(perm)]
+        o = {"id": item_id, "question": question,
+             "prompt": build_prompt(question, oc), "answer": answer_orig,
+             "gold_answer": gold_old, "correct": str(correct_orig)}
+        s = {"id": item_id, "question": question,
+             "prompt": build_prompt(question, sc), "answer": answer_shuffled,
+             "gold_answer": gold_new, "correct": str(correct_shuffled)}
+        m = {"id": item_id, "gold_old": gold_old, "gold_new": gold_new,
+             "perm": perm}
+        return o, s, m
+
+    def _build(self, n=20, a_only=2, b_only=5, both=8, neither=5, flips=4):
+        """n items with planted 2x2 and flip counts (a=orig, b=shuffled)."""
+        assert a_only + b_only + both + neither == n
+        orig, shuff, items = {}, {}, []
+        groups = (["a_only"] * a_only + ["b_only"] * b_only
+                  + ["both"] * both + ["neither"] * neither)
+        perm = [2, 0, 3, 1]  # 4-choice derangement-ish fixed permutation
+        for i, grp in enumerate(groups, 1):
+            item_id = f"LG-{i:04d}"
+            co = 1 if grp in ("a_only", "both") else 0
+            cs = 1 if grp in ("b_only", "both") else 0
+            flip = i <= flips
+            o, s, m = self._pair(item_id, [f"t{i}-0", f"t{i}-1", f"t{i}-2", f"t{i}-3"],
+                                 gold_idx=1, perm=perm,
+                                 answer_orig="A", answer_shuffled="B" if flip else "A",
+                                 correct_orig=co, correct_shuffled=cs)
+            orig[item_id], shuff[item_id] = o, s
+            items.append(m)
+        return orig, shuff, {"items": items}
+
+    def test_paired_stats_and_counts(self):
+        orig, shuff, man = self._build()
+        res = posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        s = res["summary"]
+        self.assertEqual((s["both"], s["a_only"], s["b_only"], s["neither"]),
+                         (8, 2, 5, 5))
+        self.assertEqual(s["delta"], "+15.00")   # 13/20 vs 10/20
+        self.assertEqual(s["mcnemar_p"], f"{harness._mcnemar_p(2, 5):.4g}")
+        lo, hi = float(s["ci95_low"]), float(s["ci95_high"])
+        self.assertLess(lo, 15.0)
+        self.assertGreater(hi, 15.0)
+        self.assertEqual(s["flipped"], 4)
+        self.assertEqual(s["blanks_orig"], 0)
+
+    def test_refuses_baseline_drift(self):
+        orig, shuff, man = self._build()
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(120, 146))
+        self.assertIn("pre-registered", str(ctx.exception))
+
+    def test_refuses_id_mismatch(self):
+        orig, shuff, man = self._build()
+        del shuff["LG-0001"]
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        self.assertIn("id set", str(ctx.exception))
+
+    def test_refuses_choice_multiset_mismatch(self):
+        orig, shuff, man = self._build()
+        k = "LG-0001"
+        q = shuff[k]["question"]
+        shuffled_choices = [f"{'ABCDE'[j]}. {t}" for j, t in
+                            enumerate(["t1-0", "t1-1", "t1-2", "CHANGED"])]
+        shuff[k]["prompt"] = build_prompt(q, shuffled_choices)
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        self.assertIn("multiset", str(ctx.exception))
+
+    def test_refuses_gold_text_move(self):
+        orig, shuff, man = self._build()
+        k = "LG-0001"
+        # same choice texts, but the shuffled gold letter now points elsewhere
+        o, s, m = self._pair(k, ["t1-0", "t1-1", "t1-2", "t1-3"], gold_idx=1,
+                             perm=[2, 0, 3, 1], answer_orig="A", answer_shuffled="A",
+                             correct_orig=1, correct_shuffled=1)
+        s["gold_answer"] = "A" if m["gold_new"] != "A" else "B"
+        m["gold_new"] = s["gold_answer"]
+        shuff[k], man_items = s, man["items"]
+        man_items[0] = m
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        self.assertIn("gold text moved", str(ctx.exception))
+
+    def test_breakdown_partitions_each_side(self):
+        orig, shuff, man = self._build()
+        res = posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        for side in ("orig", "shuffled"):
+            rows = [r for r in res["breakdown"]
+                    if r["section"] == "by_gold_letter" and r["side"] == side]
+            self.assertEqual(sum(r["n"] for r in rows), 20)
+        hist = [r for r in res["breakdown"] if r["section"] == "answer_letter"]
+        self.assertEqual(len(hist), 2 * 6)   # orig+shuffled x A-E+blank
 
 
 class TestAgreementCI(unittest.TestCase):

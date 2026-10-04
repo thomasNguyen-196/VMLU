@@ -34,20 +34,29 @@
 
 ## 3. Wrapper + compare (offline code, no model calls)
 
-- [ ] 3.1 Add `code_benchmark/run_shuffled_mc.py` wrapper (park-free variant of
+- [x] 3.1 Add `code_benchmark/run_shuffled_mc.py` wrapper (park-free variant of
   design D4): pre-run fail-fast on leftover MC-prefix files, subprocess
   `run_mc_eval.py` without `--resume`, rename outputs to shuffled names, move
   `raw_result_146_*` to gitignored `shuffled_checkpoints/`. Verify offline:
   unit-test the rename/park logic on tempdirs with fake CSVs (no network).
-- [ ] 3.2 Add `code_benchmark/compare_position_bias.py`: join orig
+  - **Bằng chứng:** `TestRunShuffledMcWrapper` 6 tests xanh (argv frozen,
+    không `--resume`; conflicts bắt đúng namespace count-only, bỏ qua
+    dataset-scoped; rename/park; refuse overwrite).
+- [x] 3.2 Add `code_benchmark/compare_position_bias.py`: join orig
   (`full_evaluation_legal_Qwen3_5-9B-65K.csv`) + shuffled on id; emit per-item
   compare CSV + summary (acc both sides, Δ + paired-bootstrap CI seed 42 +
   McNemar p, flip 2×2, accuracy-by-gold-position, answer-position histograms,
   blanks each side). Verify offline on synthetic CSVs with a known Δ
   (e.g. 5 planted flips → Δ and flip counts exact).
-- [ ] 3.3 Full offline gate: `python -m unittest code_benchmark.test_suite`
+  - **Bằng chứng:** `TestPositionBiasCompare` 6 tests xanh (planted 2×2=8/2/5/5
+    → Δ +15,00 và p == `_mcnemar_p(2,5)`; baseline gate; id/multiset/gold-text
+    fail-fasts; breakdown partition). Affixes parse từ chính probe
+    `build_prompt` — contract drift sẽ fail loud.
+- [x] 3.3 Full offline gate: `python -m unittest code_benchmark.test_suite`
   + `python code_benchmark/test_parsing.py` + `ruff check .` green, and
   `git diff --stat -- code_benchmark/run_mc_eval.py` empty (runner frozen).
+  - **Bằng chứng:** suite **201 tests OK**; test_parsing OK; ruff sạch;
+    `git status --short code_benchmark/run_mc_eval.py` rỗng.
 
 ## 4. Live run (needs VPN + IEC gateway)
 
