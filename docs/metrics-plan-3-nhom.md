@@ -1,8 +1,9 @@
 # Plan metric bổ sung — 3 nhóm (MC-32/33 follow-up)
 
 **Trạng thái (2026-10-04): nhóm 1 XONG (MC-34); nhóm 2 XONG — 2.1 (MC-35/36) và
-2.2 (MC-37/38, kết quả âm: dụng cụ judge trượt cổng). Nhóm 3 chưa bắt đầu.**
-Chi tiết xem MC-34/36/38 trong `measurement_card.md`.
+2.2 (MC-37/38 + MC-39/40, kết quả âm: hai dụng cụ judge trượt cổng); nhóm 3.1 XONG
+(MC-41/42: gateway có logprobs, ECE 7,39pp, under-confident −6,66pp). 3.2 safety chưa.**
+Chi tiết xem MC-34/36/38/40/42 trong `measurement_card.md`.
 
 Ngày lập: 2026-10-03. Ngữ cảnh: bảng `/harness` đã đủ 3 model (MC-32, đính chính MC-33).
 Câu hỏi gốc: metric hiện tại có đủ phản ánh hành vi model không?
@@ -48,6 +49,12 @@ không đạt thì số faithfulness vô nghĩa, dừng.
 |---|---|---|
 | 3.1 Calibration | Probe xem gateway có trả `logprobs` không — nếu không, dừng, không cố | Không |
 | 3.2 Safety benchmark | 4.000 safety rows đang skip: cần rubric + gold riêng, duyệt hội đồng | Không (đo model gọi thẳng) |
+
+**Kết quả nhóm 3.1 (2026-10-04):** probe **CÓ** logprobs (Qwen3.5-9B-65K; token đầu là chữ cái trần,
+top@0 đủ A–E) ⇒ calibration chạy. legal_mc-146: accuracy tái lập khít MC-31 (130/146), **ECE 7,39pp**,
+Brier 0,0701, **under-confident −6,66pp** (mean conf 82,4 < acc 89,0); bin lớn nhất [0,9–1,0) khớp tốt
+(conf 0,974 vs acc 0,988). Hạn chế: một miền, 146 câu; mở rộng `vmlu-mqa-all-gold` (1.047) là tùy chọn.
+Card MC-41 (pre-register) / MC-42 (kết quả).
 
 ## Thứ tự làm và mốc dừng
 

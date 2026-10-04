@@ -1612,6 +1612,54 @@ chẩn đoán) · `data/faithfulness_labels_*_test.csv` (tracked, 59/60) · MC-3
 | `khong_lam` | Không safety (3.2 — cần rubric/gold mới); không đổi decoding; không claim calibration toàn phân bố ngoài phân bố token-đầu |
 | `trang_thai` | 📌 **PRE-REGISTERED** — code (sha `6959d5ef…`) + card commit trước khi chạy; kết quả ở **MC-42** |
 
+## MC-42 — **Calibration 3.1 kết quả: ECE 7,39pp, hơi under-confident** (Qwen3.5-9B-65K, legal_mc-146)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-42` |
+| `ngay_chay` | 2026-10-04 (sau MC-41) |
+| `dieu_kien` | Y hệt MC-41; 146/146 item dùng được (`n_letters_found=5` cho mọi câu — phân bố sạch) |
+
+| Chỉ số | Giá trị |
+| --- | ---: |
+| accuracy | **130/146 = 89,04%** (tái lập khít MC-31 arm A → logprobs không đổi sinh) |
+| mean confidence | **82,38%** |
+| **ECE** (10 bin) | **7,39 pp** |
+| Brier (confidence) | **0,0701** |
+| overconfidence | **−6,66 pp** (tức **under-confident**: tự tin thấp hơn đúng thực tế) |
+
+### Bảng reliability
+
+| bin | n | conf | acc |
+| --- | ---: | ---: | ---: |
+| [0,3–0,4) | 5 | 0,346 | 0,400 |
+| [0,4–0,5) | 17 | 0,443 | 0,412 |
+| [0,5–0,6) | 6 | 0,567 | **1,000** |
+| [0,6–0,7) | 9 | 0,656 | 0,889 |
+| [0,7–0,8) | 11 | 0,740 | 0,909 |
+| [0,8–0,9) | 16 | 0,858 | 1,000 |
+| [0,9–1,0) | 82 | 0,974 | 0,988 |
+
+### Đọc kết quả
+
+1. **Khối lượng lớn nhất nằm ở bin tự tin cao và khớp tốt**: 82/146 câu ở [0,9–1,0), conf 0,974 vs acc 0,988.
+2. **Xu hướng under-confident** (mean_conf 82,4 < accuracy 89,0): model biết nhiều hơn mức nó tự nhận.
+   ECE 7,4pp chủ yếu do các bin giữa nhỏ và nhiễu ([0,5–0,6) n=6 lệch mạnh; [0,6–0,7) n=9).
+3. **Phân bố chữ cái trả lời**: A88/B33/C19/D6 — model nghiêng A nhưng đúng theo nội dung (xem MC-36:
+   histogram đáp án đi theo histogram gold).
+
+### Không được quy
+
+1. Phân bố là **niềm tin token-đầu** trên 5 lựa chọn, không phải calibration của cả câu trả lời/chuỗi suy luận.
+2. **Một miền, 146 câu, một lần chạy** → bin thưa, ECE có sai số; không suy ra calibration cho 58 môn VMLU.
+   Mở rộng `vmlu-mqa-all-gold` (1.047) là tùy chọn, chưa làm.
+3. Không so ngang model khác (28K offline).
+
+### Artifact
+
+`mc_calibration_items_legal_mc_Qwen3_5-9B-65K-cal.csv` · `…_summary_…csv` (ECE 7,39; over −6,66;
+card_hash `…`) · `…_reliability_…csv`.
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

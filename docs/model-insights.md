@@ -100,6 +100,21 @@ không ghim reasoning, chọn trên dev rồi cổng trên **mẫu test sạch**
 ⇒ 2.2 **đóng vĩnh viễn**; grounding là **khoảng trống dụng cụ đã xác nhận**, không phải việc còn treo.
 Bài học phương pháp: dùng thẳng tập dev sẽ "qua" bằng con số lạc quan; mẫu test sạch mới lộ năng lực thật.
 
+### 1.6. Calibration: model **hơi under-confident** (MC-41/42, mới 2026-10-04)
+
+Gateway IEC **có trả `logprobs`** cho Qwen3.5-9B-65K (token đầu là chữ cái trần, `top_logprobs` đủ A–E)
+⇒ đo được calibration. Trên legal_mc-146 (accuracy tái lập khít MC-31 = 130/146):
+
+| Chỉ số | Giá trị |
+| --- | ---: |
+| ECE (10 bin) | **7,39 pp** |
+| Brier (confidence) | 0,0701 |
+| overconfidence | **−6,66 pp** (under-confident) |
+| bin lớn nhất [0,9–1,0) | conf 0,974 vs acc 0,988 (khớp tốt) |
+
+→ Model **biết nhiều hơn mức nó tự nhận**; khối lượng lớn ở vùng tự tin cao lại khớp tốt. Hạn chế:
+một miền, 146 câu, phân bố **token-đầu** (không phải cả chuỗi suy luận) — không suy ra cho 58 môn VMLU.
+
 ---
 
 ## 2. Chẩn đoán theo model
@@ -190,6 +205,7 @@ Bài học phương pháp: dùng thẳng tập dev sẽ "qua" bằng con số l�
 | **Grounding / trung thực trích dẫn** | Thử ở MC-38: điều kiện cite compliance 100% nhưng judge trượt cổng (κ 0,19→0,29) ⇒ **chưa đo được** | Chưa xác định (lỗi dụng cụ) |
 | **Định dạng / ngân sách** | BidLQA near-miss ~20%; qwen38 21 blank | Rõ, sửa được |
 | **Thiên lệch đáp án** | NLI A 80% vs B 100% · MC legal: **không** thấy bias vị trí (MC-36: Δ=0, same-text 86,3%) | Rõ ở NLI, sạch ở MC |
+| **Calibration (độ tin cậy)** | legal_mc-146: ECE 7,39pp, under-confident −6,66pp (MC-42) | Nhẹ, một miền |
 | **Nhạy điều kiện** | 42,2% đổi đáp án; test −5,5 | Rõ, cần kiểm soát thực nghiệm |
 
 ---
