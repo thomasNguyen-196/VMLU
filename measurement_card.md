@@ -1358,6 +1358,31 @@ giữ nguyên số, chỉ refresh hash (deterministic, seed 42). |
 | `kiem` | Suite 178 OK, ruff sạch, `bun test` 54 pass, `tsc` sạch, blob thật validate
 (45 ladder / 6 breakdown / 6 arg_credit). |
 
+## MC-35 — **Position bias legal_mc-146**: shuffle chọn lựa (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-35` |
+| `ngay_chay` | Pre-register 2026-10-04 (card + artifact ghi xong **trước** mọi lần infer shuffled; không có số hậu nghiệm trong khối này) |
+| `muc_dich` | Trả lời câu hỏi validity rẻ nhất còn treo (plan nhóm 2.1): điểm MC có phụ thuộc **vị trí** đáp án đúng không, và model có đang khai thác "A hay đúng" không |
+| `benchmark` | VLSP2025-LegalSLM multichoice, n=146 — bản **shuffle s1234** của đúng 146 item MC-10/MC-31 arm A |
+| `manifest` | `data/legal_slm_multichoice_shuffled_s1234_manifest.json` — sha256 `f796af1f…` (tracked, commit trước infer); source sha `7b7d7f15…` verify lại lúc sinh |
+| `input` | `data/legal_slm_multichoice_shuffled_s1234_input.jsonl` — sha256 `4c722b7f…`; shape scorable `{id,question,choices[],answer}` như adapter MC-10, **runner không sửa byte nào** |
+| `shuffle_seed` | **1234** — hoán vị per-item `random.Random("1234:LG-XXXX")` (subset-stable, không phụ thuộc thứ tự chạy); gold remap theo **text identity**, fail-fast nếu choices trùng text |
+| `gold_shift` | Đo trước khi chạy (từ chính artifact): gold_old A91/B39/C16 (majority A **62,33%**) → gold_new A33/B45/C36/D32 (majority B **30,82%**) — baseline may-rủi đã bị phá |
+| `model_id` | `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1` (đường nội bộ qua VPN; đúng model/đường truyền của MC-31/MC-32) |
+| `dieu_kien` | **y hệt MC-31 arm A**: frozen `build_prompt`/`extract_answer`, temperature 0.0, seed 42, `max_tokens=4`, workers 4, không `--resume`; chỉ khác duy nhất: input đã shuffle |
+| `baseline_doi_chieu` | MC-31 arm A trên thứ tự gốc: **130/146 = 89,04%** (compare sẽ recompute từ file gốc và từ chối chạy nếu khác) |
+| `so_sanh` | `code_benchmark/compare_position_bias.py`: paired trên `id` — acc gốc vs acc shuffle, Δ + paired bootstrap CI seed 42 + McNemar exact; bảng **accuracy theo vị trí gold** (A/B/C/D) hai bên; histogram vị trí model chọn; blanks tách riêng |
+| `output` | `full_evaluation_shuffled_s1234_Qwen3_5-9B-65K.csv` + `accuracy_shuffled_s1234_Qwen3_5-9B-65K.csv` + `position_bias_compare_legal_mc_s1234.csv` (trong `all_res/ollama_result/Qwen3_5-9B-65K/`); checkpoint thô park ở `shuffled_checkpoints/`; submission shuffled riêng tên |
+| `khong_lam` | Không shuffle NLI (nhị phân vô nghĩa); không shuffle VMLU-1047/VM14K (chỉ mở nếu CI của Δ loại 0); **không chạy arm harness** — đây là validity của arm A, không phải so sánh scaffold |
+| `trang_thai` | 📌 **PRE-REGISTERED** — artifact + card commit trước infer; kết quả ghi ở **MC-36** |
+
+> Đọc kết quả đúng cách: Δ accuracy **một mình không trả lời** được câu hỏi — gold gốc lệch A nên
+> Δ có thể đến từ (i) khai thác vị trí, hoặc (ii) nhạy vị trí nói chung. Bảng accuracy-theo-vị-trí-gold
+> hai bên mới tách được hai cơ chế. n=146 ⇒ CI ~±7đ: Δ nhỏ hơn nhiễu ghi là "dưới độ phân giải",
+> không mở follow-up.
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
