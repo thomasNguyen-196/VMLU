@@ -105,6 +105,8 @@ from code_benchmark import run_legal_arm_a as legal_arm_a
 from code_benchmark import make_shuffled_mc_input as shuffled_mc
 from code_benchmark import run_shuffled_mc as shuffled_run
 from code_benchmark import compare_position_bias as posbias
+from code_benchmark import run_reading_cite_eval as cite
+from code_benchmark import judge_faithfulness as judge
 from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
@@ -3135,6 +3137,151 @@ class TestPositionBiasCompare(unittest.TestCase):
             self.assertEqual(sum(r["n"] for r in rows), 20)
         hist = [r for r in res["breakdown"] if r["section"] == "answer_letter"]
         self.assertEqual(len(hist), 2 * 6)   # orig+shuffled x A-E+blank
+
+
+class TestReadingCiteRunner(unittest.TestCase):
+    """Citation-condition runner (`run_reading_cite_eval.py`, group 2.2).
+
+    The prompt bytes are the pre-registered condition (MC-37) and the extraction
+    is fail-soft — both are contracts, so both get pinned tests.
+    """
+
+    def test_prompt_bytes_are_pinned(self):
+        expected = (
+            "Đọc đoạn văn dưới đây và trả lời câu hỏi bằng một cụm từ hoặc số ngắn gọn, "
+            "lấy nguyên văn trong đoạn văn khi có thể.\n"
+            "Sau đó trích dẫn nguyên văn một đoạn ngắn trong bài chứa câu trả lời.\n"
+            "Trả lời theo đúng hai dòng:\n"
+            "Trả lời: <câu trả lời>\n"
+            "Trích dẫn: <đoạn trích>\n\n"
+            "CTX\n\nCâu hỏi: Q?\nTrả lời: "
+        )
+        self.assertEqual(cite.build_citation_prompt("  CTX  ", "Q?"), expected)
+
+    def test_extraction_repeated_labels(self):
+        raw = "Trả lời: 1999\nTrích dẫn: Năm 1999, sự kiện diễn ra."
+        self.assertEqual(cite.extract_citation_answer(raw),
+                         ("1999", "Năm 1999, sự kiện diễn ra."))
+
+    def test_extraction_continuation_style(self):
+        # the prompt ends with "Trả lời: " — the model may just continue
+        raw = "1999\nTrích dẫn: Năm 1999, sự kiện diễn ra."
+        self.assertEqual(cite.extract_citation_answer(raw),
+                         ("1999", "Năm 1999, sự kiện diễn ra."))
+
+    def test_extraction_first_nonempty_answer_line(self):
+        raw = "Trả lời: \n  24,10%\nTrích dẫn: tỉ lệ 24,10%"
+        self.assertEqual(cite.extract_citation_answer(raw), ("24,10%", "tỉ lệ 24,10%"))
+
+    def test_extraction_missing_citation_is_unparsed(self):
+        self.assertEqual(cite.extract_citation_answer("Trả lời: 1999"), ("", ""))
+        self.assertEqual(cite.extract_citation_answer(""), ("", ""))
+        self.assertEqual(cite.extract_citation_answer("Trích dẫn: chỉ có trích dẫn"),
+                         ("", "chỉ có trích dẫn"))
+
+    def test_extraction_never_repairs(self):
+        # citation label present but no answer text -> empty answer, not a guess
+        self.assertEqual(cite.extract_citation_answer("Trích dẫn: đoạn trích"),
+                         ("", "đoạn trích"))
+
+    def test_checkpoint_namespace_is_separate(self):
+        name = cite.checkpoint_name("M-cite", 5, prefix=cite.READING_CITE_PREFIX)
+        self.assertEqual(name, "reading_cite_result_5_M-cite.csv")
+        self.assertNotIn("reading_result_", name.replace("reading_cite_result_", ""))
+        # and the resume lookup for the frozen prefix never picks it up
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            (folder / name).write_text("x", encoding="utf-8")
+            self.assertIsNone(find_latest_checkpoint(folder, "M-cite",
+                                                     prefix="reading_result_"))
+
+    def test_scoring_reuses_the_frozen_scorer(self):
+        from code_benchmark.score_reading_eval import score_pair
+        self.assertIs(cite.score_pair, score_pair)
+
+
+class TestFaithfulnessJudge(unittest.TestCase):
+    """The judge instrument (`judge_faithfulness.py`, group 2.2). The gate math
+    and the strict verdict parser are the parts that must never guess."""
+
+    def test_judge_prompt_is_pinned(self):
+        p = judge.build_judge_prompt("CTX", "Q?", "A.", "C.")
+        self.assertIn("Chỉ trả về JSON đúng định dạng:", p)
+        self.assertIn('{"verdict": "supported" hoặc "unsupported", "reason": "<một câu ngắn>"}', p)
+        self.assertTrue(p.endswith("Trích dẫn: C."))
+        # empty fields render as an explicit marker, not as blanks the judge
+        # could read as "no instruction"
+        self.assertIn("Câu trả lời: (trống)", judge.build_judge_prompt("CTX", "Q?", "", "C."))
+
+    def test_parse_bare_json(self):
+        v, r, err = judge.parse_judge_verdict('{"verdict": "supported", "reason": "ok"}')
+        self.assertEqual((v, err), ("supported", False))
+        self.assertEqual(r, "ok")
+
+    def test_parse_chatty_json(self):
+        v, _r, err = judge.parse_judge_verdict(
+            'Kết quả:\n{"verdict": "Unsupported", "reason": "lệch"}\nHết.')
+        self.assertEqual((v, err), ("unsupported", False))
+
+    def test_parse_fenced_json(self):
+        v, _r, err = judge.parse_judge_verdict(
+            '```json\n{"verdict": "supported", "reason": "ok"}\n```')
+        self.assertEqual((v, err), ("supported", False))
+
+    def test_parse_never_guesses(self):
+        for raw in ("", "supported", '{"verdict": "maybe"}', '{"reason": "x"}',
+                    '{"verdict": 3}', "not json at all"):
+            v, _r, err = judge.parse_judge_verdict(raw)
+            self.assertTrue(err, raw)
+            self.assertEqual(v, "")
+
+    def test_citation_verbatim_normalization(self):
+        ctx = "Năm 1999,   sự kiện diễn ra tại Hà Nội."
+        self.assertTrue(judge.citation_verbatim("năm 1999, sự kiện", ctx))
+        self.assertTrue(judge.citation_verbatim("Năm 1999, sự kiện diễn ra", ctx))
+        self.assertFalse(judge.citation_verbatim("Năm 2001", ctx))
+        self.assertFalse(judge.citation_verbatim("", ctx))
+
+    def test_cohen_kappa_hand_computed(self):
+        # po=0.5, pe=0.5 -> kappa 0
+        pairs = [(True, True), (True, False), (False, True), (False, False)]
+        self.assertAlmostEqual(judge.cohen_kappa(pairs), 0.0, places=6)
+        # perfect agreement with balanced marginals -> 1.0
+        self.assertAlmostEqual(judge.cohen_kappa([(True, True), (False, False)]), 1.0)
+        # degenerate marginals: all same on both raters
+        self.assertAlmostEqual(judge.cohen_kappa([(True, True)] * 5), 1.0)
+
+    def test_gate_boundaries(self):
+        self.assertTrue(judge.gate_passes(60, 0.80, 0.60))
+        self.assertFalse(judge.gate_passes(60, 0.7999, 0.60))
+        self.assertFalse(judge.gate_passes(60, 0.80, 0.5999))
+        self.assertFalse(judge.gate_passes(0, 1.0, 1.0))
+
+    def test_sample_sheet_is_deterministic_and_stratified(self):
+        rows = ([{"dataset": "squad", "item_id": f"s{i:03d}", "em": i % 2}
+                 for i in range(40)]
+                + [{"dataset": "drop", "item_id": f"d{i:03d}", "em": i % 2}
+                   for i in range(40)])
+        a = judge.sample_sheet(rows)
+        b = judge.sample_sheet(rows)
+        self.assertEqual([r["item_id"] for r in a], [r["item_id"] for r in b])
+        self.assertEqual(len(a), 60)
+        cells = Counter((r["dataset"], r["em"]) for r in a)
+        self.assertEqual(cells, {("squad", 0): 15, ("squad", 1): 15,
+                                 ("drop", 0): 15, ("drop", 1): 15})
+        c = judge.sample_sheet(rows, seed=7)
+        self.assertNotEqual([r["item_id"] for r in a], [r["item_id"] for r in c])
+
+    def test_sample_sheet_tops_up_a_short_cell(self):
+        rows = ([{"dataset": "squad", "item_id": f"s{i:03d}", "em": 1 if i < 5 else 0}
+                 for i in range(40)]
+                + [{"dataset": "drop", "item_id": f"d{i:03d}", "em": i % 2}
+                   for i in range(40)])
+        picked = judge.sample_sheet(rows)
+        self.assertEqual(len(picked), 60)
+        squad = [r for r in picked if r["dataset"] == "squad"]
+        self.assertEqual(len(squad), 30)   # short em=1 cell topped up from squad em=0
+        self.assertEqual(sum(r["em"] for r in squad), 5)
 
 
 class TestAgreementCI(unittest.TestCase):
