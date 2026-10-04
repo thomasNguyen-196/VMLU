@@ -3240,6 +3240,42 @@ class TestFaithfulnessJudge(unittest.TestCase):
             self.assertTrue(err, raw)
             self.assertEqual(v, "")
 
+    def test_parse_falls_back_to_last_verdict_in_reasoning(self):
+        # a reasoning judge mentions the field while thinking; the LAST one is
+        # the answer, and it must win over any earlier mention.
+        raw = ('Suy nghĩ: ban đầu tôi nghĩ "verdict": "supported" nhưng sai.\n'
+               'Kết luận:\n{"verdict": "unsupported", "reason": "trích dẫn lệch"}')
+        v, _r, err = judge.parse_judge_verdict(raw)
+        self.assertEqual((v, err), ("unsupported", False))
+
+    def test_judge_once_reasks_only_on_parse_failure(self):
+        calls = []
+
+        def flaky(prompt):
+            calls.append(prompt)
+            return "không phải JSON" if len(calls) == 1 else '{"verdict": "supported", "reason": "ok"}'
+
+        v, _r, err, raw = judge.judge_once(flaky, "p", retries=2)
+        self.assertEqual((v, err), ("supported", False))
+        self.assertEqual(len(calls), 2)          # one re-ask
+
+        calls2 = []
+
+        def always_bad(prompt):
+            calls2.append(prompt)
+            return "vẫn không parse"
+
+        v, _r, err, _raw = judge.judge_once(always_bad, "p", retries=2)
+        self.assertTrue(err)
+        self.assertEqual(len(calls2), 3)         # original + 2 retries, then give up
+
+    def test_excluding_the_dev_sample_keeps_the_test_disjoint(self):
+        rows = [{"dataset": "squad", "item_id": f"s{i}", "em": i % 2} for i in range(30)]
+        excluded = {f"squad:s{i}" for i in range(15)}
+        pool = [r for r in rows if f"{r['dataset']}:{r['item_id']}" not in excluded]
+        picked = judge.sample_sheet(pool, per_cell=5)
+        self.assertFalse({f"{r['dataset']}:{r['item_id']}" for r in picked} & excluded)
+
     def test_citation_verbatim_normalization(self):
         ctx = "Năm 1999,   sự kiện diễn ra tại Hà Nội."
         self.assertTrue(judge.citation_verbatim("năm 1999, sự kiện", ctx))

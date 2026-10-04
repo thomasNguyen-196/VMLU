@@ -26,6 +26,7 @@ import json
 import logging
 import os
 import random
+import re
 from collections import Counter
 from pathlib import Path
 from threading import Lock
@@ -106,12 +107,17 @@ def build_judge_prompt(context: str, question: str, answer: str, citation: str) 
     )
 
 
+_VERDICT_RE = re.compile(r'"verdict"\s*:\s*"(supported|unsupported)"', re.IGNORECASE)
+
+
 def parse_judge_verdict(raw: str) -> tuple[str, str, bool]:
     """(verdict, reason, judge_error) from the judge reply.
 
-    Strict-but-safe: accepts a bare JSON object, or the first {...} block in a
-    chatty reply; requires verdict in {supported, unsupported}. Anything else is
-    a judge_error — counted, never guessed (no keyword fallback).
+    Strict-but-safe: a bare JSON object, or the first {...} block in a chatty
+    reply, wins; if a reasoning judge emitted prose (or nested braces) that
+    breaks JSON extraction, fall back to the LAST explicit `"verdict"` field —
+    the final answer, not a mention inside the reasoning. Anything without a
+    valid verdict is a judge_error — counted, never guessed (no keyword fallback).
     """
     if not raw:
         return "", "", True
@@ -129,12 +135,27 @@ def parse_judge_verdict(raw: str) -> tuple[str, str, bool]:
                 obj = json.loads(text[start:end + 1])
             except json.JSONDecodeError:
                 obj = None
-    if not isinstance(obj, dict):
-        return "", "", True
-    verdict = str(obj.get("verdict", "")).strip().lower()
-    if verdict not in ("supported", "unsupported"):
-        return "", "", True
-    return verdict, str(obj.get("reason", "")).strip(), False
+    if isinstance(obj, dict):
+        verdict = str(obj.get("verdict", "")).strip().lower()
+        if verdict in ("supported", "unsupported"):
+            return verdict, str(obj.get("reason", "")).strip(), False
+    matches = _VERDICT_RE.findall(raw)
+    if matches:
+        return matches[-1].lower(), "", False
+    return "", "", True
+
+
+def judge_once(call, prompt: str, *, retries: int) -> tuple[str, str, bool, str]:
+    """Ask the judge, re-asking only when the reply does not PARSE (format), up
+    to `retries` extra times. A valid verdict from any attempt is returned; all
+    attempts failing -> judge_error. Never infers a verdict from keywords."""
+    raw = ""
+    for _ in range(retries + 1):
+        raw = call(prompt)
+        verdict, reason, err = parse_judge_verdict(raw)
+        if not err:
+            return verdict, reason, err, raw
+    return "", "", True, raw
 
 
 def citation_verbatim(citation: str, context: str) -> bool:
@@ -217,17 +238,24 @@ def parse_args() -> argparse.Namespace:
     common(sh)
     sh.add_argument("--seed", type=int, default=SHEET_SEED)
     sh.add_argument("--per-cell", type=int, default=SHEET_PER_CELL)
+    sh.add_argument("--exclude", type=Path, default=None,
+                    help="CSV (sheet or labels) whose dataset:item_id keys are excluded — "
+                         "test-set hygiene: never validate a judge on the sample it was tuned on")
 
     rn = sub.add_parser("run", help="judge items through the judge endpoint")
     common(rn)
     rn.add_argument("--judge-model", default=None, help="default: JUDGE_MODEL env")
     rn.add_argument("--judge-base-url", default=None, help="default: JUDGE_BASE_URL env")
     rn.add_argument("--judge-api-key", default=None, help="default: JUDGE_API_KEY env")
-    rn.add_argument("--judge-reasoning-effort", default="none",
-                    help="pinned reasoning_effort sent to the judge (default: none)")
-    rn.add_argument("--judge-max-tokens", type=int, default=400,
-                    help="judge reply budget; 200 truncated a reasoning judge into invalid "
-                         "JSON (MC-38 iteration), so v2 gives it room (default: %(default)s)")
+    rn.add_argument("--judge-reasoning-effort", default="",
+                    help="reasoning_effort sent to the judge; empty (default) = omit the field, "
+                         "letting the provider default stand (a reasoning judge needs it)")
+    rn.add_argument("--judge-max-tokens", type=int, default=1500,
+                    help="judge reply budget; reasoning judges emit long traces before the JSON "
+                         "(default: %(default)s)")
+    rn.add_argument("--judge-retries", type=int, default=2,
+                    help="re-ask an item whose reply does not parse (format only, never a "
+                         "guessed verdict; default: %(default)s)")
     rn.add_argument("--sheet", type=Path, default=None,
                     help="judge only the items in this sheet (validation pass)")
     rn.add_argument("--out", type=Path, default=None,
@@ -259,6 +287,12 @@ def cmd_sheet(args: argparse.Namespace) -> None:
     folder = model_dirs(args.model)[0]
     scores = read_csv_checked(folder / f"reading_cite_scores_{args.label}.csv",
                               required={"dataset", "item_id", "em"}, label="cite scores")
+    if args.exclude:
+        ex_keys = {item_key(r) for r in read_csv_checked(
+            args.exclude, required={"dataset", "item_id"}, label="exclude")}
+        before = len(scores)
+        scores = [r for r in scores if item_key(r) not in ex_keys]
+        print(f"excluded {before - len(scores)} items present in {args.exclude.name}")
     answers = {item_key(r): r for r in read_csv_checked(
         folder / f"reading_cite_answers_{args.label}.csv",
         required={"dataset", "item_id", "question", "answer", "citation"},
@@ -318,12 +352,17 @@ def cmd_run(args: argparse.Namespace) -> None:
 
     def one(r: dict) -> dict:
         key = (r["dataset"], str(r["item_id"]))
-        raw = call_model_with_retry(
-            client=client, model=judge_model,
-            prompt=build_judge_prompt(ctx[key], r["question"], r["answer"], r["citation"]),
-            temperature=0.0, seed=42, max_tokens=args.judge_max_tokens,
-            extra_body={"reasoning_effort": args.judge_reasoning_effort})
-        verdict, reason, err = parse_judge_verdict(raw)
+        prompt = build_judge_prompt(ctx[key], r["question"], r["answer"], r["citation"])
+        extra = ({"reasoning_effort": args.judge_reasoning_effort}
+                 if args.judge_reasoning_effort else None)
+
+        def ask(prompt: str) -> str:
+            return call_model_with_retry(
+                client=client, model=judge_model, prompt=prompt,
+                temperature=0.0, seed=42, max_tokens=args.judge_max_tokens,
+                extra_body=extra)
+
+        verdict, reason, err, raw = judge_once(ask, prompt, retries=args.judge_retries)
         return {"dataset": key[0], "item_id": key[1], "judge_model": judge_model,
                 "verdict": verdict, "reason": reason,
                 "citation_verbatim": int(citation_verbatim(r["citation"], ctx[key])),
