@@ -1530,6 +1530,23 @@ Ma trận (human/judge): v1 `yes/sup 47 · yes/uns 2 · no/sup 9 · no/uns 2`; v
 
 `reading_cite_answers_*` · `reading_cite_scores_*` · `reading_cite_summary_*` · `faithfulness_sheet_*` (csv+html) · `faithfulness_judge_validation_*` (v1) · `faithfulness_judge_validation_v2_*` · `faithfulness_validation_*` (κ 0,2941, gate_pass=0) · `data/faithfulness_labels_*` (tracked).
 
+## MC-39 — **Faithfulness judge dụng cụ v2: kimi-k3 + mẫu test mới** (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-39` |
+| `ngay_chay` | Pre-register 2026-10-04 (trước mọi lần gọi judge trên **mẫu test**; không có số hậu nghiệm) |
+| `ly_do` | MC-38 dừng vì dụng cụ: MiMo V2.5 (reasoning off) quá dễ dãi + không tất định. Chọn dụng cụ mới **trên dev**, cổng chạy trên **test mới** — không hồi tố để "cho qua" cổng cũ |
+| `judge_model` | **`kimi-k3` @ `https://opencode.ai/zen/go/v1`** (khác họ model bị chấm — không tự-chấm; `qwen3.8-max` cùng họ Qwen nên **loại**) |
+| `judge_config` | temperature 0.0, seed 42, **không ghim `reasoning_effort`** (để mặc định provider — judge suy luận cần), `max_tokens=1500`, **parse-retry 2** (chỉ khi không parse được; không bao giờ đoán verdict) |
+| `prompt_judge` | **Giữ nguyên byte v2 của MC-38** (đã ghi ở MC-37 + sửa ở MC-38); module `judge_faithfulness.py` sha lúc pre-register `74e34c79…` |
+| `dev_set` | 60 nhãn MC-38 (`data/faithfulness_labels_Qwen3_5-9B-65K-cite.csv`, sha `c7ce7c00…`) — **chỉ để chọn dụng cụ**, đã đóng băng |
+| `test_set` | **60 câu mới**, `--seed 43`, `--exclude` dev (đảm bảo rời rạc), cùng phân tầng 15×4 ô; nhãn người commit vào `data/faithfulness_labels_Qwen3_5-9B-65K-cite_test.csv` **trước** khi chấm judge trên nó |
+| `gate` | agreement ≥ 0,80 **VÀ** Cohen's κ ≥ 0,60 trên 60 câu test. **Không có lần sửa trong card này** — fail ⇒ **2.2 đóng vĩnh viễn**, công bố kết quả âm (dụng cụ thứ hai cũng trượt) |
+| `neu_qua` | Chạy judge full 400 (cùng config) → **MC-40**: compliance, EM/char-F1, verbatim rate, supported rate, `correct ∧ supported`, cross-tab; caveat κ là ước lượng một mẫu; tùy chọn seed `/results` cho `reading-400 × 65k` |
+| `khong_lam` | Không đổi điều kiện cite / câu trả lời / số EM (tái dùng MC-37/38); không sửa nhãn dev; không suy gì từ probe dev |
+| `trang_thai` | 📌 **PRE-REGISTERED** — tool v2 + change commit trước mọi lần chấm test; kết quả ở **MC-40** |
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

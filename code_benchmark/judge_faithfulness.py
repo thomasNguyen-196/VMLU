@@ -241,6 +241,8 @@ def parse_args() -> argparse.Namespace:
     sh.add_argument("--exclude", type=Path, default=None,
                     help="CSV (sheet or labels) whose dataset:item_id keys are excluded — "
                          "test-set hygiene: never validate a judge on the sample it was tuned on")
+    sh.add_argument("--out", type=Path, default=None,
+                    help="output sheet CSV (default: faithfulness_sheet_<label>.csv)")
 
     rn = sub.add_parser("run", help="judge items through the judge endpoint")
     common(rn)
@@ -268,11 +270,15 @@ def parse_args() -> argparse.Namespace:
     va.add_argument("--labels", type=Path, required=True,
                     help="committed human labels CSV (data/faithfulness_labels_<label>.csv)")
     va.add_argument("--judge", type=Path, required=True, help="judge CSV of the sheet items")
+    va.add_argument("--out", type=Path, default=None,
+                    help="validation summary CSV (default: faithfulness_validation_<label>.csv)")
 
     me = sub.add_parser("metrics", help="final summary: scores + judge + verbatim")
     common(me)
     me.add_argument("--judge", type=Path, default=None,
                     help="full judge CSV (default: faithfulness_judge_<label>.csv)")
+    me.add_argument("--out", type=Path, default=None,
+                    help="summary CSV (default: faithfulness_summary_<label>.csv)")
     return ap.parse_args()
 
 
@@ -310,7 +316,7 @@ def cmd_sheet(args: argparse.Namespace) -> None:
         rows.append({"dataset": r["dataset"], "item_id": str(r["item_id"]),
                      "question": a["question"], "context": ctx[(r["dataset"], str(r["item_id"]))],
                      "answer": a["answer"], "citation": a["citation"]})
-    out = folder / f"faithfulness_sheet_{args.label}.csv"
+    out = args.out or folder / f"faithfulness_sheet_{args.label}.csv"
     write_csv_atomic(out, rows, SHEET_COLS)
     cells = Counter((r["dataset"], int(r["em"])) for r in picked)
     print(f"sheet n={len(rows)} seed={args.seed} per_cell={args.per_cell} cells={dict(cells)}")
@@ -408,7 +414,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
     agreement = agree / n if n else float("nan")
     kappa = cohen_kappa(pairs)
     gate = gate_passes(n, agreement, kappa)
-    out = folder / f"faithfulness_validation_{args.label}.csv"
+    out = args.out or folder / f"faithfulness_validation_{args.label}.csv"
     write_csv_atomic(out, [{"label": args.label, "n": n, "agree": agree,
                             "agreement": f"{agreement:.4f}", "kappa": f"{kappa:.4f}",
                             "gate_pass": int(gate), "judge_model": judge_model,
@@ -481,7 +487,7 @@ def cmd_metrics(args: argparse.Namespace) -> None:
             "incorrect_supported": i_sup, "incorrect_unsupported": i_uns,
             "judge_model": judge_model, "measurement_card_hash": card_hash,
         })
-    out = folder / f"faithfulness_summary_{args.label}.csv"
+    out = args.out or folder / f"faithfulness_summary_{args.label}.csv"
     write_csv_atomic(out, summary, METRIC_COLS)
     for s in summary:
         print(f"{s['dataset']:<6} n={s['n']:<4} EM={s['em']:<6} compliance={s['compliance']}% "
