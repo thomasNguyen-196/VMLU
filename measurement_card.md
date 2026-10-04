@@ -1427,6 +1427,64 @@ giữ nguyên số, chỉ refresh hash (deterministic, seed 42). |
 - Harness-arm shuffle (`omp` có khuếch đại bias không): **ĐÓNG** — không cần cho claim nào hiện tại.
 - 2.2 faithfulness (reading + judge) là task nhóm 2 còn lại, độc lập với khối này.
 
+## MC-37 — **Faithfulness reading-400 (điều kiện trích dẫn) + judge MiMo** (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-37` |
+| `ngay_chay` | Pre-register 2026-10-04 (card ghi xong **trước** mọi lần gọi model của điều kiện cite; không có số hậu nghiệm trong khối này) |
+| `muc_dich` | Plan nhóm 2.2: EM/F1 chỉ đo "khớp gold", không đo **grounding**. Điều kiện cite + judge trả lời: trích dẫn có chống đỡ câu trả lời không |
+| `benchmark` | reading-400 (`data/eval_set_manifest.csv`, 200 Vi-SQuAD + 200 Vi-DROP, seed 42 — manifest đóng băng) |
+| `model_id` | `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1` (VPN nội bộ) |
+| `label` | `Qwen3_5-9B-65K-cite` — namespace riêng; **cấm** so hàng-hàng với reading-400 của MC-3/MC-31 (khác prompt) |
+| `infer_flags` | temperature 0.0, seed 42, `max_tokens=128`, workers 4; runner `run_reading_cite_eval.py run` (checkpoint `reading_cite_result_<n>_<label>.csv`, `--resume` chỉ trong label này) |
+| `prompt_cite` | **Byte-frozen** — `build_citation_prompt` (module `run_reading_cite_eval.py`; sha256 code lúc pre-register `eee13b58…`): |
+
+```text
+Đọc đoạn văn dưới đây và trả lời câu hỏi bằng một cụm từ hoặc số ngắn gọn, lấy nguyên văn trong đoạn văn khi có thể.
+Sau đó trích dẫn nguyên văn một đoạn ngắn trong bài chứa câu trả lời.
+Trả lời theo đúng hai dòng:
+Trả lời: <câu trả lời>
+Trích dẫn: <đoạn trích>
+
+<context>
+
+Câu hỏi: <question>
+Trả lời: 
+```
+
+| Trường | Giá trị |
+| --- | --- |
+| `extraction` | `extract_citation_answer`: nhận cả hai kiểu trả lời (lặp nhãn hoặc tiếp nối sau `Trả lời: `); thiếu nhãn `Trích dẫn:` hoặc answer rỗng ⇒ **("", "")**, đếm unparsed, không bao giờ đoán |
+| `scoring` | `score_reading_eval.score_pair` (đóng băng) trên **trường answer**; EM/char-F1 báo là **điều kiện riêng**; compliance (đủ 2 trường) báo riêng |
+| `judge_model` | **`mimo-v2.5` @ `https://opencode.ai/zen/go/v1`** (OpenCode Zen Go; khác họ model với model bị chấm — tránh self-judge); headers bắt buộc `x-opencode-session` + browser-ish (Cloudflare 1010/MissingSessionID — MC-29); token `OPENCODE_GO_API_KEY` trong `.omp-mimo/.env`, truyền qua `JUDGE_*` env, **không** commit |
+| `judge_flags` | temperature 0.0, seed 42, `max_tokens=200`, `reasoning_effort="none"` (ghim qua extra_body; probe 2026-10-04 OK, trả JSON chuẩn) |
+| `prompt_judge` | **Byte-frozen** — `build_judge_prompt` (module `judge_faithfulness.py`; sha256 code lúc pre-register `75eadb04…`): |
+
+```text
+Bạn là giám khảo cho bài đọc hiểu. Cho đoạn văn, câu hỏi, câu trả lời của mô hình và đoạn trích dẫn của mô hình.
+Đánh giá: đoạn trích dẫn có trực tiếp chống đỡ câu trả lời (chứa thông tin trả lời, hoặc suy ra trực tiếp từ đoạn trích) không?
+Chỉ trả về JSON đúng định dạng:
+{"verdict": "supported" hoặc "unsupported", "reason": "<một câu ngắn>"}
+
+Đoạn văn:
+<context>
+
+Câu hỏi: <question>
+Câu trả lời: <answer>
+Trích dẫn: <citation>
+```
+
+| Trường | Giá trị |
+| --- | --- |
+| `judge_parse` | Strict-but-safe: JSON trần, JSON trong prose, hoặc code fence; `verdict` phải ∈ {supported, unsupported}; còn lại ⇒ `judge_error`, đếm, không đoán. `raw_judge_response` giữ nguyên văn |
+| `validation` | Sheet mù 60 câu: **seed 42, 15 ô (dataset × EM)** = 15 squad-EM1 + 15 squad-EM0 + 15 drop-EM1 + 15 drop-EM0; ô thiếu thì lấp từ item còn lại của cùng dataset (squad trước drop). Người gán nhãn **không thấy** gold/EM/verdict judge; labels commit vào `data/faithfulness_labels_<label>.csv` **trước** khi chấm sheet |
+| `gate` | **agreement ≥ 0,80 VÀ Cohen's κ ≥ 0,60** trên 60 câu đã gán. Fail ⇒ sửa judge prompt **một lần** (ghi lại), validate lại trên đúng labels đã đóng băng; fail lần hai ⇒ **DỪNG**, công bố thất bại dụng cụ, không có điểm faithfulness |
+| `metrics` | compliance · EM/char-F1 (answer) · `citation_verbatim` (citation ⊆ context, chuẩn hoá của scorer, **không judge**) · `supported_rate` (trên judged) · **`correct ∧ supported`** · cross-tab correct×supported; `judge_error`/unparsed tách riêng, không gộp |
+| `output` | `reading_cite_answers_<label>.csv` · `reading_cite_scores_<label>.csv` · `reading_cite_summary_<label>.csv` · `faithfulness_sheet_<label>.csv` · `faithfulness_judge_validation_<label>.csv` → gate → `faithfulness_judge_<label>.csv` · `faithfulness_validation_<label>.csv` · `faithfulness_summary_<label>.csv` (trong `all_res/ollama_result/Qwen3_5-9B-65K/`) |
+| `khong_lam` | Không đụng `build_reading_prompt`/`score_reading_eval.py` (byte-frozen); không sửa câu trả lời; không nhét unparsed/judge_error vào bất kỳ tử/mẫu nào; không so ngang MC-31 |
+| `trang_thai` | 📌 **PRE-REGISTERED** — code + card commit trước mọi lần chạy cite; kết quả + quyết định gate ghi ở **MC-38** |
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

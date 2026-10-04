@@ -1,31 +1,41 @@
 ## 1. Citation runner (offline first)
 
-- [ ] 1.1 Add `code_benchmark/run_reading_cite_eval.py`: `build_citation_prompt`
+- [x] 1.1 Add `code_benchmark/run_reading_cite_eval.py`: `build_citation_prompt`
   (bytes per design D2), `extract_citation_answer` (D3, fail-soft, never
   repairs), manifest join reused from `run_reading_eval` (import, no copy),
   checkpoint `reading_cite_result_<n>_<label>.csv` (label default
   `Qwen3_5-9B-65K-cite`, `--model` = endpoint model), answers
   `reading_cite_answers_<label>.csv`, `--resume` never crosses labels.
   Verify: `git diff --stat -- code_benchmark/run_reading_eval.py` empty.
-- [ ] 1.2 Offline tests in `code_benchmark/test_suite.py`: prompt bytes pinned
+  - **Bằng chứng:** module `run`|`score`; extraction nhận cả 2 kiểu (lặp nhãn /
+    tiếp nối); `run_reading_eval.py` + `score_reading_eval.py` không đổi byte
+    (git status rỗng); `READING_CITE_PREFIX` tách namespace checkpoint.
+- [x] 1.2 Offline tests in `code_benchmark/test_suite.py`: prompt bytes pinned
   (golden string), extraction table (both fields / missing one / extra lines /
   label repeated / blank raw), checkpoint label isolation, frozen
   `score_reading_eval.score_pair` reuse. Verify `python -m unittest
   code_benchmark.test_suite` + `test_parsing.py` + `ruff check .` green.
+  - **Bằng chứng:** `TestReadingCiteRunner` 7 tests (prompt golden, 2 kiểu
+    extraction, first-line, missing/never-repairs, namespace, scorer identity).
 
 ## 2. Judge tool (offline first)
 
-- [ ] 2.1 Add `code_benchmark/judge_faithfulness.py` with subcommands
+- [x] 2.1 Add `code_benchmark/judge_faithfulness.py` with subcommands
   `run` (per-item judge calls, strict-JSON verdict parse, raw response kept,
   `judge_error` bucket), `sheet` (blind human-label sheet, pre-registered
   sampling: 60 items, seed 42, 30 squad + 30 drop, 30 EM-correct + 30
   EM-incorrect), `validate` (agreement + Cohen's κ vs committed labels; gate
   ≥ 80% and κ ≥ 0.6). Judge prompt pinned as a module constant; judge model +
   endpoint recorded per row.
-- [ ] 2.2 Offline tests: sampling rule deterministic + stratified counts,
+  - **Bằng chứng:** 4 subcommands `sheet|run|validate|metrics`; judge endpoint
+    `JUDGE_*` env tách khỏi `OPENAI_*` (llm.extra_headers nhận tên biến);
+    probe thật 2026-10-04: MiMo trả JSON chuẩn, `reasoning_effort=none` OK.
+- [x] 2.2 Offline tests: sampling rule deterministic + stratified counts,
   κ/agreement math on hand-made matrices (perfect / chance / degenerate),
   strict-JSON parse failures → `judge_error` (never guessed), gate boundary
   cases (79/80%, κ 0.59/0.60). Verify suite + ruff.
+  - **Bằng chứng:** `TestFaithfulnessJudge` 11 tests; tổng suite **222 OK**,
+    ruff sạch, test_parsing OK.
 
 ## 3. Pre-register MC-37 (before ANY model call)
 
