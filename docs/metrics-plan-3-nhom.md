@@ -1,7 +1,8 @@
 # Plan metric bổ sung — 3 nhóm (MC-32/33 follow-up)
 
-**Trạng thái (2026-10-03): nhóm 1 XONG (card MC-34).** Nhóm 2–3 chưa bắt đầu.
-Chi tiết xem MC-34 trong `measurement_card.md`.
+**Trạng thái (2026-10-04): nhóm 1 XONG (MC-34); nhóm 2 XONG — 2.1 (MC-35/36) và
+2.2 (MC-37/38, kết quả âm: dụng cụ judge trượt cổng). Nhóm 3 chưa bắt đầu.**
+Chi tiết xem MC-34/36/38 trong `measurement_card.md`.
 
 Ngày lập: 2026-10-03. Ngữ cảnh: bảng `/harness` đã đủ 3 model (MC-32, đính chính MC-33).
 Câu hỏi gốc: metric hiện tại có đủ phản ánh hành vi model không?
@@ -27,6 +28,16 @@ Harness cần không: **Không.** Chỉ đọc ledger/checkpoint cũ. Test: unit
 |---|---|---|
 | 2.1 Position bias MC | Chạy lại `run_mc_eval.py` với `choices` shuffle (seed cố định), so accuracy gốc vs shuffle | **Không** (đo model). Muốn biết scaffold có khuếch đại bias không thì chạy thêm arm B (~2h máy) — quyết sau |
 | 2.2 Faithfulness reading | Model trả lời **kèm trích dẫn** passage; chấm EM như cũ + thêm "câu trả lời có được passage entail không" bằng LLM-as-judge qua chính endpoint IEC | **Không.** Judge là gọi API trực tiếp |
+
+**Kết quả nhóm 2 (2026-10-04):**
+
+- **2.1 XONG — MC-35/36.** legal_mc-146 shuffle s1234: gốc 130/146 → shuffle 130/146, **Δ +0,00**
+  (CI −5,48..+5,48; p=1); stability theo text **same_text 126/146** vs letter-anchored 4 ⇒ model bám
+  nội dung, không bám vị trí. Follow-up VMLU-1047 shuffle + harness shuffle **ĐÓNG** (CI chứa 0).
+- **2.2 XONG theo nhánh dừng — MC-37/38.** Điều kiện cite 400 câu (compliance 100%, EM 65,00) nhưng
+  **judge trượt cổng validation**: MiMo V2.5 đạt agreement 0,8167/**κ 0,1872** (v1), sau một lần siết
+  prompt vẫn **κ 0,2941** (v2) < 0,60 ⇒ **dừng, không công bố điểm grounding** (đúng mốc dừng của plan).
+  Hướng mở: judge bật reasoning hoặc model mạnh hơn — phải pre-register riêng (MC-39).
 
 Điểm dừng trung thực cho 2.2: validate judge trên 50–100 câu mẫu thủ công trước;
 không đạt thì số faithfulness vô nghĩa, dừng.
