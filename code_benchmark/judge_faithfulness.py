@@ -64,7 +64,7 @@ LABEL_COLS = ["dataset", "item_id", "human_supports", "note"]
 JUDGE_COLS = ["dataset", "item_id", "judge_model", "verdict", "reason",
               "citation_verbatim", "judge_error", "raw_judge_response"]
 VALID_COLS = ["label", "n", "agree", "agreement", "kappa", "gate_pass",
-              "judge_model", "measurement_card_hash"]
+              "unlabeled", "judge_model", "measurement_card_hash"]
 METRIC_COLS = ["dataset", "n", "compliant_count", "compliance", "em", "char_f1",
                "citation_verbatim_count", "citation_verbatim_rate",
                "judged", "judge_errors", "supported", "supported_rate",
@@ -272,6 +272,9 @@ def parse_args() -> argparse.Namespace:
     va.add_argument("--judge", type=Path, required=True, help="judge CSV of the sheet items")
     va.add_argument("--out", type=Path, default=None,
                     help="validation summary CSV (default: faithfulness_validation_<label>.csv)")
+    va.add_argument("--skip-unlabeled", action="store_true",
+                    help="drop rows with a blank human_supports and report the count "
+                         "(partial coverage); default: fail on a blank label")
 
     me = sub.add_parser("metrics", help="final summary: scores + judge + verbatim")
     common(me)
@@ -388,17 +391,23 @@ def cmd_run(args: argparse.Namespace) -> None:
     print(f"-> {out_path}")
 
 
-def cmd_validate(args: argparse.Namespace) -> None:
-    folder = model_dirs(args.model)[0]
-    labels = read_csv_checked(args.labels, required={"dataset", "item_id", "human_supports"},
-                              label="human labels")
-    judge = {item_key(r): r for r in read_csv_checked(
-        args.judge, required={"dataset", "item_id", "verdict", "judge_error"},
-        label="judge")}
+def build_validation_pairs(labels: list[dict], judge: dict[str, dict],
+                           *, skip_unlabeled: bool) -> tuple[list[tuple[bool, bool]], int, str]:
+    """(pairs, unlabeled_count, judge_model) for the gate.
+
+    A blank `human_supports` is a hard error unless `skip_unlabeled` — partial
+    coverage is normal in human labeling, but silently dropping an item would
+    shrink the exam, so it must be explicit and counted. A `judge_error` on a
+    labeled item always aborts (never score what the judge could not answer).
+    """
     pairs: list[tuple[bool, bool]] = []
+    unlabeled = 0
     judge_model = ""
     for r in labels:
         val = str(r["human_supports"]).strip().lower()
+        if val == "" and skip_unlabeled:
+            unlabeled += 1
+            continue
         if val not in ("yes", "no"):
             raise SystemExit(f"Error: {item_key(r)}: human_supports must be yes/no, got {val!r}")
         j = judge.get(item_key(r))
@@ -409,6 +418,18 @@ def cmd_validate(args: argparse.Namespace) -> None:
                              f"resolve before validating (never guess)")
         judge_model = judge_model or j["judge_model"]
         pairs.append((val == "yes", j["verdict"] == "supported"))
+    return pairs, unlabeled, judge_model
+
+
+def cmd_validate(args: argparse.Namespace) -> None:
+    folder = model_dirs(args.model)[0]
+    labels = read_csv_checked(args.labels, required={"dataset", "item_id", "human_supports"},
+                              label="human labels")
+    judge = {item_key(r): r for r in read_csv_checked(
+        args.judge, required={"dataset", "item_id", "verdict", "judge_error"},
+        label="judge")}
+    pairs, unlabeled, judge_model = build_validation_pairs(
+        labels, judge, skip_unlabeled=args.skip_unlabeled)
     n = len(pairs)
     agree = sum(a == b for a, b in pairs)
     agreement = agree / n if n else float("nan")
@@ -417,11 +438,13 @@ def cmd_validate(args: argparse.Namespace) -> None:
     out = args.out or folder / f"faithfulness_validation_{args.label}.csv"
     write_csv_atomic(out, [{"label": args.label, "n": n, "agree": agree,
                             "agreement": f"{agreement:.4f}", "kappa": f"{kappa:.4f}",
-                            "gate_pass": int(gate), "judge_model": judge_model,
+                            "gate_pass": int(gate), "unlabeled": unlabeled,
+                            "judge_model": judge_model,
                             "measurement_card_hash": measurement_card_hash()}],
                      VALID_COLS)
-    print(f"n={n} agree={agree}/{n} agreement={agreement:.4f} kappa={kappa:.4f} "
-          f"gate={'PASS' if gate else 'FAIL'} (need ≥{GATE_AGREEMENT:.2f} và κ≥{GATE_KAPPA:.2f})")
+    print(f"n={n} (unlabeled {unlabeled}) agree={agree}/{n} agreement={agreement:.4f} "
+          f"kappa={kappa:.4f} gate={'PASS' if gate else 'FAIL'} "
+          f"(need ≥{GATE_AGREEMENT:.2f} và κ≥{GATE_KAPPA:.2f})")
     print(f"-> {out}")
     if not gate:
         raise SystemExit("Error: judge did NOT pass the validation gate — one documented "

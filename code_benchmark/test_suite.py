@@ -3276,6 +3276,23 @@ class TestFaithfulnessJudge(unittest.TestCase):
         picked = judge.sample_sheet(pool, per_cell=5)
         self.assertFalse({f"{r['dataset']}:{r['item_id']}" for r in picked} & excluded)
 
+    def test_validation_pairs_skip_unlabeled_is_explicit(self):
+        labels = [{"dataset": "squad", "item_id": "1", "human_supports": "yes"},
+                  {"dataset": "squad", "item_id": "2", "human_supports": ""},
+                  {"dataset": "drop", "item_id": "3", "human_supports": "no"}]
+        jr = {"squad:1": {"judge_model": "J", "verdict": "supported", "judge_error": "0"},
+              "drop:3": {"judge_model": "J", "verdict": "unsupported", "judge_error": "0"}}
+        with self.assertRaises(SystemExit):
+            judge.build_validation_pairs(labels, jr, skip_unlabeled=False)
+        pairs, unlabeled, model = judge.build_validation_pairs(labels, jr, skip_unlabeled=True)
+        self.assertEqual((pairs, unlabeled, model), ([(True, True), (False, False)], 1, "J"))
+
+    def test_validation_pairs_abort_on_judge_error(self):
+        labels = [{"dataset": "squad", "item_id": "1", "human_supports": "yes"}]
+        jr = {"squad:1": {"judge_model": "J", "verdict": "", "judge_error": "1"}}
+        with self.assertRaises(SystemExit):
+            judge.build_validation_pairs(labels, jr, skip_unlabeled=False)
+
     def test_citation_verbatim_normalization(self):
         ctx = "Năm 1999,   sự kiện diễn ra tại Hà Nội."
         self.assertTrue(judge.citation_verbatim("năm 1999, sự kiện", ctx))
