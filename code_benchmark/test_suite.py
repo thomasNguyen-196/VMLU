@@ -107,6 +107,7 @@ from code_benchmark import run_shuffled_mc as shuffled_run
 from code_benchmark import compare_position_bias as posbias
 from code_benchmark import run_reading_cite_eval as cite
 from code_benchmark import judge_faithfulness as judge
+from code_benchmark import label_faithfulness as labeler
 from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
@@ -3282,6 +3283,87 @@ class TestFaithfulnessJudge(unittest.TestCase):
         squad = [r for r in picked if r["dataset"] == "squad"]
         self.assertEqual(len(squad), 30)   # short em=1 cell topped up from squad em=0
         self.assertEqual(sum(r["em"] for r in squad), 5)
+
+
+class TestFaithfulnessLabelTool(unittest.TestCase):
+    """`label_faithfulness.py` — the autosaving labeler. The HTTP surface is
+    exercised for real on an ephemeral port; the file contract is the point."""
+
+    def _sheet(self):
+        return [{"dataset": "squad", "item_id": "0", "question": "Hỏi <b>x</b>?",
+                 "context": "Ngữ cảnh & <script>alert(1)</script>",
+                 "answer": "a", "citation": "ci"},
+                {"dataset": "drop", "item_id": "7", "question": "q2",
+                 "context": "c2", "answer": "a2", "citation": "ci2"}]
+
+    def test_missing_labels_file_loads_empty(self):
+        with tempfile.TemporaryDirectory() as td:
+            self.assertEqual(labeler.load_labels(Path(td) / "nope.csv"), {})
+
+    def test_upsert_rejects_anything_but_yes_no(self):
+        store: dict = {}
+        with self.assertRaises(ValueError):
+            labeler.upsert_label(store, "squad", "0", "maybe", "")
+        labeler.upsert_label(store, "squad", "0", "YES", "chú thích")
+        self.assertEqual(store["squad:0"], {"human_supports": "yes", "note": "chú thích"})
+
+    def test_write_is_sheet_ordered_and_blanks_unlabeled(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "labels.csv"
+            sheet = self._sheet()
+            store: dict = {}
+            labeler.upsert_label(store, "drop", "7", "no", "")
+            labeler.write_labels(path, store, sheet)
+            with open(path, encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            self.assertEqual([r["item_id"] for r in rows], ["0", "7"])  # sheet order
+            self.assertEqual(rows[0]["human_supports"], "")             # unlabeled stays blank
+            self.assertEqual(rows[1]["human_supports"], "no")
+            # round-trip
+            self.assertEqual(labeler.load_labels(path)["drop:7"]["human_supports"], "no")
+
+    def test_render_escapes_model_output(self):
+        page = labeler.render_page(self._sheet(), {})
+        self.assertNotIn("<script>alert(1)</script>", page)
+        self.assertIn("&lt;script&gt;", page)
+        self.assertIn("Hỏi &lt;b&gt;x&lt;/b&gt;?", page)
+
+    def test_http_autosave_round_trip(self):
+        import http.client
+        import threading
+        with tempfile.TemporaryDirectory() as td:
+            sheet = self._sheet()
+            labels = Path(td) / "labels.csv"
+            store: dict = {}
+            srv = labeler.ThreadingHTTPServer(("127.0.0.1", 0),
+                                              labeler.make_handler(sheet, labels, store,
+                                                                   threading.Lock()))
+            t = threading.Thread(target=srv.serve_forever, daemon=True)
+            t.start()
+            try:
+                port = srv.server_address[1]
+                conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+                conn.request("GET", "/")
+                r = conn.getresponse()
+                self.assertEqual(r.status, 200)
+                self.assertIn("Câu hỏi", r.read().decode("utf-8"))
+
+                body = json.dumps({"dataset": "squad", "item_id": "0",
+                                   "human_supports": "yes", "note": ""})
+                conn.request("POST", "/api/label", body,
+                             {"Content-Type": "application/json"})
+                r = conn.getresponse()
+                self.assertEqual(r.status, 200)
+                self.assertEqual(json.loads(r.read())["saved"], 1)
+                self.assertEqual(labeler.load_labels(labels)["squad:0"]["human_supports"], "yes")
+
+                bad = json.dumps({"dataset": "squad", "item_id": "0", "human_supports": "x"})
+                conn.request("POST", "/api/label", bad, {"Content-Type": "application/json"})
+                self.assertEqual(conn.getresponse().status, 400)
+            finally:
+                srv.shutdown()
+                srv.server_close()
+                t.join(timeout=5)
 
 
 class TestAgreementCI(unittest.TestCase):
