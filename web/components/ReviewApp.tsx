@@ -190,11 +190,11 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-hair bg-paper/90 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-hair bg-paper">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-3.5 sm:px-8">
           <div className="flex min-w-0 items-baseline gap-2.5">
             <h1 className="font-disp text-[19px] font-semibold tracking-[-.01em] whitespace-nowrap">Reading Review</h1>
-            <span className="text-[11px] uppercase tracking-[.06em] text-ink-3 whitespace-nowrap">
+            <span className="text-[12px] uppercase tracking-[.06em] text-ink-3 whitespace-nowrap">
               VMLU · {blob.items.length} câu · issue&nbsp;#3
             </span>
           </div>
@@ -203,19 +203,19 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
           <Stat label="reject" value={String(stats.reject)} tone="reject" />
           <Link
             href="/benchmark"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50/70 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-hair bg-card px-3 py-1.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
           >
-            <span>📊 Dashboard Benchmark (V-Bench & VMLU)</span>
+            <span>Dashboard benchmark (V-Bench &amp; VMLU)</span>
           </Link>
           <Link
             href="/results"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-colors shadow-2xs"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-hair bg-card px-3 py-1.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
           >
-            <span>🗄️ Results (DB, đa model)</span>
+            <span>Results (DB, đa model)</span>
           </Link>
           <div className="min-w-2 flex-1" />
           <label className="flex items-center gap-2">
-            <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">Model</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">Model</span>
             <select
               value={model}
               onChange={(e) => pickModel(e.target.value)}
@@ -244,7 +244,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
         <div className="mx-auto max-w-[1440px] overflow-x-auto px-4 py-2.5 sm:px-8 [scrollbar-width:thin]">
           {item && <Filmstrip items={blob.items} bucket={bucket} peers={peers} idx={idx} onJump={go} />}
         </div>
-        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-3.5 gap-y-1.5 px-4 pb-2.5 text-[11px] text-ink-3 sm:px-8">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-3.5 gap-y-1.5 px-4 pb-2.5 text-[12px] text-ink-3 sm:px-8">
           <Key swatch="bg-accept">accept</Key>
           <Key swatch="bg-reject">reject</Key>
           <Key swatch="bg-flag">reject thiếu đáp án sửa</Key>
@@ -275,7 +275,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
         </div>
       )}
 
-      <main className="mx-auto grid max-w-[1440px] grid-cols-1 items-start gap-4 px-4 py-4 sm:px-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] lg:gap-7">
+      <main className="mx-auto grid max-w-[1440px] grid-cols-1 items-start gap-4 px-4 pt-4 pb-24 sm:px-8 lg:grid-cols-[minmax(0,1.55fr)_minmax(340px,1fr)] lg:gap-7">
         {item ? (
           <>
             <ItemPane
@@ -341,7 +341,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
             ).map(([k, v]) => (
               <div key={k} className="contents">
                 <span className="text-right whitespace-nowrap">
-                  <kbd className="rounded border border-hair bg-card px-1.5 py-0.5 font-mono text-[10.5px] text-ink-2">{k}</kbd>
+                  <kbd className="rounded border border-hair bg-card px-1.5 py-0.5 font-mono text-[11px] text-ink-2">{k}</kbd>
                 </span>
                 <span>{v}</span>
               </div>

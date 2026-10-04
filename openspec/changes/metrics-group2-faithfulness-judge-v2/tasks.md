@@ -31,9 +31,12 @@
 
 ## 5. Outcome
 
-- [ ] 5.1 Pass → full 400-item judge pass (same config); MC-40: compliance,
+- [x] 5.1 Pass → full 400-item judge pass (same config); MC-40: compliance,
   EM/char-F1, verbatim rate, supported rate, `correct ∧ supported`, cross-tab,
   test-κ caveat; `docs/model-insights.md` §1.5 rewritten from "chưa đo được" to
   the result; optional `/results` seed.
-- [ ] 5.2 Fail → 2.2 closed permanently; MC-40 records the second instrument
+  - **Không thực hiện** — cổng test fail (κ 0,4809), đúng luật một-phát.
+- [x] 5.2 Fail → 2.2 closed permanently; MC-40 records the second instrument
   failure (κ numbers) as the final negative result; no faithfulness score.
+  - **Bằng chứng:** MC-40 ghi test κ=0,4809 (n=59, 1 ô trống bỏ rõ) vs dev
+    κ=0,666 (lạc quan); 2.2 đóng vĩnh viễn; §1.5 cập nhật; không chấm full 400.

@@ -1547,6 +1547,55 @@ Ma trận (human/judge): v1 `yes/sup 47 · yes/uns 2 · no/sup 9 · no/uns 2`; v
 | `khong_lam` | Không đổi điều kiện cite / câu trả lời / số EM (tái dùng MC-37/38); không sửa nhãn dev; không suy gì từ probe dev |
 | `trang_thai` | 📌 **PRE-REGISTERED** — tool v2 + change commit trước mọi lần chấm test; kết quả ở **MC-40** |
 
+## MC-40 — **Faithfulness judge v2: cổng test FAIL → 2.2 đóng vĩnh viễn**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-40` |
+| `ngay_chay` | 2026-10-04 (nhãn test commit trước khi chấm judge; judge kimi-k3 trên test + dev) |
+| `dieu_kien` | Y hệt MC-39: judge `kimi-k3` @ Zen Go, prompt v2 byte, không ghim reasoning, `max_tokens=1500`, retry 2, temp 0/seed 42 |
+
+### Cổng trên mẫu TEST sạch (đây là quyết định)
+
+| Tập | n | agreement | Cohen's κ | Kết luận |
+| --- | ---: | ---: | ---: | --- |
+| **test** (seed 43, rời rạc dev) | 59 (1 ô trống bỏ rõ) | 0,8475 (50/59) | **0,4809** | **FAIL** (κ < 0,60) |
+| dev (tập đã dùng chọn/chỉnh — **lạc quan**) | 60 | 0,9000 | 0,6660 | qua cổng, nhưng **không** dùng làm cổng |
+
+Ma trận test (human/judge, n=59): `yes/sup 44 · yes/uns 3 · no/sup 6 · no/uns 6`.
+
+**Khoảng cách dev→test (0,666 → 0,481) là chính cái bẫy mà việc chia dev/test sinh ra để lộ.** Nếu dùng
+thẳng nhãn dev làm cổng thì đã "qua" bằng một con số bị thổi; mẫu test sạch lộ ra năng lực thật thấp hơn.
+
+### Lỗi của dụng cụ (test, đo được)
+
+- **Quá dễ dãi 6 ca**: `squad:68/1502/2134` (trích dẫn chỉ chạm chủ đề, "chưa đủ ý" theo nhãn người nhưng
+  judge vẫn supported), `drop:1986` ("chỉ trả lời chủng loại"), `drop:8213` (câu hỏi hỏi tổng số nhà,
+  trích chỉ có tổng dân).
+- **Quá nghiêm 3 ca**: `drop:980/8915` (đếm/so sánh trực tiếp từ trích mà judge không công nhận),
+  `drop:193` (phép trừ judge tính ra số khác — lệch phép tính).
+- ⇒ Sai **cả hai chiều**, nên κ bị chặn trần dù agreement thô vẫn > 0,80.
+
+### Quyết định (theo luật một-phát MC-39)
+
+- **2.2 ĐÓNG VĨNH VIỄN.** Hai dụng cụ liên tiếp trượt cổng người (MiMo V2.5: κ 0,19/0,29; kimi-k3:
+  κ 0,481 trên test sạch). **Không công bố điểm grounding nào.**
+- Không chấm thêm mẫu người (ràng buộc người dùng) — đây là lần thử cuối; một dụng cụ khác (nếu có)
+  phải pre-register mới + mẫu người mới, và không mặc định là đáng làm.
+
+### Không được quy
+
+1. **Không** suy "65,00% EM cite là điểm faithfulness".
+2. **Không** quy cho Qwen3.5-9B-65K: thất bại là của **dụng cụ judge** (kiểm chứng bằng nhãn người độc lập).
+3. **Không** dùng κ dev 0,666 làm con số công bố — nó là fit trên tập đã chỉnh (minh hoạ độ lạc quan).
+4. κ test là **ước lượng một mẫu** n=59; nhưng nó là con số **sạch** duy nhất, và nó < ngưỡng đặt trước.
+
+### Artifact
+
+`faithfulness_judge_test_kimik3.csv` · `faithfulness_validation_test_kimik3.csv` (κ 0,4809, gate_pass=0,
+unlabeled=1) · `faithfulness_judge_dev_kimik3.csv` · `faithfulness_validation_dev_kimik3.csv` (κ 0,666,
+chẩn đoán) · `data/faithfulness_labels_*_test.csv` (tracked, 59/60) · MC-37/38 artifacts (điều kiện cite).
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

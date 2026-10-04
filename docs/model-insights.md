@@ -94,6 +94,12 @@ người không nhất quán với tiêu chí cũng giới hạn trần đồng 
 **khoảng trống dụng cụ**, không phải hạn chế của model. Hướng mở (phải pre-register riêng, không
 hồi tố): judge bật reasoning, hoặc judge mạnh hơn, hoặc tiêu chí chặt hơn kèm ví dụ mẫu.
 
+**Cập nhật (MC-39/40, cùng ngày):** đã thử đúng hướng đó — judge mạnh hơn, khác họ (`kimi-k3`) +
+không ghim reasoning, chọn trên dev rồi cổng trên **mẫu test sạch** (60 câu mới, rời rạc dev). Kết quả:
+κ **0,481** trên test (so với **0,666** trên dev đã chỉnh) — **vẫn trượt ngưỡng 0,60**, lỗi cả hai chiều.
+⇒ 2.2 **đóng vĩnh viễn**; grounding là **khoảng trống dụng cụ đã xác nhận**, không phải việc còn treo.
+Bài học phương pháp: dùng thẳng tập dev sẽ "qua" bằng con số lạc quan; mẫu test sạch mới lộ năng lực thật.
+
 ---
 
 ## 2. Chẩn đoán theo model
