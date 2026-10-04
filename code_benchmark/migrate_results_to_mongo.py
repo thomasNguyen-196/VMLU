@@ -9,7 +9,11 @@ Provenance rule (frozen by the repo's measurement history): the numbers on
 disk are the published ones. The migration NEVER recomputes accuracy/EM —
 it copies per-item rows + the committed accuracy/summary rows verbatim and
 refuses to complete when row-counts or identity disagree (spec: Migration
-verification).
+verification). Sole exception, documented at `accuracy_summary_rows`: when an
+arm-A run wrote no accuracy aggregate (`run_legal_arm_a.py` prints instead of
+writing one), the aggregate is derived from the committed final with the
+runner's own `build_accuracy_rows` — aggregating the existing `correct` column,
+not rescoring any answer.
 
   .venv/bin/python code_benchmark/migrate_results_to_mongo.py [--uri ...] [--db vmlu] [--drop] [--only <model_id>]
 
@@ -24,7 +28,10 @@ file that happened to hold it):
   reading_scores_bidlqa_val_Qwen3_5-9B-28K  -> bidlqa-val         / MC-12
   reading_scores_bidlqa_test_Qwen3_5-9B-28K -> bidlqa-test        / MC-11
   full_evaluation_vm14k_Qwen3_5-9B-28K.csv  -> vm14k-public-12488 / MC-14b
-  (same shapes for the gguf dir; qwen38-nothink carries legal-mc-146 / MC-6)
+  (same shapes for the gguf dir; qwen38-nothink carries legal-mc-146 / MC-6;
+   Qwen3_5-9B-65K carries legal-mc-146 + legal-nli-150 + reading-400 +
+   bidlqa-val / MC-31 — its split-track V-Bench files wait for a track-aware
+   plan and are deliberately NOT migrated as if combined)
 
 The Mongo client is accepted as a dependency (design D5) so unit tests run
 the same code against a fake adapter.
@@ -76,6 +83,15 @@ MIGRATION_PLAN = [
     ("qwen38-nothink", "qwen38-nothink", [
         ("full_evaluation_qwen38-nothink.csv", "legal-mc-146", "MC-6", "mc"),
     ]),
+    ("Qwen3_5-9B-65K", "qwen3-5-9b-65k", [
+        # MC-31 arm A (byte-frozen prompts). V-Bench is split into two track
+        # files (4141 mc + 1000 agentic) and no combined 5141 file exists, so
+        # the vbench entry waits for a track-aware plan — not silently mixed.
+        ("full_evaluation_legal_Qwen3_5-9B-65K.csv", "legal-mc-146", "MC-31", "mc"),
+        ("full_evaluation_nli_Qwen3_5-9B-65K.csv", "legal-nli-150", "MC-31", "mc"),
+        ("reading_scores_Qwen3_5-9B-65K.csv", "reading-400", "MC-31", "reading"),
+        ("reading_scores_bidlqa_val_Qwen3_5-9B-65K.csv", "bidlqa-val", "MC-31", "reading"),
+    ]),
 ]
 
 ITEM_COLLECTION = {"mc": "mc_items", "vbench": "vbench_items", "reading": "reading_items"}
@@ -94,7 +110,21 @@ RUN_CONFIGS = {
     "MC-12": {"temperature": 0.0, "seed": 42, "max_tokens": 48, "workers": 4, "prompt_style": "build_reading_prompt"},
     "MC-13": {"temperature": 0.0, "seed": 42, "max_tokens": 4, "workers": 4, "prompt_style": "build_prompt"},
     "MC-14b": {"temperature": 0.0, "seed": 42, "max_tokens": 4, "workers": 8, "prompt_style": "build_prompt"},
+    # MC-31 is ONE card over several dataset kinds (65K arm A), and its single
+    # `max_tokens` cannot hold for all of them: legal is the frozen 4-token MC
+    # budget, reading/bidlqa are the 48-token reading budget. Keyed
+    # (card_id, dataset_id); plain card_id keys stay the fallback.
+    ("MC-31", "legal-mc-146"): {"temperature": 0.0, "seed": 42, "max_tokens": 4, "workers": 4, "prompt_style": "build_prompt"},
+    ("MC-31", "legal-nli-150"): {"temperature": 0.0, "seed": 42, "max_tokens": 4, "workers": 4, "prompt_style": "build_prompt"},
+    ("MC-31", "reading-400"): {"temperature": 0.0, "seed": 42, "max_tokens": 48, "workers": 4, "prompt_style": "build_reading_prompt"},
+    ("MC-31", "bidlqa-val"): {"temperature": 0.0, "seed": 42, "max_tokens": 48, "workers": 4, "prompt_style": "build_reading_prompt"},
 }
+
+
+def runner_config(card_id: str, dataset_id: str) -> dict | None:
+    """Runner config for a (card, dataset): the dataset-scoped key wins, the
+    plain card key is the fallback (cards that span dataset kinds)."""
+    return RUN_CONFIGS.get((card_id, dataset_id)) or RUN_CONFIGS.get(card_id)
 
 
 def measurement_card_hash(path: Path = MEASUREMENT_CARD) -> str:
@@ -164,7 +194,18 @@ BUILDERS = {"mc": mc_item, "vbench": vbench_item, "reading": reading_item}
 
 
 def accuracy_summary_rows(model_dir: Path, dir_slug: str) -> dict[str, list[dict]]:
-    """accuracy_<infix>_<slug>.csv rows keyed by dataset: the committed aggregates."""
+    """accuracy_<infix>_<slug>.csv rows keyed by dataset: the committed aggregates.
+
+    When an aggregate file is absent (arm-A runs produced by `run_legal_arm_a.py`
+    print their accuracy but never wrote the CSV), the rows are DERIVED from the
+    committed final with the runner's own `build_accuracy_rows` — same function,
+    same numbers, never a second scoring path. A missing final stays a hard error
+    (read_csv_checked), so nothing is silently skipped.
+    """
+    try:
+        from code_benchmark.run_mc_eval import build_accuracy_rows
+    except ImportError:  # direct run from code_benchmark/
+        from run_mc_eval import build_accuracy_rows
     out: dict[str, list[dict]] = {}
     for infix, dataset_id in (("", "vmlu-mqa-all-gold"), ("_legal", "legal-mc-146"), ("_nli", "legal-nli-150"),
                               ("_vm14k", "vm14k-public-12488")):
@@ -174,6 +215,13 @@ def accuracy_summary_rows(model_dir: Path, dir_slug: str) -> dict[str, list[dict
                 out[dataset_id] = read_csv_checked(path, required={"level", "name", "n", "correct"},
                                                    label=f"accuracy{infix}")
                 break
+        else:
+            final = model_dir / f"full_evaluation{infix}_{dir_slug}.csv"
+            if final.exists():
+                rows = read_csv_checked(final, required={"id", "correct"}, label=f"final{infix}")
+                scored = [{**r, "correct": int(str(r.get("correct", "")).strip() or 0)}
+                          for r in rows]
+                out[dataset_id] = build_accuracy_rows(scored)
     return out
 
 
@@ -220,7 +268,7 @@ def migrate(db, *, only: str | None = None, card_hash: str | None = None) -> dic
                 if d["_id"] in seen:
                     raise SystemExit(f"Error: duplicate item {d['_id']} in {path}")
                 seen.add(d["_id"])
-            config = RUN_CONFIGS.get(card_id)
+            config = runner_config(card_id, dataset_id)
             if config is None:
                 raise SystemExit(f"Error: no runner config for card {card_id}")
             db["runs"].update_one(

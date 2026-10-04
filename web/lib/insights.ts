@@ -196,6 +196,16 @@ const SEEDS: Record<string, Record<string, InsightSeed>> = {
       ],
       caveat: "Mô hình 27B vượt giới hạn ≤4B của bộ dữ liệu và đã rời endpoint.",
     },
+    "qwen3-5-9b-65k": {
+      verdict:
+        "89,04% (130/146). Đã kiểm tra position bias (MC-35/36): shuffle đổi phân bố gold từ A-majority 62,3% sang gần đều (30,8%) nhưng accuracy không đổi — Δ +0,00 (CI −5,48..+5,48), 126/146 câu giữ nguyên text được chọn (letter-anchored chỉ 4). Con số này không bị thổi bởi vị trí đáp án; phần dư 16 câu đổi cả text chưa tách được khỏi nhiễu chạy lại vì chưa có repeat.",
+      causes: ["normative"],
+      actions: [
+        "Dùng 89,04% làm baseline 65K cho mọi so sánh harness trên legal-mc-146; giữ đúng điều kiện MC-31.",
+        "Muốn kết luận dưới ±5,5 điểm thì chạy lặp cùng điều kiện trước — CI của Δ trên n=146 rộng ±5,5 điểm.",
+      ],
+      caveat: "Position bias mới đo trên legal_mc-146 của riêng model này (MC-36), không suy sang bộ khác; mô hình 9B vượt giới hạn ≤4B của bộ dữ liệu.",
+    },
   },
   "legal-nli-150": {
     "qwen3-5-9b-28k": {

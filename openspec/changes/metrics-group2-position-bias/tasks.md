@@ -96,3 +96,24 @@
   Dashboard: no change (non-goal, proposal).
   - **Bằng chứng:** §1.4 "Position bias" + cập nhật taxonomy §5; mốc dừng ghi
     trong MC-36: cả hai follow-up **ĐÓNG**.
+
+## 6. UI — nhận xét lên `/results` + `/benchmark` (yêu cầu bổ sung 2026-10-04)
+
+- [x] 6.1 Register `qwen3-5-9b-65k` in `seed_registries.MODELS` + migrate its
+  arm-A runs (legal-mc-146, legal-nli-150, reading-400, bidlqa-val / MC-31) so
+  the model is visible on `/results` + `/benchmark`. V-Bench 65K waits for a
+  track-aware plan (split 4141+1000 files; not merged silently).
+- [x] 6.2 `web/lib/insights.ts`: curated seed `legal-mc-146` ×
+  `qwen3-5-9b-65k` carrying the MC-36 verdict (89,04%; Δ +0,00; same-text
+  126/146; caveat "không suy sang bộ khác"); `insights.test.ts` +1 test.
+- [x] 6.3 Migration support: `runner_config()` dataset-scoped keys (MC-31
+  spans 4-token legal + 48-token reading), `accuracy_summary_rows()` derives
+  the aggregate from the committed final when an arm-A run wrote none
+  (`run_legal_arm_a.py` prints instead of writing) — same `build_accuracy_rows`,
+  never a second scorer; 2 new Python tests.
+  - **Bằng chứng:** suite 204 OK, ruff sạch; `bun test lib/insights.test.ts`
+    14 pass; `tsc` sạch; Mongo: seed 4 models + migrate 17 runs / 38.202 items,
+    verify 0 blocking diffs; `/api/results/models` lists `qwen3-5-9b-65k`;
+    summary API trả 130/146 = 89.04; `buildInsight` end-to-end với summary thật
+    → curated, verdict mang kết quả position bias; `/benchmark?model=qwen3-5-9b-65k`
+    render "LegalSLM (146 câu) 89.04%".

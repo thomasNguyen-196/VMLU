@@ -59,3 +59,8 @@ the cheapest open validity threat: one re-run, no new gold needed.
 - No dashboard `/harness` change: this is an arm-A validity check, not a
   harness comparison. Results live in the card + `docs/model-insights.md`.
 - No prompt/parser/scorer changes of any kind.
+
+**Scope addition (2026-10-04, explicit request):** the MC-36 commentary is
+surfaced on the web UI — the 65K model is registered + migrated to `/results`
+and a curated insight seed carries the position-bias verdict. See tasks §6;
+everything else in this proposal is unchanged.

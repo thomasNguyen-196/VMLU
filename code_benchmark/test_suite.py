@@ -112,6 +112,8 @@ from code_benchmark.migrate_results_to_mongo import (
     vbench_item,
     reading_item,
     MIGRATION_PLAN,
+    runner_config,
+    accuracy_summary_rows,
 )
 
 class TestVMLUBenchmark(unittest.TestCase):
@@ -1513,6 +1515,52 @@ class TestResultsIdentity(unittest.TestCase):
         for dir_slug, model_id, _files in MIGRATION_PLAN:
             self.assertEqual(canonical_model_id(dir_slug), model_id,
                              msg=f"dir {dir_slug} must resolve to {model_id}")
+
+    def test_runner_config_dataset_scoped_override(self):
+        # MC-31 spans dataset kinds: legal is the 4-token MC budget, reading
+        # the 48-token reading budget. One card-wide config would lie for one
+        # of the two, so the (card, dataset) key wins and plain keys fall back.
+        self.assertEqual(runner_config("MC-31", "legal-mc-146")["max_tokens"], 4)
+        self.assertEqual(runner_config("MC-31", "legal-nli-150")["max_tokens"], 4)
+        self.assertEqual(runner_config("MC-31", "reading-400")["max_tokens"], 48)
+        self.assertEqual(runner_config("MC-31", "bidlqa-val")["max_tokens"], 48)
+        self.assertEqual(runner_config("MC-9", "whatever")["max_tokens"], 4)  # fallback
+        self.assertIsNone(runner_config("MC-999", "x"))
+
+    def test_accuracy_summary_falls_back_to_the_committed_final(self):
+        """`run_legal_arm_a.py` prints accuracy but writes no aggregate; the
+        migration must still find summary rows — derived from the final's own
+        `correct` column with the runner's function, never a second scorer."""
+        import csv as _csv
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td)
+            final = d / "full_evaluation_legal_M.csv"
+            with open(final, "w", newline="", encoding="utf-8") as f:
+                w = _csv.DictWriter(f, fieldnames=["id", "answer", "gold_answer", "correct"])
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "answer": "A", "gold_answer": "A", "correct": "1"})
+                w.writerow({"id": "LG-0002", "answer": "B", "gold_answer": "C", "correct": "0"})
+            acc = accuracy_summary_rows(d, "M")
+            rows = acc["legal-mc-146"]
+            overall = rows[0]
+            self.assertEqual((overall["level"], overall["n"], overall["correct"]), ("overall", 2, 1))
+            self.assertEqual(overall["accuracy"], 50.0)
+
+            # a committed aggregate, when present, always wins over derivation
+            with open(d / "accuracy_legal_M.csv", "w", newline="", encoding="utf-8") as f:
+                w = _csv.DictWriter(f, fieldnames=["level", "name", "n", "correct", "accuracy"])
+                w.writeheader()
+                w.writerow({"level": "overall", "name": "overall", "n": 2, "correct": 2, "accuracy": 100.0})
+            self.assertEqual(accuracy_summary_rows(d, "M")["legal-mc-146"][0]["correct"], "2")
+
+            # no aggregate and no final: the dataset is simply absent, and a
+            # half-written final (no `correct` column) is a hard error
+            self.assertNotIn("legal-mc-146", accuracy_summary_rows(Path(td) / "empty", "M"))
+            bad = Path(td) / "bad"
+            bad.mkdir()
+            (bad / "full_evaluation_legal_M.csv").write_text("id,answer\nLG-0001,A\n", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                accuracy_summary_rows(bad, "M")
 
     def test_seed_is_idempotent(self):
         from unittest.mock import MagicMock, patch
