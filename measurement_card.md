@@ -1660,6 +1660,19 @@ chẩn đoán) · `data/faithfulness_labels_*_test.csv` (tracked, 59/60) · MC-3
 `mc_calibration_items_legal_mc_Qwen3_5-9B-65K-cal.csv` · `…_summary_…csv` (ECE 7,39; over −6,66;
 card_hash `…`) · `…_reliability_…csv`.
 
+## MC-43 — **Sửa quy tắc chữ cái + mở rộng VMLU-1047** (pre-register)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-43` |
+| `ly_do` | **MC-42 dùng sai quy tắc.** `legal_mc` là bộ **4 lựa chọn (A–D)**, nhưng `letter_probs` chuẩn hoá trên cả A–E. Model vẫn đặt khối lượng lên chữ `E` **không tồn tại** (TB 1,25%, max 9,45%, 3/146 câu >5%) → confidence bị **loãng**, ECE sai. Đây là lỗi dụng cụ, không phải phát hiện về model |
+| `sua_gi` | Chữ cái **đọc từ chính prompt** (`offered_letters`, quét ngược khối `A. …` trước `Đáp án: `), không hard-code A–E. Chuẩn hoá chỉ trên chữ được cung cấp; khối lượng rơi ngoài lựa chọn được đo riêng thành `off_options_mass` (so với khối lượng nhìn thấy trong top-20) thay vì pha vào confidence |
+| `dieu_kien` | (a) **Chạy lại** `legal_mc-146` — y hệt MC-41 (cùng model, temp 0, seed 42, max_tokens 4, logprobs, top-20); chỉ khác là artifact dùng schema mới (`n_choices`, `off_options_mass`) và quy tắc mới. (b) **Mở rộng** `vmlu_mqa_all_gold` (1.047 câu, 58 môn, gold đóng băng qua `detect_scorable`) — cùng model/flags, `--workers 4`, label `Qwen3_5-9B-65K-cal` |
+| `ly_do_co_reset` | Mở rộng dùng chính quy tắc mới; nếu giữ quy tắc cũ thì số VMLU (phần lớn 4 lựa chọn, 42 câu 3 lựa chọn) sẽ sai theo cùng lỗi |
+| `bao_cao_them` | **Phân rã theo môn/nhóm** (`build_breakdown`, dùng `subject_category` đóng băng): accuracy, mean confidence, ECE, over-confidence per category (STEM/Social/Humanity/Other) và per subject. Đây là lý do mở rộng: 1 miền 146 câu không đủ vẽ đường cong |
+| `khong_lam` | Không so sánh chéo condition (legal_mc vs VMLU là hai bộ khác nhau, chỉ đặt cạnh nhau để mô tả, không phải phép so); không claim calibration cho chuỗi suy luận; ECE vẫn là bin 10 trên **token-đầu** |
+| `trang_thai` | 📌 **PRE-REGISTERED** — commit trước cả hai lần chạy; kết quả ở **MC-44** |
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

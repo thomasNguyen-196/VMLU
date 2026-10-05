@@ -3428,35 +3428,56 @@ class TestMcCalibration(unittest.TestCase):
     """`run_mc_calibration_eval.py` — the pure parts: letter distribution from
     logprobs, ECE/reliability, and the summary math (group 3.1)."""
 
-    def test_letter_probs_normalizes_over_letters_only(self):
+    def test_letter_probs_normalizes_over_the_offered_letters_only(self):
         import math
         top = [{"token": "B", "logprob": math.log(0.5)},
                {"token": "A", "logprob": math.log(0.2)},
                {"token": "C", "logprob": math.log(0.25)},
                {"token": " x", "logprob": math.log(0.9)},   # non-letter ignored
-               {"token": "D", "logprob": math.log(0.05)}]
-        p = cal.letter_probs(top)
+               {"token": "D", "logprob": math.log(0.05)},
+               {"token": "E", "logprob": math.log(0.10)}]  # NOT offered by a 4-choice row
+        p, off = cal.letter_probs(top, "ABCD")
+        self.assertEqual(set(p), set("ABCD"))
         self.assertAlmostEqual(sum(p.values()), 1.0)
+        # renormalized over the offered four, so E no longer dilutes the answer
         self.assertAlmostEqual(p["B"], 0.5, places=6)
         self.assertAlmostEqual(p["A"], 0.2, places=6)
-        self.assertEqual(p["E"], 0.0)                        # absent -> 0, not invented
+        self.assertGreater(off, 0.0)                        # E's share is reported, not folded in
+
+    def test_letter_probs_missing_offered_letter_is_zero_not_invented(self):
+        p, _ = cal.letter_probs([{"token": "A", "logprob": math.log(1.0)}], "ABC")
+        self.assertAlmostEqual(p["A"], 1.0, places=6)
+        self.assertEqual(p["B"], 0.0)
+        self.assertEqual(p["C"], 0.0)
 
     def test_letter_probs_empty_is_all_zero(self):
-        self.assertEqual(set(cal.letter_probs([]).values()), {0.0})
+        p, off = cal.letter_probs([], "ABCD")
+        self.assertEqual(set(p.values()), {0.0})
+        self.assertEqual(off, 0.0)
 
-    def test_ece_hand_computed(self):
-        ece, rows = cal.ece_and_reliability([0.9, 0.9, 0.1, 0.1], [1, 1, 0, 0], bins=10)
-        self.assertAlmostEqual(ece, 0.1, places=6)
-        self.assertEqual(len(rows), 10)
-        self.assertEqual(sum(r["n"] for r in rows), 4)
+    def test_offered_letters_reads_the_prompt_not_a_fixed_width(self):
+        four = build_prompt("Câu hỏi?", ["A. x", "B. y", "C. z", "D. w"])
+        self.assertEqual(cal.offered_letters(four), "ABCD")
+        five = build_prompt("Câu hỏi?", ["A. x", "B. y", "C. z", "D. w", "E. v"])
+        self.assertEqual(cal.offered_letters(five), "ABCDE")
+        three = build_prompt("Câu hỏi?", ["A. x", "B. y", "C. z"])
+        self.assertEqual(cal.offered_letters(three), "ABC")
+
+    def test_offered_letters_fails_fast_on_a_gapped_option_block(self):
+        bad = build_prompt("Câu hỏi?", ["A. x", "C. z", "B. y", "D. w"])
+        with self.assertRaises(SystemExit):
+            cal.offered_letters(bad)
 
     def test_build_report_summary_math(self):
         items = [
             {"id": "1", "gold": "A", "answer": "A", "correct": 1, "n_letters_found": 5,
+             "n_choices": 5, "off_options_mass": "0",
              "p_A": "0.9", "p_B": "0.1", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": "0.9"},
             {"id": "2", "gold": "A", "answer": "B", "correct": 0, "n_letters_found": 5,
+             "n_choices": 5, "off_options_mass": "0",
              "p_A": "0.2", "p_B": "0.8", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": "0.8"},
             {"id": "3", "gold": "C", "answer": "", "correct": 0, "n_letters_found": 0,
+             "n_choices": 4, "off_options_mass": "0",
              "p_A": "0", "p_B": "0", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": ""},
         ]
         summary, rows = cal.build_report(items, "legal_mc", "h", bins=10)
@@ -3469,6 +3490,105 @@ class TestMcCalibration(unittest.TestCase):
         # overconfidence = 0.85 - 0.3333 = +51.67
         self.assertEqual(summary["overconfidence"], "+51.67")
         self.assertEqual(len(rows), 10)
+
+    def test_build_breakdown_uses_the_frozen_subject_map(self):
+        items = []
+        for item_id in ["01-0001", "01-0002", "37-0003"]:
+            items.append({"id": item_id, "gold": "A", "answer": "A", "correct": 1,
+                          "n_letters_found": 4, "n_choices": 4, "off_options_mass": "0",
+                          "p_A": "1", "p_B": "0", "p_C": "0", "p_D": "0", "p_E": "0",
+                          "confidence": "1.0"})
+        rows = cal.build_breakdown(items, "vmlu_mqa_all_gold", bins=10)
+        by = {(r["level"], r["name"]): r for r in rows}
+        self.assertEqual(by[("overall", "overall")]["n"], 3)
+        self.assertEqual(by[("category", "STEM")]["n"], 2)      # 01 = Elementary Mathematics
+        self.assertEqual(by[("category", "Humanity")]["n"], 1)  # 37 = Administrative Law
+        self.assertEqual(by[("subject", "01 Elementary Mathematics")]["n"], 2)
+        for r in rows:
+            if r["n"]:
+                self.assertEqual(r["ece"], "0.00")              # conf == acc in every bin
+
+    def test_load_mqa_all_gold_builds_prompts_and_gold(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "all_gold.jsonl"
+            p.write_text(json.dumps({"id": "28-0007", "question": "Hỏi?",
+                                     "choices": ["A. a", "B. b", "C. c", "D. d"],
+                                     "answer": "c"}) + "\n", encoding="utf-8")
+            items = cal.load_mqa_all_gold(p)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["gold"], "C")                 # upper-cased like the scorer
+        self.assertEqual(items[0]["n_choices"], 4)
+        self.assertEqual(cal.offered_letters(items[0]["prompt"]), "ABCD")
+
+    def test_load_mqa_all_gold_rejects_partial_gold(self):
+        rows = [{"id": "01-0001", "question": "q", "choices": ["A. a", "B. b"], "answer": "A"},
+                {"id": "01-0002", "question": "q", "choices": ["A. a", "B. b"], "answer": ""}]
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "all_gold.jsonl"
+            p.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                cal.load_mqa_all_gold(p)          # all-or-none, the frozen gate
+
+    def test_load_mqa_all_gold_rejects_duplicate_ids_and_wide_choice_blocks(self):
+        dup = [{"id": "01-0001", "question": "q", "choices": ["A. a", "B. b"], "answer": "A"}] * 2
+        wide = [{"id": "01-0001", "question": "q", "answer": "A",
+                 "choices": ["A. a", "B. b", "C. c", "D. d", "E. e", "F. f"]}]
+        for rows in (dup, wide):
+            with tempfile.TemporaryDirectory() as d:
+                p = Path(d) / "all_gold.jsonl"
+                p.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+                with self.assertRaises(SystemExit):
+                    cal.load_mqa_all_gold(p)
+
+    def test_logprobs_retry_returns_first_token_distribution(self):
+        from code_benchmark.llm import call_logprobs_with_retry
+        client = MagicMock()
+        first = MagicMock(token="B", logprob=-0.25)
+        first.top_logprobs = [MagicMock(token="B", logprob=-0.25), MagicMock(token="A", logprob=-2.0)]
+        choice = MagicMock()
+        choice.message.content = "B"
+        choice.logprobs.content = [first]
+        client.chat.completions.create.return_value = MagicMock(choices=[choice])
+        content, tok, top = call_logprobs_with_retry(client, "m", "p", 0.0, 42, 4, 20)
+        self.assertEqual((content, tok), ("B", "B"))
+        self.assertEqual([t["token"] for t in top], ["B", "A"])
+
+    def test_logprobs_retry_gives_up_and_returns_nothing_rather_than_guessing(self):
+        from code_benchmark.llm import call_logprobs_with_retry
+        client = MagicMock()
+        client.chat.completions.create.side_effect = Exception("502 bad gateway")
+        with unittest.mock.patch("code_benchmark.llm.time.sleep"):
+            content, tok, top = call_logprobs_with_retry(
+                client, "m", "p", 0.0, 42, 4, 20, max_retries=2, sleep_sec=0)
+        self.assertEqual((content, tok, top), ("", "", []))
+
+    def test_auth_failure_is_fatal_on_the_logprobs_path_too(self):
+        from code_benchmark.llm import call_logprobs_with_retry
+        client = MagicMock()
+        client.chat.completions.create.side_effect = Exception("401 Unauthorized")
+        # fail fast, never 30 retries on a bad key — the rule is shared with the text path
+        with self.assertRaisesRegex(Exception, "401 Unauthorized"):
+            call_logprobs_with_retry(client, "m", "p", 0.0, 42, 4, 20)
+
+    def test_off_options_mass_is_reported_not_folded_into_the_distribution(self):
+        # The legal MC row offers A-D; E is not a candidate, so its mass is a
+        # measured diagnostic. Renormalizing over A-E (the MC-42 rule) would
+        # understate confidence by exactly this share.
+        top = [{"token": "A", "logprob": math.log(0.5)},
+               {"token": "B", "logprob": math.log(0.3)},
+               {"token": "C", "logprob": math.log(0.1)},
+               {"token": "D", "logprob": math.log(0.06)},
+               {"token": "E", "logprob": math.log(0.04)}]
+        p, off = cal.letter_probs(top, "ABCD")
+        self.assertAlmostEqual(off, 0.04, places=6)
+        self.assertAlmostEqual(sum(p.values()), 1.0)
+        self.assertAlmostEqual(p["A"], 0.5 / 0.96, places=6)   # > the raw 0.5
+
+    def test_ece_hand_computed(self):
+        ece, rows = cal.ece_and_reliability([0.9, 0.9, 0.1, 0.1], [1, 1, 0, 0], bins=10)
+        self.assertAlmostEqual(ece, 0.1, places=6)
+        self.assertEqual(len(rows), 10)
+        self.assertEqual(sum(r["n"] for r in rows), 4)
 
 
 class TestAgreementCI(unittest.TestCase):

@@ -49,6 +49,62 @@ def build_client(base_url: str, api_key: str) -> OpenAI:
                   default_headers=extra_headers())
 
 
+def is_fatal_llm_error(err: Exception) -> bool:
+    """The fatal-error rule, single-sourced: authentication/permission failures are
+    NEVER retried. Factored out of `call_model_with_retry` so the logprobs sibling
+    below cannot drift from it (a bad key must fail fast on both paths, not 30×)."""
+    if isinstance(err, (AuthenticationError, PermissionDeniedError)):
+        return True
+    err_str = str(err).lower()
+    return any(k in err_str for k in ("unauthorized", "401", "forbidden", "403"))
+
+
+def call_logprobs_with_retry(client: OpenAI, model: str, prompt: str, temperature: float,
+                             seed: int, max_tokens: int, top_logprobs: int,
+                             max_retries: int = 30, sleep_sec: int = 30
+                             ) -> tuple[str, str, list[dict]]:
+    """`call_model_with_retry`'s logprobs sibling — same contract (30×30s generic
+    retry, auth fail-fast), but it must hand back the answer-token distribution,
+    which the text-only return cannot carry.
+
+    Returns `(content, first_token, top_logprobs)` where `top_logprobs` is the
+    FIRST generated token's `[{'token','logprob'}, ...]`. On transport failure that
+    outlasts `max_retries` it returns `("", "", [])` — the caller records the item
+    as unusable (it stays in the accuracy denominator) instead of inventing a
+    probability, mirroring how an unparsed MC answer stays in the denominator.
+    """
+    messages = [{"role": "user", "content": prompt}]
+    kwargs = {"model": model, "messages": messages, "temperature": temperature,
+              "max_tokens": max_tokens, "logprobs": True, "top_logprobs": top_logprobs}
+    if seed is not None:
+        kwargs["seed"] = seed
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = client.chat.completions.create(**kwargs)
+            choice = response.choices[0]
+            content = choice.message.content or ""
+            lp = getattr(choice, "logprobs", None)
+            if lp is None or not lp.content:
+                return content, "", []
+            first = lp.content[0]
+            top = [{"token": t.token, "logprob": t.logprob} for t in (first.top_logprobs or [])]
+            return content, first.token, top
+        except (AuthenticationError, PermissionDeniedError) as auth_err:
+            logging.error(f"Fatal authentication/permission error: {auth_err}")
+            raise auth_err
+        except Exception as e:
+            if is_fatal_llm_error(e):
+                logging.error(f"Fatal authentication error detected in response: {e}")
+                raise e
+            logging.warning(f"Error on attempt {attempt}/{max_retries}: {e}")
+            if attempt < max_retries:
+                time.sleep(sleep_sec)
+            else:
+                logging.error(f"Failed after {max_retries} attempts: {prompt[:100]}...")
+                return "", "", []
+    return "", "", []
+
+
 def call_model_with_retry(client: OpenAI, model: str, prompt: str, temperature: float, seed: int, max_tokens: int, max_retries: int = 30, sleep_sec: int = 30, extra_body: dict | None = None) -> str:
     messages = [{"role": "user", "content": prompt}]
     for attempt in range(1, max_retries + 1):
@@ -73,8 +129,7 @@ def call_model_with_retry(client: OpenAI, model: str, prompt: str, temperature: 
             logging.error(f"Fatal authentication/permission error: {auth_err}")
             raise auth_err
         except Exception as e:
-            err_str = str(e).lower()
-            if "unauthorized" in err_str or "401" in err_str or "forbidden" in err_str or "403" in err_str:
+            if is_fatal_llm_error(e):
                 logging.error(f"Fatal authentication error detected in response: {e}")
                 raise e
             logging.warning(f"Error on attempt {attempt}/{max_retries}: {e}")
