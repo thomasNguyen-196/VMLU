@@ -30,8 +30,22 @@
   - **Bằng chứng:** ECE 7,39pp · Brier 0,0701 · over −6,66pp; MC-42 + §1.6 +
     plan doc cập nhật.
 
-## 4. Optional follow-up (not gated)
+## 4. VMLU-1047 extension (MC-43/44)
 
-- [ ] 4.1 If the first pass is clean: `vmlu-mqa-all-gold` (1,047) calibration
-  for a per-category curve; else record the limitation and stop.
-  - **Chưa làm** (tùy chọn) — lượt đầu sạch; mở rộng chờ quyết định.
+- [x] 4.1 Fix the letter-set rule first: `offered_letters` reads the prompt's own
+  option block; `off_options_mass` reports what falls outside it. (MC-42 was
+  wrong: legal_mc is 4-choice yet E carried up to 9.4% mass.)
+  - **Bằng chứng:** `offered_letters` + tests (3/4/5-choice, gapped block fails
+    fast); MC-43 pre-register commit `5784bb2`.
+- [x] 4.2 Re-run `legal_mc-146` and add `vmlu_mqa_all_gold` (1,047 / 58 subjects)
+  with the same model and flags; per-category + per-subject breakdown.
+  - **Bằng chứng:** legal 132/146 = 90,41%; VMLU **751/1047 = 71,73%**, 1046/1047
+    usable, breakdown CSV 58 môn.
+- [x] 4.3 Record MC-44 and update insights + plan doc.
+  - **Bằng chứng:** MC-44 (kết quả + nhiễu backend + hạn chế), §1.6, plan doc.
+
+## 5. Not done (out of scope)
+
+- Safety (group 3.2) — needs its own rubric + gold; no measurement attempted.
+- A second model for the calibration contrast — `Qwen3.5-9B-28K` is offline
+  (503), so no cross-model claim is made.

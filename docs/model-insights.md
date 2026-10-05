@@ -100,20 +100,31 @@ không ghim reasoning, chọn trên dev rồi cổng trên **mẫu test sạch**
 ⇒ 2.2 **đóng vĩnh viễn**; grounding là **khoảng trống dụng cụ đã xác nhận**, không phải việc còn treo.
 Bài học phương pháp: dùng thẳng tập dev sẽ "qua" bằng con số lạc quan; mẫu test sạch mới lộ năng lực thật.
 
-### 1.6. Calibration: model **hơi under-confident** (MC-41/42, mới 2026-10-04)
+### 1.6. Calibration: over-confidence **bám theo độ khó môn** (MC-41…44, mới 2026-10-05)
 
-Gateway IEC **có trả `logprobs`** cho Qwen3.5-9B-65K (token đầu là chữ cái trần, `top_logprobs` đủ A–E)
-⇒ đo được calibration. Trên legal_mc-146 (accuracy tái lập khít MC-31 = 130/146):
+Gateway IEC **có trả `logprobs`** cho Qwen3.5-9B-65K (token đầu là chữ cái trần, `top_logprobs` đủ các chữ
+được cung cấp) ⇒ đo được calibration.
 
-| Chỉ số | Giá trị |
-| --- | ---: |
-| ECE (10 bin) | **7,39 pp** |
-| Brier (confidence) | 0,0701 |
-| overconfidence | **−6,66 pp** (under-confident) |
-| bin lớn nhất [0,9–1,0) | conf 0,974 vs acc 0,988 (khớp tốt) |
+| Bộ | n | acc | conf | ECE | over-conf |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| legal_mc (1 miền) | 146 | 90,41 | 83,02 | 8,41 | **−7,39** (under) |
+| **VMLU 58 môn** | 1047 | 71,73 | 78,31 | 6,51 | **+6,58** (over) |
+| └ Other | 156 | 60,26 | 72,81 | 12,55 | **+12,55** |
+| └ STEM | 383 | 76,76 | 81,99 | 5,68 | +5,22 |
 
-→ Model **biết nhiều hơn mức nó tự nhận**; khối lượng lớn ở vùng tự tin cao lại khớp tốt. Hạn chế:
-một miền, 146 câu, phân bố **token-đầu** (không phải cả chuỗi suy luận) — không suy ra cho 58 môn VMLU.
+**Phát hiện chính:** dấu của lệch calibration **đổi chiều theo độ khó**. Model giữ tự tin 65–69% ở môn nó
+đúng 30–40% (Preschool Pedagogy 30,00% acc / 65,45% conf), nhưng ở môn dễ (High School Physics 95%) thì
+tự tin khớp gần tuyệt đối (ECE 6,94). Trên VMLU, **toàn bộ bin giữa [0,5–0,9) over-confident 11–15pp**,
+hai đầu khớp — lệch có hệ thống, không nhiễu.
+
+→ **Một con số ECE chung không mô tả được model này**: calibration là hàm của độ khó môn. Claim đúng phải là
+"model over-confident ở vùng tự tin trung bình trên môn khó", không phải "model calibration tốt/kém".
+
+Hạn chế: phân bố **token-đầu** (không phải cả chuỗi suy luận); một lần chạy; **backend không tất định ở temp 0**
+(cùng điều kiện cho accuracy 130 rồi 132/146) ⇒ biên ±~1pp; ECE môn có n=10–20 rất thô.
+
+Bài học dụng cụ (đã sửa): chữ cái phải đọc từ **chính prompt** (`offered_letters`), không hard-code A–E —
+legal_mc chỉ có 4 lựa chọn nhưng model vẫn đặt tới 9,4% khối lượng lên E không tồn tại, làm loãng confidence.
 
 ---
 
@@ -205,7 +216,7 @@ một miền, 146 câu, phân bố **token-đầu** (không phải cả chuỗi 
 | **Grounding / trung thực trích dẫn** | Thử ở MC-38: điều kiện cite compliance 100% nhưng judge trượt cổng (κ 0,19→0,29) ⇒ **chưa đo được** | Chưa xác định (lỗi dụng cụ) |
 | **Định dạng / ngân sách** | BidLQA near-miss ~20%; qwen38 21 blank | Rõ, sửa được |
 | **Thiên lệch đáp án** | NLI A 80% vs B 100% · MC legal: **không** thấy bias vị trí (MC-36: Δ=0, same-text 86,3%) | Rõ ở NLI, sạch ở MC |
-| **Calibration (độ tin cậy)** | legal_mc-146: ECE 7,39pp, under-confident −6,66pp (MC-42) | Nhẹ, một miền |
+| **Calibration (độ tin cậy)** | VMLU-1047: ECE 6,51pp nhưng **over-confident +6,58pp**, lệch 11–15pp ở bin giữa; **đổi chiều theo độ khó môn** (legal_mc −7,39 under, Other +12,55 over) (MC-44) | Rõ, có hệ thống |
 | **Nhạy điều kiện** | 42,2% đổi đáp án; test −5,5 | Rõ, cần kiểm soát thực nghiệm |
 
 ---

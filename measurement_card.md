@@ -1673,6 +1673,88 @@ card_hash `…`) · `…_reliability_…csv`.
 | `khong_lam` | Không so sánh chéo condition (legal_mc vs VMLU là hai bộ khác nhau, chỉ đặt cạnh nhau để mô tả, không phải phép so); không claim calibration cho chuỗi suy luận; ECE vẫn là bin 10 trên **token-đầu** |
 | `trang_thai` | 📌 **PRE-REGISTERED** — commit trước cả hai lần chạy; kết quả ở **MC-44** |
 
+## MC-44 — **Kết quả: over-confidence lớn ở môn khó, under-confidence ở legal_mc** (MC-43)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-44` |
+| `ngay_chay` | 2026-10-05 (sau MC-43) |
+| `dieu_kien` | (a) `legal_mc-146` chạy lại; (b) `vmlu_mqa_all_gold` 1.047 câu / 58 môn — cùng model/flags như MC-43 |
+
+### (a) legal_mc-146 — quy tắc đã sửa
+
+| Chỉ số | MC-42 (sai) | **MC-44 (đúng)** |
+| --- | ---: | ---: |
+| accuracy | 89,04% (130/146) | **90,41% (132/146)** |
+| mean confidence | 82,38% | **83,02%** |
+| ECE | 7,39 | **8,41** |
+| Brier (conf) | 0,0701 | **0,0736** |
+| overconfidence | −6,66 | **−7,39** (under-confident) |
+| mean `off_options_mass` | (không đo) | **0,0136** (max 0,0945) |
+
+⇒ Bỏ chữ E ảo khỏi mẫu số làm confidence **tăng** và ECE tăng nhẹ; kết luận đổi chiều không đổi (vẫn under-confident).
+
+**⚠ Nhiễu backend phát hiện ở đây:** cùng một điều kiện (prompt, temp 0, seed 42, logprobs — **không đổi gì**) cho **accuracy 130/146 rồi 132/146**. Endpoint **không tất định ở temp 0** (đúng như MC-18 từng ghi). Hệ quả: chênh lệch ±1–2 câu là nhiễu, không phải tín hiệu; ECE của legal_mc có biên ±~1pp.
+
+### (b) vmlu_mqa_all_gold (1.047) — kết quả chính
+
+| Chỉ số | Giá trị |
+| --- | ---: |
+| accuracy | **751/1047 = 71,73%** |
+| usable | 1046/1047 (1 câu <2 chữ) · unparsed 0 |
+| mean confidence | **78,31%** |
+| **ECE** (10 bin) | **6,51 pp** |
+| Brier (conf) | **0,1499** |
+| **overconfidence** | **+6,58 pp** (⚠ **OVER-confident** — ngược chiều legal_mc) |
+| mean `off_options_mass` | 0,0155 (max **0,4826**, 73/1047 câu >5%) |
+
+**Bảng reliability (VMLU-1047):**
+
+| bin | n | conf | acc | chênh |
+| --- | ---: | ---: | ---: | ---: |
+| [0,2–0,3) | 2 | 0,294 | 0,000 | −0,29 |
+| [0,3–0,4) | 63 | 0,357 | 0,318 | −0,04 |
+| [0,4–0,5) | 94 | 0,455 | 0,404 | −0,05 |
+| [0,5–0,6) | 96 | 0,550 | 0,396 | **−0,15** |
+| [0,6–0,7) | 110 | 0,651 | 0,545 | **−0,11** |
+| [0,7–0,8) | 95 | 0,748 | 0,621 | **−0,13** |
+| [0,8–0,9) | 105 | 0,849 | 0,733 | **−0,12** |
+| [0,9–1,0) | 481 | 0,974 | 0,954 | −0,02 |
+
+⇒ Lệch **có hệ thống**: toàn bộ bin giữa [0,5–0,9) đều over-confident 11–15pp; hai đầu (thấp & rất cao) khớp. Không phải nhiễu ngẫu nhiên.
+
+### Điểm mấu chốt: over-confidence **bám theo độ khó môn**, không phải hằng số của model
+
+| nhóm/môn | n | acc | conf | ECE | over |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| STEM | 383 | 76,76 | 81,99 | 5,68 | +5,22 |
+| Social Science | 184 | 77,17 | 80,04 | 7,76 | +2,87 |
+| Humanity | 324 | 68,21 | 75,61 | 8,18 | +7,40 |
+| **Other** | 156 | **60,26** | 72,81 | **12,55** | **+12,55** |
+| 54 Preschool Pedagogy | 10 | **30,00** | 65,45 | **37,98** | **+35,45** |
+| 50 Accountant | 18 | 38,89 | 68,75 | 36,14 | +29,86 |
+| 36 High School Literature | 20 | 40,00 | 68,57 | 28,57 | +28,57 |
+| 10 High School Physics | 20 | 95,00 | 96,82 | 6,94 | +1,82 |
+| 24 High School Civil Education | 20 | 95,00 | 95,29 | 5,37 | +0,29 |
+
+Model **giữ tự tin ~65–69% ở môn nó đúng 30–40%**. Ở môn dễ (95%) thì tự tin khớp gần như tuyệt đối (ECE 5–7pp). ⇒ Calibration **không phải đặc tính cố định của model** mà là hàm của độ khó; một con số ECE chung không mô tả được model này.
+
+### Hai phát hiện phụ đáng ghi
+
+1. **Sai lệch đáp án**: gold C278/D248 nhưng model chọn C293/D300, A chỉ 205 (gold A256). Khớp với MC-36 (không có position bias) — đáp án đi theo nội dung, nhưng hơi **nghiêng về cuối danh sách** ở bộ 4 lựa chọn.
+2. **`off_options_mass` tới 0,48**: ở 1 câu model đặt 48% khối lượng lên chữ không tồn tại (bộ 3–4 lựa chọn, chữ vượt). Đây là **lỗi dụng cụ đo đạc, không phải thiếu hiểu biết** — phân bố bị rò ra ngoài lựa chọn hợp lệ tới mức lớn.
+
+### Không được quy
+
+1. Không so sánh chéo điều kiện: legal_mc (một miền, acc 90%) và VMLU (58 môn, acc 72%) là hai bộ khác nhau — đặt cạnh để **mô tả**, không phải phép so.
+2. Vẫn là **phân bố token-đầu**, không phải calibration của chuỗi suy luận.
+3. Một lần chạy mỗi bộ; backend không tất định (xem nhiễu ở (a)) → biên ±~1pp, đủ để kết luận dấu của over-confidence, không đủ để đòi chính xác từng chữ số.
+4. ECE môn có n=10–20 ⇒ rất thô (ECE 37,98 của Preschool Pedagogy là 10 câu, chỉ đọc là "rất over-confident", không đọc là 37,98).
+
+### Artifact
+
+`mc_calibration_{items,summary,reliability,breakdown}_{legal_mc,vmlu_mqa_all_gold}_Qwen3_5-9B-65K-cal.csv`
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

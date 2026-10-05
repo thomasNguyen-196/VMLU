@@ -50,11 +50,22 @@ không đạt thì số faithfulness vô nghĩa, dừng.
 | 3.1 Calibration | Probe xem gateway có trả `logprobs` không — nếu không, dừng, không cố | Không |
 | 3.2 Safety benchmark | 4.000 safety rows đang skip: cần rubric + gold riêng, duyệt hội đồng | Không (đo model gọi thẳng) |
 
-**Kết quả nhóm 3.1 (2026-10-04):** probe **CÓ** logprobs (Qwen3.5-9B-65K; token đầu là chữ cái trần,
-top@0 đủ A–E) ⇒ calibration chạy. legal_mc-146: accuracy tái lập khít MC-31 (130/146), **ECE 7,39pp**,
-Brier 0,0701, **under-confident −6,66pp** (mean conf 82,4 < acc 89,0); bin lớn nhất [0,9–1,0) khớp tốt
-(conf 0,974 vs acc 0,988). Hạn chế: một miền, 146 câu; mở rộng `vmlu-mqa-all-gold` (1.047) là tùy chọn.
-Card MC-41 (pre-register) / MC-42 (kết quả).
+**Kết quả nhóm 3.1 (2026-10-04 → 05):** probe **CÓ** logprobs (Qwen3.5-9B-65K; token đầu là chữ cái trần,
+`top_logprobs` đủ các chữ được cung cấp) ⇒ calibration chạy.
+
+| Bộ | n | acc | conf | ECE | over-conf |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| legal_mc | 146 | 90,41 | 83,02 | 8,41 | **−7,39** (under) |
+| **VMLU 58 môn** | 1047 | 71,73 | 78,31 | 6,51 | **+6,58** (over) |
+
+**Phát hiện:** dấu lệch **đổi chiều theo độ khó môn** — Other (acc 60,3) over +12,55, STEM over +5,22,
+còn môn dễ (95% acc) khớp gần tuyệt đối. Trên VMLU toàn bộ bin [0,5–0,9) over-confident 11–15pp.
+⇒ calibration là **hàm của độ khó**, không phải đặc tính cố định; một ECE chung không mô tả được model.
+
+Hai bài học đã ghi: (1) chữ cái phải đọc từ chính prompt — legal_mc chỉ 4 lựa chọn nhưng model vẫn đặt 9,4%
+khối lượng lên E không tồn tại, làm loãng confidence (MC-42 sai, MC-44 đã sửa); (2) **backend không tất định
+ở temp 0** — cùng điều kiện cho accuracy 130 rồi 132/146, biên ±1–2 câu.
+Card MC-41/42 (lượt đầu, quy tắc sai) · MC-43 (pre-register sửa + mở rộng) · MC-44 (kết quả).
 
 ## Thứ tự làm và mốc dừng
 
