@@ -45,8 +45,13 @@
 
 - [ ] 5.1 Bảng gene → CLI flag (`tasks.md` §4.2 của change `thesis-p0`) để genome
   chạy được, không chỉ validate được.
-- [ ] 5.2 Xác định **shape thật** của T65 gốc (`system=690` ≠ `system=745`): MC-31
-  mô tả "system prompt trung tính" nhưng proxy log ghi 690 ký tự. Cần một lần chạy
-  đúng cấu hình MC-31 để **hoặc xác nhận hoặc đính chính** MC-31/32.
+- [ ] 5.2 Xác định **shape thật** của T65 gốc (`system=690` ≠ `system=745` ≠ `9178`):
+  MC-31 mô tả "system prompt trung tính" nhưng proxy log ghi 690 ký tự — khớp với
+  **không** ô nào của factorial. Cần một lần chạy đúng cấu hình MC-31 để **hoặc xác
+  nhận hoặc đính chính** MC-31/32.
+  - **Trong lúc chờ:** arm T65 gốc **không có evidence bundle** và không được ghép đôi
+    với bất kỳ arm nào. `baseline_genome()` bám `ompT65r2/r3` — cùng ô, nhưng shape
+    request đã biết chính xác. Cho T65 một genome lúc này sẽ khẳng định một tương
+    đương mà MC-47 đã cố ý từ chối.
 - [ ] 5.3 Nếu luận văn cần: lặp thêm từng ô (thu hẹp CI tương tác) và mở rộng
   factorial ra `reading400` — hiện mọi kết luận mới chỉ dựa trên `legal_mc`.

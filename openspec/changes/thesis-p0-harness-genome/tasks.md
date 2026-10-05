@@ -29,16 +29,30 @@
   khai báo bắt buộc, breakdown theo category/subject.
   - **Bằng chứng:** `TestHarnessGenome`; suite **OK**, ruff sạch.
 
-## 4. Chạy seed (CẦN CARD RIÊNG — chưa làm ở đây)
+## 4. Gene → CLI flag (P1 bước 1) — xong
 
-- [ ] 4.1 Pre-register MC-46: chạy `minimal_genome()` trên `legal_mc` ở
-  `Qwen3.5-9B-65K` để có **cặp seed** minimal/detailed mà §6 cần (cặp hiện có
-  chỉ ở runner V-Bench trên 28K). Cần VPN + endpoint ⇒ không thuộc change này.
-- [ ] 4.2 Bảng gene → CLI flag (P1): ánh xạ mỗi gene sang flag thật của
-  `run_harness_eval.py` / `run_vbench_eval.py`, để genome không thành cách viết
-  thứ hai cho cùng một phép đo.
+- [x] 4.1 ~~Pre-register MC-46: chạy `minimal_genome()` để có cặp seed~~ — **đã
+  hủy, và lý do mới**: arm **A3 đã chính là `minimal_genome()`** (gọi thẳng, prompt
+  đóng băng, temp 0, seed 42), đã đo trên 6 tập ở MC-31/32. Chạy lại là đo trùng.
+  Cặp seed mà §6 cần thật ra đã có, chỉ là dưới dạng **arm** chứ không phải genome —
+  nên MC-46 chuyển sang đo factorial persona × tools trên 65K (xem MC-46/47).
+  - **Bằng chứng:** MC-47 xác nhận 4 ô + noise floor; `docs/rq1-decomposition.md`.
+- [x] 4.2 Bảng gene → CLI flag: `code_benchmark/genome_to_cli.py` với
+  `support_matrix()` + `plan()` fail-fast.
+  - **Bằng chứng:** ma trận 22 dòng — **8 implemented, 2 routed, 1 external,
+    1 separate-pipeline, 10 unsupported**; `plan()` chặn 5 nhóm gene chưa có runner.
 
-## 5. Ngoài phạm vi
+## 5. Những gì bảng gene phơi ra (ghi để không quên)
+
+| phát hiện | nghĩa là gì |
+|---|---|
+| **10/22 gene chưa chạy được** | `cot`, `fewshot_k`, toàn bộ `rag`, `samples_per_item>1`, và 3 tool có tên. Lưới P1 **không thể** quét chúng cho tới khi có runner |
+| **3 tool có tên không tồn tại** | menu thật của omp là 11 tool (`read, bash, edit, eval, glob, grep, task, hub, todo, web_search, write`). `calculator`/`date_arith`/`enum_verbatim_lookup` chỉ có trong kế hoạch |
+| **`elicitation` chỉ có 2 giá trị thật** | `minimal` và `detailed`, mà `detailed` chỉ chạy được ở runner V-Bench. Muốn đổi prompt MC/reading là **việc mới**, không phải đổi cờ |
+| **harness không có `--temperature`** | temp 0 được ghim bằng proxy ⇒ **proxy là một phần của điều kiện**. MC-47 đã đo cái giá khi proxy chết: 25 item `exit 1`, chậm 60×, preflight không thấy |
+| **`baseline_genome()` đã sửa** | bản đầu mã hoá RAG + tool có tên ⇒ mô tả một lần chạy **không tồn tại**. Nay mã hoá đúng arm T65 đã đo: `tools=all`, không RAG, temp 0, 1 mẫu |
+
+## 6. Ngoài phạm vi
 
 - Grid search, evolution loop, meta-agent (P1–P2).
 - Sandbox + codegen tools (P4, §7).
