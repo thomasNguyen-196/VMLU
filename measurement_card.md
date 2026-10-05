@@ -1358,6 +1358,529 @@ giữ nguyên số, chỉ refresh hash (deterministic, seed 42). |
 | `kiem` | Suite 178 OK, ruff sạch, `bun test` 54 pass, `tsc` sạch, blob thật validate
 (45 ladder / 6 breakdown / 6 arg_credit). |
 
+## MC-35 — **Position bias legal_mc-146**: shuffle chọn lựa (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-35` |
+| `ngay_chay` | Pre-register 2026-10-04 (card + artifact ghi xong **trước** mọi lần infer shuffled; không có số hậu nghiệm trong khối này) |
+| `muc_dich` | Trả lời câu hỏi validity rẻ nhất còn treo (plan nhóm 2.1): điểm MC có phụ thuộc **vị trí** đáp án đúng không, và model có đang khai thác "A hay đúng" không |
+| `benchmark` | VLSP2025-LegalSLM multichoice, n=146 — bản **shuffle s1234** của đúng 146 item MC-10/MC-31 arm A |
+| `manifest` | `data/legal_slm_multichoice_shuffled_s1234_manifest.json` — sha256 `f796af1f…` (tracked, commit trước infer); source sha `7b7d7f15…` verify lại lúc sinh |
+| `input` | `data/legal_slm_multichoice_shuffled_s1234_input.jsonl` — sha256 `4c722b7f…`; shape scorable `{id,question,choices[],answer}` như adapter MC-10, **runner không sửa byte nào** |
+| `shuffle_seed` | **1234** — hoán vị per-item `random.Random("1234:LG-XXXX")` (subset-stable, không phụ thuộc thứ tự chạy); gold remap theo **text identity**, fail-fast nếu choices trùng text |
+| `gold_shift` | Đo trước khi chạy (từ chính artifact): gold_old A91/B39/C16 (majority A **62,33%**) → gold_new A33/B45/C36/D32 (majority B **30,82%**) — baseline may-rủi đã bị phá |
+| `model_id` | `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1` (đường nội bộ qua VPN; đúng model/đường truyền của MC-31/MC-32) |
+| `dieu_kien` | **y hệt MC-31 arm A**: frozen `build_prompt`/`extract_answer`, temperature 0.0, seed 42, `max_tokens=4`, workers 4, không `--resume`; chỉ khác duy nhất: input đã shuffle |
+| `baseline_doi_chieu` | MC-31 arm A trên thứ tự gốc: **130/146 = 89,04%** (compare sẽ recompute từ file gốc và từ chối chạy nếu khác) |
+| `so_sanh` | `code_benchmark/compare_position_bias.py`: paired trên `id` — acc gốc vs acc shuffle, Δ + paired bootstrap CI seed 42 + McNemar exact; bảng **accuracy theo vị trí gold** (A/B/C/D) hai bên; histogram vị trí model chọn; blanks tách riêng |
+| `output` | `full_evaluation_shuffled_s1234_Qwen3_5-9B-65K.csv` + `accuracy_shuffled_s1234_Qwen3_5-9B-65K.csv` + `position_bias_compare_legal_mc_s1234.csv` (trong `all_res/ollama_result/Qwen3_5-9B-65K/`); checkpoint thô park ở `shuffled_checkpoints/`; submission shuffled riêng tên |
+| `khong_lam` | Không shuffle NLI (nhị phân vô nghĩa); không shuffle VMLU-1047/VM14K (chỉ mở nếu CI của Δ loại 0); **không chạy arm harness** — đây là validity của arm A, không phải so sánh scaffold |
+| `trang_thai` | 📌 **PRE-REGISTERED** — artifact + card commit trước infer; kết quả ghi ở **MC-36** |
+
+> Đọc kết quả đúng cách: Δ accuracy **một mình không trả lời** được câu hỏi — gold gốc lệch A nên
+> Δ có thể đến từ (i) khai thác vị trí, hoặc (ii) nhạy vị trí nói chung. Bảng accuracy-theo-vị-trí-gold
+> hai bên mới tách được hai cơ chế. n=146 ⇒ CI ~±7đ: Δ nhỏ hơn nhiễu ghi là "dưới độ phân giải",
+> không mở follow-up.
+
+## MC-36 — **Position bias legal_mc-146: kết quả** (Qwen3.5-9B-65K, shuffle s1234)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-36` |
+| `ngay_chay` | 2026-10-04 10:24:48→10:27:17 (+07); pre-register MC-35 commit `556334f` **trước** infer |
+| `dieu_kien` | Y hệt MC-35: input shuffle s1234 (sha `4c722b7f…`), frozen runner, temp 0, seed 42, max_tokens 4, workers 4, model `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1` (VPN nội bộ; DNS shim `PYTHONPATH` — MC-32) |
+| `infer` | 146/146 item, 149,53s (2,49 phút), **0 blank**, 8 lần retry thoáng qua đều tự hồi (không item nào hỏng); submission `submission_shuffled_s1234.csv` (không upload) |
+
+### Kết quả (nguồn: `position_bias_legal_mc_s1234_compare.csv`)
+
+| Chỉ số | Giá trị |
+| --- | --- |
+| accuracy gốc | **130/146 = 89,04%** (recompute khớp MC-31, gate pre-registered pass) |
+| accuracy shuffle | **130/146 = 89,04%** |
+| **Δ** | **+0,00** (CI95 **−5,48..+5,48**; McNemar exact **p=1**) |
+| 2×2 (a=gốc, b=shuffle) | both 121 · a-only 9 · b-only 9 · neither 7 |
+| flip chữ cái | 112/146 (76,7%) |
+| **stability theo TEXT** | **same_text 126 (86,3%)** · letter_anchored **4 (2,7%)** · neither 16 (11,0%) |
+| accuracy theo gold (gốc) | A 84/91=92,31 · B 32/39=82,05 · C 14/16=87,50 |
+| accuracy theo gold (shuffle) | A 28/33=84,85 · B 40/45=88,89 · C 31/36=86,11 · D 31/32=96,88 |
+| histogram đáp án model | gốc A88/B32/C21/D5 · shuffle A30/B43/C34/D39 (gold: A91/B39/C16 → A33/B45/C36/D32) |
+| `measurement_card_hash` | `2669c665…634fb0` (bản card lúc compare chạy — có MC-35, chưa có khối này) |
+
+### Đọc kết quả
+
+1. **Không phát hiện position bias ở mức accuracy** — câu hỏi pre-registered: Δ = +0,00, CI chứa 0,
+   p = 1, và 2×2 **đối xứng 9/9**. Gold đổi từ majority-A 62,3% sang gần đều (majority-B 30,8%)
+   mà điểm không nhúc nhích ⇒ con số 89,04% **không bị thổi bởi "A hay đúng"**.
+2. **Cơ chế: model bám nội dung, không bám vị trí.** 126/146 item giữ nguyên **text** được chọn;
+   letter_anchored chỉ 4 item (2,7%). Histogram đáp án **đi theo histogram gold** (A88 khi gold A91 →
+   A30 khi gold A33; B32 khi gold B39 → B43 khi gold B45) — dấu hiệu content-driven rõ nhất.
+3. **112 flip chữ cái không phải bất ổn**: phần lớn là đáp án đúng "cưỡi" text gold sang chữ cái mới
+   (both 121 item). Đây là lý do bảng stability-theo-text là bảng chính, không phải flip count.
+4. **Phần dư chưa quy**: 16 item "neither" + chênh lệch 9/9 không tách được giữa nhạy cảm nội dung
+   thật và noise chạy-lại (arm A 65K **chưa có repeat** — MC-27 mới đo noise cho harness arm 28K).
+   CI ±5,48đ trên n=146; mọi kết luận nhỏ hơn ngưỡng này ghi là **dưới độ phân giải**.
+
+### Mốc dừng (theo `docs/metrics-plan-3-nhom.md`)
+
+- VMLU-1047 shuffle: **ĐÓNG** — CI của Δ chứa 0, không có tín hiệu để đuổi theo.
+- Harness-arm shuffle (`omp` có khuếch đại bias không): **ĐÓNG** — không cần cho claim nào hiện tại.
+- 2.2 faithfulness (reading + judge) là task nhóm 2 còn lại, độc lập với khối này.
+
+## MC-37 — **Faithfulness reading-400 (điều kiện trích dẫn) + judge MiMo** (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-37` |
+| `ngay_chay` | Pre-register 2026-10-04 (card ghi xong **trước** mọi lần gọi model của điều kiện cite; không có số hậu nghiệm trong khối này) |
+| `muc_dich` | Plan nhóm 2.2: EM/F1 chỉ đo "khớp gold", không đo **grounding**. Điều kiện cite + judge trả lời: trích dẫn có chống đỡ câu trả lời không |
+| `benchmark` | reading-400 (`data/eval_set_manifest.csv`, 200 Vi-SQuAD + 200 Vi-DROP, seed 42 — manifest đóng băng) |
+| `model_id` | `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1` (VPN nội bộ) |
+| `label` | `Qwen3_5-9B-65K-cite` — namespace riêng; **cấm** so hàng-hàng với reading-400 của MC-3/MC-31 (khác prompt) |
+| `infer_flags` | temperature 0.0, seed 42, `max_tokens=128`, workers 4; runner `run_reading_cite_eval.py run` (checkpoint `reading_cite_result_<n>_<label>.csv`, `--resume` chỉ trong label này) |
+| `prompt_cite` | **Byte-frozen** — `build_citation_prompt` (module `run_reading_cite_eval.py`; sha256 code lúc pre-register `eee13b58…`): |
+
+```text
+Đọc đoạn văn dưới đây và trả lời câu hỏi bằng một cụm từ hoặc số ngắn gọn, lấy nguyên văn trong đoạn văn khi có thể.
+Sau đó trích dẫn nguyên văn một đoạn ngắn trong bài chứa câu trả lời.
+Trả lời theo đúng hai dòng:
+Trả lời: <câu trả lời>
+Trích dẫn: <đoạn trích>
+
+<context>
+
+Câu hỏi: <question>
+Trả lời: 
+```
+
+| Trường | Giá trị |
+| --- | --- |
+| `extraction` | `extract_citation_answer`: nhận cả hai kiểu trả lời (lặp nhãn hoặc tiếp nối sau `Trả lời: `); thiếu nhãn `Trích dẫn:` hoặc answer rỗng ⇒ **("", "")**, đếm unparsed, không bao giờ đoán |
+| `scoring` | `score_reading_eval.score_pair` (đóng băng) trên **trường answer**; EM/char-F1 báo là **điều kiện riêng**; compliance (đủ 2 trường) báo riêng |
+| `judge_model` | **`mimo-v2.5` @ `https://opencode.ai/zen/go/v1`** (OpenCode Zen Go; khác họ model với model bị chấm — tránh self-judge); headers bắt buộc `x-opencode-session` + browser-ish (Cloudflare 1010/MissingSessionID — MC-29); token `OPENCODE_GO_API_KEY` trong `.omp-mimo/.env`, truyền qua `JUDGE_*` env, **không** commit |
+| `judge_flags` | temperature 0.0, seed 42, `max_tokens=200`, `reasoning_effort="none"` (ghim qua extra_body; probe 2026-10-04 OK, trả JSON chuẩn) |
+| `prompt_judge` | **Byte-frozen** — `build_judge_prompt` (module `judge_faithfulness.py`; sha256 code lúc pre-register `75eadb04…`): |
+
+```text
+Bạn là giám khảo cho bài đọc hiểu. Cho đoạn văn, câu hỏi, câu trả lời của mô hình và đoạn trích dẫn của mô hình.
+Đánh giá: đoạn trích dẫn có trực tiếp chống đỡ câu trả lời (chứa thông tin trả lời, hoặc suy ra trực tiếp từ đoạn trích) không?
+Chỉ trả về JSON đúng định dạng:
+{"verdict": "supported" hoặc "unsupported", "reason": "<một câu ngắn>"}
+
+Đoạn văn:
+<context>
+
+Câu hỏi: <question>
+Câu trả lời: <answer>
+Trích dẫn: <citation>
+```
+
+| Trường | Giá trị |
+| --- | --- |
+| `judge_parse` | Strict-but-safe: JSON trần, JSON trong prose, hoặc code fence; `verdict` phải ∈ {supported, unsupported}; còn lại ⇒ `judge_error`, đếm, không đoán. `raw_judge_response` giữ nguyên văn |
+| `validation` | Sheet mù 60 câu: **seed 42, 15 ô (dataset × EM)** = 15 squad-EM1 + 15 squad-EM0 + 15 drop-EM1 + 15 drop-EM0; ô thiếu thì lấp từ item còn lại của cùng dataset (squad trước drop). Người gán nhãn **không thấy** gold/EM/verdict judge; labels commit vào `data/faithfulness_labels_<label>.csv` **trước** khi chấm sheet |
+| `gate` | **agreement ≥ 0,80 VÀ Cohen's κ ≥ 0,60** trên 60 câu đã gán. Fail ⇒ sửa judge prompt **một lần** (ghi lại), validate lại trên đúng labels đã đóng băng; fail lần hai ⇒ **DỪNG**, công bố thất bại dụng cụ, không có điểm faithfulness |
+| `metrics` | compliance · EM/char-F1 (answer) · `citation_verbatim` (citation ⊆ context, chuẩn hoá của scorer, **không judge**) · `supported_rate` (trên judged) · **`correct ∧ supported`** · cross-tab correct×supported; `judge_error`/unparsed tách riêng, không gộp |
+| `output` | `reading_cite_answers_<label>.csv` · `reading_cite_scores_<label>.csv` · `reading_cite_summary_<label>.csv` · `faithfulness_sheet_<label>.csv` · `faithfulness_judge_validation_<label>.csv` → gate → `faithfulness_judge_<label>.csv` · `faithfulness_validation_<label>.csv` · `faithfulness_summary_<label>.csv` (trong `all_res/ollama_result/Qwen3_5-9B-65K/`) |
+| `khong_lam` | Không đụng `build_reading_prompt`/`score_reading_eval.py` (byte-frozen); không sửa câu trả lời; không nhét unparsed/judge_error vào bất kỳ tử/mẫu nào; không so ngang MC-31 |
+| `trang_thai` | 📌 **PRE-REGISTERED** — code + card commit trước mọi lần chạy cite; kết quả + quyết định gate ghi ở **MC-38** |
+
+## MC-38 — **Faithfulness: cổng validation FAIL → DỪNG, không công bố điểm grounding**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-38` |
+| `ngay_chay` | 2026-10-04 (infer 10:5x; label người; judge v1 + v2; validate) |
+| `dieu_kien` | Y hệt MC-37 (điều kiện cite + judge MiMo). Không có số hậu nghiệm nào trong MC-37 |
+| `ket_qua_cite` | 400/400 trong 243,3s · **compliance 100%** (0 blank answer/citation) · EM **squad 81,00** (162/200) · **drop 49,00** (98/200) · **ALL 65,00** (260/400) · char-F1 80,07 — đây là **hàng đo mô tả của điều kiện cite**, KHÔNG so ngang MC-31 (prompt khác) và **KHÔNG phải** điểm grounding |
+| `nhan_nguoi` | 60 câu (seed 42, 15×4 ô), commit `data/faithfulness_labels_Qwen3_5-9B-65K-cite.csv` **trước** khi chấm judge: yes 49 / no 11, 8 note |
+
+### Cổng validation — FAIL cả hai lần (theo luật MC-37: 1 lần sửa, fail lần hai thì dừng)
+
+| | agreement | Cohen's κ | Kết luận |
+| --- | ---: | ---: | --- |
+| judge v1 (prompt MC-37) | 0,8167 (49/60) | **0,1872** | FAIL (κ < 0,60) |
+| judge v2 (prompt siết + `max_tokens` 400) | 0,8333 (50/60) | **0,2941** | FAIL (κ < 0,60) |
+
+Ma trận (human/judge): v1 `yes/sup 47 · yes/uns 2 · no/sup 9 · no/uns 2`; v2 `47 · 2 · 8 · 3`.
+
+**vì sao κ thấp dù agreement > 0,80:** nhãn người lệch mạnh về "yes" (49/60) và judge cũng gần như luôn "supported" ⇒ phần lớn đồng thuận là do **cùng nói yes**, không phải do phân biệt được. κ trừ đúng phần may mắn đó — đây là lý do cổng yêu cầu κ chứ không chỉ agreement.
+
+### Lỗi của dụng cụ (đo được, không suy đoán)
+
+1. **Số học sai**: `drop:8335` judge nói "95,84% + 0,72% = 96,74%" (đúng phải 96,56); `drop:1870` lý do "268+285=…" rồi vẫn ra supported; `drop:6607` nhận "gần khớp" 32.100 vs 32.200. Prompt v2 yêu cầu tính lại và khớp chính xác — không sửa được.
+2. **Không theo quy tắc loại thông tin**: `drop:5493/6525/2295` hỏi "tỷ lệ nào / cái nào lớn hơn" mà đáp một con số; judge vẫn supported.
+3. **Truncation**: v1 với `max_tokens=200` cắt JSON của `drop:1870` thành lỗi parse (1 judge_error) → v2 nâng 400.
+4. **Ba nhãn người không nhất quán với tiêu chí** (ghi nhận, KHÔNG sửa — nhãn đã đóng băng): `squad:2941`, `squad:1107` (trích dẫn chứa nguyên văn đáp án mà chấm "không"), `drop:1865` (trích dẫn nói ngược đáp án mà chấm "có"). Ba ca này giới hạn trần đồng thuận khả đạt.
+
+### Quyết định (theo mốc dừng MC-37)
+
+- **DỪNG đo faithfulness.** **Không công bố điểm grounding nào.** Judge MiMo V2.5 (reasoning off) không qua cổng với cả prompt v1 lẫn bản sửa v2.
+- `drop:2741` là ca duy nhất v2 lật đúng; `drop:6755` v2 lật ngược thành bất đồng — v2 không phải cải thiện đủ.
+- Hàng EM điều kiện cite (65,00) vẫn là **phép đo hợp lệ** của condition đó, nhưng tách khỏi mọi claim "grounded".
+
+### Không được quy
+
+1. **Không** suy "65,00% là điểm faithfulness" — không có điểm faithfulness nào được công bố.
+2. **Không** quy thất bại cho model bị chấm (Qwen3.5-9B-65K): đây là thất bại **dụng cụ đo** (judge), đã kiểm chứng bằng nhãn người.
+3. Judge chạy `reasoning_effort="none"` (theo MC-37). Một judge bật reasoning, hoặc model mạnh hơn, **chưa được thử** — là dụng cụ mới, phải pre-register riêng (MC-39 nếu mở), không được hồi tố để "cho qua" cổng này.
+4. `measurement_card_hash` của các artifact cite/judge thuộc bản card lúc chạy (MC-37), không phải bản có MC-38.
+
+### Artifact
+
+`reading_cite_answers_*` · `reading_cite_scores_*` · `reading_cite_summary_*` · `faithfulness_sheet_*` (csv+html) · `faithfulness_judge_validation_*` (v1) · `faithfulness_judge_validation_v2_*` · `faithfulness_validation_*` (κ 0,2941, gate_pass=0) · `data/faithfulness_labels_*` (tracked).
+
+## MC-39 — **Faithfulness judge dụng cụ v2: kimi-k3 + mẫu test mới** (pre-register, chưa chạy)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-39` |
+| `ngay_chay` | Pre-register 2026-10-04 (trước mọi lần gọi judge trên **mẫu test**; không có số hậu nghiệm) |
+| `ly_do` | MC-38 dừng vì dụng cụ: MiMo V2.5 (reasoning off) quá dễ dãi + không tất định. Chọn dụng cụ mới **trên dev**, cổng chạy trên **test mới** — không hồi tố để "cho qua" cổng cũ |
+| `judge_model` | **`kimi-k3` @ `https://opencode.ai/zen/go/v1`** (khác họ model bị chấm — không tự-chấm; `qwen3.8-max` cùng họ Qwen nên **loại**) |
+| `judge_config` | temperature 0.0, seed 42, **không ghim `reasoning_effort`** (để mặc định provider — judge suy luận cần), `max_tokens=1500`, **parse-retry 2** (chỉ khi không parse được; không bao giờ đoán verdict) |
+| `prompt_judge` | **Giữ nguyên byte v2 của MC-38** (đã ghi ở MC-37 + sửa ở MC-38); module `judge_faithfulness.py` sha lúc pre-register `74e34c79…` |
+| `dev_set` | 60 nhãn MC-38 (`data/faithfulness_labels_Qwen3_5-9B-65K-cite.csv`, sha `c7ce7c00…`) — **chỉ để chọn dụng cụ**, đã đóng băng |
+| `test_set` | **60 câu mới**, `--seed 43`, `--exclude` dev (đảm bảo rời rạc), cùng phân tầng 15×4 ô; nhãn người commit vào `data/faithfulness_labels_Qwen3_5-9B-65K-cite_test.csv` **trước** khi chấm judge trên nó |
+| `gate` | agreement ≥ 0,80 **VÀ** Cohen's κ ≥ 0,60 trên 60 câu test. **Không có lần sửa trong card này** — fail ⇒ **2.2 đóng vĩnh viễn**, công bố kết quả âm (dụng cụ thứ hai cũng trượt) |
+| `neu_qua` | Chạy judge full 400 (cùng config) → **MC-40**: compliance, EM/char-F1, verbatim rate, supported rate, `correct ∧ supported`, cross-tab; caveat κ là ước lượng một mẫu; tùy chọn seed `/results` cho `reading-400 × 65k` |
+| `khong_lam` | Không đổi điều kiện cite / câu trả lời / số EM (tái dùng MC-37/38); không sửa nhãn dev; không suy gì từ probe dev |
+| `trang_thai` | 📌 **PRE-REGISTERED** — tool v2 + change commit trước mọi lần chấm test; kết quả ở **MC-40** |
+
+## MC-40 — **Faithfulness judge v2: cổng test FAIL → 2.2 đóng vĩnh viễn**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-40` |
+| `ngay_chay` | 2026-10-04 (nhãn test commit trước khi chấm judge; judge kimi-k3 trên test + dev) |
+| `dieu_kien` | Y hệt MC-39: judge `kimi-k3` @ Zen Go, prompt v2 byte, không ghim reasoning, `max_tokens=1500`, retry 2, temp 0/seed 42 |
+
+### Cổng trên mẫu TEST sạch (đây là quyết định)
+
+| Tập | n | agreement | Cohen's κ | Kết luận |
+| --- | ---: | ---: | ---: | --- |
+| **test** (seed 43, rời rạc dev) | 59 (1 ô trống bỏ rõ) | 0,8475 (50/59) | **0,4809** | **FAIL** (κ < 0,60) |
+| dev (tập đã dùng chọn/chỉnh — **lạc quan**) | 60 | 0,9000 | 0,6660 | qua cổng, nhưng **không** dùng làm cổng |
+
+Ma trận test (human/judge, n=59): `yes/sup 44 · yes/uns 3 · no/sup 6 · no/uns 6`.
+
+**Khoảng cách dev→test (0,666 → 0,481) là chính cái bẫy mà việc chia dev/test sinh ra để lộ.** Nếu dùng
+thẳng nhãn dev làm cổng thì đã "qua" bằng một con số bị thổi; mẫu test sạch lộ ra năng lực thật thấp hơn.
+
+### Lỗi của dụng cụ (test, đo được)
+
+- **Quá dễ dãi 6 ca**: `squad:68/1502/2134` (trích dẫn chỉ chạm chủ đề, "chưa đủ ý" theo nhãn người nhưng
+  judge vẫn supported), `drop:1986` ("chỉ trả lời chủng loại"), `drop:8213` (câu hỏi hỏi tổng số nhà,
+  trích chỉ có tổng dân).
+- **Quá nghiêm 3 ca**: `drop:980/8915` (đếm/so sánh trực tiếp từ trích mà judge không công nhận),
+  `drop:193` (phép trừ judge tính ra số khác — lệch phép tính).
+- ⇒ Sai **cả hai chiều**, nên κ bị chặn trần dù agreement thô vẫn > 0,80.
+
+### Quyết định (theo luật một-phát MC-39)
+
+- **2.2 ĐÓNG VĨNH VIỄN.** Hai dụng cụ liên tiếp trượt cổng người (MiMo V2.5: κ 0,19/0,29; kimi-k3:
+  κ 0,481 trên test sạch). **Không công bố điểm grounding nào.**
+- Không chấm thêm mẫu người (ràng buộc người dùng) — đây là lần thử cuối; một dụng cụ khác (nếu có)
+  phải pre-register mới + mẫu người mới, và không mặc định là đáng làm.
+
+### Không được quy
+
+1. **Không** suy "65,00% EM cite là điểm faithfulness".
+2. **Không** quy cho Qwen3.5-9B-65K: thất bại là của **dụng cụ judge** (kiểm chứng bằng nhãn người độc lập).
+3. **Không** dùng κ dev 0,666 làm con số công bố — nó là fit trên tập đã chỉnh (minh hoạ độ lạc quan).
+4. κ test là **ước lượng một mẫu** n=59; nhưng nó là con số **sạch** duy nhất, và nó < ngưỡng đặt trước.
+
+### Artifact
+
+`faithfulness_judge_test_kimik3.csv` · `faithfulness_validation_test_kimik3.csv` (κ 0,4809, gate_pass=0,
+unlabeled=1) · `faithfulness_judge_dev_kimik3.csv` · `faithfulness_validation_dev_kimik3.csv` (κ 0,666,
+chẩn đoán) · `data/faithfulness_labels_*_test.csv` (tracked, 59/60) · MC-37/38 artifacts (điều kiện cite).
+
+## MC-41 — **Calibration 3.1: probe logprobs + pre-register** (Qwen3.5-9B-65K, legal_mc)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-41` |
+| `ngay_chay` | Probe 2026-10-04; calibration pre-register cùng ngày (**trước** mọi lần chạy calibration) |
+| `probe_ket_qua` | **Gateway IEC CÓ trả `logprobs`** cho `Qwen3.5-9B-65K`: `logprobs=true, top_logprobs=5` → `choices[0].logprobs.content[0].top_logprobs` có `token`+`logprob`; token đầu **là chữ cái trần** (`"B"`), top@0 chứa đủ A–E. `Qwen3.5-9B-28K` offline (503). ⇒ nhánh "không có thì dừng" không kích hoạt |
+| `dieu_kien` | `legal_mc-146`, model `Qwen3.5-9B-65K` @ `http://llmapi.iec/v1`; frozen `build_prompt`/`extract_answer`; temperature 0.0, seed 42, `max_tokens=4`, workers 4, **`logprobs=true, top_logprobs=20`** (option chỉ-đọc, không đổi prompt/parser) |
+| `phan_bo_A-E` | Từ `top_logprobs[0]`: lấy token **đúng bằng** một trong A–E, `p=exp(logprob)`, chuẩn hoá lại trên các chữ có mặt; chữ vắng = 0 (không bịa). `n_letters_found` ghi lại; item có < 2 chữ ⇒ **unusable** (loại khỏi metric calibration, vẫn tính sai trong mẫu số accuracy). `confidence = p[chữ đã chọn]` |
+| `metrics` | accuracy (scorer đóng băng) · mean_confidence · **ECE** (10 bin đều) · **Brier** (confidence + multiclass) · bảng reliability (bin, n, conf, acc) · **overconfidence** = mean_conf − accuracy |
+| `sanity` | accuracy in ra và **ghi cạnh** MC-31 arm A (130/146) — không phải cổng (backend không tất định tuyệt đối ở temp 0) |
+| `pham_vi` | Lượt đầu: `legal_mc-146` (1 miền, 146 câu — đường cong thô, ghi là hạn chế). `vmlu-mqa-all-gold` (1.047) là mở rộng tùy chọn, không thuộc card này |
+| `output` | `mc_calibration_items_legal_mc_<label>.csv` · `mc_calibration_summary_legal_mc_<label>.csv` · `mc_calibration_reliability_legal_mc_<label>.csv` (label `Qwen3_5-9B-65K-cal`) |
+| `khong_lam` | Không safety (3.2 — cần rubric/gold mới); không đổi decoding; không claim calibration toàn phân bố ngoài phân bố token-đầu |
+| `trang_thai` | 📌 **PRE-REGISTERED** — code (sha `6959d5ef…`) + card commit trước khi chạy; kết quả ở **MC-42** |
+
+## MC-42 — **Calibration 3.1 kết quả: ECE 7,39pp, hơi under-confident** (Qwen3.5-9B-65K, legal_mc-146)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-42` |
+| `ngay_chay` | 2026-10-04 (sau MC-41) |
+| `dieu_kien` | Y hệt MC-41; 146/146 item dùng được (`n_letters_found=5` cho mọi câu — phân bố sạch) |
+
+| Chỉ số | Giá trị |
+| --- | ---: |
+| accuracy | **130/146 = 89,04%** (tái lập khít MC-31 arm A → logprobs không đổi sinh) |
+| mean confidence | **82,38%** |
+| **ECE** (10 bin) | **7,39 pp** |
+| Brier (confidence) | **0,0701** |
+| overconfidence | **−6,66 pp** (tức **under-confident**: tự tin thấp hơn đúng thực tế) |
+
+### Bảng reliability
+
+| bin | n | conf | acc |
+| --- | ---: | ---: | ---: |
+| [0,3–0,4) | 5 | 0,346 | 0,400 |
+| [0,4–0,5) | 17 | 0,443 | 0,412 |
+| [0,5–0,6) | 6 | 0,567 | **1,000** |
+| [0,6–0,7) | 9 | 0,656 | 0,889 |
+| [0,7–0,8) | 11 | 0,740 | 0,909 |
+| [0,8–0,9) | 16 | 0,858 | 1,000 |
+| [0,9–1,0) | 82 | 0,974 | 0,988 |
+
+### Đọc kết quả
+
+1. **Khối lượng lớn nhất nằm ở bin tự tin cao và khớp tốt**: 82/146 câu ở [0,9–1,0), conf 0,974 vs acc 0,988.
+2. **Xu hướng under-confident** (mean_conf 82,4 < accuracy 89,0): model biết nhiều hơn mức nó tự nhận.
+   ECE 7,4pp chủ yếu do các bin giữa nhỏ và nhiễu ([0,5–0,6) n=6 lệch mạnh; [0,6–0,7) n=9).
+3. **Phân bố chữ cái trả lời**: A88/B33/C19/D6 — model nghiêng A nhưng đúng theo nội dung (xem MC-36:
+   histogram đáp án đi theo histogram gold).
+
+### Không được quy
+
+1. Phân bố là **niềm tin token-đầu** trên 5 lựa chọn, không phải calibration của cả câu trả lời/chuỗi suy luận.
+2. **Một miền, 146 câu, một lần chạy** → bin thưa, ECE có sai số; không suy ra calibration cho 58 môn VMLU.
+   Mở rộng `vmlu-mqa-all-gold` (1.047) là tùy chọn, chưa làm.
+3. Không so ngang model khác (28K offline).
+
+### Artifact
+
+`mc_calibration_items_legal_mc_Qwen3_5-9B-65K-cal.csv` · `…_summary_…csv` (ECE 7,39; over −6,66;
+card_hash `…`) · `…_reliability_…csv`.
+
+## MC-43 — **Sửa quy tắc chữ cái + mở rộng VMLU-1047** (pre-register)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-43` |
+| `ly_do` | **MC-42 dùng sai quy tắc.** `legal_mc` là bộ **4 lựa chọn (A–D)**, nhưng `letter_probs` chuẩn hoá trên cả A–E. Model vẫn đặt khối lượng lên chữ `E` **không tồn tại** (TB 1,25%, max 9,45%, 3/146 câu >5%) → confidence bị **loãng**, ECE sai. Đây là lỗi dụng cụ, không phải phát hiện về model |
+| `sua_gi` | Chữ cái **đọc từ chính prompt** (`offered_letters`, quét ngược khối `A. …` trước `Đáp án: `), không hard-code A–E. Chuẩn hoá chỉ trên chữ được cung cấp; khối lượng rơi ngoài lựa chọn được đo riêng thành `off_options_mass` (so với khối lượng nhìn thấy trong top-20) thay vì pha vào confidence |
+| `dieu_kien` | (a) **Chạy lại** `legal_mc-146` — y hệt MC-41 (cùng model, temp 0, seed 42, max_tokens 4, logprobs, top-20); chỉ khác là artifact dùng schema mới (`n_choices`, `off_options_mass`) và quy tắc mới. (b) **Mở rộng** `vmlu_mqa_all_gold` (1.047 câu, 58 môn, gold đóng băng qua `detect_scorable`) — cùng model/flags, `--workers 4`, label `Qwen3_5-9B-65K-cal` |
+| `ly_do_co_reset` | Mở rộng dùng chính quy tắc mới; nếu giữ quy tắc cũ thì số VMLU (phần lớn 4 lựa chọn, 42 câu 3 lựa chọn) sẽ sai theo cùng lỗi |
+| `bao_cao_them` | **Phân rã theo môn/nhóm** (`build_breakdown`, dùng `subject_category` đóng băng): accuracy, mean confidence, ECE, over-confidence per category (STEM/Social/Humanity/Other) và per subject. Đây là lý do mở rộng: 1 miền 146 câu không đủ vẽ đường cong |
+| `khong_lam` | Không so sánh chéo condition (legal_mc vs VMLU là hai bộ khác nhau, chỉ đặt cạnh nhau để mô tả, không phải phép so); không claim calibration cho chuỗi suy luận; ECE vẫn là bin 10 trên **token-đầu** |
+| `trang_thai` | 📌 **PRE-REGISTERED** — commit trước cả hai lần chạy; kết quả ở **MC-44** |
+
+## MC-44 — **Kết quả: over-confidence lớn ở môn khó, under-confidence ở legal_mc** (MC-43)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-44` |
+| `ngay_chay` | 2026-10-05 (sau MC-43) |
+| `dieu_kien` | (a) `legal_mc-146` chạy lại; (b) `vmlu_mqa_all_gold` 1.047 câu / 58 môn — cùng model/flags như MC-43 |
+
+### (a) legal_mc-146 — quy tắc đã sửa
+
+| Chỉ số | MC-42 (sai) | **MC-44 (đúng)** |
+| --- | ---: | ---: |
+| accuracy | 89,04% (130/146) | **90,41% (132/146)** |
+| mean confidence | 82,38% | **83,02%** |
+| ECE | 7,39 | **8,41** |
+| Brier (conf) | 0,0701 | **0,0736** |
+| overconfidence | −6,66 | **−7,39** (under-confident) |
+| mean `off_options_mass` | (không đo) | **0,0136** (max 0,0945) |
+
+⇒ Bỏ chữ E ảo khỏi mẫu số làm confidence **tăng** và ECE tăng nhẹ; kết luận đổi chiều không đổi (vẫn under-confident).
+
+**⚠ Nhiễu backend phát hiện ở đây:** cùng một điều kiện (prompt, temp 0, seed 42, logprobs — **không đổi gì**) cho **accuracy 130/146 rồi 132/146**. Endpoint **không tất định ở temp 0** (đúng như MC-18 từng ghi). Hệ quả: chênh lệch ±1–2 câu là nhiễu, không phải tín hiệu; ECE của legal_mc có biên ±~1pp.
+
+### (b) vmlu_mqa_all_gold (1.047) — kết quả chính
+
+| Chỉ số | Giá trị |
+| --- | ---: |
+| accuracy | **751/1047 = 71,73%** |
+| usable | 1046/1047 (1 câu <2 chữ) · unparsed 0 |
+| mean confidence | **78,31%** |
+| **ECE** (10 bin) | **6,51 pp** |
+| Brier (conf) | **0,1499** |
+| **overconfidence** | **+6,58 pp** (⚠ **OVER-confident** — ngược chiều legal_mc) |
+| mean `off_options_mass` | 0,0155 (max **0,4826**, 73/1047 câu >5%) |
+
+**Bảng reliability (VMLU-1047):**
+
+| bin | n | conf | acc | chênh |
+| --- | ---: | ---: | ---: | ---: |
+| [0,2–0,3) | 2 | 0,294 | 0,000 | −0,29 |
+| [0,3–0,4) | 63 | 0,357 | 0,318 | −0,04 |
+| [0,4–0,5) | 94 | 0,455 | 0,404 | −0,05 |
+| [0,5–0,6) | 96 | 0,550 | 0,396 | **−0,15** |
+| [0,6–0,7) | 110 | 0,651 | 0,545 | **−0,11** |
+| [0,7–0,8) | 95 | 0,748 | 0,621 | **−0,13** |
+| [0,8–0,9) | 105 | 0,849 | 0,733 | **−0,12** |
+| [0,9–1,0) | 481 | 0,974 | 0,954 | −0,02 |
+
+⇒ Lệch **có hệ thống**: toàn bộ bin giữa [0,5–0,9) đều over-confident 11–15pp; hai đầu (thấp & rất cao) khớp. Không phải nhiễu ngẫu nhiên.
+
+### Điểm mấu chốt: over-confidence **bám theo độ khó môn**, không phải hằng số của model
+
+| nhóm/môn | n | acc | conf | ECE | over |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| STEM | 383 | 76,76 | 81,99 | 5,68 | +5,22 |
+| Social Science | 184 | 77,17 | 80,04 | 7,76 | +2,87 |
+| Humanity | 324 | 68,21 | 75,61 | 8,18 | +7,40 |
+| **Other** | 156 | **60,26** | 72,81 | **12,55** | **+12,55** |
+| 54 Preschool Pedagogy | 10 | **30,00** | 65,45 | **37,98** | **+35,45** |
+| 50 Accountant | 18 | 38,89 | 68,75 | 36,14 | +29,86 |
+| 36 High School Literature | 20 | 40,00 | 68,57 | 28,57 | +28,57 |
+| 10 High School Physics | 20 | 95,00 | 96,82 | 6,94 | +1,82 |
+| 24 High School Civil Education | 20 | 95,00 | 95,29 | 5,37 | +0,29 |
+
+Model **giữ tự tin ~65–69% ở môn nó đúng 30–40%**. Ở môn dễ (95%) thì tự tin khớp gần như tuyệt đối (ECE 5–7pp). ⇒ Calibration **không phải đặc tính cố định của model** mà là hàm của độ khó; một con số ECE chung không mô tả được model này.
+
+### Hai phát hiện phụ đáng ghi
+
+1. **Sai lệch đáp án**: gold C278/D248 nhưng model chọn C293/D300, A chỉ 205 (gold A256). Khớp với MC-36 (không có position bias) — đáp án đi theo nội dung, nhưng hơi **nghiêng về cuối danh sách** ở bộ 4 lựa chọn.
+2. **`off_options_mass` tới 0,48**: ở 1 câu model đặt 48% khối lượng lên chữ không tồn tại (bộ 3–4 lựa chọn, chữ vượt). Đây là **lỗi dụng cụ đo đạc, không phải thiếu hiểu biết** — phân bố bị rò ra ngoài lựa chọn hợp lệ tới mức lớn.
+
+### Không được quy
+
+1. Không so sánh chéo điều kiện: legal_mc (một miền, acc 90%) và VMLU (58 môn, acc 72%) là hai bộ khác nhau — đặt cạnh để **mô tả**, không phải phép so.
+2. Vẫn là **phân bố token-đầu**, không phải calibration của chuỗi suy luận.
+3. Một lần chạy mỗi bộ; backend không tất định (xem nhiễu ở (a)) → biên ±~1pp, đủ để kết luận dấu của over-confidence, không đủ để đòi chính xác từng chữ số.
+4. ECE môn có n=10–20 ⇒ rất thô (ECE 37,98 của Preschool Pedagogy là 10 câu, chỉ đọc là "rất over-confident", không đọc là 37,98).
+
+### Artifact
+
+`mc_calibration_{items,summary,reliability,breakdown}_{legal_mc,vmlu_mqa_all_gold}_Qwen3_5-9B-65K-cal.csv`
+
+## MC-45 — **3.2 Safety: đóng KHÔNG đo** (quyết định, không phải một phép đo)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-45` |
+| `loai` | ⚠️ **Đóng không đo** — không có card đo nào cho 3.2. Ghi lại để không ai khởi động lại mù |
+| `ly_do` | Đọc dữ liệu thật: 4.000 safety row **không phải một task** mà là hai dụng cụ không tương thích — `hatespeech` (2000: 1300 mệnh lệnh/700 câu hỏi, không có đáp án đúng, cần rubric từ chối) và `politics_*` (2000 câu hỏi chính trị nhạy cảm, cần gold riêng từng câu) |
+| `ma_vong` | (1) gold cho `politics_*` là nội dung người chấm cũng dễ bất đồng; (2) theo MC-39/40, judge safety khó hơn faithfulness — LLM judge dễ **đồng thuận với model**, gần như chắc chắn trượt cổng κ ≥ 0,60 ⇒ không có điểm số để công bố; (3) mọi phiên bản cần **hàng trăm nhãn tay**, trái ràng buộc đã đặt |
+| `mo_khong_the` | Không có — **không phát sinh artifact nào**, không có inference nào chạy. Đây là một quyết định phạm vi |
+| `mo_khong_them` | Việc đo harness-evolution (RQ1–RQ4) theo `docs/harness-evolution-thesis-plan.md` |
+| `khong_lam` | Không suy ra "model an toàn/không an toàn" từ việc này — 4.000 câu **chưa từng** được chấm, đừng đọc nhầm là "đã kiểm tra và thấy ổn" |
+| `trang_thai` | ✅ **Đóng** (2026-10-05) — hướng phát triển |
+
+## MC-46 — **Factorial persona × tools trên 65K + noise floor 65K** (pre-register)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-46` |
+| `ngay_chay` | 2026-10-05 (pre-register, **trước** mọi lần chạy) |
+| `ly_do` | Bảng RQ1 (`docs/rq1-decomposition.md`) chỉ ra hai khoảng trống: (1) ô factorial **persona × tools chỉ có ở 28K**, node đã offline; (2) **noise floor chưa có ở 65K** — chỉ một cặp đo gián tiếp từ MC-44 (130→132), đủ biết có nhiễu nhưng không đặt được ngưỡng |
+| `dieu_kien` | Model `Qwen3.5-9B-65K` @ IEC. `omp sạch`: `HOME=/tmp/fakehome`, sandbox `/tmp`, `--agent-dir .omp-qwen65k-pinned` (temperature 0 ghim qua proxy `127.0.0.1:8799` → `llmapi.iec`, `--pin temperature=0`), `--arm-a-slug Qwen3_5-9B-65K` để so với **arm A3 của chính model này**, dataset `legal_mc` (146), workers 4 |
+| `4_o` | **F5** `--tools none --system-prompt minimal` · **F7** `--tools none` (giữ system prompt của omp) · **F8** `--tools all` (giữ system prompt của omp) · **T65‑r2** lặp lại **y hệt** T65 |
+| `o_4_da_co` | **F6 ≡ T65** (`--tools all` + system prompt trung tính, MC-31/32) — dùng lại, **không chạy lại**: chạy lại một điều kiện đã có không tạo thêm thông tin, chỉ tốn compute |
+| `doc_biet` | (a) hai contrast **gene** (tools, persona) trên 65K, so với chính arm A3; (b) một **noise floor có hệ thống** cho 65K để mọi contrast nhỏ ở 65K biết phải lớn hơn bao nhiêu |
+| `khong_lam` | Không chạy trên dataset khác (một condition một slug, một card một hạng mục); không đụng arm H2/H3 (scaffold **có rò** style, MC-22); không so chéo sang 28K; không so sánh với MiMo (khác model) |
+| `dieu_kien_can` | VPN IEC + proxy 8799 + `.omp-qwen65k-pinned`. Nếu proxy không dựng được ⇒ **dừng ô nào cần nó**, ghi vào card, không chạy bằng điều kiện khác |
+| `trang_thai` | 📌 **PRE-REGISTERED** — commit trước khi chạy; kết quả ở **MC-47** |
+
+## MC-47 — **Kết quả MC-46: ở 65K chính scaffold gần như miễn phí, cái tốn điểm là tool + persona**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-47` |
+| `ngay_chay` | 2026-10-05 (sau MC-46) |
+| `dieu_kien` | Y hệt MC-46. Tất cả 5 arm **sạch**: 146/146 item, **0 failure**, 0 tool call, 0 net attempt |
+
+### ⚠ Sự cố hạ tầng phải ghi lại (vì nó gần như không lộ ra)
+
+Lần chạy F5 đầu tiên **proxy ghim temperature được khởi động thiếu DNS shim** ⇒ mọi request qua
+proxy trả `502` ⇒ `omp` retry tới hết `--max-time 180` ⇒ **25 item đầu ra `exit 1 / aborted /
+wall 181s`**. Preflight **không bắt được** vì nó chỉ kiểm tra endpoint trực tiếp, không kiểm tra
+hop proxy. Tốc độ tụt 60× (2,12 → 0,02 item/s) là dấu hiệu duy nhất.
+
+→ **Đã xoá checkpoint nhiễm và chạy lại từ đầu** (không sửa, không lấy trung bình). Bài học cho
+mọi arm sau: một hop proxy hỏng **không làm arm fail**, nó biến arm thành cơn bão retry — nhìn ra
+vẫn giống một kết quả chỉ hơi tệ.
+
+### Request thật (bằng chứng từ proxy log, không phải từ văn xuôi card)
+
+| arm | `--tools` | `--system-prompt` | system chars | tools gửi đi |
+|---|---|---|---:|---:|
+| `ompF5clean` | none | minimal | 745 | 0 |
+| `ompF7clean` | none | *(bỏ ⇒ gốc omp)* | 9178 | 0 |
+| `ompF8clean` | all | *(bỏ ⇒ gốc omp)* | 16050 | 11 |
+| `ompT65r2` | all | minimal | 745 | 11 |
+
+**Phát hiện văn xuôi vs bằng chứng:** MC-31 mô tả T65 là "system prompt trung tính", nhưng proxy
+log của chính lần chạy T65 gốc (2026-09-30) ghi `system=690 tools=11`. Tức T65 gốc **không** phải
+ô "tools=all + system prompt trung tính" theo nghĩa 745 ký tự; nó là một shape khác (690 ký tự).
+Vì vậy **T65 gốc không được gộp vào ô nào** của ma trận 2×2, và cũng không được dùng làm lặp.
+
+### Ma trận 2×2 trên 65K (đều so với arm A3 = 89,04%)
+
+| ô | tools | persona | arm B | Δ vs A3 | CI 95% | p |
+|---|---|---|---:|---:|---|---:|
+| F5 | none | minimal | 87,67 | **−1,37** | [−5,48, +2,74] | 0,754 |
+| F7 | none | gốc omp | 79,45 | −9,59 | [−15,07, −4,11] | 0,0013 |
+| F8 | all | gốc omp | 73,29 | −15,75 | [−22,60, −8,90] | 3,4e-05 |
+| T65r2 | all | minimal | 76,03 | −13,01 | [−19,86, −6,16] | 3,1e-04 |
+
+### Contrast gene (ghép đôi, hướng "CÓ gene − KHÔNG có gene")
+
+| gene | giữ cố định | Δ | CI 95% | p | đọc |
+|---|---|---:|---|---:|---|
+| **tools** | persona = minimal | **−11,64** | [−17,81, −5,48] | 4,9e-04 | **làm hỏng** |
+| **tools** | persona = gốc omp | **−6,16** | [−10,96, −1,37] | 0,022 | **làm hỏng** |
+| **persona** | tools = none | **−8,22** | [−13,01, −3,42] | 0,002 | **làm hỏng** |
+| **persona** | tools = all | −2,74 | [−6,16, 0,00] | 0,219 | không đọc được |
+| interaction | tools × persona | +5,48 | [−5,48, +16,44] | — | không đọc được |
+
+### Kết luận — và nó **đảo ngược** kết luận ở 28K
+
+Ở **65K**: ô scaffold tối giảu (F5) chỉ **−1,37 điểm, CI chạm 0** ⇒ **bản thân agent scaffold
+gần như miễn phí**. Cái tốn điểm là **những gì thêm vào nó**: tool menu (−11,6 / −6,2) và system
+prompt của omp (−8,2 khi không tool).
+
+Ở **28K** (MC-23): hai gene đó CI **chạm 0**, còn scaffold mất 15–18 điểm.
+
+⇒ **Không có "cái giá của scaffold" nói chung.** Cùng một cấu hình, hai model cho hai kết luận
+ngược nhau. Đây là phát hiện trung tâm của RQ1: phải ghi gene **theo model**, không ghi
+"harness tốn X điểm".
+
+### ⚠ Lỗ hổng của genome §4 phát hiện ở đây
+
+Khi đăng ký 4 ô này vào genome, ô **F5** (qua `omp`, không tool, system prompt trung tính) và
+**arm A3** (gọi thẳng) cho ra **cùng một `genome_id` = `8e6d943df3ad94a0`**. Lý do: tám nhóm gene
+của §4 **không có gene nào biểu diễn "prompt có được đưa qua scaffold hay không"** — mà đó chính
+là nguồn biến động lớn nhất đã đo.
+
+⇒ Đã sửa: `collect_evidence(..., container=...)`, thư mục bundle đặt tên
+`<container>__<genome_id>` (`omp__8e6d943…` vs `direct__8e6d943…`). Không sửa thì một vòng
+evolution sẽ để hai điều kiện khác nhau chiếm cùng một thư mục, và "best candidate theo thư mục"
+sẽ là một phép so vô nghĩa. Ghi vào `tasks.md` của change `thesis-p0` như việc còn lại: hoặc thêm
+nhóm gene `scaffold`, hoặc chấp nhận nó là **container** chứ không phải gene — nhưng phải nói rõ.
+
+### Noise floor 65K (có hệ thống)
+
+`ompT65r2` 76,03 vs `ompT65r3` 74,66 (cùng shape `system=745, tools=11`) ⇒ **độ trải 1,37 điểm**.
+Sàn 65K yếu hơn sàn 28K (0,68–5,48) vì chỉ có **2** lặp. Các contrast gene ở trên đều lớn hơn sàn
+nhiều lần ⇒ đọc được. Tương tác thì không.
+
+### Không được quy
+
+1. **Một lần chạy mỗi ô** (trừ ô T65r2/r3) ⇒ tương tác tools × persona có CI rộng, **không** quy
+   là hai gene nhân lên nhau được.
+2. **Chỉ `legal_mc`** (146 câu, một miền). Chưa nói được cho reading hay V-Bench.
+3. **`input_tokens` không phân biệt được các ô** (median 294–297 cả khi 0 lẫn 11 tool) ⇒ nhận dạng
+   ô dựa trên **proxy log**, không phải cột token. Đừng dùng cột đó để suy ra cấu hình.
+4. **Sự cố proxy ở trên** đã loại bỏ hoàn toàn lần chạy đầu; các số trong bảng là lần chạy sạch.
+
+### Artifact
+
+`harness_compare_legal_mc_vsA_omp{F5clean,F7clean,F8clean,T65r2,T65r3}_Qwen3_5-9B-65K.csv` ·
+`harness_ledger_legal_mc_*` · proxy log `/tmp/opencode/mc46/proxy2.log` (tạm, mất khi reboot) ·
+bảng tổng hợp `docs/rq1-decomposition.md` (sinh tự động).
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

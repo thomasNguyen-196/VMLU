@@ -48,7 +48,7 @@ function DecisionPanelInner({
       <div className={card}>
         {peerLock ? (
           <>
-            <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">
+            <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">
               Đã có người chốt
             </span>
             <p className="mt-2.5 text-[14px] leading-relaxed">
@@ -72,16 +72,16 @@ function DecisionPanelInner({
                 <span className="mt-1.5 block text-[12.5px] italic text-ink-2">ghi chú: {peerLock.n}</span>
               )}
             </p>
-            <p className="mt-3 rounded-lg border border-hair bg-hair/20 px-3 py-2 text-[12.5px] leading-snug text-ink-2">
+            <p className="mt-3 rounded-lg bg-hair/20 px-3 py-2 text-[12.5px] leading-snug text-ink-2">
               Câu này khóa chỉ-đọc để hai người không làm trùng (sổ phân công{" "}
               <code className="font-mono">review_records/</code>). Phím{" "}
-              <kbd className="rounded border border-hair bg-card px-1.5 py-0.5 font-mono text-[10.5px]">t</kbd>{" "}
+              <kbd className="rounded border border-hair bg-card px-1.5 py-0.5 font-mono text-[11px]">t</kbd>{" "}
               nhảy tới câu chưa có người làm.
             </p>
           </>
         ) : (
           <>
-        <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">
+        <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">
           Quyết định của bạn
         </span>
         <div role="radiogroup" aria-label="Quyết định" className="mt-2.5 grid grid-cols-3 gap-2">
@@ -100,9 +100,9 @@ function DecisionPanelInner({
         </p>
 
         <div className="mt-4">
-          <label htmlFor="corr" className="block text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">
+          <label htmlFor="corr" className="block text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">
             Đáp án sửa <span className="normal-case tracking-normal">— bắt buộc khi Reject</span>{" "}
-            <kbd className="font-mono text-[10.5px]">e</kbd>
+            <kbd className="font-mono text-[11px]">e</kbd>
           </label>
           <textarea
             id="corr"
@@ -128,8 +128,8 @@ function DecisionPanelInner({
         </div>
 
         <div className="mt-4">
-          <label htmlFor="note" className="block text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">
-            Ghi chú <kbd className="font-mono text-[10.5px]">n</kbd>
+          <label htmlFor="note" className="block text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">
+            Ghi chú <kbd className="font-mono text-[11px]">n</kbd>
           </label>
           <textarea
             id="note"
@@ -146,7 +146,7 @@ function DecisionPanelInner({
       </div>
 
       <div className={card}>
-        <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">
+        <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">
           Tiến độ theo nhóm câu
         </span>
         <div className="mt-2.5 text-[13px]">
@@ -165,7 +165,7 @@ function DecisionPanelInner({
       </div>
 
       <div className={card}>
-        <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">Xuất kết quả</span>
+        <span className="text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">Xuất kết quả</span>
         <div className="mt-2.5 grid grid-cols-2 gap-2">
           <button type="button" onClick={onExportCsv} className={`${btn} border-dashed`}>
             Export CSV
@@ -183,12 +183,12 @@ function DecisionPanelInner({
             />
           </label>
         </div>
-        <p className="mt-3 text-[11.5px] leading-relaxed text-ink-3">
+        <p className="mt-3 text-[12px] leading-relaxed text-ink-3">
           State tự lưu vào đĩa <code className="font-mono">review_state/{reviewer ? `/${slugPreview(reviewer)}__${slugPreview(model)}.json` : ""}</code>.
           Export CSV khi cần đưa cho bước merge{" "}
           <code className="font-mono">export_annotation_workbooks.py review</code>.
         </p>
-        <div className="mt-3 border-t border-hair pt-3 text-[11.5px] leading-relaxed text-ink-3">
+        <div className="mt-3 border-t border-hair pt-3 text-[12px] leading-relaxed text-ink-3">
           <span className="font-semibold uppercase tracking-[.08em]">Sổ phân công · review_records/</span>
           {peerFiles.length ? (
             <ul className="mt-1.5 space-y-1">
@@ -276,7 +276,7 @@ function SegBtn({
         }
       />
       {children}
-      <kbd className="font-mono text-[10.5px] font-normal">{unset ? "u" : k}</kbd>
+      <kbd className="font-mono text-[11px] font-normal">{unset ? "u" : k}</kbd>
     </button>
   );
 }

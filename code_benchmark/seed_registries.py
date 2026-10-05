@@ -87,6 +87,17 @@ MODELS = [
         "endpoint": "https://llmapi.iec-uit.com/v1",
         "notes": "Compare model for VMLU-MQA all_gold + reading-400 + V-Bench (left endpoint 2026-09-12, MC-4).",
     },
+    {
+        "_id": "qwen3-5-9b-65k",
+        "display_name": "Qwen3.5-9B-65K",
+        "dir_slugs": ["Qwen3_5-9B-65K"],
+        "endpoint_ids": ["iec-uit"],
+        "params": "9B",
+        "quantization": "",
+        "endpoint": "http://llmapi.iec/v1 (internal, VPN)",
+        "notes": "65K-context node (MC-31/MC-32): arm-A baseline + position-bias check "
+                 "MC-35/36. Served via the internal IEC URL; quantization not exposed.",
+    },
 ]
 
 

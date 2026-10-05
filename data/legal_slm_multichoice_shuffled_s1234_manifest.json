@@ -1,0 +1,1620 @@
+{
+ "benchmark": "VLSP2025-LegalSLM public-test",
+ "split": "multichoice",
+ "variant": "shuffled-s1234",
+ "n": 146,
+ "seed": 42,
+ "shuffle_seed": 1234,
+ "source_file": "v_legal_slsp/legal_slm/multichoice.jsonl",
+ "source_sha256": "7b7d7f15ca060040ece55bd62ca18149f4d5b633c3a916870c810bf9f1d05ea3",
+ "input_file": "data/legal_slm_multichoice_shuffled_s1234_input.jsonl",
+ "input_sha256": "4c722b7ff0c3cc1b501989c694ee9535cb3f21cc7a62a56127e3de87dcf0b241",
+ "items": [
+  {
+   "id": "LG-0001",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    3,
+    1,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0002",
+   "gold_new": "D",
+   "gold_old": "C",
+   "perm": [
+    1,
+    0,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0003",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0004",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0005",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0006",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0007",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0008",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0009",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0010",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0011",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0012",
+   "gold_new": "C",
+   "gold_old": "B",
+   "perm": [
+    0,
+    3,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0013",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0014",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0015",
+   "gold_new": "B",
+   "gold_old": "C",
+   "perm": [
+    3,
+    2,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0016",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0017",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0018",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0019",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    1,
+    2,
+    3,
+    0
+   ]
+  },
+  {
+   "id": "LG-0020",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0021",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    3,
+    1
+   ]
+  },
+  {
+   "id": "LG-0022",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0023",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    2,
+    1,
+    0
+   ]
+  },
+  {
+   "id": "LG-0024",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    2,
+    1,
+    0
+   ]
+  },
+  {
+   "id": "LG-0025",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0026",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    1,
+    2,
+    3,
+    0
+   ]
+  },
+  {
+   "id": "LG-0027",
+   "gold_new": "C",
+   "gold_old": "C",
+   "perm": [
+    1,
+    3,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0028",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0029",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    3,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0030",
+   "gold_new": "C",
+   "gold_old": "C",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0031",
+   "gold_new": "C",
+   "gold_old": "C",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0032",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0033",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    3,
+    1
+   ]
+  },
+  {
+   "id": "LG-0034",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0035",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0036",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0037",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0038",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0039",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    2,
+    3,
+    0
+   ]
+  },
+  {
+   "id": "LG-0040",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    2,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0041",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0042",
+   "gold_new": "C",
+   "gold_old": "B",
+   "perm": [
+    0,
+    3,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0043",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0044",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0045",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    1,
+    2,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0046",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    2,
+    1,
+    0
+   ]
+  },
+  {
+   "id": "LG-0047",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0048",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0049",
+   "gold_new": "C",
+   "gold_old": "B",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0050",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0051",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    2,
+    3,
+    0
+   ]
+  },
+  {
+   "id": "LG-0052",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0053",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0054",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0055",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    2,
+    1,
+    0
+   ]
+  },
+  {
+   "id": "LG-0056",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0057",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0058",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0059",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0060",
+   "gold_new": "B",
+   "gold_old": "C",
+   "perm": [
+    1,
+    2,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0061",
+   "gold_new": "A",
+   "gold_old": "C",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0062",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0063",
+   "gold_new": "A",
+   "gold_old": "C",
+   "perm": [
+    2,
+    3,
+    1,
+    0
+   ]
+  },
+  {
+   "id": "LG-0064",
+   "gold_new": "B",
+   "gold_old": "C",
+   "perm": [
+    3,
+    2,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0065",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0066",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0067",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0068",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0069",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0070",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0071",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0072",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    0,
+    1,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0073",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0074",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0075",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0076",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0077",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    3,
+    1
+   ]
+  },
+  {
+   "id": "LG-0078",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    2,
+    1,
+    3,
+    0
+   ]
+  },
+  {
+   "id": "LG-0079",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0080",
+   "gold_new": "C",
+   "gold_old": "C",
+   "perm": [
+    1,
+    3,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0081",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    0,
+    3,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0082",
+   "gold_new": "A",
+   "gold_old": "C",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0083",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0084",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0085",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    1,
+    0
+   ]
+  },
+  {
+   "id": "LG-0086",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0087",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0088",
+   "gold_new": "C",
+   "gold_old": "B",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0089",
+   "gold_new": "C",
+   "gold_old": "B",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0090",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0091",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0092",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    2,
+    0,
+    3,
+    1
+   ]
+  },
+  {
+   "id": "LG-0093",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    2,
+    3,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0094",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0095",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0096",
+   "gold_new": "C",
+   "gold_old": "C",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0097",
+   "gold_new": "C",
+   "gold_old": "B",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0098",
+   "gold_new": "D",
+   "gold_old": "C",
+   "perm": [
+    0,
+    1,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0099",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0100",
+   "gold_new": "C",
+   "gold_old": "C",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0101",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0102",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0103",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0104",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0105",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0106",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0107",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0108",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0109",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0110",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    2,
+    1,
+    3,
+    0
+   ]
+  },
+  {
+   "id": "LG-0111",
+   "gold_new": "D",
+   "gold_old": "C",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0112",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    0,
+    1,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0113",
+   "gold_new": "D",
+   "gold_old": "B",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0114",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    2,
+    1,
+    3,
+    0
+   ]
+  },
+  {
+   "id": "LG-0115",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0116",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0117",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    3,
+    2,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0118",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0119",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0120",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    2,
+    3,
+    1,
+    0
+   ]
+  },
+  {
+   "id": "LG-0121",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0122",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0123",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0124",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0125",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    3,
+    2,
+    0,
+    1
+   ]
+  },
+  {
+   "id": "LG-0126",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    3,
+    0,
+    2,
+    1
+   ]
+  },
+  {
+   "id": "LG-0127",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    2,
+    3,
+    1
+   ]
+  },
+  {
+   "id": "LG-0128",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0129",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    2,
+    3
+   ]
+  },
+  {
+   "id": "LG-0130",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0131",
+   "gold_new": "D",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0132",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    2,
+    3,
+    1
+   ]
+  },
+  {
+   "id": "LG-0133",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    2,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0134",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0135",
+   "gold_new": "A",
+   "gold_old": "B",
+   "perm": [
+    1,
+    0,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0136",
+   "gold_new": "C",
+   "gold_old": "C",
+   "perm": [
+    1,
+    3,
+    2,
+    0
+   ]
+  },
+  {
+   "id": "LG-0137",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0138",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    1,
+    0,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0139",
+   "gold_new": "C",
+   "gold_old": "B",
+   "perm": [
+    0,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "id": "LG-0140",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    3,
+    1,
+    2
+   ]
+  },
+  {
+   "id": "LG-0141",
+   "gold_new": "B",
+   "gold_old": "A",
+   "perm": [
+    2,
+    0,
+    3,
+    1
+   ]
+  },
+  {
+   "id": "LG-0142",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    1,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0143",
+   "gold_new": "A",
+   "gold_old": "A",
+   "perm": [
+    0,
+    1,
+    3,
+    2
+   ]
+  },
+  {
+   "id": "LG-0144",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  },
+  {
+   "id": "LG-0145",
+   "gold_new": "B",
+   "gold_old": "B",
+   "perm": [
+    2,
+    1,
+    0,
+    3
+   ]
+  },
+  {
+   "id": "LG-0146",
+   "gold_new": "C",
+   "gold_old": "A",
+   "perm": [
+    3,
+    1,
+    0,
+    2
+   ]
+  }
+ ]
+}

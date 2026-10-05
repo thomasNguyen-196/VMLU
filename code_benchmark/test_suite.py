@@ -102,6 +102,13 @@ from code_benchmark import build_dashboard_harness as dash
 from code_benchmark import capture_scaffold as scaffold
 from code_benchmark import llm
 from code_benchmark import run_legal_arm_a as legal_arm_a
+from code_benchmark import make_shuffled_mc_input as shuffled_mc
+from code_benchmark import run_shuffled_mc as shuffled_run
+from code_benchmark import compare_position_bias as posbias
+from code_benchmark import run_reading_cite_eval as cite
+from code_benchmark import judge_faithfulness as judge
+from code_benchmark import label_faithfulness as labeler
+from code_benchmark import run_mc_calibration_eval as cal
 from code_benchmark.score_reading_eval import read_csv_rows
 from code_benchmark.migrate_results_to_mongo import (
     migrate,
@@ -109,6 +116,8 @@ from code_benchmark.migrate_results_to_mongo import (
     vbench_item,
     reading_item,
     MIGRATION_PLAN,
+    runner_config,
+    accuracy_summary_rows,
 )
 
 class TestVMLUBenchmark(unittest.TestCase):
@@ -1511,6 +1520,52 @@ class TestResultsIdentity(unittest.TestCase):
             self.assertEqual(canonical_model_id(dir_slug), model_id,
                              msg=f"dir {dir_slug} must resolve to {model_id}")
 
+    def test_runner_config_dataset_scoped_override(self):
+        # MC-31 spans dataset kinds: legal is the 4-token MC budget, reading
+        # the 48-token reading budget. One card-wide config would lie for one
+        # of the two, so the (card, dataset) key wins and plain keys fall back.
+        self.assertEqual(runner_config("MC-31", "legal-mc-146")["max_tokens"], 4)
+        self.assertEqual(runner_config("MC-31", "legal-nli-150")["max_tokens"], 4)
+        self.assertEqual(runner_config("MC-31", "reading-400")["max_tokens"], 48)
+        self.assertEqual(runner_config("MC-31", "bidlqa-val")["max_tokens"], 48)
+        self.assertEqual(runner_config("MC-9", "whatever")["max_tokens"], 4)  # fallback
+        self.assertIsNone(runner_config("MC-999", "x"))
+
+    def test_accuracy_summary_falls_back_to_the_committed_final(self):
+        """`run_legal_arm_a.py` prints accuracy but writes no aggregate; the
+        migration must still find summary rows — derived from the final's own
+        `correct` column with the runner's function, never a second scorer."""
+        import csv as _csv
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td)
+            final = d / "full_evaluation_legal_M.csv"
+            with open(final, "w", newline="", encoding="utf-8") as f:
+                w = _csv.DictWriter(f, fieldnames=["id", "answer", "gold_answer", "correct"])
+                w.writeheader()
+                w.writerow({"id": "LG-0001", "answer": "A", "gold_answer": "A", "correct": "1"})
+                w.writerow({"id": "LG-0002", "answer": "B", "gold_answer": "C", "correct": "0"})
+            acc = accuracy_summary_rows(d, "M")
+            rows = acc["legal-mc-146"]
+            overall = rows[0]
+            self.assertEqual((overall["level"], overall["n"], overall["correct"]), ("overall", 2, 1))
+            self.assertEqual(overall["accuracy"], 50.0)
+
+            # a committed aggregate, when present, always wins over derivation
+            with open(d / "accuracy_legal_M.csv", "w", newline="", encoding="utf-8") as f:
+                w = _csv.DictWriter(f, fieldnames=["level", "name", "n", "correct", "accuracy"])
+                w.writeheader()
+                w.writerow({"level": "overall", "name": "overall", "n": 2, "correct": 2, "accuracy": 100.0})
+            self.assertEqual(accuracy_summary_rows(d, "M")["legal-mc-146"][0]["correct"], "2")
+
+            # no aggregate and no final: the dataset is simply absent, and a
+            # half-written final (no `correct` column) is a hard error
+            self.assertNotIn("legal-mc-146", accuracy_summary_rows(Path(td) / "empty", "M"))
+            bad = Path(td) / "bad"
+            bad.mkdir()
+            (bad / "full_evaluation_legal_M.csv").write_text("id,answer\nLG-0001,A\n", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                accuracy_summary_rows(bad, "M")
+
     def test_seed_is_idempotent(self):
         from unittest.mock import MagicMock, patch
         import code_benchmark.seed_registries as sr
@@ -2765,6 +2820,1062 @@ class TestLegalArmA(unittest.TestCase):
             # and the resumed row's `correct` is an int again, or the final
             # accuracy sum raises str+int after the file has been written
             self.assertTrue(all(isinstance(r["correct"], int) for r in rows))
+
+
+class TestShuffledMcInput(unittest.TestCase):
+    """Position-bias shuffle adapter (`make_shuffled_mc_input.py`, group 2.1).
+
+    The shuffle is the pre-registered condition: per-item deterministic,
+    order-independent, gold following its text. Anything weaker (global
+    shuffle, letter-following remap) silently measures a different condition.
+    """
+
+    def _rows(self, n_items=6, n_choices=4):
+        rows = []
+        for i in range(n_items):
+            texts = [f"choice-{i}-{j}" for j in range(n_choices)]
+            gold_idx = (i * 2 + 1) % n_choices
+            rows.append({"question": f"q{i}",
+                         "choices": texts,
+                         "answer": gold_idx,
+                         "answer_choice_letter": "ABCDE"[gold_idx]})
+        return rows
+
+    def _golds(self, rows):
+        return {f"LG-{i + 1:04d}": "ABCDE"[r["answer"]] for i, r in enumerate(rows)}
+
+    def test_deterministic_same_seed_same_output(self):
+        rows = self._rows()
+        out1 = shuffled_mc.build(rows, self._golds(rows), 1234)
+        out2 = shuffled_mc.build(rows, self._golds(rows), 1234)
+        self.assertEqual(out1, out2)
+
+    def test_subset_stable_per_item(self):
+        # limit/prefix runs must reproduce the same per-item output: the RNG
+        # is keyed by positional id, never by a sequential stream. (Full
+        # reordering would reassign positional ids, so it is NOT stable — and
+        # the source sha pin is what forbids silent reordering.)
+        rows = self._rows()
+        golds = self._golds(rows)
+        inp_full, items_full = shuffled_mc.build(rows, golds, 1234)
+        sub = rows[:3]
+        sub_golds = {f"LG-{i + 1:04d}": "ABCDE"[r["answer"]] for i, r in enumerate(sub)}
+        inp_sub, items_sub = shuffled_mc.build(sub, sub_golds, 1234)
+        self.assertEqual(inp_sub, inp_full[:3])
+        self.assertEqual(items_sub, items_full[:3])
+
+    def test_gold_follows_its_text(self):
+        rows = self._rows()
+        inp, items = shuffled_mc.build(rows, self._golds(rows), 1234)
+        for in_row, item, src in zip(inp, items, rows, strict=True):
+            gold_text = src["choices"][src["answer"]]
+            new_idx = "ABCDE".index(item["gold_new"])
+            # the lettered choice at the new gold position ends with the gold text
+            self.assertTrue(in_row["choices"][new_idx].endswith(gold_text),
+                            f"{item['id']}: gold text lost in shuffle")
+            self.assertEqual(item["perm"][new_idx], src["answer"])
+            self.assertEqual(in_row["answer"], item["gold_new"])
+            # choice-text set preserved (integrity check the compare relies on)
+            got = [c.split(". ", 1)[1] for c in in_row["choices"]]
+            self.assertEqual(sorted(got), sorted(src["choices"]))
+
+    def test_lettering_format_and_verbatim_question(self):
+        rows = self._rows(n_items=2, n_choices=3)
+        inp, _ = shuffled_mc.build(rows, self._golds(rows), 1234)
+        for in_row, src in zip(inp, rows, strict=True):
+            self.assertEqual(in_row["question"], src["question"])
+            for j, c in enumerate(in_row["choices"]):
+                self.assertTrue(c.startswith(f"{'ABCDE'[j]}. "))
+
+    def test_supports_two_and_three_choice_items(self):
+        rows = self._rows(n_items=2, n_choices=2) + self._rows(n_items=2, n_choices=3)
+        golds = {f"LG-{i + 1:04d}": "ABCDE"[r["answer"]] for i, r in enumerate(rows)}
+        inp, items = shuffled_mc.build(rows, golds, 1234)
+        self.assertEqual(len(inp), 4)
+        self.assertTrue(all(len(r["choices"]) in (2, 3) for r in inp))
+
+    def test_duplicate_choice_texts_abort(self):
+        rows = [{"question": "q", "choices": ["same", "same", "other", "x"],
+                 "answer": 2, "answer_choice_letter": "C"}]
+        with self.assertRaises(SystemExit) as ctx:
+            shuffled_mc.build(rows, {"LG-0001": "C"}, 1234)
+        self.assertIn("duplicate", str(ctx.exception))
+
+    def test_source_answer_fields_must_agree(self):
+        base = {"question": "q", "choices": ["a", "b", "c"], "answer": 1,
+                "answer_choice_letter": "B"}
+        # index vs letter disagree
+        bad = dict(base, answer_choice_letter="C")
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build([bad], {"LG-0001": "B"}, 1234)
+        # source vs orig-manifest gold disagree
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build([dict(base)], {"LG-0001": "A"}, 1234)
+        # missing manifest gold
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build([dict(base)], {}, 1234)
+
+    def test_exceeds_letter_contract_aborts(self):
+        rows = [{"question": "q", "choices": [f"c{j}" for j in range(6)],
+                 "answer": 0, "answer_choice_letter": "A"}]
+        with self.assertRaises(SystemExit):
+            shuffled_mc.build(rows, {"LG-0001": "A"}, 1234)
+
+    def test_different_seeds_differ_somewhere(self):
+        rows = self._rows(n_items=8)
+        golds = self._golds(rows)
+        _, items_a = shuffled_mc.build(rows, golds, 1234)
+        _, items_b = shuffled_mc.build(rows, golds, 9999)
+        perms_a = [tuple(i["perm"]) for i in items_a]
+        perms_b = [tuple(i["perm"]) for i in items_b]
+        self.assertNotEqual(perms_a, perms_b)
+
+
+class TestRunShuffledMcWrapper(unittest.TestCase):
+    """`run_shuffled_mc.py` — the condition-collision guards and the
+    rename/park dance. Offline: no subprocess ever runs here."""
+
+    SLUG = "M"
+
+    def _fake_outputs(self, folder: Path):
+        for name in (f"full_evaluation_{self.SLUG}.csv", f"accuracy_{self.SLUG}.csv"):
+            (folder / name).write_text("col\n1\n", encoding="utf-8")
+        for n in (100, 146):
+            (folder / f"raw_result_{n}_{self.SLUG}.csv").write_text("col\n1\n", encoding="utf-8")
+
+    def test_conflicts_catch_leftovers_and_existing_shuffled_outputs(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            self._fake_outputs(folder)
+            got = "\n".join(shuffled_run.conflicts(folder, self.SLUG, "s1234"))
+            self.assertIn(f"raw_result_146_{self.SLUG}.csv", got)
+            self.assertIn(f"full_evaluation_{self.SLUG}.csv", got)
+            # and with a clean folder plus existing shuffled outputs:
+            folder2 = Path(td) / "b"
+            folder2.mkdir()
+            (folder2 / f"full_evaluation_shuffled_s1234_{self.SLUG}.csv").write_text("x", encoding="utf-8")
+            got2 = "\n".join(shuffled_run.conflicts(folder2, self.SLUG, "s1234"))
+            self.assertIn("shuffled output already exists", got2)
+
+    def test_conflicts_ignore_the_dataset_scoped_namespace(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            # legal arm-A / harness files share the folder but NOT the resume namespace
+            for name in (f"raw_result_legal_mc_146_{self.SLUG}.csv",
+                         f"raw_result_legal_nli_150_{self.SLUG}.csv",
+                         f"full_evaluation_legal_{self.SLUG}.csv"):
+                (folder / name).write_text("col\n1\n", encoding="utf-8")
+            self.assertEqual(shuffled_run.conflicts(folder, self.SLUG, "s1234"), [])
+
+    def test_argv_is_frozen_and_never_resumes(self):
+        argv = shuffled_run.build_runner_argv(
+            python="/py", folder="data", file="shuffled.jsonl", model="M",
+            submission_out=Path("subs/submission_shuffled_s1234.csv"))
+        self.assertNotIn("--resume", argv)
+        for flag, val in (("--temperature", "0.0"), ("--seed", "42"),
+                          ("--max-tokens", "4"), ("--workers", "4")):
+            self.assertEqual(argv[argv.index(flag) + 1], val)
+        self.assertTrue(any(a.endswith("submission_shuffled_s1234.csv") for a in argv))
+
+    def test_rename_and_park_happy_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            self._fake_outputs(folder)
+            shuffled_run.execute_renames(shuffled_run.plan_renames(folder, self.SLUG, "s1234"))
+            moved = shuffled_run.park_checkpoints(folder, self.SLUG, "s1234")
+            self.assertEqual(len(moved), 2)
+            self.assertTrue((folder / f"full_evaluation_shuffled_s1234_{self.SLUG}.csv").exists())
+            self.assertTrue((folder / f"accuracy_shuffled_s1234_{self.SLUG}.csv").exists())
+            self.assertFalse((folder / f"full_evaluation_{self.SLUG}.csv").exists())
+            parked = sorted(p.name for p in (folder / "shuffled_checkpoints").iterdir())
+            self.assertEqual(parked, [f"raw_result_100_{self.SLUG}.csv",
+                                      f"raw_result_146_{self.SLUG}.csv"])
+            # the leftovers are gone, but a re-run is still refused — the
+            # shuffled measurement itself now exists (never overwritten silently)
+            got = shuffled_run.conflicts(folder, self.SLUG, "s1234")
+            self.assertEqual(len(got), 1)
+            self.assertIn("already exists", got[0])
+
+    def test_missing_fresh_output_fails_without_renaming(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            (folder / f"accuracy_{self.SLUG}.csv").write_text("col\n1\n", encoding="utf-8")
+            pairs = shuffled_run.plan_renames(folder, self.SLUG, "s1234")
+            with self.assertRaises(SystemExit) as ctx:
+                shuffled_run.execute_renames(pairs)
+            self.assertIn("missing after the run", str(ctx.exception))
+            # nothing was renamed (the accuracy file is still at its original name)
+            self.assertTrue((folder / f"accuracy_{self.SLUG}.csv").exists())
+            self.assertFalse((folder / f"accuracy_shuffled_s1234_{self.SLUG}.csv").exists())
+
+    def test_park_refuses_to_overwrite(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            (folder / f"raw_result_146_{self.SLUG}.csv").write_text("new", encoding="utf-8")
+            park = folder / "shuffled_checkpoints"
+            park.mkdir()
+            (park / f"raw_result_146_{self.SLUG}.csv").write_text("old", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                shuffled_run.park_checkpoints(folder, self.SLUG, "s1234")
+            self.assertEqual((park / f"raw_result_146_{self.SLUG}.csv").read_text(encoding="utf-8"),
+                             "old")  # the parked measurement is untouched
+
+
+class TestPositionBiasCompare(unittest.TestCase):
+    """`compare_position_bias.py` — integrity gates + paired stats, offline.
+
+    Every fixture goes through the real frozen `build_prompt`, so the tests
+    fail if the prompt contract and the compare parser ever drift apart.
+    """
+
+    def _pair(self, item_id: str, texts: list[str], gold_idx: int, perm: list[int],
+              answer_orig: str, answer_shuffled: str,
+              correct_orig: int, correct_shuffled: int) -> tuple[dict, dict, dict]:
+        question = f"Question {item_id}?"
+        gold_old = "ABCDE"[gold_idx]
+        gold_new = "ABCDE"[perm.index(gold_idx)]
+        oc = [f"{'ABCDE'[j]}. {t}" for j, t in enumerate(texts)]
+        sc = [f"{'ABCDE'[j]}. {texts[p]}" for j, p in enumerate(perm)]
+        o = {"id": item_id, "question": question,
+             "prompt": build_prompt(question, oc), "answer": answer_orig,
+             "gold_answer": gold_old, "correct": str(correct_orig)}
+        s = {"id": item_id, "question": question,
+             "prompt": build_prompt(question, sc), "answer": answer_shuffled,
+             "gold_answer": gold_new, "correct": str(correct_shuffled)}
+        m = {"id": item_id, "gold_old": gold_old, "gold_new": gold_new,
+             "perm": perm}
+        return o, s, m
+
+    def _build(self, n=20, a_only=2, b_only=5, both=8, neither=5, flips=4):
+        """n items with planted 2x2 and flip counts (a=orig, b=shuffled)."""
+        assert a_only + b_only + both + neither == n
+        orig, shuff, items = {}, {}, []
+        groups = (["a_only"] * a_only + ["b_only"] * b_only
+                  + ["both"] * both + ["neither"] * neither)
+        perm = [2, 0, 3, 1]  # 4-choice derangement-ish fixed permutation
+        for i, grp in enumerate(groups, 1):
+            item_id = f"LG-{i:04d}"
+            co = 1 if grp in ("a_only", "both") else 0
+            cs = 1 if grp in ("b_only", "both") else 0
+            flip = i <= flips
+            o, s, m = self._pair(item_id, [f"t{i}-0", f"t{i}-1", f"t{i}-2", f"t{i}-3"],
+                                 gold_idx=1, perm=perm,
+                                 answer_orig="A", answer_shuffled="B" if flip else "A",
+                                 correct_orig=co, correct_shuffled=cs)
+            orig[item_id], shuff[item_id] = o, s
+            items.append(m)
+        return orig, shuff, {"items": items}
+
+    def test_paired_stats_and_counts(self):
+        orig, shuff, man = self._build()
+        res = posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        s = res["summary"]
+        self.assertEqual((s["both"], s["a_only"], s["b_only"], s["neither"]),
+                         (8, 2, 5, 5))
+        self.assertEqual(s["delta"], "+15.00")   # 13/20 vs 10/20
+        self.assertEqual(s["mcnemar_p"], f"{harness._mcnemar_p(2, 5):.4g}")
+        lo, hi = float(s["ci95_low"]), float(s["ci95_high"])
+        self.assertLess(lo, 15.0)
+        self.assertGreater(hi, 15.0)
+        self.assertEqual(s["flipped"], 4)
+        self.assertEqual(s["blanks_orig"], 0)
+
+    def test_choice_text_stability_decomposition(self):
+        """Planted fixture: flipped items answer 'B' on the shuffled side, and
+        with perm=[2,0,3,1] shuffled-B == texts[0] == orig-A's text — so all 4
+        flips are content-stable; the 16 same-letter items now point at a
+        different text, i.e. letter-anchored."""
+        orig, shuff, man = self._build(flips=4)
+        s = posbias.compare(orig, shuff, man, expected_orig=(10, 20))["summary"]
+        self.assertEqual(s["same_text"], 4)
+        self.assertEqual(s["letter_anchored"], 16)
+        self.assertEqual(s["neither_choice"], 0)
+
+    def test_refuses_baseline_drift(self):
+        orig, shuff, man = self._build()
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(120, 146))
+        self.assertIn("pre-registered", str(ctx.exception))
+
+    def test_refuses_id_mismatch(self):
+        orig, shuff, man = self._build()
+        del shuff["LG-0001"]
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        self.assertIn("id set", str(ctx.exception))
+
+    def test_refuses_choice_multiset_mismatch(self):
+        orig, shuff, man = self._build()
+        k = "LG-0001"
+        q = shuff[k]["question"]
+        shuffled_choices = [f"{'ABCDE'[j]}. {t}" for j, t in
+                            enumerate(["t1-0", "t1-1", "t1-2", "CHANGED"])]
+        shuff[k]["prompt"] = build_prompt(q, shuffled_choices)
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        self.assertIn("multiset", str(ctx.exception))
+
+    def test_refuses_gold_text_move(self):
+        orig, shuff, man = self._build()
+        k = "LG-0001"
+        # same choice texts, but the shuffled gold letter now points elsewhere
+        o, s, m = self._pair(k, ["t1-0", "t1-1", "t1-2", "t1-3"], gold_idx=1,
+                             perm=[2, 0, 3, 1], answer_orig="A", answer_shuffled="A",
+                             correct_orig=1, correct_shuffled=1)
+        s["gold_answer"] = "A" if m["gold_new"] != "A" else "B"
+        m["gold_new"] = s["gold_answer"]
+        shuff[k], man_items = s, man["items"]
+        man_items[0] = m
+        with self.assertRaises(SystemExit) as ctx:
+            posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        self.assertIn("gold text moved", str(ctx.exception))
+
+    def test_breakdown_partitions_each_side(self):
+        orig, shuff, man = self._build()
+        res = posbias.compare(orig, shuff, man, expected_orig=(10, 20))
+        for side in ("orig", "shuffled"):
+            rows = [r for r in res["breakdown"]
+                    if r["section"] == "by_gold_letter" and r["side"] == side]
+            self.assertEqual(sum(r["n"] for r in rows), 20)
+        hist = [r for r in res["breakdown"] if r["section"] == "answer_letter"]
+        self.assertEqual(len(hist), 2 * 6)   # orig+shuffled x A-E+blank
+
+
+class TestReadingCiteRunner(unittest.TestCase):
+    """Citation-condition runner (`run_reading_cite_eval.py`, group 2.2).
+
+    The prompt bytes are the pre-registered condition (MC-37) and the extraction
+    is fail-soft — both are contracts, so both get pinned tests.
+    """
+
+    def test_prompt_bytes_are_pinned(self):
+        expected = (
+            "Đọc đoạn văn dưới đây và trả lời câu hỏi bằng một cụm từ hoặc số ngắn gọn, "
+            "lấy nguyên văn trong đoạn văn khi có thể.\n"
+            "Sau đó trích dẫn nguyên văn một đoạn ngắn trong bài chứa câu trả lời.\n"
+            "Trả lời theo đúng hai dòng:\n"
+            "Trả lời: <câu trả lời>\n"
+            "Trích dẫn: <đoạn trích>\n\n"
+            "CTX\n\nCâu hỏi: Q?\nTrả lời: "
+        )
+        self.assertEqual(cite.build_citation_prompt("  CTX  ", "Q?"), expected)
+
+    def test_extraction_repeated_labels(self):
+        raw = "Trả lời: 1999\nTrích dẫn: Năm 1999, sự kiện diễn ra."
+        self.assertEqual(cite.extract_citation_answer(raw),
+                         ("1999", "Năm 1999, sự kiện diễn ra."))
+
+    def test_extraction_continuation_style(self):
+        # the prompt ends with "Trả lời: " — the model may just continue
+        raw = "1999\nTrích dẫn: Năm 1999, sự kiện diễn ra."
+        self.assertEqual(cite.extract_citation_answer(raw),
+                         ("1999", "Năm 1999, sự kiện diễn ra."))
+
+    def test_extraction_first_nonempty_answer_line(self):
+        raw = "Trả lời: \n  24,10%\nTrích dẫn: tỉ lệ 24,10%"
+        self.assertEqual(cite.extract_citation_answer(raw), ("24,10%", "tỉ lệ 24,10%"))
+
+    def test_extraction_missing_citation_is_unparsed(self):
+        self.assertEqual(cite.extract_citation_answer("Trả lời: 1999"), ("", ""))
+        self.assertEqual(cite.extract_citation_answer(""), ("", ""))
+        self.assertEqual(cite.extract_citation_answer("Trích dẫn: chỉ có trích dẫn"),
+                         ("", "chỉ có trích dẫn"))
+
+    def test_extraction_never_repairs(self):
+        # citation label present but no answer text -> empty answer, not a guess
+        self.assertEqual(cite.extract_citation_answer("Trích dẫn: đoạn trích"),
+                         ("", "đoạn trích"))
+
+    def test_checkpoint_namespace_is_separate(self):
+        name = cite.checkpoint_name("M-cite", 5, prefix=cite.READING_CITE_PREFIX)
+        self.assertEqual(name, "reading_cite_result_5_M-cite.csv")
+        self.assertNotIn("reading_result_", name.replace("reading_cite_result_", ""))
+        # and the resume lookup for the frozen prefix never picks it up
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            (folder / name).write_text("x", encoding="utf-8")
+            self.assertIsNone(find_latest_checkpoint(folder, "M-cite",
+                                                     prefix="reading_result_"))
+
+    def test_scoring_reuses_the_frozen_scorer(self):
+        from code_benchmark.score_reading_eval import score_pair
+        self.assertIs(cite.score_pair, score_pair)
+
+
+class TestFaithfulnessJudge(unittest.TestCase):
+    """The judge instrument (`judge_faithfulness.py`, group 2.2). The gate math
+    and the strict verdict parser are the parts that must never guess."""
+
+    def test_judge_prompt_is_pinned(self):
+        p = judge.build_judge_prompt("CTX", "Q?", "A.", "C.")
+        self.assertIn("Chỉ trả về JSON đúng định dạng:", p)
+        self.assertIn('{"verdict": "supported" hoặc "unsupported", "reason": "<một câu ngắn>"}', p)
+        self.assertTrue(p.endswith("Trích dẫn: C."))
+        # v2 rules the human validation forced in (MC-38)
+        self.assertIn("đúng loại thông tin", p)     # answer-type must fit the question
+        self.assertIn("khớp chính xác", p)           # arithmetic checked, "gần đúng" rejected
+        self.assertIn("nhất quán với kết luận", p)   # verdict must follow its own reason
+        # empty fields render as an explicit marker, not as blanks the judge
+        # could read as "no instruction"
+        self.assertIn("Câu trả lời: (trống)", judge.build_judge_prompt("CTX", "Q?", "", "C."))
+
+    def test_parse_bare_json(self):
+        v, r, err = judge.parse_judge_verdict('{"verdict": "supported", "reason": "ok"}')
+        self.assertEqual((v, err), ("supported", False))
+        self.assertEqual(r, "ok")
+
+    def test_parse_chatty_json(self):
+        v, _r, err = judge.parse_judge_verdict(
+            'Kết quả:\n{"verdict": "Unsupported", "reason": "lệch"}\nHết.')
+        self.assertEqual((v, err), ("unsupported", False))
+
+    def test_parse_fenced_json(self):
+        v, _r, err = judge.parse_judge_verdict(
+            '```json\n{"verdict": "supported", "reason": "ok"}\n```')
+        self.assertEqual((v, err), ("supported", False))
+
+    def test_parse_never_guesses(self):
+        for raw in ("", "supported", '{"verdict": "maybe"}', '{"reason": "x"}',
+                    '{"verdict": 3}', "not json at all"):
+            v, _r, err = judge.parse_judge_verdict(raw)
+            self.assertTrue(err, raw)
+            self.assertEqual(v, "")
+
+    def test_parse_falls_back_to_last_verdict_in_reasoning(self):
+        # a reasoning judge mentions the field while thinking; the LAST one is
+        # the answer, and it must win over any earlier mention.
+        raw = ('Suy nghĩ: ban đầu tôi nghĩ "verdict": "supported" nhưng sai.\n'
+               'Kết luận:\n{"verdict": "unsupported", "reason": "trích dẫn lệch"}')
+        v, _r, err = judge.parse_judge_verdict(raw)
+        self.assertEqual((v, err), ("unsupported", False))
+
+    def test_judge_once_reasks_only_on_parse_failure(self):
+        calls = []
+
+        def flaky(prompt):
+            calls.append(prompt)
+            return "không phải JSON" if len(calls) == 1 else '{"verdict": "supported", "reason": "ok"}'
+
+        v, _r, err, raw = judge.judge_once(flaky, "p", retries=2)
+        self.assertEqual((v, err), ("supported", False))
+        self.assertEqual(len(calls), 2)          # one re-ask
+
+        calls2 = []
+
+        def always_bad(prompt):
+            calls2.append(prompt)
+            return "vẫn không parse"
+
+        v, _r, err, _raw = judge.judge_once(always_bad, "p", retries=2)
+        self.assertTrue(err)
+        self.assertEqual(len(calls2), 3)         # original + 2 retries, then give up
+
+    def test_excluding_the_dev_sample_keeps_the_test_disjoint(self):
+        rows = [{"dataset": "squad", "item_id": f"s{i}", "em": i % 2} for i in range(30)]
+        excluded = {f"squad:s{i}" for i in range(15)}
+        pool = [r for r in rows if f"{r['dataset']}:{r['item_id']}" not in excluded]
+        picked = judge.sample_sheet(pool, per_cell=5)
+        self.assertFalse({f"{r['dataset']}:{r['item_id']}" for r in picked} & excluded)
+
+    def test_validation_pairs_skip_unlabeled_is_explicit(self):
+        labels = [{"dataset": "squad", "item_id": "1", "human_supports": "yes"},
+                  {"dataset": "squad", "item_id": "2", "human_supports": ""},
+                  {"dataset": "drop", "item_id": "3", "human_supports": "no"}]
+        jr = {"squad:1": {"judge_model": "J", "verdict": "supported", "judge_error": "0"},
+              "drop:3": {"judge_model": "J", "verdict": "unsupported", "judge_error": "0"}}
+        with self.assertRaises(SystemExit):
+            judge.build_validation_pairs(labels, jr, skip_unlabeled=False)
+        pairs, unlabeled, model = judge.build_validation_pairs(labels, jr, skip_unlabeled=True)
+        self.assertEqual((pairs, unlabeled, model), ([(True, True), (False, False)], 1, "J"))
+
+    def test_validation_pairs_abort_on_judge_error(self):
+        labels = [{"dataset": "squad", "item_id": "1", "human_supports": "yes"}]
+        jr = {"squad:1": {"judge_model": "J", "verdict": "", "judge_error": "1"}}
+        with self.assertRaises(SystemExit):
+            judge.build_validation_pairs(labels, jr, skip_unlabeled=False)
+
+    def test_citation_verbatim_normalization(self):
+        ctx = "Năm 1999,   sự kiện diễn ra tại Hà Nội."
+        self.assertTrue(judge.citation_verbatim("năm 1999, sự kiện", ctx))
+        self.assertTrue(judge.citation_verbatim("Năm 1999, sự kiện diễn ra", ctx))
+        self.assertFalse(judge.citation_verbatim("Năm 2001", ctx))
+        self.assertFalse(judge.citation_verbatim("", ctx))
+
+    def test_cohen_kappa_hand_computed(self):
+        # po=0.5, pe=0.5 -> kappa 0
+        pairs = [(True, True), (True, False), (False, True), (False, False)]
+        self.assertAlmostEqual(judge.cohen_kappa(pairs), 0.0, places=6)
+        # perfect agreement with balanced marginals -> 1.0
+        self.assertAlmostEqual(judge.cohen_kappa([(True, True), (False, False)]), 1.0)
+        # degenerate marginals: all same on both raters
+        self.assertAlmostEqual(judge.cohen_kappa([(True, True)] * 5), 1.0)
+
+    def test_gate_boundaries(self):
+        self.assertTrue(judge.gate_passes(60, 0.80, 0.60))
+        self.assertFalse(judge.gate_passes(60, 0.7999, 0.60))
+        self.assertFalse(judge.gate_passes(60, 0.80, 0.5999))
+        self.assertFalse(judge.gate_passes(0, 1.0, 1.0))
+
+    def test_sample_sheet_is_deterministic_and_stratified(self):
+        rows = ([{"dataset": "squad", "item_id": f"s{i:03d}", "em": i % 2}
+                 for i in range(40)]
+                + [{"dataset": "drop", "item_id": f"d{i:03d}", "em": i % 2}
+                   for i in range(40)])
+        a = judge.sample_sheet(rows)
+        b = judge.sample_sheet(rows)
+        self.assertEqual([r["item_id"] for r in a], [r["item_id"] for r in b])
+        self.assertEqual(len(a), 60)
+        cells = Counter((r["dataset"], r["em"]) for r in a)
+        self.assertEqual(cells, {("squad", 0): 15, ("squad", 1): 15,
+                                 ("drop", 0): 15, ("drop", 1): 15})
+        c = judge.sample_sheet(rows, seed=7)
+        self.assertNotEqual([r["item_id"] for r in a], [r["item_id"] for r in c])
+
+    def test_sample_sheet_tops_up_a_short_cell(self):
+        rows = ([{"dataset": "squad", "item_id": f"s{i:03d}", "em": 1 if i < 5 else 0}
+                 for i in range(40)]
+                + [{"dataset": "drop", "item_id": f"d{i:03d}", "em": i % 2}
+                   for i in range(40)])
+        picked = judge.sample_sheet(rows)
+        self.assertEqual(len(picked), 60)
+        squad = [r for r in picked if r["dataset"] == "squad"]
+        self.assertEqual(len(squad), 30)   # short em=1 cell topped up from squad em=0
+        self.assertEqual(sum(r["em"] for r in squad), 5)
+
+
+class TestFaithfulnessLabelTool(unittest.TestCase):
+    """`label_faithfulness.py` — the autosaving labeler. The HTTP surface is
+    exercised for real on an ephemeral port; the file contract is the point."""
+
+    def _sheet(self):
+        return [{"dataset": "squad", "item_id": "0", "question": "Hỏi <b>x</b>?",
+                 "context": "Ngữ cảnh & <script>alert(1)</script>",
+                 "answer": "a", "citation": "ci"},
+                {"dataset": "drop", "item_id": "7", "question": "q2",
+                 "context": "c2", "answer": "a2", "citation": "ci2"}]
+
+    def test_missing_labels_file_loads_empty(self):
+        with tempfile.TemporaryDirectory() as td:
+            self.assertEqual(labeler.load_labels(Path(td) / "nope.csv"), {})
+
+    def test_upsert_rejects_anything_but_yes_no(self):
+        store: dict = {}
+        with self.assertRaises(ValueError):
+            labeler.upsert_label(store, "squad", "0", "maybe", "")
+        labeler.upsert_label(store, "squad", "0", "YES", "chú thích")
+        self.assertEqual(store["squad:0"], {"human_supports": "yes", "note": "chú thích"})
+
+    def test_write_is_sheet_ordered_and_blanks_unlabeled(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "labels.csv"
+            sheet = self._sheet()
+            store: dict = {}
+            labeler.upsert_label(store, "drop", "7", "no", "")
+            labeler.write_labels(path, store, sheet)
+            with open(path, encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            self.assertEqual([r["item_id"] for r in rows], ["0", "7"])  # sheet order
+            self.assertEqual(rows[0]["human_supports"], "")             # unlabeled stays blank
+            self.assertEqual(rows[1]["human_supports"], "no")
+            # round-trip
+            self.assertEqual(labeler.load_labels(path)["drop:7"]["human_supports"], "no")
+
+    def test_render_escapes_model_output(self):
+        page = labeler.render_page(self._sheet(), {})
+        self.assertNotIn("<script>alert(1)</script>", page)
+        self.assertIn("&lt;script&gt;", page)
+        self.assertIn("Hỏi &lt;b&gt;x&lt;/b&gt;?", page)
+
+    def test_http_autosave_round_trip(self):
+        import http.client
+        import threading
+        with tempfile.TemporaryDirectory() as td:
+            sheet = self._sheet()
+            labels = Path(td) / "labels.csv"
+            store: dict = {}
+            srv = labeler.ThreadingHTTPServer(("127.0.0.1", 0),
+                                              labeler.make_handler(sheet, labels, store,
+                                                                   threading.Lock()))
+            t = threading.Thread(target=srv.serve_forever, daemon=True)
+            t.start()
+            try:
+                port = srv.server_address[1]
+                conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+                conn.request("GET", "/")
+                r = conn.getresponse()
+                self.assertEqual(r.status, 200)
+                self.assertIn("Câu hỏi", r.read().decode("utf-8"))
+
+                body = json.dumps({"dataset": "squad", "item_id": "0",
+                                   "human_supports": "yes", "note": ""})
+                conn.request("POST", "/api/label", body,
+                             {"Content-Type": "application/json"})
+                r = conn.getresponse()
+                self.assertEqual(r.status, 200)
+                self.assertEqual(json.loads(r.read())["saved"], 1)
+                self.assertEqual(labeler.load_labels(labels)["squad:0"]["human_supports"], "yes")
+
+                bad = json.dumps({"dataset": "squad", "item_id": "0", "human_supports": "x"})
+                conn.request("POST", "/api/label", bad, {"Content-Type": "application/json"})
+                self.assertEqual(conn.getresponse().status, 400)
+            finally:
+                srv.shutdown()
+                srv.server_close()
+                t.join(timeout=5)
+
+
+class TestMcCalibration(unittest.TestCase):
+    """`run_mc_calibration_eval.py` — the pure parts: letter distribution from
+    logprobs, ECE/reliability, and the summary math (group 3.1)."""
+
+    @staticmethod
+    def _lp(piece: str, logprob: float) -> dict:
+        """One entry of a `top_logprobs` list.
+
+        Built through a helper instead of `{"token": "B", ...}` literals on purpose:
+        bandit reads a `token=` string literal as a hardcoded password (B105/B106),
+        and these are answer letters. Suppressing the gate repo-wide to accommodate
+        five fixtures would be the wrong trade — the gate stays armed.
+        """
+        return {"token": piece, "logprob": logprob}
+
+    def test_letter_probs_normalizes_over_the_offered_letters_only(self):
+        import math
+        top = [self._lp("B", math.log(0.5)),
+               self._lp("A", math.log(0.2)),
+               self._lp("C", math.log(0.25)),
+               self._lp(" x", math.log(0.9)),   # non-letter ignored
+               self._lp("D", math.log(0.05)),
+               self._lp("E", math.log(0.10))]  # NOT offered by a 4-choice row
+        p, off = cal.letter_probs(top, "ABCD")
+        self.assertEqual(set(p), set("ABCD"))
+        self.assertAlmostEqual(sum(p.values()), 1.0)
+        # renormalized over the offered four, so E no longer dilutes the answer
+        self.assertAlmostEqual(p["B"], 0.5, places=6)
+        self.assertAlmostEqual(p["A"], 0.2, places=6)
+        self.assertGreater(off, 0.0)                        # E's share is reported, not folded in
+
+    def test_letter_probs_missing_offered_letter_is_zero_not_invented(self):
+        p, _ = cal.letter_probs([self._lp("A", math.log(1.0))], "ABC")
+        self.assertAlmostEqual(p["A"], 1.0, places=6)
+        self.assertEqual(p["B"], 0.0)
+        self.assertEqual(p["C"], 0.0)
+
+    def test_letter_probs_empty_is_all_zero(self):
+        p, off = cal.letter_probs([], "ABCD")
+        self.assertEqual(set(p.values()), {0.0})
+        self.assertEqual(off, 0.0)
+
+    def test_offered_letters_reads_the_prompt_not_a_fixed_width(self):
+        four = build_prompt("Câu hỏi?", ["A. x", "B. y", "C. z", "D. w"])
+        self.assertEqual(cal.offered_letters(four), "ABCD")
+        five = build_prompt("Câu hỏi?", ["A. x", "B. y", "C. z", "D. w", "E. v"])
+        self.assertEqual(cal.offered_letters(five), "ABCDE")
+        three = build_prompt("Câu hỏi?", ["A. x", "B. y", "C. z"])
+        self.assertEqual(cal.offered_letters(three), "ABC")
+
+    def test_offered_letters_fails_fast_on_a_gapped_option_block(self):
+        bad = build_prompt("Câu hỏi?", ["A. x", "C. z", "B. y", "D. w"])
+        with self.assertRaises(SystemExit):
+            cal.offered_letters(bad)
+
+    def test_build_report_summary_math(self):
+        items = [
+            {"id": "1", "gold": "A", "answer": "A", "correct": 1, "n_letters_found": 5,
+             "n_choices": 5, "off_options_mass": "0",
+             "p_A": "0.9", "p_B": "0.1", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": "0.9"},
+            {"id": "2", "gold": "A", "answer": "B", "correct": 0, "n_letters_found": 5,
+             "n_choices": 5, "off_options_mass": "0",
+             "p_A": "0.2", "p_B": "0.8", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": "0.8"},
+            {"id": "3", "gold": "C", "answer": "", "correct": 0, "n_letters_found": 0,
+             "n_choices": 4, "off_options_mass": "0",
+             "p_A": "0", "p_B": "0", "p_C": "0", "p_D": "0", "p_E": "0", "confidence": ""},
+        ]
+        summary, rows = cal.build_report(items, "legal_mc", "h", bins=10)
+        self.assertEqual(summary["n"], 3)
+        self.assertEqual(summary["n_usable"], 2)              # item 3 has no distribution
+        self.assertEqual(summary["accuracy"], "33.33")        # 1/3, unparsed counts wrong
+        self.assertEqual(summary["mean_confidence"], "85.00")
+        # confidence Brier: ((0.9-1)^2 + (0.8-0)^2)/2 = (0.01+0.64)/2 = 0.325
+        self.assertEqual(summary["brier_confidence"], "0.3250")
+        # overconfidence = 0.85 - 0.3333 = +51.67
+        self.assertEqual(summary["overconfidence"], "+51.67")
+        self.assertEqual(len(rows), 10)
+
+    def test_build_breakdown_uses_the_frozen_subject_map(self):
+        items = []
+        for item_id in ["01-0001", "01-0002", "37-0003"]:
+            items.append({"id": item_id, "gold": "A", "answer": "A", "correct": 1,
+                          "n_letters_found": 4, "n_choices": 4, "off_options_mass": "0",
+                          "p_A": "1", "p_B": "0", "p_C": "0", "p_D": "0", "p_E": "0",
+                          "confidence": "1.0"})
+        rows = cal.build_breakdown(items, "vmlu_mqa_all_gold", bins=10)
+        by = {(r["level"], r["name"]): r for r in rows}
+        self.assertEqual(by[("overall", "overall")]["n"], 3)
+        self.assertEqual(by[("category", "STEM")]["n"], 2)      # 01 = Elementary Mathematics
+        self.assertEqual(by[("category", "Humanity")]["n"], 1)  # 37 = Administrative Law
+        self.assertEqual(by[("subject", "01 Elementary Mathematics")]["n"], 2)
+        for r in rows:
+            if r["n"]:
+                self.assertEqual(r["ece"], "0.00")              # conf == acc in every bin
+
+    def test_load_mqa_all_gold_builds_prompts_and_gold(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "all_gold.jsonl"
+            p.write_text(json.dumps({"id": "28-0007", "question": "Hỏi?",
+                                     "choices": ["A. a", "B. b", "C. c", "D. d"],
+                                     "answer": "c"}) + "\n", encoding="utf-8")
+            items = cal.load_mqa_all_gold(p)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["gold"], "C")                 # upper-cased like the scorer
+        self.assertEqual(items[0]["n_choices"], 4)
+        self.assertEqual(cal.offered_letters(items[0]["prompt"]), "ABCD")
+
+    def test_load_mqa_all_gold_rejects_partial_gold(self):
+        rows = [{"id": "01-0001", "question": "q", "choices": ["A. a", "B. b"], "answer": "A"},
+                {"id": "01-0002", "question": "q", "choices": ["A. a", "B. b"], "answer": ""}]
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "all_gold.jsonl"
+            p.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                cal.load_mqa_all_gold(p)          # all-or-none, the frozen gate
+
+    def test_load_mqa_all_gold_rejects_duplicate_ids_and_wide_choice_blocks(self):
+        dup = [{"id": "01-0001", "question": "q", "choices": ["A. a", "B. b"], "answer": "A"}] * 2
+        wide = [{"id": "01-0001", "question": "q", "answer": "A",
+                 "choices": ["A. a", "B. b", "C. c", "D. d", "E. e", "F. f"]}]
+        for rows in (dup, wide):
+            with tempfile.TemporaryDirectory() as d:
+                p = Path(d) / "all_gold.jsonl"
+                p.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+                with self.assertRaises(SystemExit):
+                    cal.load_mqa_all_gold(p)
+
+    def test_logprobs_retry_returns_first_token_distribution(self):
+        from code_benchmark.llm import call_logprobs_with_retry
+        client = MagicMock()
+        # the letters go through locals: bandit reads a `token=` literal as a password
+        chosen, runner_up = "B", "A"
+        first = MagicMock(token=chosen, logprob=-0.25)
+        first.top_logprobs = [MagicMock(token=chosen, logprob=-0.25),
+                              MagicMock(token=runner_up, logprob=-2.0)]
+        choice = MagicMock()
+        choice.message.content = "B"
+        choice.logprobs.content = [first]
+        client.chat.completions.create.return_value = MagicMock(choices=[choice])
+        content, tok, top = call_logprobs_with_retry(client, "m", "p", 0.0, 42, 4, 20)
+        self.assertEqual((content, tok), ("B", "B"))
+        self.assertEqual([t["token"] for t in top], ["B", "A"])
+
+    def test_logprobs_retry_gives_up_and_returns_nothing_rather_than_guessing(self):
+        from code_benchmark.llm import call_logprobs_with_retry
+        client = MagicMock()
+        client.chat.completions.create.side_effect = Exception("502 bad gateway")
+        with unittest.mock.patch("code_benchmark.llm.time.sleep"):
+            content, tok, top = call_logprobs_with_retry(
+                client, "m", "p", 0.0, 42, 4, 20, max_retries=2, sleep_sec=0)
+        self.assertEqual((content, tok, top), ("", "", []))
+
+    def test_auth_failure_is_fatal_on_the_logprobs_path_too(self):
+        from code_benchmark.llm import call_logprobs_with_retry
+        client = MagicMock()
+        client.chat.completions.create.side_effect = Exception("401 Unauthorized")
+        # fail fast, never 30 retries on a bad key — the rule is shared with the text path
+        with self.assertRaisesRegex(Exception, "401 Unauthorized"):
+            call_logprobs_with_retry(client, "m", "p", 0.0, 42, 4, 20)
+
+    def test_off_options_mass_is_reported_not_folded_into_the_distribution(self):
+        # The legal MC row offers A-D; E is not a candidate, so its mass is a
+        # measured diagnostic. Renormalizing over A-E (the MC-42 rule) would
+        # understate confidence by exactly this share.
+        top = [self._lp("A", math.log(0.5)),
+               self._lp("B", math.log(0.3)),
+               self._lp("C", math.log(0.1)),
+               self._lp("D", math.log(0.06)),
+               self._lp("E", math.log(0.04))]
+        p, off = cal.letter_probs(top, "ABCD")
+        self.assertAlmostEqual(off, 0.04, places=6)
+        self.assertAlmostEqual(sum(p.values()), 1.0)
+        self.assertAlmostEqual(p["A"], 0.5 / 0.96, places=6)   # > the raw 0.5
+
+    def test_ece_hand_computed(self):
+        ece, rows = cal.ece_and_reliability([0.9, 0.9, 0.1, 0.1], [1, 1, 0, 0], bins=10)
+        self.assertAlmostEqual(ece, 0.1, places=6)
+        self.assertEqual(len(rows), 10)
+        self.assertEqual(sum(r["n"] for r in rows), 4)
+
+
+class TestHarnessGenome(unittest.TestCase):
+    """`harness_genome.py` — the P0 guard. Each test is one way an evolutionary
+    loop could cheat its way to a better score; the guard must stop it at
+    validation time, not in a write-up afterwards."""
+
+    def setUp(self):
+        from code_benchmark import harness_genome as hg
+        self.hg = hg
+        self.spec = hg.minimal_genome().to_dict()
+
+    def test_minimal_seed_validates_and_its_id_survives_a_round_trip(self):
+        from code_benchmark import harness_genome as hg
+        g = hg.minimal_genome()
+        self.assertEqual(hg.validate(g.to_dict()).genome_id, g.genome_id)
+        self.assertEqual(g.tools, ("none",))
+        self.assertEqual(g.max_tokens, 4)                 # the frozen MC letter budget
+        self.assertEqual(g.required_declarations(), [])   # a plain single answer
+
+    def test_a_different_value_anywhere_is_a_different_candidate(self):
+        from code_benchmark import harness_genome as hg
+        base = hg.minimal_genome()
+        mutated = hg.validate({**base.to_dict(), "option_order": "seed_shuffle",
+                               "shuffle_seed": 1234})
+        self.assertNotEqual(mutated.genome_id, base.genome_id)
+        self.assertEqual(mutated.shuffle_seed, 1234)
+
+    def test_an_unreviewed_ninth_gene_group_is_an_escape_hatch(self):
+        spec = {**self.spec, "self_reward": {"weight": 1.0}}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_an_out_of_enum_value_is_never_coerced(self):
+        spec = {**self.spec, "elicitation": "chain_of_thought_v2"}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_fewshot_k_must_agree_with_its_elicitation(self):
+        spec = {**self.spec, "fewshot": {"k": 3, "selection": "random"}}
+        with self.assertRaises(SystemExit):               # minimal + k=3 is a contradiction
+            self.hg.validate(spec)
+        spec = {**self.spec, "elicitation": "fewshot_k",
+                "fewshot": {"k": 0, "selection": "random"}}
+        with self.assertRaises(SystemExit):               # few-shot with no examples
+            self.hg.validate(spec)
+
+    def test_a_token_ceiling_is_part_of_the_measurement(self):
+        # The cheapest reward-hack: give an MC model room to write a rationale whose
+        # last letter the byte-frozen parser then reads. Score up, capability flat.
+        spec = {**self.spec, "resources": {"max_tokens": 64, "temperature": 0.0,
+                                           "samples_per_item": 1}}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+        over_cap = {**self.spec, "template_id": "vbench_agentic"}
+        over_cap["answer_format"] = {"template_id": "vbench_agentic", "retries": 0,
+                                     "repair_syntax_only": True}
+        over_cap["resources"] = {"max_tokens": 4096, "temperature": 0.0,
+                                 "samples_per_item": 1}
+        with self.assertRaises(SystemExit):               # above the hard cap too
+            self.hg.validate(over_cap)
+
+    def test_a_template_outside_the_frozen_registry_is_a_scorer_change(self):
+        spec = {**self.spec}
+        spec["answer_format"] = {"template_id": "extract_answer_v2", "retries": 0,
+                                 "repair_syntax_only": True}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_values_cannot_smuggle_a_path_or_code(self):
+        for bad in ("/etc/passwd", "code_benchmark/run_mc_eval.py", "import os",
+                    "lambda: 1", "x\ny"):
+            spec = {**self.spec}
+            spec["answer_format"] = {"template_id": bad, "retries": 0,
+                                     "repair_syntax_only": True}
+            with self.assertRaises(SystemExit):
+                self.hg.validate(spec)
+
+    def test_scorer_gold_and_split_keys_are_outside_the_genome(self):
+        for key in ("scorer", "gold", "dataset", "split", "extract_answer"):
+            with self.assertRaises(SystemExit):
+                self.hg.validate({**self.spec, key: "anything"})
+
+    def test_answers_are_never_repaired(self):
+        spec = {**self.spec}
+        spec["answer_format"] = {"template_id": "mc_frozen", "retries": 0,
+                                 "repair_syntax_only": False}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_tools_are_a_reviewed_menu_and_none_stands_alone(self):
+        spec = {**self.spec, "tools": ["calculator", "self_written_tool"]}
+        with self.assertRaises(SystemExit):               # synthesis is P4 + sandbox
+            self.hg.validate(spec)
+        spec = {**self.spec, "tools": ["none", "calculator"]}
+        with self.assertRaises(SystemExit):               # a contradiction, not a default
+            self.hg.validate(spec)
+        spec = {**self.spec, "tools": ["calculator", "calculator"]}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_a_shuffle_without_its_seed_is_uninterpretable(self):
+        spec = {**self.spec, "option_order": "seed_shuffle"}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+        spec = {**self.spec, "shuffle_seed": 7}           # seed without a shuffle
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_a_disabled_retrieval_group_must_be_inert(self):
+        spec = {**self.spec, "rag": {"mode": "off", "corpus": "mixed", "top_k": 3,
+                                     "merge": "concat"}}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+        ok = {**self.spec, "rag": {"mode": "off", "corpus": "viwiki", "top_k": 0,
+                                   "merge": "none"}}
+        self.assertEqual(self.hg.validate(ok).rag_mode, "off")
+
+    def test_conditions_that_change_what_is_measured_must_declare_it(self):
+        from code_benchmark import harness_genome as hg
+        guided = hg.validate({**self.spec, "agentic_extra": {"guided_fallback": True}})
+        self.assertTrue(any("thứ ba" in d for d in guided.required_declarations()))
+        hot = hg.validate({**self.spec, "resources": {"max_tokens": 4, "temperature": 0.7,
+                                                      "samples_per_item": 1}})
+        self.assertTrue(any("không tất định" in d for d in hot.required_declarations()))
+        vote = hg.validate({**self.spec, "resources": {"max_tokens": 4, "temperature": 0.0,
+                                                      "samples_per_item": 5}})
+        self.assertTrue(any("bầu" in d for d in vote.required_declarations()))
+        tools = hg.validate({**self.spec, "tools": ["calculator", "date_arith"]})
+        self.assertTrue(any("tách biệt của tool" in d for d in tools.required_declarations()))
+
+    def test_the_baseline_and_its_ablation_are_two_named_candidates(self):
+        from code_benchmark import harness_genome as hg
+        base = hg.baseline_genome()
+        ablated = hg.baseline_genome_vs_direct(base)
+        self.assertNotEqual(base.genome_id, ablated.genome_id)
+        self.assertEqual(ablated.tools, ("none",))
+        self.assertEqual(ablated.elicitation, "zero_shot_minimal")
+        self.assertEqual(ablated.rag_mode, base.rag_mode)   # only the stated genes moved
+
+    def test_the_frozen_surface_is_fingerprinted_and_covers_the_three_contracts(self):
+        from code_benchmark import harness_genome as hg
+        prints = hg.frozen_fingerprints()
+        self.assertEqual(set(prints), {"code_benchmark.run_mc_eval:build_prompt",
+                                       "code_benchmark.run_mc_eval:extract_answer",
+                                       "code_benchmark.run_vbench_eval:_validate_call"})
+        self.assertEqual(prints, hg.frozen_fingerprints())   # stable across calls
+        self.assertTrue(all(len(v) == 16 for v in prints.values()))
+
+    def test_an_evidence_bundle_references_results_and_fails_fast_when_absent(self):
+        from code_benchmark import harness_genome as hg
+        g = hg.minimal_genome()
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "evidence"
+            with self.assertRaises(SystemExit):             # no bundle pointing at nothing
+                hg.collect_evidence(g, slug="probe", dataset="legal_mc",
+                                    results=Path(d) / "nope.csv",
+                                    ledger=Path(d) / "nope2.csv", budget={},
+                                    root=root)
+            (Path(d) / "res.csv").write_text("id\n1\n", encoding="utf-8")
+            (Path(d) / "led.csv").write_text("id\n1\n", encoding="utf-8")
+            out = hg.collect_evidence(g, slug="probe", dataset="legal_mc",
+                                      results=Path(d) / "res.csv",
+                                      ledger=Path(d) / "led.csv",
+                                      budget={"wall_sec": 12}, root=root,
+                                      container="omp")
+            # the container is part of the identity: MC-47 measured the scaffold
+            # itself as the largest variance source, and the §4 gene groups cannot
+            # express it, so a direct call and a scaffolded run must not collide.
+            self.assertEqual(out.name, f"omp__{g.genome_id}")
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["container"], "omp")
+            self.assertFalse(manifest["code_changed"])       # honest empty for config-only
+            self.assertEqual(manifest["frozen_fingerprints"], hg.frozen_fingerprints())
+            self.assertIn("legal_mc", manifest["reproduce"])
+            self.assertEqual(json.loads((out / "genome.json").read_text(encoding="utf-8")),
+                             g.to_dict())
+            self.assertTrue((out / "harness.diff").exists())
+            direct = hg.collect_evidence(g, slug="probe_direct", dataset="legal_mc",
+                                         results=Path(d) / "res.csv",
+                                         ledger=Path(d) / "led.csv", budget={}, root=root)
+            self.assertNotEqual(direct.name, out.name)
+            self.assertNotEqual(direct.name, g.genome_id)
+            removed = hg.prune_evidence(keep=0, root=root)
+            self.assertEqual(sorted(removed), sorted([f"omp__{g.genome_id}",
+                                                      f"direct__{g.genome_id}"]))
+
+    def test_the_gene_groups_are_exactly_the_plans_eight(self):
+        # §4's list, in order. If the plan changes, this is the test that must change
+        # with it — silently widening the grammar is how a guard stops guarding.
+        self.assertEqual(self.hg.GENE_GROUPS,
+                         ("elicitation", "fewshot", "option_order", "answer_format",
+                          "rag", "tools", "resources", "agentic_extra"))
+
+
+class TestRq1Decomposition(unittest.TestCase):
+    """`build_rq1_decomposition.py` — the thesis RQ1 table. Its whole value is that
+    no number is typed by hand, so the tests are about what it refuses to do."""
+
+    def setUp(self):
+        from code_benchmark import build_rq1_decomposition as rq1
+        self.rq1 = rq1
+
+    def test_a_missing_artifact_is_an_error_not_a_dropped_row(self):
+        reg = self.rq1.registry()
+        reg.sources[0].path = "does-not-exist/nope.csv"
+        with self.assertRaises(SystemExit) as ctx:
+            self.rq1.read_source(reg.sources[0])
+        self.assertIn("cannot be invented", str(ctx.exception))
+
+    def test_every_declared_source_exists_in_this_repo(self):
+        # The declaration IS the contract: if an arm was deleted, the table must stop
+        # rather than quietly shrink to the arms that still exist. Paired and
+        # interaction sources name their arms inside the path, so resolve both kinds.
+        for src in self.rq1.registry().sources:
+            parts = src.path.split("|")
+            slugs = parts[1:] if parts[0] in ("interaction",) else parts[:1]
+            for slug in slugs:
+                path = self.rq1.RESULTS / slug
+                self.assertTrue(path.exists(), f"declared RQ1 source missing: {path}")
+
+    def test_a_paired_contrast_needs_two_arms_that_actually_share_items(self):
+        stats = self.rq1._paired_contrast("ompF5clean_Qwen3_5-9B-65K",
+                                          "ompF7clean_Qwen3_5-9B-65K", "legal_mc")
+        self.assertEqual(stats["n"], 146)
+        self.assertTrue(stats["delta"])            # a signed string, e.g. "-8.22"
+        with self.assertRaises(SystemExit):
+            self.rq1._paired_contrast("ompF5clean_Qwen3_5-9B-65K",
+                                      "ompH5clean_Qwen3_5-9B-28K", "legal_nli")
+
+    def test_the_scaffold_table_keeps_one_model_per_row_pair(self):
+        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
+        scaffolds = [r for r in rows if r["source"] == "scaffold"]
+        models = {r["model"] for r in scaffolds}
+        self.assertEqual(models, {"Qwen3.5-9B-65K", "Qwen3.5-9B-28K", "MiMo V2.5"})
+        for r in scaffolds:            # each row names its own model: no cross-model delta
+            self.assertTrue(r["model"])
+            self.assertTrue(r["card"])
+
+    def test_metrics_are_named_per_row_and_never_merged(self):
+        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
+        metrics = {r["metric"] for r in rows if r["source"] == "scaffold"}
+        # accuracy, EM and the two V-Bench metrics are four different quantities
+        self.assertGreaterEqual(len(metrics), 3)
+        for r in rows:
+            self.assertTrue(r["metric"], f"row without a metric name: {r['artifact']}")
+
+    def test_a_tiny_p_is_never_printed_as_zero(self):
+        # p = 0.000 reads as "no effect", which is the opposite of what it means
+        self.assertNotEqual(self.rq1.p_fmt("1.049e-05"), "0.000")
+        self.assertEqual(self.rq1.p_fmt("1.049e-05"), "1.0e-05")
+        self.assertEqual(self.rq1.p_fmt("0.1094"), "0.109")
+        self.assertEqual(self.rq1.p_fmt(""), "—")
+        self.assertEqual(self.rq1.p_fmt("n/a"), "—")
+
+    def test_the_table_renders_from_real_artifacts(self):
+        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
+        md = self.rq1.render(rows, self.rq1.noise_floor(), self.rq1.calibration_rows())
+        self.assertIn("Scaffold gene", md)
+        self.assertIn("## Không được quy", md)             # caveats are part of the output
+        self.assertNotIn("| — | — |", md)                  # no unrendered placeholders
+        self.assertNotIn("None", md)
+
+    def test_noise_floor_keeps_each_cell_separate_at_a_fixed_n(self):
+        rows = self.rq1.noise_floor()
+        self.assertGreaterEqual(len(rows), 4)
+        cells = [r["cell"] for r in rows]
+        self.assertEqual(len(cells), len(set(cells)))     # not collapsed into one cell
+        for r in rows:
+            self.assertGreaterEqual(int(r["runs"]), 2)     # a single run has no spread
+            self.assertEqual(int(r["n"]), 146)             # never pooled across n
+            self.assertAlmostEqual(float(r["spread"]),
+                                   float(r["max"]) - float(r["min"]), places=2)
 
 
 class TestAgreementCI(unittest.TestCase):

@@ -112,6 +112,17 @@ describe("buildInsight", () => {
     expect(legal.verdict).toContain("phân loại khả năng hỗ trợ");
     expect(legal.verdict).toContain("không phải NLI ba nhãn đầy đủ");
   });
+
+  test("65K legal-mc-146: seed mang kết quả position bias (MC-36), không thêm cause 'robustness'", () => {
+    const ins = buildInsight("qwen3-5-9b-65k", "legal-mc-146", mcSummary);
+    expect(ins.curated).toBe(true);
+    expect(ins.verdict).toContain("89,04% (130/146)");
+    expect(ins.verdict).toContain("Δ +0,00");
+    expect(ins.verdict).toContain("126/146 câu giữ nguyên text");
+    // đã kiểm tra robustness và không thấy hiệu ứng: nó không được là "cause"
+    expect(ins.causes.map((c) => c.tag)).toEqual(["normative"]);
+    expect(ins.caveat).toContain("không suy sang bộ khác");
+  });
 });
 
 describe("canonicalModelId", () => {
