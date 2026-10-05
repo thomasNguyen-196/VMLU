@@ -3787,6 +3787,73 @@ class TestHarnessGenome(unittest.TestCase):
                           "rag", "tools", "resources", "agentic_extra"))
 
 
+class TestRq1Decomposition(unittest.TestCase):
+    """`build_rq1_decomposition.py` — the thesis RQ1 table. Its whole value is that
+    no number is typed by hand, so the tests are about what it refuses to do."""
+
+    def setUp(self):
+        from code_benchmark import build_rq1_decomposition as rq1
+        self.rq1 = rq1
+
+    def test_a_missing_artifact_is_an_error_not_a_dropped_row(self):
+        reg = self.rq1.registry()
+        reg.sources[0].path = "does-not-exist/nope.csv"
+        with self.assertRaises(SystemExit) as ctx:
+            self.rq1.read_source(reg.sources[0])
+        self.assertIn("cannot be invented", str(ctx.exception))
+
+    def test_every_declared_source_exists_in_this_repo(self):
+        # The declaration IS the contract: if an arm was deleted, the table must stop
+        # rather than quietly shrink to the arms that still exist.
+        for src in self.rq1.registry().sources:
+            path = self.rq1.RESULTS / src.path
+            self.assertTrue(path.exists(), f"declared RQ1 source missing: {path}")
+
+    def test_the_scaffold_table_keeps_one_model_per_row_pair(self):
+        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
+        scaffolds = [r for r in rows if r["source"] == "scaffold"]
+        models = {r["model"] for r in scaffolds}
+        self.assertEqual(models, {"Qwen3.5-9B-65K", "Qwen3.5-9B-28K", "MiMo V2.5"})
+        for r in scaffolds:            # each row names its own model: no cross-model delta
+            self.assertTrue(r["model"])
+            self.assertTrue(r["card"])
+
+    def test_metrics_are_named_per_row_and_never_merged(self):
+        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
+        metrics = {r["metric"] for r in rows if r["source"] == "scaffold"}
+        # accuracy, EM and the two V-Bench metrics are four different quantities
+        self.assertGreaterEqual(len(metrics), 3)
+        for r in rows:
+            self.assertTrue(r["metric"], f"row without a metric name: {r['artifact']}")
+
+    def test_a_tiny_p_is_never_printed_as_zero(self):
+        # p = 0.000 reads as "no effect", which is the opposite of what it means
+        self.assertNotEqual(self.rq1.p_fmt("1.049e-05"), "0.000")
+        self.assertEqual(self.rq1.p_fmt("1.049e-05"), "1.0e-05")
+        self.assertEqual(self.rq1.p_fmt("0.1094"), "0.109")
+        self.assertEqual(self.rq1.p_fmt(""), "—")
+        self.assertEqual(self.rq1.p_fmt("n/a"), "—")
+
+    def test_the_table_renders_from_real_artifacts(self):
+        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
+        md = self.rq1.render(rows, self.rq1.noise_floor(), self.rq1.calibration_rows())
+        self.assertIn("Scaffold gene", md)
+        self.assertIn("## Không được quy", md)             # caveats are part of the output
+        self.assertNotIn("| — | — |", md)                  # no unrendered placeholders
+        self.assertNotIn("None", md)
+
+    def test_noise_floor_keeps_each_cell_separate_at_a_fixed_n(self):
+        rows = self.rq1.noise_floor()
+        self.assertGreaterEqual(len(rows), 4)
+        cells = [r["cell"] for r in rows]
+        self.assertEqual(len(cells), len(set(cells)))     # not collapsed into one cell
+        for r in rows:
+            self.assertGreaterEqual(int(r["runs"]), 2)     # a single run has no spread
+            self.assertEqual(int(r["n"]), 146)             # never pooled across n
+            self.assertAlmostEqual(float(r["spread"]),
+                                   float(r["max"]) - float(r["min"]), places=2)
+
+
 class TestAgreementCI(unittest.TestCase):
     """The V-Bench MC agreement CI — a scale bug that shipped because no arm had
     ever run that branch (found 2026-09-29, the first MiMo run to reach it)."""

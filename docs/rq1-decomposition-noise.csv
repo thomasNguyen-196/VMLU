@@ -1,0 +1,5 @@
+cell,n,runs,min,max,spread,beats_all_contrasts
+ompH5clean,146,3,69.18,72.6,3.42,
+ompH6clean,146,2,67.81,73.29,5.48,
+ompH7clean,146,2,70.55,71.23,0.68,
+ompH8clean,146,2,73.97,74.66,0.69,
