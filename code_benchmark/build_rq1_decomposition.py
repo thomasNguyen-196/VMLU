@@ -34,7 +34,9 @@ try:  # package run (repo root) or direct run (cwd == code_benchmark)
 except ImportError:  # direct run from code_benchmark/
     from common import read_csv_checked, write_csv_atomic
 
-RESULTS = Path("all_res/ollama_result")
+RESULTS = Path("all_res/ollama_result")   # gitignored: the readers below all take
+# the results root as an argument so their LOGIC is testable against fixtures,
+# while the declaration contract (every Source exists) stays a real-repo check.
 DOCS = Path("docs")
 
 T65 = "ompT65_Qwen3_5-9B-65K"
@@ -185,7 +187,8 @@ def _correct_by_id(folder: Path, dataset: str, slug: str) -> dict[str, int]:
     return {str(r["id"]): int(r["correct"]) for r in rows}
 
 
-def _paired_contrast(left_slug: str, right_slug: str, dataset: str) -> dict:
+def _paired_contrast(left_slug: str, right_slug: str, dataset: str,
+                     results: Path = RESULTS) -> dict:
     """The delta BETWEEN two harness arms, with a paired bootstrap CI and an exact
     McNemar — computed with the harness runner's own statistics, so a gene contrast
     here is produced by the same code as every `harness_compare` CSV."""
@@ -193,8 +196,8 @@ def _paired_contrast(left_slug: str, right_slug: str, dataset: str) -> dict:
         from code_benchmark.run_harness_eval import _mcnemar_p, _paired_bootstrap
     except ImportError:
         from run_harness_eval import _mcnemar_p, _paired_bootstrap
-    left = _correct_by_id(RESULTS / left_slug, dataset, left_slug)
-    right = _correct_by_id(RESULTS / right_slug, dataset, right_slug)
+    left = _correct_by_id(results / left_slug, dataset, left_slug)
+    right = _correct_by_id(results / right_slug, dataset, right_slug)
     shared = sorted(set(left) & set(right))
     if not shared:
         raise SystemExit(f"Error: {left_slug} and {right_slug} share no item ids — "
@@ -210,14 +213,15 @@ def _paired_contrast(left_slug: str, right_slug: str, dataset: str) -> dict:
             "mcnemar_p": _mcnemar_p(b, c)}
 
 
-def _interaction_contrast(all_omp, none_omp, all_min, none_min, dataset: str) -> dict:
+def _interaction_contrast(all_omp, none_omp, all_min, none_min, dataset: str,
+                         results: Path = RESULTS) -> dict:
     """(tools | persona=omp) − (tools | persona=minimal), item-paired.
 
     A corner-to-corner contrast is NOT an interaction: F5→F8 bundles both genes and
     cannot say whether they multiply. This keeps the two tools effects apart.
     """
-    stats_a = _paired_contrast(all_omp, none_omp, dataset)
-    stats_b = _paired_contrast(all_min, none_min, dataset)
+    stats_a = _paired_contrast(all_omp, none_omp, dataset, results)
+    stats_b = _paired_contrast(all_min, none_min, dataset, results)
     delta = float(stats_a["delta"]) - float(stats_b["delta"])
     lo = float(stats_a["ci95_low"]) - float(stats_b["ci95_high"])
     hi = float(stats_a["ci95_high"]) - float(stats_b["ci95_low"])
@@ -226,21 +230,21 @@ def _interaction_contrast(all_omp, none_omp, all_min, none_min, dataset: str) ->
             "mcnemar_p": ""}
 
 
-def read_source(src: Source) -> dict:
+def read_source(src: Source, results: Path = RESULTS) -> dict:
     if src.path.startswith("interaction|"):
-        stats = _interaction_contrast(*src.path.split("|")[1:], src.dataset)
+        stats = _interaction_contrast(*src.path.split("|")[1:], src.dataset, results)
         return {"source": src.source, "gene": src.gene, "model": src.model,
                 "dataset": src.dataset, "metric": src.metric or "accuracy",
                 **stats, "card": src.card, "artifact": src.path.split("|")[1],
                 "label": src.label, "expectation": src.expectation}
     if "|" in src.path:                       # a gene contrast: two arms, paired
         left_slug, right_slug = src.path.split("|", 1)
-        stats = _paired_contrast(left_slug, right_slug, src.dataset)
+        stats = _paired_contrast(left_slug, right_slug, src.dataset, results)
         return {"source": src.source, "gene": src.gene, "model": src.model,
                 "dataset": src.dataset, "metric": src.metric or "accuracy",
                 **stats, "card": src.card, "artifact": right_slug,
                 "label": src.label, "expectation": src.expectation}
-    path = RESULTS / src.path
+    path = results / src.path
     if not path.exists():
         raise SystemExit(f"Error: RQ1 source missing: {path}\n"
                          f"  source={src.source!r} dataset={src.dataset!r} card={src.card}\n"
@@ -259,7 +263,7 @@ def read_source(src: Source) -> dict:
     }
 
 
-def noise_floor() -> list[dict]:
+def noise_floor(results: Path = RESULTS) -> list[dict]:
     """Run-to-run spread of each repeated cell, at a FIXED n (never pooled across
     n). This is the bar a contrast must clear to be a result rather than noise.
 
@@ -275,7 +279,7 @@ def noise_floor() -> list[dict]:
         ("ompT65r*_Qwen3_5-9B-65K", r"(ompT65)(?:clean)?(?:_?r(\d+))?_Qwen"),
     )
     for pattern, cell_re in families:
-        for folder in sorted(RESULTS.glob(pattern)):
+        for folder in sorted(results.glob(pattern)):
             match = re.match(cell_re, folder.name)
             cell = match.group(1) if match else folder.name
             for path in sorted(folder.glob("harness_compare_legal_mc_vsA_*.csv")):
@@ -295,17 +299,17 @@ def noise_floor() -> list[dict]:
     return rows
 
 
-def calibration_rows() -> list[dict]:
+def calibration_rows(results: Path = RESULTS) -> list[dict]:
     """Not a variance source but the same story from the other side: how the
     confidence that produces the score relates to correctness."""
     out = []
     for dataset, card in (("legal_mc", "MC-44"), ("vmlu_mqa_all_gold", "MC-44")):
-        for path in sorted(RESULTS.glob(f"*/mc_calibration_summary_{dataset}_*.csv")):
+        for path in sorted(results.glob(f"*/mc_calibration_summary_{dataset}_*.csv")):
             row = read_csv_checked(path, label=path.name)[0]
             out.append({"dataset": dataset, "n": row["n"], "accuracy": row["accuracy"],
                         "mean_confidence": row["mean_confidence"], "ece": row["ece"],
                         "overconfidence": row["overconfidence"], "card": card,
-                        "artifact": str(path.relative_to(RESULTS))})
+                        "artifact": str(path.relative_to(results))})
     return out
 
 

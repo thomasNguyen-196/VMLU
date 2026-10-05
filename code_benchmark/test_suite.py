@@ -3799,83 +3799,154 @@ class TestHarnessGenome(unittest.TestCase):
 
 
 class TestRq1Decomposition(unittest.TestCase):
-    """`build_rq1_decomposition.py` — the thesis RQ1 table. Its whole value is that
-    no number is typed by hand, so the tests are about what it refuses to do."""
+    """`build_rq1_decomposition.py` — the thesis RQ1 table.
+
+    Its value is that no number is typed by hand, so the tests are about what it
+    refuses to do.
+
+    The results tree (`all_res/`) is gitignored, so the LOGIC is exercised against
+    fixtures built here — those tests run on a fresh clone. The one test that
+    genuinely needs the real artifacts, "every declared source exists", is skipped
+    when they are absent: it checks this machine's runs, not a property of the code.
+    (A test that only passes where its author works is not a test.)
+    """
 
     def setUp(self):
         from code_benchmark import build_rq1_decomposition as rq1
         self.rq1 = rq1
 
+    # -- fixtures -----------------------------------------------------------
+    def _write(self, root: Path, rel: str, text: str) -> Path:
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def _compare_csv(self, n, arm_a, arm_b, delta, lo, hi, p="") -> str:
+        return ("metric,group,n,arm_a,arm_b,delta,ci95_low,ci95_high,mcnemar_p,"
+                "a_only,b_only,both,neither,arm_b_failures,measurement_card_hash\n"
+                f"accuracy,ALL,{n},{arm_a},{arm_b},{delta},{lo},{hi},{p},"
+                "1,1,2,3,0,deadbeef\n")
+
+    def _projection(self, n: int, correct_ids, prefix: str = "LG-") -> str:
+        rows = ["id,question,prompt,raw_response,answer,gold_answer,correct"]
+        for i in range(n):
+            c = 1 if i in correct_ids else 0
+            rows.append(f"{prefix}{i:04d},q,p,A,A,B,{c}")
+        return "\n".join(rows) + "\n"
+
+    def _fixture(self, root: Path) -> None:
+        """One repeated cell (2 runs) plus one cell with a single run."""
+        self._write(root, "ompH5clean_Qwen3_5-9B-28K/"
+                 "harness_compare_legal_mc_vsA_ompH5clean_Qwen3_5-9B-28K.csv",
+                 self._compare_csv(146, 87.0, 70.0, -17.0, -25.0, -9.0, "1e-05"))
+        self._write(root, "ompH5clean_r2_Qwen3_5-9B-28K/"
+                 "harness_compare_legal_mc_vsA_ompH5clean_r2_Qwen3_5-9B-28K.csv",
+                 self._compare_csv(146, 87.0, 73.0, -14.0, -22.0, -6.0, "1e-04"))
+        self._write(root, "ompH6clean_Qwen3_5-9B-28K/"
+                 "harness_compare_legal_mc_vsA_ompH6clean_Qwen3_5-9B-28K.csv",
+                 self._compare_csv(146, 87.0, 69.0, -18.0, -26.0, -10.0, "1e-05"))
+
+    # -- fail-fast ----------------------------------------------------------
     def test_a_missing_artifact_is_an_error_not_a_dropped_row(self):
-        reg = self.rq1.registry()
-        reg.sources[0].path = "does-not-exist/nope.csv"
-        with self.assertRaises(SystemExit) as ctx:
-            self.rq1.read_source(reg.sources[0])
+        src = self.rq1.registry().sources[0]
+        src.path = "does-not-exist/nope.csv"
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(SystemExit) as ctx:
+                self.rq1.read_source(src, Path(d))
         self.assertIn("cannot be invented", str(ctx.exception))
 
-    def test_every_declared_source_exists_in_this_repo(self):
-        # The declaration IS the contract: if an arm was deleted, the table must stop
-        # rather than quietly shrink to the arms that still exist. Paired and
-        # interaction sources name their arms inside the path, so resolve both kinds.
-        for src in self.rq1.registry().sources:
-            parts = src.path.split("|")
-            slugs = parts[1:] if parts[0] in ("interaction",) else parts[:1]
-            for slug in slugs:
-                path = self.rq1.RESULTS / slug
-                self.assertTrue(path.exists(), f"declared RQ1 source missing: {path}")
+    def test_a_paired_contrast_needs_two_arms_that_share_items(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self._write(root, "armA/full_evaluation_legal_mc_armA.csv",
+                        self._projection(4, {0, 1}))
+            self._write(root, "armB/full_evaluation_legal_mc_armB.csv",
+                        self._projection(4, {0}))
+            stats = self.rq1._paired_contrast("armA", "armB", "legal_mc", root)
+            self.assertEqual(stats["n"], 4)
+            # delta is left minus right, so POSITIVE means the left arm won:
+            # armA 2/4, armB 1/4
+            self.assertEqual(stats["delta"], "+25.00")
+            # the CI must BRACKET the point estimate — that is the invariant the table relies on
+            lo, delta, hi = (float(stats["ci95_low"]), float(stats["delta"]),
+                             float(stats["ci95_high"]))
+            self.assertLessEqual(lo, delta)
+            self.assertLessEqual(delta, hi)
+            # disjoint ids -> refuse, rather than compare different item sets
+            self._write(root, "armC/full_evaluation_legal_mc_armC.csv",
+                        self._projection(4, {0}, prefix="XX-"))
+            with self.assertRaises(SystemExit):
+                self.rq1._paired_contrast("armA", "armC", "legal_mc", root)
 
-    def test_a_paired_contrast_needs_two_arms_that_actually_share_items(self):
-        stats = self.rq1._paired_contrast("ompF5clean_Qwen3_5-9B-65K",
-                                          "ompF7clean_Qwen3_5-9B-65K", "legal_mc")
-        self.assertEqual(stats["n"], 146)
-        self.assertTrue(stats["delta"])            # a signed string, e.g. "-8.22"
-        with self.assertRaises(SystemExit):
-            self.rq1._paired_contrast("ompF5clean_Qwen3_5-9B-65K",
-                                      "ompH5clean_Qwen3_5-9B-28K", "legal_nli")
+    def test_the_interaction_is_a_difference_of_differences_not_a_corner_contrast(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            for slug, correct in (("allOmp", {0, 1, 2, 3}), ("noneOmp", {0}),
+                                  ("allMin", {0, 1, 2}), ("noneMin", {0, 1, 2})):
+                self._write(root, f"{slug}/full_evaluation_legal_mc_{slug}.csv",
+                            self._projection(4, correct))
+            stats = self.rq1._interaction_contrast("allOmp", "noneOmp", "allMin",
+                                                   "noneMin", "legal_mc", root)
+            self.assertEqual(stats["delta"], "+75.00")     # (100 - 25) - (75 - 75)
+            self.assertEqual(stats["mcnemar_p"], "")       # a difference, not a test
 
-    def test_the_scaffold_table_keeps_one_model_per_row_pair(self):
-        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
-        scaffolds = [r for r in rows if r["source"] == "scaffold"]
-        models = {r["model"] for r in scaffolds}
-        self.assertEqual(models, {"Qwen3.5-9B-65K", "Qwen3.5-9B-28K", "MiMo V2.5"})
-        for r in scaffolds:            # each row names its own model: no cross-model delta
-            self.assertTrue(r["model"])
-            self.assertTrue(r["card"])
+    # -- noise floor ---------------------------------------------------------
+    def test_noise_floor_keeps_each_cell_separate_at_a_fixed_n(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            self._fixture(root)
+            rows = self.rq1.noise_floor(root)
+        by_cell = {r["cell"]: r for r in rows}
+        self.assertEqual(set(by_cell), {"ompH5clean"})     # single-run cell dropped
+        row = by_cell["ompH5clean"]
+        self.assertEqual(row["n"], 146)                    # never pooled across n
+        self.assertEqual(int(row["runs"]), 2)              # a single run has no spread
+        self.assertAlmostEqual(float(row["spread"]), 3.0, places=2)
+        self.assertAlmostEqual(float(row["spread"]),
+                               float(row["max"]) - float(row["min"]), places=2)
 
-    def test_metrics_are_named_per_row_and_never_merged(self):
-        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
-        metrics = {r["metric"] for r in rows if r["source"] == "scaffold"}
-        # accuracy, EM and the two V-Bench metrics are four different quantities
-        self.assertGreaterEqual(len(metrics), 3)
-        for r in rows:
-            self.assertTrue(r["metric"], f"row without a metric name: {r['artifact']}")
-
+    # -- presentation -------------------------------------------------------
     def test_a_tiny_p_is_never_printed_as_zero(self):
         # p = 0.000 reads as "no effect", which is the opposite of what it means
         self.assertNotEqual(self.rq1.p_fmt("1.049e-05"), "0.000")
         self.assertEqual(self.rq1.p_fmt("1.049e-05"), "1.0e-05")
         self.assertEqual(self.rq1.p_fmt("0.1094"), "0.109")
-        self.assertEqual(self.rq1.p_fmt(""), "—")
-        self.assertEqual(self.rq1.p_fmt("n/a"), "—")
+        self.assertEqual(self.rq1.p_fmt(""), "\u2014")
+        self.assertEqual(self.rq1.p_fmt("n/a"), "\u2014")
 
-    def test_the_table_renders_from_real_artifacts(self):
-        rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]
-        md = self.rq1.render(rows, self.rq1.noise_floor(), self.rq1.calibration_rows())
+    def test_the_rendered_table_carries_its_own_caveats(self):
+        rows = [{"source": "scaffold", "gene": "scaffold", "model": "M", "dataset": "legal_mc",
+                 "metric": "accuracy", "n": 146, "arm_a": "89.04", "arm_b": "73.97",
+                 "delta": "-15.07", "ci95_low": "-21.92", "ci95_high": "-8.90",
+                 "mcnemar_p": "1e-05", "card": "MC-31/32", "artifact": "a/b.csv",
+                 "label": "", "expectation": ""}]
+        noise = [{"cell": "ompH5clean", "n": 146, "runs": 3, "min": 69.18, "max": 72.6,
+                  "spread": "3.42", "beats_all_contrasts": ""}]
+        calib = [{"dataset": "legal_mc", "n": 146, "accuracy": "90.41",
+                  "mean_confidence": "83.02", "ece": "8.41", "overconfidence": "-7.39",
+                  "card": "MC-44", "artifact": "c.csv"}]
+        md = self.rq1.render(rows, noise, calib)
         self.assertIn("Scaffold gene", md)
-        self.assertIn("## Không được quy", md)             # caveats are part of the output
-        self.assertNotIn("| — | — |", md)                  # no unrendered placeholders
+        self.assertIn("Kh\u00f4ng \u0111\u01b0\u1ee3c quy", md)   # caveats ship with it
+        self.assertIn("1.0e-05", md)                     # p survived
+        self.assertNotIn("0.000", md)                    # and was not flattened
         self.assertNotIn("None", md)
 
-    def test_noise_floor_keeps_each_cell_separate_at_a_fixed_n(self):
-        rows = self.rq1.noise_floor()
-        self.assertGreaterEqual(len(rows), 4)
-        cells = [r["cell"] for r in rows]
-        self.assertEqual(len(cells), len(set(cells)))     # not collapsed into one cell
-        for r in rows:
-            self.assertGreaterEqual(int(r["runs"]), 2)     # a single run has no spread
-            self.assertEqual(int(r["n"]), 146)             # never pooled across n
-            self.assertAlmostEqual(float(r["spread"]),
-                                   float(r["max"]) - float(r["min"]), places=2)
+    # -- the one check that needs the real artifacts -------------------------
+    def test_every_declared_source_exists_in_this_repo(self):
+        # The declaration IS the contract: if an arm was deleted, the table must stop
+        # rather than quietly shrink to the arms that still exist. Checkable only
+        # where the runs are — `all_res/` is gitignored, and on a fresh clone the
+        # generator would refuse to run at all.
+        if not self.rq1.RESULTS.exists():
+            self.skipTest("all_res/ollama_result absent (gitignored) — nothing to verify")
+        for src in self.rq1.registry().sources:
+            parts = src.path.split("|")
+            slugs = parts[1:] if parts[0] == "interaction" else parts[:1]
+            for slug in slugs:
+                path = self.rq1.RESULTS / slug
+                self.assertTrue(path.exists(), f"declared RQ1 source missing: {path}")
 
 
 class TestAgreementCI(unittest.TestCase):
