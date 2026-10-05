@@ -46,7 +46,13 @@ OPTION_ORDERS = ("as_is", "seed_shuffle")                                     # 
 RAG_MODES = ("off", "bm25", "dense", "hybrid")                               # §4
 RAG_CORPORA = ("viwiki", "vbpl", "mixed")                                     # §4
 RAG_MERGES = ("none", "concat", "auto")                                      # §4
-TOOL_MENU = ("none", "calculator", "date_arith", "enum_verbatim_lookup")     # §4 + §7
+# The menu a genome may name. `none` and `all` are what the runners actually
+# accept today (`--tools none`, `--tools all` = omp's own 11-tool menu, measured in
+# MC-31/47). The three named tools come from the plan's §4/§7 and are PLANNED, not
+# available — they stay in the grammar so a mutation can target them, and
+# `genome_to_cli.py`'s support matrix reports them as unsupported rather than
+# quietly dropping them from a run.
+TOOL_MENU = ("none", "all", "calculator", "date_arith", "enum_verbatim_lookup")
 GENE_GROUPS = ("elicitation", "fewshot", "option_order", "answer_format",
                "rag", "tools", "resources", "agentic_extra")                  # §4, all eight
 
@@ -345,20 +351,34 @@ def minimal_genome(*, template_id: str = "mc_frozen", max_tokens: int = 4) -> Ge
     })
 
 
-def baseline_genome(*, template_id: str = "mc_frozen", max_tokens: int = 4,
-                    tools: tuple[str, ...] = ("calculator", "enum_verbatim_lookup")) -> Genome:
-    """The repo's current measured state as one genome: frozen prompt + the two
-    tool genes the plan motivates from measured error clusters (Vi-DROP arithmetic,
-    near-miss enums) + a small retrieval group. §6 calls this the baseline the
-    mutants must beat."""
+def baseline_genome(*, template_id: str = "legal_frozen", max_tokens: int = 4) -> Genome:
+    """The repo's **measured** state as one genome — not the plan's wish list.
+
+    Encodes the harness cell whose request shape we actually know: omp's default
+    11-tool menu (`--tools all`), a neutral system prompt, no retrieval, one
+    deterministic sample — the condition of the `ompT65r2`/`ompT65r3` repeats, and the
+    same cell as T65.
+
+    Two earlier versions were wrong, and both are worth recording:
+
+    - The first encoded the plan's aspirational baseline (bm25 retrieval plus
+      `calculator` and `enum_verbatim_lookup`). It described no run in this repo, and
+      those tools do not exist in omp's menu, so the genome could not have been
+      executed at all.
+    - The second read T65 as "omp's own prompt", which its own proxy log contradicts:
+      T65 sent a **690-character** system prompt, where the neutral one is 745 and
+      omp's own is 9,178. T65's original shape matches no cell in the factorial, which
+      is why MC-47 excluded it from every paired contrast. That gap is still open, so
+      the seed follows the repeats, whose shape is known exactly.
+    """
     return validate({
-        "elicitation": "zero_shot_detailed",
+        "elicitation": "zero_shot_minimal",
         "fewshot": {"k": 0, "selection": "same_domain"},
         "option_order": "as_is",
         "answer_format": {"template_id": template_id, "retries": 0,
                           "repair_syntax_only": True},
-        "rag": {"mode": "bm25", "corpus": "mixed", "top_k": 3, "merge": "concat"},
-        "tools": list(tools),
+        "rag": {"mode": "off", "corpus": "viwiki", "top_k": 0, "merge": "none"},
+        "tools": ["all"],
         "resources": {"max_tokens": max_tokens, "temperature": 0.0,
                       "samples_per_item": 1},
         "agentic_extra": {"guided_fallback": False},
@@ -366,9 +386,9 @@ def baseline_genome(*, template_id: str = "mc_frozen", max_tokens: int = 4,
 
 
 def baseline_genome_vs_direct(genome: Genome) -> Genome:
-    """One targeted mutation of the baseline: drop the scaffold's tools and go back
-    to the frozen minimal prompt. Used as the ablation seed that separates
-    'harness gene' from 'prompt gene' — the decomposition RQ1 is built on."""
+    """One targeted mutation of the baseline: drop the tool menu and the scaffold's
+    own persona, back to the frozen minimal prompt. Used as the ablation seed that
+    separates 'harness gene' from 'prompt gene' — the decomposition RQ1 is built on."""
     return validate({**genome.to_dict(), "elicitation": "zero_shot_minimal",
                      "tools": ["none"]})
 

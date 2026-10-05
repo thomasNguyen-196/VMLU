@@ -3895,13 +3895,13 @@
   },
   "harness": {
     "benchmark_name": "Harness arm — mỗi model so với chính nó (omp vs gọi API trực tiếp)",
-    "date": "2026-09-26 → 2026-10-02",
+    "date": "2026-09-26 → 2026-10-05",
     "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
     "endpoint": "https://llmapi.iec-uit.com/v1 (Qwen 28K, lúc còn sống) · https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go) · http://llmapi.iec/v1 (Qwen 65K, nội bộ qua VPN)",
     "harness": "omp (Oh My Pi) v18.2.7",
     "condition": "prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo và Qwen-65K: temperature 0 (+ reasoning tắt cho MiMo) được GHIM BẰNG PROXY trong suốt vì omp không gửi được các field đó; sandbox đặt ngoài repo nên không có AGENTS.md nạp vào (MC-29/MC-30).",
-    "measurement_card": "MC-15…MC-32",
-    "measurement_card_hash": "e5c230b13510815793c63d032ea445c8d643bd9355a9a936e72e9edb7ab7055b",
+    "measurement_card": "MC-15…MC-47",
+    "measurement_card_hash": "bca93fa50bab11bfb0978411a0e45559dfc92a09f7bd73d39664ed5bfe31bf26",
     "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
     "ladder": [
       {
@@ -4989,6 +4989,126 @@
         "a_only": "",
         "b_only": "",
         "neither": 1517
+      },
+      {
+        "arm": "F5",
+        "arm_slug": "ompF5clean_Qwen3_5-9B-65K",
+        "label": "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+        "card": "MC-46/47",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "metric": "accuracy",
+        "n": 146,
+        "arm_b": 87.67,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 89.04,
+        "delta": -1.37,
+        "ci95_low": -5.48,
+        "ci95_high": 2.74,
+        "mcnemar_p": "0.7539",
+        "both": 124,
+        "a_only": 6,
+        "b_only": 4,
+        "neither": 12
+      },
+      {
+        "arm": "F7",
+        "arm_slug": "ompF7clean_Qwen3_5-9B-65K",
+        "label": "65K: omp sạch, KHÔNG tool, system prompt gốc của omp",
+        "card": "MC-46/47",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "metric": "accuracy",
+        "n": 146,
+        "arm_b": 79.45,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 89.04,
+        "delta": -9.59,
+        "ci95_low": -15.07,
+        "ci95_high": -4.11,
+        "mcnemar_p": "0.001312",
+        "both": 114,
+        "a_only": 16,
+        "b_only": 2,
+        "neither": 14
+      },
+      {
+        "arm": "F8",
+        "arm_slug": "ompF8clean_Qwen3_5-9B-65K",
+        "label": "65K: omp sạch + tool menu đầy đủ, system prompt gốc của omp",
+        "card": "MC-46/47",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "metric": "accuracy",
+        "n": 146,
+        "arm_b": 73.29,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 89.04,
+        "delta": -15.75,
+        "ci95_low": -22.6,
+        "ci95_high": -8.9,
+        "mcnemar_p": "3.395e-05",
+        "both": 103,
+        "a_only": 27,
+        "b_only": 4,
+        "neither": 12
+      },
+      {
+        "arm": "T65r2",
+        "arm_slug": "ompT65r2_Qwen3_5-9B-65K",
+        "label": "65K: lặp 2 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)",
+        "card": "MC-47",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "metric": "accuracy",
+        "n": 146,
+        "arm_b": 76.03,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 89.04,
+        "delta": -13.01,
+        "ci95_low": -19.86,
+        "ci95_high": -6.16,
+        "mcnemar_p": "0.0003107",
+        "both": 107,
+        "a_only": 23,
+        "b_only": 4,
+        "neither": 12
+      },
+      {
+        "arm": "T65r3",
+        "arm_slug": "ompT65r3_Qwen3_5-9B-65K",
+        "label": "65K: lặp 3 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)",
+        "card": "MC-47",
+        "model": "Qwen3.5-9B-65K",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "metric": "accuracy",
+        "n": 146,
+        "arm_b": 74.66,
+        "char_f1": null,
+        "blanks": 0,
+        "role": "harness",
+        "arm_a": 89.04,
+        "delta": -14.38,
+        "ci95_low": -21.23,
+        "ci95_high": -7.53,
+        "mcnemar_p": "4.923e-05",
+        "both": 106,
+        "a_only": 24,
+        "b_only": 3,
+        "neither": 13
       }
     ],
     "secondary_metrics": [
@@ -5074,6 +5194,54 @@
       }
     ],
     "repeatability": [
+      {
+        "cell": "ompF5clean",
+        "repeat": 1,
+        "arm": "F5",
+        "label": "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+        "card": "MC-46/47",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "n": 146,
+        "arm_a": 89.04,
+        "arm_b": 87.67,
+        "delta": -1.37,
+        "ci95_low": -5.48,
+        "ci95_high": 2.74,
+        "mcnemar_p": "0.7539"
+      },
+      {
+        "cell": "ompF7clean",
+        "repeat": 1,
+        "arm": "F7",
+        "label": "65K: omp sạch, KHÔNG tool, system prompt gốc của omp",
+        "card": "MC-46/47",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "n": 146,
+        "arm_a": 89.04,
+        "arm_b": 79.45,
+        "delta": -9.59,
+        "ci95_low": -15.07,
+        "ci95_high": -4.11,
+        "mcnemar_p": "0.001312"
+      },
+      {
+        "cell": "ompF8clean",
+        "repeat": 1,
+        "arm": "F8",
+        "label": "65K: omp sạch + tool menu đầy đủ, system prompt gốc của omp",
+        "card": "MC-46/47",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "n": 146,
+        "arm_a": 89.04,
+        "arm_b": 73.29,
+        "delta": -15.75,
+        "ci95_low": -22.6,
+        "ci95_high": -8.9,
+        "mcnemar_p": "3.395e-05"
+      },
       {
         "cell": "ompH1",
         "repeat": 1,
@@ -5584,7 +5752,49 @@
         "mcnemar_p": "0.1797"
       },
       {
-        "cell": "ompT65_Qwen3_5-9B-65K",
+        "cell": "ompT65",
+        "repeat": 2,
+        "arm": "T65r2",
+        "label": "65K: lặp 2 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)",
+        "card": "MC-47",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "n": 146,
+        "arm_a": 89.04,
+        "arm_b": 76.03,
+        "delta": -13.01,
+        "ci95_low": -19.86,
+        "ci95_high": -6.16,
+        "mcnemar_p": "0.0003107",
+        "cell_n": 2,
+        "cell_mean": 75.34,
+        "cell_spread": 1.37,
+        "cell_min": 74.66,
+        "cell_max": 76.03
+      },
+      {
+        "cell": "ompT65",
+        "repeat": 3,
+        "arm": "T65r3",
+        "label": "65K: lặp 3 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)",
+        "card": "MC-47",
+        "dataset": "legal_mc",
+        "dataset_label": "legal-MC (accuracy)",
+        "n": 146,
+        "arm_a": 89.04,
+        "arm_b": 74.66,
+        "delta": -14.38,
+        "ci95_low": -21.23,
+        "ci95_high": -7.53,
+        "mcnemar_p": "4.923e-05",
+        "cell_n": 2,
+        "cell_mean": 75.34,
+        "cell_spread": 1.37,
+        "cell_min": 74.66,
+        "cell_max": 76.03
+      },
+      {
+        "cell": "ompT65orig",
         "repeat": 1,
         "arm": "T65",
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
@@ -5600,7 +5810,7 @@
         "mcnemar_p": "1.049e-05"
       },
       {
-        "cell": "ompT65_Qwen3_5-9B-65K",
+        "cell": "ompT65orig",
         "repeat": 1,
         "arm": "T65",
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
@@ -5616,7 +5826,7 @@
         "mcnemar_p": "0.1094"
       },
       {
-        "cell": "ompT65_Qwen3_5-9B-65K",
+        "cell": "ompT65orig",
         "repeat": 1,
         "arm": "T65",
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
@@ -5632,7 +5842,7 @@
         "mcnemar_p": "6.424e-09"
       },
       {
-        "cell": "ompT65_Qwen3_5-9B-65K",
+        "cell": "ompT65orig",
         "repeat": 1,
         "arm": "T65",
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
@@ -5648,7 +5858,7 @@
         "mcnemar_p": "0.0009143"
       },
       {
-        "cell": "ompT65_Qwen3_5-9B-65K",
+        "cell": "ompT65orig",
         "repeat": 1,
         "arm": "T65",
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
@@ -5664,7 +5874,7 @@
         "mcnemar_p": "1.855e-141"
       },
       {
-        "cell": "ompT65_Qwen3_5-9B-65K",
+        "cell": "ompT65orig",
         "repeat": 1,
         "arm": "T65",
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
@@ -6537,12 +6747,12 @@
       }
     ],
     "insight": {
-      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm; Qwen3.5-9B-65K -15.07…-4.00 điểm. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/3 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
+      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm; Qwen3.5-9B-65K -15.75…-1.37 điểm. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/3 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
       "claims": [
         {
           "id": "penalty:MiMo V2.5",
           "title": "MiMo V2.5: đi qua tiến trình agent KHÔNG làm giảm điểm",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch có Δ từ +0.00 đến +7.00 điểm trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400), tức không tìm thấy khoản phạt nào ở đây. Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong 4 phép so sánh đó, 1 phép có khoảng tin cậy 95% loại trừ 0; 3 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch có Δ từ +0.00 đến +7.00 điểm trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400), tức không tìm thấy khoản phạt nào ở đây. Trong 4 phép so sánh đó, 1 phép có khoảng tin cậy 95% loại trừ 0; 3 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
@@ -6565,7 +6775,7 @@
         {
           "id": "penalty:Qwen3.5-9B-28K",
           "title": "Qwen3.5-9B-28K: chi phí của việc đưa một prompt qua tiến trình agent",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong 7 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0.",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 7 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0.",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
@@ -6588,19 +6798,19 @@
         {
           "id": "penalty:Qwen3.5-9B-65K",
           "title": "Qwen3.5-9B-65K: chi phí của việc đưa một prompt qua tiến trình agent",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong 4 phép so sánh đó, 3 phép có khoảng tin cậy 95% loại trừ 0; 1 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 9 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0; 2 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
-              "value": "-15.07"
+              "value": "-15.75"
             },
             {
               "label": "Δ lớn nhất",
-              "value": "-4.00"
+              "value": "-1.37"
             },
             {
               "label": "CI 95% loại trừ 0",
-              "value": "3/4"
+              "value": "7/9"
             },
             {
               "label": "tập nhỏ nhất",
@@ -6611,7 +6821,7 @@
         {
           "id": "model_dependent",
           "title": "Scaffold không có một giá riêng: dấu của hiệu ứng đổi theo model",
-          "body": "Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: MiMo V2.5 dao động +0.00…+7.00 điểm; Qwen3.5-9B-28K dao động -22.25…-5.60 điểm; Qwen3.5-9B-65K dao động -15.07…-4.00 điểm. Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, không phải chi phí của việc đi qua một tiến trình agent. Trên 1/3 model, scaffold thậm chí còn tăng điểm. Các model còn khác nhau ở chỗ có suy luận hay không, nên đây là so các condition chứ không phải so thứ hạng model.",
+          "body": "Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: MiMo V2.5 dao động +0.00…+7.00 điểm; Qwen3.5-9B-28K dao động -22.25…-5.60 điểm; Qwen3.5-9B-65K dao động -15.75…-1.37 điểm. Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, không phải chi phí của việc đi qua một tiến trình agent. Trên 1/3 model, scaffold thậm chí còn tăng điểm. Các model còn khác nhau ở chỗ có suy luận hay không, nên đây là so các condition chứ không phải so thứ hạng model.",
           "evidence": [
             {
               "label": "MiMo V2.5: Δ cao nhất",
@@ -6623,7 +6833,7 @@
             },
             {
               "label": "Qwen3.5-9B-65K: Δ cao nhất",
-              "value": "-4.00đ"
+              "value": "-1.37đ"
             },
             {
               "label": "MiMo V2.5: Δ thấp nhất",
@@ -6635,7 +6845,30 @@
             },
             {
               "label": "Qwen3.5-9B-65K: Δ thấp nhất",
+              "value": "-15.75đ"
+            }
+          ]
+        },
+        {
+          "id": "configuration:Qwen3.5-9B-65K:legal-MC",
+          "title": "Qwen3.5-9B-65K / legal-MC: cấu hình nào tốn điểm thì tùy — scaffold tối giảu gần như miễn phí, thêm công cụ và persona thì tốn",
+          "body": "Trên cùng một tập và cùng arm A, các arm scaffold sạch của Qwen3.5-9B-65K trải Δ từ -1.37 (arm F5, CI [-5.48, +2.74] — **không khác 0** thống kê) tới -15.75 (arm F8, CI [-22.60, -8.90]). Nghĩa là **chính cái scaffold không phải là nơi mất điểm**: ô tối giảu (không công cụ, system prompt trung tính) gần như ngang với gọi thẳng, và điểm chỉ rơi khi bật menu công cụ và/hoặc system prompt gốc của omp. Đọc một dải Δ của riêng model này mà không ghi cấu hình sẽ gán nhầm chi phí cho agent thay vì cho những gì ta thêm vào nó. Sàn nhiễu của chính các ô lặp ở model này là 1.37 điểm, nên những chênh lệch dưới mức đó không đọc được.",
+          "evidence": [
+            {
+              "label": "arm F5",
+              "value": "-1.37đ"
+            },
+            {
+              "label": "arm F8",
+              "value": "-15.75đ"
+            },
+            {
+              "label": "arm T65",
               "value": "-15.07đ"
+            },
+            {
+              "label": "sàn nhiễu (lặp)",
+              "value": "1.37đ"
             }
           ]
         },
@@ -7103,6 +7336,91 @@
         "reported_input_tokens": 11736621,
         "reported_cache_read": 113786879,
         "completion_tokens": 591888
+      },
+      {
+        "arm": "F5",
+        "arm_slug": "ompF5clean_Qwen3_5-9B-65K",
+        "label": "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+        "model": "Qwen3.5-9B-65K",
+        "n": 146,
+        "datasets": 1,
+        "wall_s_per_item": 2.2,
+        "turns_per_item": 1.0,
+        "failures": 0,
+        "tool_use_items": 0,
+        "net_attempt_items": 0,
+        "path_escape_items": 0,
+        "reported_input_tokens": 43665,
+        "reported_cache_read": 36354,
+        "completion_tokens": 292
+      },
+      {
+        "arm": "F7",
+        "arm_slug": "ompF7clean_Qwen3_5-9B-65K",
+        "label": "65K: omp sạch, KHÔNG tool, system prompt gốc của omp",
+        "model": "Qwen3.5-9B-65K",
+        "n": 146,
+        "datasets": 1,
+        "wall_s_per_item": 2.25,
+        "turns_per_item": 1.0,
+        "failures": 0,
+        "tool_use_items": 0,
+        "net_attempt_items": 0,
+        "path_escape_items": 0,
+        "reported_input_tokens": 48186,
+        "reported_cache_read": 326016,
+        "completion_tokens": 292
+      },
+      {
+        "arm": "F8",
+        "arm_slug": "ompF8clean_Qwen3_5-9B-65K",
+        "label": "65K: omp sạch + tool menu đầy đủ, system prompt gốc của omp",
+        "model": "Qwen3.5-9B-65K",
+        "n": 146,
+        "datasets": 1,
+        "wall_s_per_item": 2.57,
+        "turns_per_item": 1.0,
+        "failures": 0,
+        "tool_use_items": 0,
+        "net_attempt_items": 0,
+        "path_escape_items": 0,
+        "reported_input_tokens": 61624,
+        "reported_cache_read": 2604200,
+        "completion_tokens": 292
+      },
+      {
+        "arm": "T65r2",
+        "arm_slug": "ompT65r2_Qwen3_5-9B-65K",
+        "label": "65K: lặp 2 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)",
+        "model": "Qwen3.5-9B-65K",
+        "n": 146,
+        "datasets": 1,
+        "wall_s_per_item": 2.57,
+        "turns_per_item": 1.0,
+        "failures": 0,
+        "tool_use_items": 0,
+        "net_attempt_items": 0,
+        "path_escape_items": 0,
+        "reported_input_tokens": 72200,
+        "reported_cache_read": 2033712,
+        "completion_tokens": 292
+      },
+      {
+        "arm": "T65r3",
+        "arm_slug": "ompT65r3_Qwen3_5-9B-65K",
+        "label": "65K: lặp 3 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)",
+        "model": "Qwen3.5-9B-65K",
+        "n": 146,
+        "datasets": 1,
+        "wall_s_per_item": 2.41,
+        "turns_per_item": 1.0,
+        "failures": 0,
+        "tool_use_items": 0,
+        "net_attempt_items": 0,
+        "path_escape_items": 0,
+        "reported_input_tokens": 43959,
+        "reported_cache_read": 2061958,
+        "completion_tokens": 292
       }
     ],
     "speed": [
@@ -7428,7 +7746,7 @@
       }
     ],
     "totals": {
-      "items_harness": 16740,
+      "items_harness": 17470,
       "failures": 665,
       "tool_use_items": 513,
       "net_attempt_items": 18,
@@ -7451,7 +7769,11 @@
       "MC-29: sandbox từng mặc định nằm TRONG repo, nên omp nạp toàn bộ AGENTS.md của chính repo này (27.501 ký tự, ~7k token) vào system prompt của MỌI item tới MC-28. Nhãn \"scaffold sạch\" của các arm cũ nghĩa là sạch persona/tool, không có nghĩa là sạch chỉ dẫn dự án. Ablation trên MiMo (cùng arm, khác vị trí sandbox): +7.003 token/câu, Δ +0,68 điểm — tốn tiền, không tốn điểm.",
       "omp KHÔNG gửi temperature và reasoning_effort (bắt bằng proxy; `options:` trong models.yml bị bỏ qua im lặng). Các card ghi \"temperature 0\" là đúng cho arm A nhưng SAI cho mọi arm B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
       "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên cùng câu hỏi. Điểm V-Bench thật do máy chủ chấm; ta không có vàng cục bộ.",
-      "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, 2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi cổng ngoài sập cert."
+      "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, 2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi cổng ngoài sập cert.",
+      "Các arm F5/F7/F8 và T65r2/T65r3 chỉ chạy legal_mc (146 câu, một miền). Đọc dải Δ của chúng như một kết luận về 58 môn VMLU là không có cơ sở.",
+      "Arm T65 GỐC không được gộp với hai lặp của nó, dù cùng nhãn điều kiện: proxy log của lần chạy gốc ghi system prompt dài 690 ký tự, còn hai lặp dài 745 (MC-47). Shape thật của T65 gốc chưa xác định, nên nó không xuất hiện trong bảng sàn nhiễu.",
+      "Sàn nhiễu tính trên arm 65K chỉ có 2 lặp, yếu hơn sàn ở 28K (3 lặp); một chênh lệch 65K nhỏ hơn sàn đó thì chưa đọc được (MC-47).",
+      "Calibration (MC-44) CỐ Ý không nằm trong block này: nó đo độ tin cậy của điểm theo môn, không phải một contrast ghép đôi giữa các arm, nên thuộc /benchmark chứ không phải /harness."
     ],
     "sources": {
       "runner": "code_benchmark/run_harness_eval.py (run | compare | speed)",
