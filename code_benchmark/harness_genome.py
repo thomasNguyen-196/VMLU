@@ -35,7 +35,7 @@ import inspect
 import json
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404 — only use is `git diff` on a caller-supplied ref (see _git_diff)
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -395,6 +395,24 @@ def frozen_fingerprints() -> dict[str, str]:
 EVIDENCE_ROOT = Path("all_res/evidence")
 
 
+def _git_diff(git_ref: str) -> str:
+    """`git diff <ref> -- code_benchmark`, with git resolved to an absolute path.
+
+    The ref is a caller-supplied string used as one argv element (no shell), which
+    is why this is safe enough for the CI security gate; `shutil.which` is still
+    resolved first so the child process cannot pick up a `git` from PATH that
+    someone else wrote."""
+    git = shutil.which("git")
+    if git is None:
+        _fail("git not found on PATH — an evidence bundle cannot state whether the "
+              "harness code changed, which is part of what the bundle is for")
+    # No shell, git resolved above, and the only caller-controlled value is one argv
+    # element — `git diff` reads a ref, it does not execute it.
+    proc = subprocess.run([git, "diff", git_ref, "--", "code_benchmark"],
+                          capture_output=True, text=True, check=False)  # nosec B603
+    return proc.stdout
+
+
 def collect_evidence(genome: Genome, *, slug: str, dataset: str, results: Path,
                      ledger: Path, budget: dict, root: Path = EVIDENCE_ROOT,
                      git_ref: str | None = None) -> Path:
@@ -419,11 +437,7 @@ def collect_evidence(genome: Genome, *, slug: str, dataset: str, results: Path,
         json.dumps(budget, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     # A config-only mutation must produce an honest empty diff, not a fake one.
-    diff = ""
-    if git_ref:
-        proc = subprocess.run(["git", "diff", git_ref, "--", "code_benchmark"],
-                              capture_output=True, text=True, check=False)   # nosec B603
-        diff = proc.stdout
+    diff = _git_diff(git_ref) if git_ref else ""
     (out / "harness.diff").write_text(diff, encoding="utf-8")
 
     manifest = {
