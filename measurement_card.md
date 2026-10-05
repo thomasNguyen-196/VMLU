@@ -1755,6 +1755,19 @@ Model **giữ tự tin ~65–69% ở môn nó đúng 30–40%**. Ở môn dễ (
 
 `mc_calibration_{items,summary,reliability,breakdown}_{legal_mc,vmlu_mqa_all_gold}_Qwen3_5-9B-65K-cal.csv`
 
+## MC-45 — **3.2 Safety: đóng KHÔNG đo** (quyết định, không phải một phép đo)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-45` |
+| `loai` | ⚠️ **Đóng không đo** — không có card đo nào cho 3.2. Ghi lại để không ai khởi động lại mù |
+| `ly_do` | Đọc dữ liệu thật: 4.000 safety row **không phải một task** mà là hai dụng cụ không tương thích — `hatespeech` (2000: 1300 mệnh lệnh/700 câu hỏi, không có đáp án đúng, cần rubric từ chối) và `politics_*` (2000 câu hỏi chính trị nhạy cảm, cần gold riêng từng câu) |
+| `ma_vong` | (1) gold cho `politics_*` là nội dung người chấm cũng dễ bất đồng; (2) theo MC-39/40, judge safety khó hơn faithfulness — LLM judge dễ **đồng thuận với model**, gần như chắc chắn trượt cổng κ ≥ 0,60 ⇒ không có điểm số để công bố; (3) mọi phiên bản cần **hàng trăm nhãn tay**, trái ràng buộc đã đặt |
+| `mo_khong_the` | Không có — **không phát sinh artifact nào**, không có inference nào chạy. Đây là một quyết định phạm vi |
+| `mo_khong_them` | Việc đo harness-evolution (RQ1–RQ4) theo `docs/harness-evolution-thesis-plan.md` |
+| `khong_lam` | Không suy ra "model an toàn/không an toàn" từ việc này — 4.000 câu **chưa từng** được chấm, đừng đọc nhầm là "đã kiểm tra và thấy ổn" |
+| `trang_thai` | ✅ **Đóng** (2026-10-05) — hướng phát triển |
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

@@ -1,9 +1,11 @@
 # Plan metric bổ sung — 3 nhóm (MC-32/33 follow-up)
 
-**Trạng thái (2026-10-04): nhóm 1 XONG (MC-34); nhóm 2 XONG — 2.1 (MC-35/36) và
+**Trạng thái (2026-10-05): nhóm 1 XONG (MC-34); nhóm 2 XONG — 2.1 (MC-35/36) và
 2.2 (MC-37/38 + MC-39/40, kết quả âm: hai dụng cụ judge trượt cổng); nhóm 3.1 XONG
-(MC-41/42: gateway có logprobs, ECE 7,39pp, under-confident −6,66pp). 3.2 safety chưa.**
-Chi tiết xem MC-34/36/38/40/42 trong `measurement_card.md`.
+(MC-41…44: logprobs khả dụng; VMLU-1047 ECE 6,51pp **over-confident +6,58pp**, đổi chiều
+theo độ khó môn); 3.2 **KHÔNG chạy** — ghi hướng phát triển, lý do ở bảng dưới.**
+Chi tiết xem MC-34/36/38/40/42/44 trong `measurement_card.md`.
+**Sau nhóm 3: chuyển sang `docs/harness-evolution-thesis-plan.md`.**
 
 Ngày lập: 2026-10-03. Ngữ cảnh: bảng `/harness` đã đủ 3 model (MC-32, đính chính MC-33).
 Câu hỏi gốc: metric hiện tại có đủ phản ánh hành vi model không?
@@ -49,6 +51,22 @@ không đạt thì số faithfulness vô nghĩa, dừng.
 |---|---|---|
 | 3.1 Calibration | Probe xem gateway có trả `logprobs` không — nếu không, dừng, không cố | Không |
 | 3.2 Safety benchmark | 4.000 safety rows đang skip: cần rubric + gold riêng, duyệt hội đồng | Không (đo model gọi thẳng) |
+
+**3.2 — QUYẾT ĐỊNH 2026-10-05: ghi thành hướng phát triển, KHÔNG chạy.** Đọc dữ liệu thật cho thấy đây
+**không phải một task mà là hai dụng cụ không tương thích**:
+
+| domain | n | Dạng | Cần để chấm |
+|---|---:|---|---|
+| `hatespeech` | 2000 | 1300 **mệnh lệnh** / 700 câu hỏi — không có "đáp án đúng" | rubric **hành vi từ chối** + judge |
+| `politics_easy` | 1000 | câu hỏi tri thức (100% hỏi) | **gold riêng** từng câu |
+| `politics_advanced` | 1000 | phân tích dài (tb 188 ký tự) | gold + rubric chất lượng lập luận |
+
+Ba lý do không chạy: (1) `politics_*` là câu hỏi **chính trị nhạy cảm**, loại nội dung người chấm cũng dễ
+bất đồng về gold; (2) theo tiền lệ 2.2 (MC-39/40), một judge safety còn khó hơn faithfulness — LLM judge
+dễ **đồng thuận với model** hơn là phản đối, nên gần như chắc chắn trượt cổng κ ≥ 0,60 ⇒ không có điểm số nào
+để công bố; (3) mọi phiên bản đều cần **hàng trăm nhãn tay**, trái ràng buộc đã đặt.
+Nếu sau này mở lại: bắt đầu từ `hatespeech` với thang nhị phân (refuse/comply) và **phải** qua cổng κ
+trước khi đo.
 
 **Kết quả nhóm 3.1 (2026-10-04 → 05):** probe **CÓ** logprobs (Qwen3.5-9B-65K; token đầu là chữ cái trần,
 `top_logprobs` đủ các chữ được cung cấp) ⇒ calibration chạy.
