@@ -1768,6 +1768,21 @@ Model **giữ tự tin ~65–69% ở môn nó đúng 30–40%**. Ở môn dễ (
 | `khong_lam` | Không suy ra "model an toàn/không an toàn" từ việc này — 4.000 câu **chưa từng** được chấm, đừng đọc nhầm là "đã kiểm tra và thấy ổn" |
 | `trang_thai` | ✅ **Đóng** (2026-10-05) — hướng phát triển |
 
+## MC-46 — **Factorial persona × tools trên 65K + noise floor 65K** (pre-register)
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-46` |
+| `ngay_chay` | 2026-10-05 (pre-register, **trước** mọi lần chạy) |
+| `ly_do` | Bảng RQ1 (`docs/rq1-decomposition.md`) chỉ ra hai khoảng trống: (1) ô factorial **persona × tools chỉ có ở 28K**, node đã offline; (2) **noise floor chưa có ở 65K** — chỉ một cặp đo gián tiếp từ MC-44 (130→132), đủ biết có nhiễu nhưng không đặt được ngưỡng |
+| `dieu_kien` | Model `Qwen3.5-9B-65K` @ IEC. `omp sạch`: `HOME=/tmp/fakehome`, sandbox `/tmp`, `--agent-dir .omp-qwen65k-pinned` (temperature 0 ghim qua proxy `127.0.0.1:8799` → `llmapi.iec`, `--pin temperature=0`), `--arm-a-slug Qwen3_5-9B-65K` để so với **arm A3 của chính model này**, dataset `legal_mc` (146), workers 4 |
+| `4_o` | **F5** `--tools none --system-prompt minimal` · **F7** `--tools none` (giữ system prompt của omp) · **F8** `--tools all` (giữ system prompt của omp) · **T65‑r2** lặp lại **y hệt** T65 |
+| `o_4_da_co` | **F6 ≡ T65** (`--tools all` + system prompt trung tính, MC-31/32) — dùng lại, **không chạy lại**: chạy lại một điều kiện đã có không tạo thêm thông tin, chỉ tốn compute |
+| `doc_biet` | (a) hai contrast **gene** (tools, persona) trên 65K, so với chính arm A3; (b) một **noise floor có hệ thống** cho 65K để mọi contrast nhỏ ở 65K biết phải lớn hơn bao nhiêu |
+| `khong_lam` | Không chạy trên dataset khác (một condition một slug, một card một hạng mục); không đụng arm H2/H3 (scaffold **có rò** style, MC-22); không so chéo sang 28K; không so sánh với MiMo (khác model) |
+| `dieu_kien_can` | VPN IEC + proxy 8799 + `.omp-qwen65k-pinned`. Nếu proxy không dựng được ⇒ **dừng ô nào cần nó**, ghi vào card, không chạy bằng điều kiện khác |
+| `trang_thai` | 📌 **PRE-REGISTERED** — commit trước khi chạy; kết quả ở **MC-47** |
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.
