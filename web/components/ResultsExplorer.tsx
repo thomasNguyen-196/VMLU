@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { InsightPanel } from "@/components/InsightPanel.tsx";
+import SiteNav from "@/components/SiteNav.tsx";
 
 interface ModelOpt {
   _id: string;
@@ -398,6 +399,7 @@ export function ResultsExplorer() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <SiteNav />
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <h1 className="font-bold">Results (DB-backed)</h1>

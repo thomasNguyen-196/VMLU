@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useReviewStore } from "@/lib/review-store.ts";
 import { computeStats, nextUnreviewed, passageGroups, passagePosition } from "@/lib/review-logic.ts";
 import { Filmstrip } from "./Filmstrip.tsx";
+import SiteNav from "./SiteNav.tsx";
 import { ItemPane } from "./ItemPane.tsx";
 import { DecisionPanel } from "./DecisionPanel.tsx";
 import { NavDock } from "./NavDock.tsx";
@@ -190,6 +191,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
 
   return (
     <>
+      <SiteNav />
       <header className="sticky top-0 z-30 border-b border-hair bg-paper">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-3.5 sm:px-8">
           <div className="flex min-w-0 items-baseline gap-2.5">
@@ -201,12 +203,6 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
           <Stat label="accept %" value={stats.acceptPct === null ? "—" : stats.acceptPct.toFixed(1)} tone="accept" />
           <Stat label="đã review" value={`${stats.reviewed}/${stats.total}`} />
           <Stat label="reject" value={String(stats.reject)} tone="reject" />
-          <Link
-            href="/benchmark"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-hair bg-card px-3 py-1.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
-          >
-            <span>Dashboard benchmark (V-Bench &amp; VMLU)</span>
-          </Link>
           <Link
             href="/results"
             className="inline-flex items-center gap-1.5 rounded-lg border border-hair bg-card px-3 py-1.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"

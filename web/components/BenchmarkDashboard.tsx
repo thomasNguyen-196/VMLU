@@ -4,7 +4,13 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { InsightPanel } from "@/components/InsightPanel.tsx";
 import { OverviewTab } from "@/components/OverviewTab.tsx";
+import { HarnessContrast } from "@/components/HarnessContrast.tsx";
 import { summaryFromBlob } from "@/lib/insights.ts";
+import {
+  harnessContrastFor,
+  type HarnessContrastMap,
+} from "@/lib/harness-contrast.ts";
+import type { HarnessContrastVM } from "@/lib/harness-contrast.ts";
 import type {
   BenchmarkView,
   LegalBlock as DbLegal,
@@ -265,9 +271,14 @@ export function viewToDashboardData(view: BenchmarkView): { data: BenchmarkData;
 function DatasetStrip({
   meta,
   headline,
+  contrast,
+  datasetName,
 }: {
   meta: { about: string; shape: string; metric: string; metricNote: string } | undefined;
   headline: string;
+  /** Cross-link into the frozen harness study for this same cell, or null. */
+  contrast?: HarnessContrastVM | null;
+  datasetName?: string;
 }) {
   if (!meta) return null;
   return (
@@ -288,6 +299,7 @@ function DatasetStrip({
       <p className="text-[11px] text-amber-800 leading-relaxed bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
         ⚠️ {meta.metricNote}
       </p>
+      <HarnessContrast contrast={contrast ?? null} datasetName={datasetName ?? meta.metric} />
     </div>
   );
 }
@@ -316,6 +328,7 @@ function ReadingTabView({
   meta,
   datasetId,
   modelId,
+  contrast,
 }: {
   block: ReadingBlock;
   title: string;
@@ -323,6 +336,7 @@ function ReadingTabView({
   meta: { about: string; shape: string; metric: string; metricNote: string } | undefined;
   datasetId: string;
   modelId: string;
+  contrast?: HarnessContrastVM | null;
 }) {
   return (
     <div className="space-y-6">
@@ -362,7 +376,12 @@ function ReadingTabView({
         </div>
       </div>
 
-      <DatasetStrip meta={meta} headline={`EM ${block.overall.em.toFixed(2)}% · F1 ${block.overall.char_f1.toFixed(2)}% (n=${block.overall.n})`} />
+      <DatasetStrip
+        meta={meta}
+        headline={`EM ${block.overall.em.toFixed(2)}% · F1 ${block.overall.char_f1.toFixed(2)}% (n=${block.overall.n})`}
+        contrast={contrast}
+        datasetName={datasetId}
+      />
       <TabInsight datasetId={datasetId} modelId={modelId} block={block} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -435,12 +454,19 @@ export function BenchmarkDashboard({
   models,
   activeModelId,
   onModelChange,
+  harness,
+  modelDisplayName,
 }: {
   data: BenchmarkData;
   questions: VmluQuestion[];
   models: Array<{ id: string; display_name: string }>;
   activeModelId: string;
   onModelChange: (id: string) => void;
+  /** Frozen-block cross-link index keyed by model display_name. Optional so an
+   *  older caller (tests) still renders — every strip then reports "chưa đo". */
+  harness?: HarnessContrastMap;
+  /** Needed because the block keys on display_name, the dashboard on model id. */
+  modelDisplayName?: string;
 }) {
   const [tab, setTab] = useState<"overview" | "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k">(
     "overview",
@@ -518,6 +544,12 @@ export function BenchmarkDashboard({
 
   // Modal
   const [selectedQuestion, setSelectedQuestion] = useState<VmluQuestion | null>(null);
+
+  // Cross-link into the frozen harness block for one benchmark dataset cell.
+  // Null when this model/dataset has no arm — the strip then SAYS "chưa đo"
+  // rather than rendering nothing (see components/HarnessContrast.tsx).
+  const hc = (datasetId: string): HarnessContrastVM | null =>
+    harnessContrastFor(harness, modelDisplayName ?? activeModelId, datasetId);
 
   // Filtered VMLU subjects
   const filteredSubjects = useMemo(() => {
@@ -656,7 +688,12 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            <DatasetStrip meta={data.datasetMeta["vmlu-mqa-all-gold"]} headline={`Accuracy ${data.vmlu.overall.accuracy.toFixed(2)}% (${data.vmlu.overall.correct}/${data.vmlu.overall.n}) · 4 categories + 58 subjects`} />
+            <DatasetStrip
+              meta={data.datasetMeta["vmlu-mqa-all-gold"]}
+              headline={`Accuracy ${data.vmlu.overall.accuracy.toFixed(2)}% (${data.vmlu.overall.correct}/${data.vmlu.overall.n}) · 4 categories + 58 subjects`}
+              contrast={hc("vmlu-mqa-all-gold")}
+              datasetName="VMLU-MQA"
+            />
             <TabInsight datasetId="vmlu-mqa-all-gold" modelId={activeModelId} block={data.vmlu} />
 
             {/* Highlighting Weakest vs Strongest */}
@@ -974,7 +1011,12 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            <DatasetStrip meta={data.datasetMeta["vbench-public-test"]} headline={`Micro ${data.vbench.micro_accuracy.toFixed(2)}% (${data.vbench.total_correct}/${data.vbench.total_items}) · Macro ${data.vbench.macro_score.toFixed(2)} (13 miền)`} />
+            <DatasetStrip
+              meta={data.datasetMeta["vbench-public-test"]}
+              headline={`Micro ${data.vbench.micro_accuracy.toFixed(2)}% (${data.vbench.total_correct}/${data.vbench.total_items}) · Macro ${data.vbench.macro_score.toFixed(2)} (13 miền)`}
+              contrast={hc("vbench-public-test")}
+              datasetName="V-Bench public test"
+            />
             <TabInsight datasetId="vbench-public-test" modelId={activeModelId} block={data.vbench} />
 
             {/* 13 Domains Leaderboard */}
@@ -1067,6 +1109,7 @@ export function BenchmarkDashboard({
             meta={data.datasetMeta["reading-400"]}
             datasetId="reading-400"
             modelId={activeModelId}
+            contrast={hc("reading-400")}
           />
         )}
         {/* ========================================================== */}
@@ -1117,7 +1160,12 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            <DatasetStrip meta={data.datasetMeta["legal-mc-146"]} headline={`Accuracy ${data.legal.overall.accuracy.toFixed(2)}% (${data.legal.overall.correct}/${data.legal.overall.n}) · baseline ${data.legal.baseline.majority_accuracy.toFixed(2)}%`} />
+            <DatasetStrip
+              meta={data.datasetMeta["legal-mc-146"]}
+              headline={`Accuracy ${data.legal.overall.accuracy.toFixed(2)}% (${data.legal.overall.correct}/${data.legal.overall.n}) · baseline ${data.legal.baseline.majority_accuracy.toFixed(2)}%`}
+              contrast={hc("legal-mc-146")}
+              datasetName="LegalSLM MC-146"
+            />
             <TabInsight datasetId="legal-mc-146" modelId={activeModelId} block={data.legal} />
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
@@ -1209,7 +1257,12 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            <DatasetStrip meta={data.datasetMeta["legal-nli-150"]} headline={`Accuracy ${data.legal_nli.overall.accuracy.toFixed(2)}% (${data.legal_nli.overall.correct}/${data.legal_nli.overall.n}) · mốc đối chứng ${data.legal_nli.baseline.majority_accuracy.toFixed(2)}%`} />
+            <DatasetStrip
+              meta={data.datasetMeta["legal-nli-150"]}
+              headline={`Accuracy ${data.legal_nli.overall.accuracy.toFixed(2)}% (${data.legal_nli.overall.correct}/${data.legal_nli.overall.n}) · mốc đối chứng ${data.legal_nli.baseline.majority_accuracy.toFixed(2)}%`}
+              contrast={hc("legal-nli-150")}
+              datasetName="LegalSLM NLI-150"
+            />
             <TabInsight datasetId="legal-nli-150" modelId={activeModelId} block={data.legal_nli} />
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
@@ -1265,6 +1318,7 @@ export function BenchmarkDashboard({
               meta={data.datasetMeta[tab]}
               datasetId={tab === "bidlqa-val" ? "bidlqa-val" : "bidlqa-test"}
               modelId={activeModelId}
+              contrast={hc(tab === "bidlqa-val" ? "bidlqa-val" : "bidlqa-test")}
             />
           )}
 
@@ -1314,7 +1368,12 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            <DatasetStrip meta={data.datasetMeta["vm14k-public-12488"]} headline={`Accuracy ${data.vm14k.overall.accuracy.toFixed(2)}% (${data.vm14k.overall.correct}/${data.vm14k.overall.n}) · baseline ${data.vm14k.baseline.majority_accuracy.toFixed(2)}%`} />
+            <DatasetStrip
+              meta={data.datasetMeta["vm14k-public-12488"]}
+              headline={`Accuracy ${data.vm14k.overall.accuracy.toFixed(2)}% (${data.vm14k.overall.correct}/${data.vm14k.overall.n}) · baseline ${data.vm14k.baseline.majority_accuracy.toFixed(2)}%`}
+              contrast={hc("vm14k-public-12488")}
+              datasetName="VM14K"
+            />
             <TabInsight datasetId="vm14k-public-12488" modelId={activeModelId} block={data.vm14k} />
 
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
