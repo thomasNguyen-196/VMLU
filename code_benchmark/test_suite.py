@@ -3591,6 +3591,188 @@ class TestMcCalibration(unittest.TestCase):
         self.assertEqual(sum(r["n"] for r in rows), 4)
 
 
+class TestHarnessGenome(unittest.TestCase):
+    """`harness_genome.py` — the P0 guard. Each test is one way an evolutionary
+    loop could cheat its way to a better score; the guard must stop it at
+    validation time, not in a write-up afterwards."""
+
+    def setUp(self):
+        from code_benchmark import harness_genome as hg
+        self.hg = hg
+        self.spec = hg.minimal_genome().to_dict()
+
+    def test_minimal_seed_validates_and_its_id_survives_a_round_trip(self):
+        from code_benchmark import harness_genome as hg
+        g = hg.minimal_genome()
+        self.assertEqual(hg.validate(g.to_dict()).genome_id, g.genome_id)
+        self.assertEqual(g.tools, ("none",))
+        self.assertEqual(g.max_tokens, 4)                 # the frozen MC letter budget
+        self.assertEqual(g.required_declarations(), [])   # a plain single answer
+
+    def test_a_different_value_anywhere_is_a_different_candidate(self):
+        from code_benchmark import harness_genome as hg
+        base = hg.minimal_genome()
+        mutated = hg.validate({**base.to_dict(), "option_order": "seed_shuffle",
+                               "shuffle_seed": 1234})
+        self.assertNotEqual(mutated.genome_id, base.genome_id)
+        self.assertEqual(mutated.shuffle_seed, 1234)
+
+    def test_an_unreviewed_ninth_gene_group_is_an_escape_hatch(self):
+        spec = {**self.spec, "self_reward": {"weight": 1.0}}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_an_out_of_enum_value_is_never_coerced(self):
+        spec = {**self.spec, "elicitation": "chain_of_thought_v2"}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_fewshot_k_must_agree_with_its_elicitation(self):
+        spec = {**self.spec, "fewshot": {"k": 3, "selection": "random"}}
+        with self.assertRaises(SystemExit):               # minimal + k=3 is a contradiction
+            self.hg.validate(spec)
+        spec = {**self.spec, "elicitation": "fewshot_k",
+                "fewshot": {"k": 0, "selection": "random"}}
+        with self.assertRaises(SystemExit):               # few-shot with no examples
+            self.hg.validate(spec)
+
+    def test_a_token_ceiling_is_part_of_the_measurement(self):
+        # The cheapest reward-hack: give an MC model room to write a rationale whose
+        # last letter the byte-frozen parser then reads. Score up, capability flat.
+        spec = {**self.spec, "resources": {"max_tokens": 64, "temperature": 0.0,
+                                           "samples_per_item": 1}}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+        over_cap = {**self.spec, "template_id": "vbench_agentic"}
+        over_cap["answer_format"] = {"template_id": "vbench_agentic", "retries": 0,
+                                     "repair_syntax_only": True}
+        over_cap["resources"] = {"max_tokens": 4096, "temperature": 0.0,
+                                 "samples_per_item": 1}
+        with self.assertRaises(SystemExit):               # above the hard cap too
+            self.hg.validate(over_cap)
+
+    def test_a_template_outside_the_frozen_registry_is_a_scorer_change(self):
+        spec = {**self.spec}
+        spec["answer_format"] = {"template_id": "extract_answer_v2", "retries": 0,
+                                 "repair_syntax_only": True}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_values_cannot_smuggle_a_path_or_code(self):
+        for bad in ("/etc/passwd", "code_benchmark/run_mc_eval.py", "import os",
+                    "lambda: 1", "x\ny"):
+            spec = {**self.spec}
+            spec["answer_format"] = {"template_id": bad, "retries": 0,
+                                     "repair_syntax_only": True}
+            with self.assertRaises(SystemExit):
+                self.hg.validate(spec)
+
+    def test_scorer_gold_and_split_keys_are_outside_the_genome(self):
+        for key in ("scorer", "gold", "dataset", "split", "extract_answer"):
+            with self.assertRaises(SystemExit):
+                self.hg.validate({**self.spec, key: "anything"})
+
+    def test_answers_are_never_repaired(self):
+        spec = {**self.spec}
+        spec["answer_format"] = {"template_id": "mc_frozen", "retries": 0,
+                                 "repair_syntax_only": False}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_tools_are_a_reviewed_menu_and_none_stands_alone(self):
+        spec = {**self.spec, "tools": ["calculator", "self_written_tool"]}
+        with self.assertRaises(SystemExit):               # synthesis is P4 + sandbox
+            self.hg.validate(spec)
+        spec = {**self.spec, "tools": ["none", "calculator"]}
+        with self.assertRaises(SystemExit):               # a contradiction, not a default
+            self.hg.validate(spec)
+        spec = {**self.spec, "tools": ["calculator", "calculator"]}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_a_shuffle_without_its_seed_is_uninterpretable(self):
+        spec = {**self.spec, "option_order": "seed_shuffle"}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+        spec = {**self.spec, "shuffle_seed": 7}           # seed without a shuffle
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+
+    def test_a_disabled_retrieval_group_must_be_inert(self):
+        spec = {**self.spec, "rag": {"mode": "off", "corpus": "mixed", "top_k": 3,
+                                     "merge": "concat"}}
+        with self.assertRaises(SystemExit):
+            self.hg.validate(spec)
+        ok = {**self.spec, "rag": {"mode": "off", "corpus": "viwiki", "top_k": 0,
+                                   "merge": "none"}}
+        self.assertEqual(self.hg.validate(ok).rag_mode, "off")
+
+    def test_conditions_that_change_what_is_measured_must_declare_it(self):
+        from code_benchmark import harness_genome as hg
+        guided = hg.validate({**self.spec, "agentic_extra": {"guided_fallback": True}})
+        self.assertTrue(any("thứ ba" in d for d in guided.required_declarations()))
+        hot = hg.validate({**self.spec, "resources": {"max_tokens": 4, "temperature": 0.7,
+                                                      "samples_per_item": 1}})
+        self.assertTrue(any("không tất định" in d for d in hot.required_declarations()))
+        vote = hg.validate({**self.spec, "resources": {"max_tokens": 4, "temperature": 0.0,
+                                                      "samples_per_item": 5}})
+        self.assertTrue(any("bầu" in d for d in vote.required_declarations()))
+        tools = hg.validate({**self.spec, "tools": ["calculator", "date_arith"]})
+        self.assertTrue(any("tách biệt của tool" in d for d in tools.required_declarations()))
+
+    def test_the_baseline_and_its_ablation_are_two_named_candidates(self):
+        from code_benchmark import harness_genome as hg
+        base = hg.baseline_genome()
+        ablated = hg.baseline_genome_vs_direct(base)
+        self.assertNotEqual(base.genome_id, ablated.genome_id)
+        self.assertEqual(ablated.tools, ("none",))
+        self.assertEqual(ablated.elicitation, "zero_shot_minimal")
+        self.assertEqual(ablated.rag_mode, base.rag_mode)   # only the stated genes moved
+
+    def test_the_frozen_surface_is_fingerprinted_and_covers_the_three_contracts(self):
+        from code_benchmark import harness_genome as hg
+        prints = hg.frozen_fingerprints()
+        self.assertEqual(set(prints), {"code_benchmark.run_mc_eval:build_prompt",
+                                       "code_benchmark.run_mc_eval:extract_answer",
+                                       "code_benchmark.run_vbench_eval:_validate_call"})
+        self.assertEqual(prints, hg.frozen_fingerprints())   # stable across calls
+        self.assertTrue(all(len(v) == 16 for v in prints.values()))
+
+    def test_an_evidence_bundle_references_results_and_fails_fast_when_absent(self):
+        from code_benchmark import harness_genome as hg
+        g = hg.minimal_genome()
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "evidence"
+            with self.assertRaises(SystemExit):             # no bundle pointing at nothing
+                hg.collect_evidence(g, slug="probe", dataset="legal_mc",
+                                    results=Path(d) / "nope.csv",
+                                    ledger=Path(d) / "nope2.csv", budget={},
+                                    root=root)
+            (Path(d) / "res.csv").write_text("id\n1\n", encoding="utf-8")
+            (Path(d) / "led.csv").write_text("id\n1\n", encoding="utf-8")
+            out = hg.collect_evidence(g, slug="probe", dataset="legal_mc",
+                                      results=Path(d) / "res.csv",
+                                      ledger=Path(d) / "led.csv",
+                                      budget={"wall_sec": 12}, root=root)
+            self.assertEqual(out.name, g.genome_id)
+            manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertFalse(manifest["code_changed"])       # honest empty for config-only
+            self.assertEqual(manifest["frozen_fingerprints"], hg.frozen_fingerprints())
+            self.assertIn("legal_mc", manifest["reproduce"])
+            self.assertEqual(json.loads((out / "genome.json").read_text(encoding="utf-8")),
+                             g.to_dict())
+            self.assertTrue((out / "harness.diff").exists())
+            removed = hg.prune_evidence(keep=0, root=root)
+            self.assertEqual(removed, [g.genome_id])
+
+    def test_the_gene_groups_are_exactly_the_plans_eight(self):
+        # §4's list, in order. If the plan changes, this is the test that must change
+        # with it — silently widening the grammar is how a guard stops guarding.
+        self.assertEqual(self.hg.GENE_GROUPS,
+                         ("elicitation", "fewshot", "option_order", "answer_format",
+                          "rag", "tools", "resources", "agentic_extra"))
+
+
 class TestAgreementCI(unittest.TestCase):
     """The V-Bench MC agreement CI — a scale bug that shipped because no arm had
     ever run that branch (found 2026-09-29, the first MiMo run to reach it)."""

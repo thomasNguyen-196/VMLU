@@ -142,6 +142,24 @@ discipline, and the meta-agent is an external, disclosed API model.
 
 - **P0 (wk 1–2):** `harness_genome.py` spec + guard tests; evidence-folder writer;
   baseline + oracle-condition runs (minimal/detailed already exist as seeds).
+
+> **Trạng thái P0 (2026-10-05):** phần code **xong** — `code_benchmark/harness_genome.py`
+> (genome 8 nhóm gene theo §4, `TEMPLATE_IDS` đóng + trần token theo từng runner,
+> `frozen_fingerprints()`, `required_declarations()`, `collect_evidence()`) và 18 test guard
+> trong `code_benchmark/test_suite.py`. Chi tiết: `openspec/changes/thesis-p0-harness-genome/`.
+>
+> **Còn thiếu, và hai tiền đề trong tài liệu này đã lỗi thời:**
+> 1. **Model.** §0 ghi `Qwen3.8-27B-Q4_K_M.gguf`; endpoint hôm nay phục vụ
+>    **`Qwen3.5-9B-65K`** (28K offline 503). Fitness phải định nghĩa lại theo model thật.
+> 2. **"minimal/detailed already exist as seeds"** chỉ đúng cho runner V-Bench trên 28K.
+>    Ở model đang chạy chỉ có `A3_direct` (gọi thẳng) và `T65` (omp + tool) — đó là
+>    "tối giản" và "harness giàu", **không phải** cặp seed mà §6 cần. `minimal_genome()`
+>    đã có sẵn để *chạy*, chưa chạy (cần card riêng — MC-46 trong tasks.md).
+>
+> **Bài học từ MC-44 bổ sung cho §5:** backend không tất định ở temp 0 (cùng điều kiện cho
+> accuracy 130 rồi 132/146). Ngân sách "2–3 ngày endpoint" của §5 phải chứa thêm biên
+> nhiễu này, và mỗi arm nhiệt>0 cần một repeatability floor riêng (guard đã bắt buộc
+> khai báo điều này qua `required_declarations()`).
 - **P1 (wk 3–4):** grid search (30–50 points) incl. calculator & option-shuffle genes;
   variance decomposition tables (RQ1) + confidence intervals via bootstrap.
 - **P2 (wk 5–7):** evolution loop (8×15); archive plots; mutation-hypothesis ledger.
