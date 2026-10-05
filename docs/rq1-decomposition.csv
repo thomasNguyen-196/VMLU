@@ -12,4 +12,13 @@ scaffold,scaffold (omp),MiMo V2.5,legal_mc,accuracy,146,90.41,93.15,+2.74,0.00,6
 factorial,tools (danh mục tool),Qwen3.5-9B-28K,legal_mc,accuracy,100,70.00,69.00,-1.00,-11.00,10.00,1,MC-23,ompH6clean_Qwen3_5-9B-28K/harness_compare_legal_mc_vsH5_ompH6clean_Qwen3_5-9B-28K.csv
 factorial,persona (system prompt),Qwen3.5-9B-28K,legal_mc,accuracy,100,70.00,68.00,-2.00,-13.00,9.00,0.8555,MC-23,ompH7clean_Qwen3_5-9B-28K/harness_compare_legal_mc_vsH5_ompH7clean_Qwen3_5-9B-28K.csv
 factorial,tools × persona,Qwen3.5-9B-28K,legal_mc,accuracy,100,70.00,75.00,+5.00,-4.00,14.00,0.4049,MC-23,ompH8clean_Qwen3_5-9B-28K/harness_compare_legal_mc_vsH5_ompH8clean_Qwen3_5-9B-28K.csv
+factorial_65k,scaffold (omp),Qwen3.5-9B-65K,legal_mc,accuracy,146,89.04,87.67,-1.37,-5.48,2.74,0.7539,MC-47,ompF5clean_Qwen3_5-9B-65K/harness_compare_legal_mc_vsA_ompF5clean_Qwen3_5-9B-65K.csv
+factorial_65k,scaffold (omp),Qwen3.5-9B-65K,legal_mc,accuracy,146,89.04,79.45,-9.59,-15.07,-4.11,0.001312,MC-47,ompF7clean_Qwen3_5-9B-65K/harness_compare_legal_mc_vsA_ompF7clean_Qwen3_5-9B-65K.csv
+factorial_65k,scaffold (omp),Qwen3.5-9B-65K,legal_mc,accuracy,146,89.04,73.29,-15.75,-22.60,-8.90,3.395e-05,MC-47,ompF8clean_Qwen3_5-9B-65K/harness_compare_legal_mc_vsA_ompF8clean_Qwen3_5-9B-65K.csv
+factorial_65k,scaffold (omp),Qwen3.5-9B-65K,legal_mc,accuracy,146,89.04,76.03,-13.01,-19.86,-6.16,0.0003107,MC-47,ompT65r2_Qwen3_5-9B-65K/harness_compare_legal_mc_vsA_ompT65r2_Qwen3_5-9B-65K.csv
+factorial_65k_gene,tools,Qwen3.5-9B-65K,legal_mc,accuracy,146,76.03,87.67,-11.64,-17.81,-5.48,0.00048828125,MC-47,ompF5clean_Qwen3_5-9B-65K
+factorial_65k_gene,tools,Qwen3.5-9B-65K,legal_mc,accuracy,146,73.29,79.45,-6.16,-10.96,-1.37,0.0224609375,MC-47,ompF7clean_Qwen3_5-9B-65K
+factorial_65k_gene,persona,Qwen3.5-9B-65K,legal_mc,accuracy,146,79.45,87.67,-8.22,-13.01,-3.42,0.0018310546875,MC-47,ompF5clean_Qwen3_5-9B-65K
+factorial_65k_gene,persona,Qwen3.5-9B-65K,legal_mc,accuracy,146,73.29,76.03,-2.74,-6.16,+0.00,0.21875,MC-47,ompT65r2_Qwen3_5-9B-65K
+factorial_65k_gene,interaction,Qwen3.5-9B-65K,legal_mc,accuracy,146,76.03,79.45,+5.48,-5.48,+16.44,,MC-47,ompF8clean_Qwen3_5-9B-65K
 option_order,option_order,Qwen3.5-9B-65K,legal_mc,accuracy,146,89.04,89.04,+0.00,-5.48,5.48,1,MC-36,Qwen3_5-9B-65K/position_bias_legal_mc_s1234_compare.csv

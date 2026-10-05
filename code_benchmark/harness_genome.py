@@ -415,17 +415,24 @@ def _git_diff(git_ref: str) -> str:
 
 def collect_evidence(genome: Genome, *, slug: str, dataset: str, results: Path,
                      ledger: Path, budget: dict, root: Path = EVIDENCE_ROOT,
-                     git_ref: str | None = None) -> Path:
+                     git_ref: str | None = None, container: str = "direct") -> Path:
     """Write one candidate's evidence folder. **References** the arm's CSVs by path
     instead of copying them: results stay in `all_res/ollama_result/<slug>/`
     (gitignored, per-model), because a copied second copy is a second source of
     truth — the exact failure the repo already hit with the review blob vs the
-    static fallback."""
+    static fallback.
+
+    `container` names the SCAFFOLD the genome lives inside (`direct`, `omp`, …).
+    It is part of the folder name on purpose: the §4 gene groups cannot express
+    "is the prompt scaffolded at all", which MC-47 measured as the single largest
+    variance source. Without it, a direct call and a scaffolded run with the same
+    genes would share one `genome_id` and two different conditions would occupy one
+    folder — the exact collision that would silently corrupt an evolutionary search."""
     for label, path in (("results", results), ("ledger", ledger)):
         if not Path(path).exists():
             _fail(f"evidence bundle for {slug} names a {label} file that does not exist: "
                   f"{path} — a bundle that points at nothing is worse than no bundle")
-    out = Path(root) / genome.genome_id
+    out = Path(root) / f"{container}__{genome.genome_id}"
     out.mkdir(parents=True, exist_ok=True)
 
     (out / "genome.json").write_text(
@@ -442,6 +449,7 @@ def collect_evidence(genome: Genome, *, slug: str, dataset: str, results: Path,
 
     manifest = {
         "genome_id": genome.genome_id,
+        "container": container,
         "slug": slug,
         "dataset": dataset,
         "code_changed": bool(diff.strip()),
@@ -457,7 +465,8 @@ def collect_evidence(genome: Genome, *, slug: str, dataset: str, results: Path,
         json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
         encoding="utf-8")
     (out / "README.md").write_text(
-        f"# Evidence {genome.genome_id}\n\n"
+        f"# Evidence {container}__{genome.genome_id}\n\n"
+        f"- container (scaffold): `{container}`\n- genome_id: `{genome.genome_id}`\n"
         f"- slug: `{slug}`\n- dataset: `{dataset}`\n"
         f"- code changed by this candidate: **{bool(diff.strip())}**\n"
         f"- results: `{results}`\n- ledger: `{ledger}`\n\n"

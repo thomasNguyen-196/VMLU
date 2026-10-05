@@ -32,6 +32,25 @@ Câu hỏi tiếp: phần mất điểm là do **cái scaffold**, hay do những
 | persona (system prompt) | 100 | đổi sang system prompt của omp, giữ không tool | **-2.00** | [-13.00, 9.00] | CI chạm 0 → **đổi persona không giúp** |
 | tools × persona | 100 | cả tool menu lẫn persona của omp | **5.00** | [-4.00, 14.00] | CI chạm 0 → **cả hai cùng lúc vẫn không giúp** |
 
+## Factorial persona × tools trên **65K** (MC-46/47)
+
+Mỗi ô so với **cùng arm A3** của chính model này — cùng cơ sở, nên dấu của Δ đọc được thẳng. Các contrast **gene** (giữ một ô cố định) ở bảng dưới, có CI ghép đôi.
+
+| ô | tools | system prompt | arm B | Δ vs A3 | CI 95% | p |
+|---|---|---|---:|---:|---|---:|
+| `ompF5clean_Qwen3_5-9B-65K` | none | minimal (--system-prompt minimal) | 87.67 | **-1.37** | [-5.48, 2.74] | 0.754 |
+| `ompF7clean_Qwen3_5-9B-65K` | none | gốc của omp | 79.45 | **-9.59** | [-15.07, -4.11] | 0.001 |
+| `ompF8clean_Qwen3_5-9B-65K` | all | gốc của omp | 73.29 | **-15.75** | [-22.60, -8.90] | 3.4e-05 |
+| `ompT65r2_Qwen3_5-9B-65K` | all | minimal (--system-prompt minimal) | 76.03 | **-13.01** | [-19.86, -6.16] | 3.1e-04 |
+
+| contrast gene (paired) | giữ cố định | Δ | CI 95% | p | đọc |
+|---|---|---:|---|---:|---|
+| thêm tool menu | persona = minimal | **-11.64** | [-17.81, -5.48] | 4.9e-04 | **làm hỏng** |
+| thêm tool menu | persona = gốc omp | **-6.16** | [-10.96, -1.37] | 0.022 | **làm hỏng** |
+| system prompt của omp | tools = none | **-8.22** | [-13.01, -3.42] | 0.002 | **làm hỏng** |
+| system prompt của omp | tools = all | **-2.74** | [-6.16, 0.00] | 0.219 | không đọc được |
+| tools × persona | hiệu ứng tools có nhân với persona không | **5.48** | [-5.48, 16.44] | — | không đọc được |
+
 ## Option order (gene thứ ba)
 
 | dataset | metric | n | giữ nguyên | đảo (seed 1234) | Δ | CI 95% | p | card |
@@ -50,6 +69,7 @@ Cùng một điều kiện, chạy lại, cùng `n`. Không lặp lại thì kh�
 | ompH6clean | 146 | 2 | 67.81 | 73.29 | **5.48** |
 | ompH7clean | 146 | 2 | 70.55 | 71.23 | **0.68** |
 | ompH8clean | 146 | 2 | 73.97 | 74.66 | **0.69** |
+| ompT65 | 146 | 2 | 74.66 | 76.03 | **1.37** |
 
 ## Calibration (đặc tính của điểm số, không phải một gene)
 
@@ -60,15 +80,16 @@ Cùng một điều kiện, chạy lại, cùng `n`. Không lặp lại thì kh�
 
 ## Đọc tổng hợp
 
-1. **Scaffold là gene duy nhất có hiệu ứng lớn** — và dấu của nó **phụ thuộc model**: Qwen3.5-9B-65K mất hàng chục điểm, MiMo V2.5 *được* điểm. Không có một "cái giá của harness" nếu chưa nói rõ model nào.
-2. **Persona và tool menu gần như vô hiệu** (CI chạm 0) ⇒ phần mất điểm không phải do những gì ta thêm vào, mà do **chính cái scaffold**.
-3. **Option order sạch** trên MC ⇒ biến động không đến từ vị trí lựa chọn.
+1. **Gene nào quan trọng thì phụ thuộc model.** Ở 65K, ô scaffold tối giảu (không tool, system prompt trung tính) gần như **miễn phí** (−1,37; CI chạm 0) — cái tốn điểm là **những gì thêm vào nó**: tool menu (−11,64 / −6,16) và system prompt của omp (−8,22 khi không tool). Ở 28K thì **ngược lại**: hai gene đó CI chạm 0 còn scaffold mất 15–18 điểm. Cùng một cấu hình, hai kết luận khác nhau.
+2. **Dấu của scaffold phụ thuộc model**: Qwen3.5-9B-65K mất hàng chục điểm, MiMo V2.5 *được* điểm (+2,74). Không có một "cái giá của harness" nếu chưa nói rõ model nào.
+3. **Option order sạch** trên MC ⇒ biến động không đến từ vị trí lựa chọn (MC-36).
 4. **Calibration đổi chiều theo độ khó** ⇒ một điểm số không kèm độ tin cậy thì không diễn giải được (MC-44).
+5. **Tương tác tools × persona không đọc được** (CI rộng) ⇒ chưa được quy là hai gene nhân lên nhau; cần thêm lặp để thu hẹp.
 
 ## Không được quy
 
 - **Model khác không phải là một contrast.** MiMo nằm trong bảng scaffold như một hàng riêng của *model pair* khác; so Qwen với MiMo không phải là so harness.
 - **Metric khác nhau không xếp hạng được.** `accuracy`, `EM`, `agreement_with_arm_A`, `valid_rate` là bốn thứ khác nhau; bảng nêu tên từng metric thay vì gộp.
-- **Noise floor chỉ có cho model 28K** (4 cell × 2–3 lần chạy, n=146). Ở 65K mới chỉ có một cặp đo gián tiếp (130 → 132/146, MC-44) — đủ để biết có nhiễu, **không đủ** để đặt ngưỡng. Các contrast 65K rộng hơn nhiều lần nên không bị nhiễu này nuốt, nhưng một contrast 65K nhỏ thì chưa có sàn.
+- **Noise floor: 28K có nhiều lần hơn 65K.** 5 cell, 2–3 lần chạy mỗi cell. Ở 65K mới có **2** lặp cùng shape ⇒ sàn 65K yếu hơn hẳn; một contrast 65K nhỏ hơn sàn đó thì chưa đọc được. Ngoài ra MC-44 đo trực tiếp một cặp arm A ở 65K (130 → 132/146) — đó là nhiễu của **đường gọi thẳng**, khác đường harness.
 - **n=100 ở các ô factorial** → CI rộng hơn ô n=146; đừng đọc độ lớn điểm khác nhau giữa hai bảng là khác nhau về hiệu ứng.
 - **Scaffold của `omp` có lịch sử rò** (MC-22): `APPEND_SYSTEM.md` của máy. Các ô ở đây là scaffold **sạch** (HOME override) hoặc arm A; đừng trộn arm H2/H3 (có rò) vào đây.

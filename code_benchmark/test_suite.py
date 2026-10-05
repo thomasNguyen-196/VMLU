@@ -3767,17 +3767,28 @@ class TestHarnessGenome(unittest.TestCase):
             out = hg.collect_evidence(g, slug="probe", dataset="legal_mc",
                                       results=Path(d) / "res.csv",
                                       ledger=Path(d) / "led.csv",
-                                      budget={"wall_sec": 12}, root=root)
-            self.assertEqual(out.name, g.genome_id)
+                                      budget={"wall_sec": 12}, root=root,
+                                      container="omp")
+            # the container is part of the identity: MC-47 measured the scaffold
+            # itself as the largest variance source, and the §4 gene groups cannot
+            # express it, so a direct call and a scaffolded run must not collide.
+            self.assertEqual(out.name, f"omp__{g.genome_id}")
             manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["container"], "omp")
             self.assertFalse(manifest["code_changed"])       # honest empty for config-only
             self.assertEqual(manifest["frozen_fingerprints"], hg.frozen_fingerprints())
             self.assertIn("legal_mc", manifest["reproduce"])
             self.assertEqual(json.loads((out / "genome.json").read_text(encoding="utf-8")),
                              g.to_dict())
             self.assertTrue((out / "harness.diff").exists())
+            direct = hg.collect_evidence(g, slug="probe_direct", dataset="legal_mc",
+                                         results=Path(d) / "res.csv",
+                                         ledger=Path(d) / "led.csv", budget={}, root=root)
+            self.assertNotEqual(direct.name, out.name)
+            self.assertNotEqual(direct.name, g.genome_id)
             removed = hg.prune_evidence(keep=0, root=root)
-            self.assertEqual(removed, [g.genome_id])
+            self.assertEqual(sorted(removed), sorted([f"omp__{g.genome_id}",
+                                                      f"direct__{g.genome_id}"]))
 
     def test_the_gene_groups_are_exactly_the_plans_eight(self):
         # §4's list, in order. If the plan changes, this is the test that must change
@@ -3804,10 +3815,23 @@ class TestRq1Decomposition(unittest.TestCase):
 
     def test_every_declared_source_exists_in_this_repo(self):
         # The declaration IS the contract: if an arm was deleted, the table must stop
-        # rather than quietly shrink to the arms that still exist.
+        # rather than quietly shrink to the arms that still exist. Paired and
+        # interaction sources name their arms inside the path, so resolve both kinds.
         for src in self.rq1.registry().sources:
-            path = self.rq1.RESULTS / src.path
-            self.assertTrue(path.exists(), f"declared RQ1 source missing: {path}")
+            parts = src.path.split("|")
+            slugs = parts[1:] if parts[0] in ("interaction",) else parts[:1]
+            for slug in slugs:
+                path = self.rq1.RESULTS / slug
+                self.assertTrue(path.exists(), f"declared RQ1 source missing: {path}")
+
+    def test_a_paired_contrast_needs_two_arms_that_actually_share_items(self):
+        stats = self.rq1._paired_contrast("ompF5clean_Qwen3_5-9B-65K",
+                                          "ompF7clean_Qwen3_5-9B-65K", "legal_mc")
+        self.assertEqual(stats["n"], 146)
+        self.assertTrue(stats["delta"])            # a signed string, e.g. "-8.22"
+        with self.assertRaises(SystemExit):
+            self.rq1._paired_contrast("ompF5clean_Qwen3_5-9B-65K",
+                                      "ompH5clean_Qwen3_5-9B-28K", "legal_nli")
 
     def test_the_scaffold_table_keeps_one_model_per_row_pair(self):
         rows = [self.rq1.read_source(s) for s in self.rq1.registry().sources]

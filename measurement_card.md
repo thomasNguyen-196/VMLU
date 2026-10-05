@@ -1783,6 +1783,104 @@ Model **giữ tự tin ~65–69% ở môn nó đúng 30–40%**. Ở môn dễ (
 | `dieu_kien_can` | VPN IEC + proxy 8799 + `.omp-qwen65k-pinned`. Nếu proxy không dựng được ⇒ **dừng ô nào cần nó**, ghi vào card, không chạy bằng điều kiện khác |
 | `trang_thai` | 📌 **PRE-REGISTERED** — commit trước khi chạy; kết quả ở **MC-47** |
 
+## MC-47 — **Kết quả MC-46: ở 65K chính scaffold gần như miễn phí, cái tốn điểm là tool + persona**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-47` |
+| `ngay_chay` | 2026-10-05 (sau MC-46) |
+| `dieu_kien` | Y hệt MC-46. Tất cả 5 arm **sạch**: 146/146 item, **0 failure**, 0 tool call, 0 net attempt |
+
+### ⚠ Sự cố hạ tầng phải ghi lại (vì nó gần như không lộ ra)
+
+Lần chạy F5 đầu tiên **proxy ghim temperature được khởi động thiếu DNS shim** ⇒ mọi request qua
+proxy trả `502` ⇒ `omp` retry tới hết `--max-time 180` ⇒ **25 item đầu ra `exit 1 / aborted /
+wall 181s`**. Preflight **không bắt được** vì nó chỉ kiểm tra endpoint trực tiếp, không kiểm tra
+hop proxy. Tốc độ tụt 60× (2,12 → 0,02 item/s) là dấu hiệu duy nhất.
+
+→ **Đã xoá checkpoint nhiễm và chạy lại từ đầu** (không sửa, không lấy trung bình). Bài học cho
+mọi arm sau: một hop proxy hỏng **không làm arm fail**, nó biến arm thành cơn bão retry — nhìn ra
+vẫn giống một kết quả chỉ hơi tệ.
+
+### Request thật (bằng chứng từ proxy log, không phải từ văn xuôi card)
+
+| arm | `--tools` | `--system-prompt` | system chars | tools gửi đi |
+|---|---|---|---:|---:|
+| `ompF5clean` | none | minimal | 745 | 0 |
+| `ompF7clean` | none | *(bỏ ⇒ gốc omp)* | 9178 | 0 |
+| `ompF8clean` | all | *(bỏ ⇒ gốc omp)* | 16050 | 11 |
+| `ompT65r2` | all | minimal | 745 | 11 |
+
+**Phát hiện văn xuôi vs bằng chứng:** MC-31 mô tả T65 là "system prompt trung tính", nhưng proxy
+log của chính lần chạy T65 gốc (2026-09-30) ghi `system=690 tools=11`. Tức T65 gốc **không** phải
+ô "tools=all + system prompt trung tính" theo nghĩa 745 ký tự; nó là một shape khác (690 ký tự).
+Vì vậy **T65 gốc không được gộp vào ô nào** của ma trận 2×2, và cũng không được dùng làm lặp.
+
+### Ma trận 2×2 trên 65K (đều so với arm A3 = 89,04%)
+
+| ô | tools | persona | arm B | Δ vs A3 | CI 95% | p |
+|---|---|---|---:|---:|---|---:|
+| F5 | none | minimal | 87,67 | **−1,37** | [−5,48, +2,74] | 0,754 |
+| F7 | none | gốc omp | 79,45 | −9,59 | [−15,07, −4,11] | 0,0013 |
+| F8 | all | gốc omp | 73,29 | −15,75 | [−22,60, −8,90] | 3,4e-05 |
+| T65r2 | all | minimal | 76,03 | −13,01 | [−19,86, −6,16] | 3,1e-04 |
+
+### Contrast gene (ghép đôi, hướng "CÓ gene − KHÔNG có gene")
+
+| gene | giữ cố định | Δ | CI 95% | p | đọc |
+|---|---|---:|---|---:|---|
+| **tools** | persona = minimal | **−11,64** | [−17,81, −5,48] | 4,9e-04 | **làm hỏng** |
+| **tools** | persona = gốc omp | **−6,16** | [−10,96, −1,37] | 0,022 | **làm hỏng** |
+| **persona** | tools = none | **−8,22** | [−13,01, −3,42] | 0,002 | **làm hỏng** |
+| **persona** | tools = all | −2,74 | [−6,16, 0,00] | 0,219 | không đọc được |
+| interaction | tools × persona | +5,48 | [−5,48, +16,44] | — | không đọc được |
+
+### Kết luận — và nó **đảo ngược** kết luận ở 28K
+
+Ở **65K**: ô scaffold tối giảu (F5) chỉ **−1,37 điểm, CI chạm 0** ⇒ **bản thân agent scaffold
+gần như miễn phí**. Cái tốn điểm là **những gì thêm vào nó**: tool menu (−11,6 / −6,2) và system
+prompt của omp (−8,2 khi không tool).
+
+Ở **28K** (MC-23): hai gene đó CI **chạm 0**, còn scaffold mất 15–18 điểm.
+
+⇒ **Không có "cái giá của scaffold" nói chung.** Cùng một cấu hình, hai model cho hai kết luận
+ngược nhau. Đây là phát hiện trung tâm của RQ1: phải ghi gene **theo model**, không ghi
+"harness tốn X điểm".
+
+### ⚠ Lỗ hổng của genome §4 phát hiện ở đây
+
+Khi đăng ký 4 ô này vào genome, ô **F5** (qua `omp`, không tool, system prompt trung tính) và
+**arm A3** (gọi thẳng) cho ra **cùng một `genome_id` = `8e6d943df3ad94a0`**. Lý do: tám nhóm gene
+của §4 **không có gene nào biểu diễn "prompt có được đưa qua scaffold hay không"** — mà đó chính
+là nguồn biến động lớn nhất đã đo.
+
+⇒ Đã sửa: `collect_evidence(..., container=...)`, thư mục bundle đặt tên
+`<container>__<genome_id>` (`omp__8e6d943…` vs `direct__8e6d943…`). Không sửa thì một vòng
+evolution sẽ để hai điều kiện khác nhau chiếm cùng một thư mục, và "best candidate theo thư mục"
+sẽ là một phép so vô nghĩa. Ghi vào `tasks.md` của change `thesis-p0` như việc còn lại: hoặc thêm
+nhóm gene `scaffold`, hoặc chấp nhận nó là **container** chứ không phải gene — nhưng phải nói rõ.
+
+### Noise floor 65K (có hệ thống)
+
+`ompT65r2` 76,03 vs `ompT65r3` 74,66 (cùng shape `system=745, tools=11`) ⇒ **độ trải 1,37 điểm**.
+Sàn 65K yếu hơn sàn 28K (0,68–5,48) vì chỉ có **2** lặp. Các contrast gene ở trên đều lớn hơn sàn
+nhiều lần ⇒ đọc được. Tương tác thì không.
+
+### Không được quy
+
+1. **Một lần chạy mỗi ô** (trừ ô T65r2/r3) ⇒ tương tác tools × persona có CI rộng, **không** quy
+   là hai gene nhân lên nhau được.
+2. **Chỉ `legal_mc`** (146 câu, một miền). Chưa nói được cho reading hay V-Bench.
+3. **`input_tokens` không phân biệt được các ô** (median 294–297 cả khi 0 lẫn 11 tool) ⇒ nhận dạng
+   ô dựa trên **proxy log**, không phải cột token. Đừng dùng cột đó để suy ra cấu hình.
+4. **Sự cố proxy ở trên** đã loại bỏ hoàn toàn lần chạy đầu; các số trong bảng là lần chạy sạch.
+
+### Artifact
+
+`harness_compare_legal_mc_vsA_omp{F5clean,F7clean,F8clean,T65r2,T65r3}_Qwen3_5-9B-65K.csv` ·
+`harness_ledger_legal_mc_*` · proxy log `/tmp/opencode/mc46/proxy2.log` (tạm, mất khi reboot) ·
+bảng tổng hợp `docs/rq1-decomposition.md` (sinh tự động).
+
 ## Quy tắc dùng card
 
 1. **Mỗi lần chạy một khối.** Không sửa khối cũ; chạy lại thì thêm khối mới có `card_id` mới.

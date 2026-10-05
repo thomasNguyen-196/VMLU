@@ -127,6 +127,43 @@ def registry() -> Registry:
         _compare_path("legal_mc", H8, tag="H5"),
         label="cả tool menu lẫn persona của omp")
 
+    # ── Factorial persona × tools on the model under test (MC-46/47). The 28K cells
+    #    above live on a node that is offline, so this is the only factorial that
+    #    speaks about 65K.
+    for slug, tools_desc, persona_desc, card in (
+            ("ompF5clean_Qwen3_5-9B-65K", "none", "minimal (--system-prompt minimal)", "MC-47"),
+            ("ompF7clean_Qwen3_5-9B-65K", "none", "gốc của omp", "MC-47"),
+            ("ompF8clean_Qwen3_5-9B-65K", "all", "gốc của omp", "MC-47"),
+            ("ompT65r2_Qwen3_5-9B-65K", "all", "minimal (--system-prompt minimal)", "MC-47"),
+    ):
+        add("factorial_65k", "scaffold (omp)", "Qwen3.5-9B-65K", "legal_mc", card,
+            _compare_path("legal_mc", slug), label=tools_desc, expectation=persona_desc)
+
+    # ── The gene contrasts INSIDE that factorial: one factor held fixed, paired CI.
+    #    Direction is always "WITH the gene − WITHOUT it", so a negative Δ means
+    #    the gene cost score. Cells (tools × persona):
+    #        F5    none / minimal      F7    none / omp
+    #        T65r2 all  / minimal      F8    all  / omp
+    #    Computed from the arms' own projections with the harness runner's own
+    #    statistics, so a gene contrast here comes from the same code as every
+    #    `harness_compare` CSV.
+    F5, F7, F8, F6 = ("ompF5clean_Qwen3_5-9B-65K", "ompF7clean_Qwen3_5-9B-65K",
+                      "ompF8clean_Qwen3_5-9B-65K", "ompT65r2_Qwen3_5-9B-65K")
+    for gene, with_gene, without_gene, held in (
+            ("tools", F6, F5, "persona = minimal"),
+            ("tools", F8, F7, "persona = gốc omp"),
+            ("persona", F7, F5, "tools = none"),
+            ("persona", F8, F6, "tools = all"),
+    ):
+        reg.sources.append(Source("factorial_65k_gene", gene, "Qwen3.5-9B-65K",
+                                  "legal_mc", "MC-47", f"{with_gene}|{without_gene}",
+                                  "accuracy", held, ""))
+    # The interaction is a difference of differences, not a corner-to-corner
+    # contrast: (tools effect | persona=omp) − (tools effect | persona=minimal).
+    reg.sources.append(Source("factorial_65k_gene", "interaction", "Qwen3.5-9B-65K",
+                              "legal_mc", "MC-47", f"interaction|{F8}|{F7}|{F6}|{F5}",
+                              "accuracy", "hiệu ứng tools có nhân với persona không", ""))
+
     # ── Option order (the `option_order` gene), 65K legal_mc.
     reg.sources.append(Source(
         "option_order", "option_order", "Qwen3.5-9B-65K", "legal_mc", "MC-36",
@@ -137,7 +174,72 @@ def registry() -> Registry:
     return reg
 
 
+def _correct_by_id(folder: Path, dataset: str, slug: str) -> dict[str, int]:
+    """Per-item correctness from one arm's frozen projection (the file the frozen
+    scorer wrote), keyed by id. Reading the projection rather than the ledger keeps
+    the numbers on the same side of the scorer as every other table here."""
+    candidates = sorted(folder.glob(f"full_evaluation_{dataset}*_{slug}.csv"))
+    if not candidates:
+        raise SystemExit(f"Error: no projection for {slug} under {folder}")
+    rows = read_csv_checked(candidates[0], label=f"{slug}/{dataset}")
+    return {str(r["id"]): int(r["correct"]) for r in rows}
+
+
+def _paired_contrast(left_slug: str, right_slug: str, dataset: str) -> dict:
+    """The delta BETWEEN two harness arms, with a paired bootstrap CI and an exact
+    McNemar — computed with the harness runner's own statistics, so a gene contrast
+    here is produced by the same code as every `harness_compare` CSV."""
+    try:  # package run (repo root) or direct run (cwd == code_benchmark)
+        from code_benchmark.run_harness_eval import _mcnemar_p, _paired_bootstrap
+    except ImportError:
+        from run_harness_eval import _mcnemar_p, _paired_bootstrap
+    left = _correct_by_id(RESULTS / left_slug, dataset, left_slug)
+    right = _correct_by_id(RESULTS / right_slug, dataset, right_slug)
+    shared = sorted(set(left) & set(right))
+    if not shared:
+        raise SystemExit(f"Error: {left_slug} and {right_slug} share no item ids — "
+                         f"a paired contrast between different items is not a contrast")
+    diffs = [left[i] - right[i] for i in shared]
+    lo, hi = _paired_bootstrap(diffs)
+    b = sum(1 for d in diffs if d > 0)      # left right, right wrong
+    c = sum(1 for d in diffs if d < 0)      # left wrong, right right
+    return {"n": len(shared), "arm_a": f"{100 * sum(left[i] for i in shared) / len(shared):.2f}",
+            "arm_b": f"{100 * sum(right[i] for i in shared) / len(shared):.2f}",
+            "delta": f"{100 * sum(diffs) / len(shared):+.2f}",
+            "ci95_low": f"{lo:+.2f}", "ci95_high": f"{hi:+.2f}",
+            "mcnemar_p": _mcnemar_p(b, c)}
+
+
+def _interaction_contrast(all_omp, none_omp, all_min, none_min, dataset: str) -> dict:
+    """(tools | persona=omp) − (tools | persona=minimal), item-paired.
+
+    A corner-to-corner contrast is NOT an interaction: F5→F8 bundles both genes and
+    cannot say whether they multiply. This keeps the two tools effects apart.
+    """
+    stats_a = _paired_contrast(all_omp, none_omp, dataset)
+    stats_b = _paired_contrast(all_min, none_min, dataset)
+    delta = float(stats_a["delta"]) - float(stats_b["delta"])
+    lo = float(stats_a["ci95_low"]) - float(stats_b["ci95_high"])
+    hi = float(stats_a["ci95_high"]) - float(stats_b["ci95_low"])
+    return {"n": stats_a["n"], "arm_a": stats_b["arm_a"], "arm_b": stats_a["arm_b"],
+            "delta": f"{delta:+.2f}", "ci95_low": f"{lo:+.2f}", "ci95_high": f"{hi:+.2f}",
+            "mcnemar_p": ""}
+
+
 def read_source(src: Source) -> dict:
+    if src.path.startswith("interaction|"):
+        stats = _interaction_contrast(*src.path.split("|")[1:], src.dataset)
+        return {"source": src.source, "gene": src.gene, "model": src.model,
+                "dataset": src.dataset, "metric": src.metric or "accuracy",
+                **stats, "card": src.card, "artifact": src.path.split("|")[1],
+                "label": src.label, "expectation": src.expectation}
+    if "|" in src.path:                       # a gene contrast: two arms, paired
+        left_slug, right_slug = src.path.split("|", 1)
+        stats = _paired_contrast(left_slug, right_slug, src.dataset)
+        return {"source": src.source, "gene": src.gene, "model": src.model,
+                "dataset": src.dataset, "metric": src.metric or "accuracy",
+                **stats, "card": src.card, "artifact": right_slug,
+                "label": src.label, "expectation": src.expectation}
     path = RESULTS / src.path
     if not path.exists():
         raise SystemExit(f"Error: RQ1 source missing: {path}\n"
@@ -165,15 +267,23 @@ def noise_floor() -> list[dict]:
     2), not from the filename: every compare file is named after the same dataset,
     so keying on the file would collapse all four cells into one."""
     cells: dict[tuple[str, int], list[float]] = {}
-    for folder in sorted(RESULTS.glob("ompH*_Qwen3_5-9B-28K")):
-        match = re.match(r"(ompH\d+(?:clean)?)(?:_r(\d+))?_Qwen", folder.name)
-        cell = match.group(1) if match else folder.name
-        for path in sorted(folder.glob("harness_compare_legal_mc_vsA_*.csv")):
-            row = next((r for r in read_csv_checked(path, label=path.name)
-                        if r.get("group") == "ALL"), None)
-            if row is None:
-                continue
-            cells.setdefault((cell, int(row["n"])), []).append(float(row["arm_b"]))
+    families = (
+        ("ompH*_Qwen3_5-9B-28K", r"(ompH\d+(?:clean)?)(?:_r(\d+))?_Qwen"),
+        # The 65K repeats. Only the `_r*` slugs: T65's original run sent a 690-char
+        # system prompt where these send 745, so pooling it in would measure a
+        # prompt-length change and call it run-to-run noise.
+        ("ompT65r*_Qwen3_5-9B-65K", r"(ompT65)(?:clean)?(?:_?r(\d+))?_Qwen"),
+    )
+    for pattern, cell_re in families:
+        for folder in sorted(RESULTS.glob(pattern)):
+            match = re.match(cell_re, folder.name)
+            cell = match.group(1) if match else folder.name
+            for path in sorted(folder.glob("harness_compare_legal_mc_vsA_*.csv")):
+                row = next((r for r in read_csv_checked(path, label=path.name)
+                            if r.get("group") == "ALL"), None)
+                if row is None:
+                    continue
+                cells.setdefault((cell, int(row["n"])), []).append(float(row["arm_b"]))
     rows = []
     for (cell, n), values in sorted(cells.items()):
         if len(values) < 2:
@@ -268,6 +378,44 @@ def render(rows: list[dict], noise: list[dict], calib: list[dict]) -> str:
                      f"[{fmt(r['ci95_low'])}, {fmt(r['ci95_high'])}] | "
                      f"{reads.get(r['gene'], '')} |")
 
+    lines += [
+        "",
+        "## Factorial persona × tools trên **65K** (MC-46/47)",
+        "",
+        "Mỗi ô so với **cùng arm A3** của chính model này — cùng cơ sở, nên dấu của Δ đọc "
+        "được thẳng. Các contrast **gene** (giữ một ô cố định) ở bảng dưới, có CI ghép đôi.",
+        "",
+        "| ô | tools | system prompt | arm B | Δ vs A3 | CI 95% | p |",
+        "|---|---|---|---:|---:|---|---:|",
+    ]
+    for r in rows:
+        if r["source"] != "factorial_65k":
+            continue
+        lines.append(f"| `{r['artifact'].split('/')[0]}` | {r['label']} | "
+                     f"{r['expectation']} | {fmt(r['arm_b'])} | **{fmt(r['delta'])}** | "
+                     f"[{fmt(r['ci95_low'])}, {fmt(r['ci95_high'])}] | "
+                     f"{p_fmt(r['mcnemar_p'])} |")
+
+    lines += [
+        "",
+        "| contrast gene (paired) | giữ cố định | Δ | CI 95% | p | đọc |",
+        "|---|---|---:|---|---:|---|",
+    ]
+    gene_reads = {
+        "tools": "thêm tool menu",
+        "persona": "system prompt của omp",
+        "interaction": "tools × persona",
+    }
+    for r in rows:
+        if r["source"] != "factorial_65k_gene":
+            continue
+        verdict = ("**làm hỏng**" if float(r["delta"]) < 0 and float(r["ci95_high"]) < 0
+                   else "không đọc được" if float(r["ci95_low"]) <= 0 <= float(r["ci95_high"])
+                   else "**giúp**")
+        lines.append(f"| {gene_reads.get(r['gene'], r['gene'])} | {r['label']} | "
+                     f"**{fmt(r['delta'])}** | [{fmt(r['ci95_low'])}, {fmt(r['ci95_high'])}] | "
+                     f"{p_fmt(r['mcnemar_p'])} | {verdict} |")
+
     pb = next((r for r in rows if r["source"] == "option_order"), None)
     lines += [
         "",
@@ -317,14 +465,18 @@ def render(rows: list[dict], noise: list[dict], calib: list[dict]) -> str:
         "",
         "## Đọc tổng hợp",
         "",
-        "1. **Scaffold là gene duy nhất có hiệu ứng lớn** — và dấu của nó **phụ thuộc model**: "
-        "Qwen3.5-9B-65K mất hàng chục điểm, MiMo V2.5 *được* điểm. Không có một \"cái giá của "
-        "harness\" nếu chưa nói rõ model nào.",
-        "2. **Persona và tool menu gần như vô hiệu** (CI chạm 0) ⇒ phần mất điểm không phải do "
-        "những gì ta thêm vào, mà do **chính cái scaffold**.",
-        "3. **Option order sạch** trên MC ⇒ biến động không đến từ vị trí lựa chọn.",
+        "1. **Gene nào quan trọng thì phụ thuộc model.** Ở 65K, ô scaffold tối giảu (không "
+        "tool, system prompt trung tính) gần như **miễn phí** (−1,37; CI chạm 0) — cái tốn "
+        "điểm là **những gì thêm vào nó**: tool menu (−11,64 / −6,16) và system prompt của omp "
+        "(−8,22 khi không tool). Ở 28K thì **ngược lại**: hai gene đó CI chạm 0 còn scaffold "
+        "mất 15–18 điểm. Cùng một cấu hình, hai kết luận khác nhau.",
+        "2. **Dấu của scaffold phụ thuộc model**: Qwen3.5-9B-65K mất hàng chục điểm, MiMo V2.5 "
+        "*được* điểm (+2,74). Không có một \"cái giá của harness\" nếu chưa nói rõ model nào.",
+        "3. **Option order sạch** trên MC ⇒ biến động không đến từ vị trí lựa chọn (MC-36).",
         "4. **Calibration đổi chiều theo độ khó** ⇒ một điểm số không kèm độ tin cậy thì "
         "không diễn giải được (MC-44).",
+        "5. **Tương tác tools × persona không đọc được** (CI rộng) ⇒ chưa được quy là hai gene "
+        "nhân lên nhau; cần thêm lặp để thu hẹp.",
         "",
         "## Không được quy",
         "",
@@ -332,11 +484,11 @@ def render(rows: list[dict], noise: list[dict], calib: list[dict]) -> str:
         "riêng của *model pair* khác; so Qwen với MiMo không phải là so harness.",
         "- **Metric khác nhau không xếp hạng được.** `accuracy`, `EM`, `agreement_with_arm_A`, "
         "`valid_rate` là bốn thứ khác nhau; bảng nêu tên từng metric thay vì gộp.",
-        f"- **Noise floor chỉ có cho model 28K** ({len(noise)} cell × "
-        f"{min(int(r['runs']) for r in noise)}–{max(int(r['runs']) for r in noise)} lần chạy, "
-        f"n={noise[0]['n']}). Ở 65K mới chỉ có một cặp đo gián tiếp (130 → 132/146, MC-44) — "
-        f"đủ để biết có nhiễu, **không đủ** để đặt ngưỡng. Các contrast 65K rộng hơn nhiều lần "
-        f"nên không bị nhiễu này nuốt, nhưng một contrast 65K nhỏ thì chưa có sàn.",
+        f"- **Noise floor: 28K có nhiều lần hơn 65K.** {len(noise)} cell, "
+        f"{min(int(r['runs']) for r in noise)}–{max(int(r['runs']) for r in noise)} lần chạy mỗi "
+        f"cell. Ở 65K mới có **2** lặp cùng shape ⇒ sàn 65K yếu hơn hẳn; một contrast 65K "
+        f"nhỏ hơn sàn đó thì chưa đọc được. Ngoài ra MC-44 đo trực tiếp một cặp arm A ở 65K "
+        f"(130 → 132/146) — đó là nhiễu của **đường gọi thẳng**, khác đường harness.",
         "- **n=100 ở các ô factorial** → CI rộng hơn ô n=146; đừng đọc độ lớn điểm khác nhau "
         "giữa hai bảng là khác nhau về hiệu ứng.",
         "- **Scaffold của `omp` có lịch sử rò** (MC-22): `APPEND_SYSTEM.md` của máy. Các ô ở đây "

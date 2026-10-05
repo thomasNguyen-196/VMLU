@@ -28,11 +28,25 @@
   - **Bằng chứng:** `all_res/evidence/8e6d943df3ad94a0/` và `…/d02b0c5126b940a7/`
     (gitignored), sinh lại sau khi commit để `code_changed` trung thực.
 
-## 4. Còn lại
+## 4. MC-46/47 — factorial + noise floor trên 65K (chạy rồi)
 
-- [ ] 4.1 MC-46: hình thức hoá `minimal_genome()` / `baseline_genome()` thành lệnh
-  chạy được (bảng gene → CLI flag — `tasks.md` §4.2 của change `thesis-p0`).
-- [ ] 4.2 Đo noise floor có hệ thống ở **65K** (hiện chỉ có một cặp gián tiếp từ
-  MC-44); cần ≥2 lần chạy lại cùng một arm.
-- [ ] 4.3 Nếu luận văn cần: chạy lại ô factorial persona × tools trên 65K (hiện
-  chỉ có ở 28K, node đã offline).
+- [x] 4.1 4 ô của ma trận persona × tools trên 65K + 2 lặp sạch cho noise floor
+  (MC-46 pre-register → MC-47 kết quả).
+  - **Bằng chứng:** 5 arm × 146 item, **0 failure**; F5 −1,37 (CI chạm 0) vs
+    tools −11,64, persona −8,22; noise floor 65K = **1,37 điểm** (2 lặp).
+- [x] 4.2 Bảng RQ1 cập nhật: mục factorial 65K + contrast gene ghép đôi (dùng lại
+  `_paired_bootstrap`/`_mcnemar_p` của harness) + ô noise floor 65K.
+  - **Bằng chứng:** 23 dòng contrast · 5 cell noise; `docs/rq1-decomposition.md`.
+- [x] 4.3 Ghi sự cố hạ tầng (proxy thiếu DNS shim ⇒ 25 item `exit 1`, 60× chậm,
+  **không** bị preflight bắt) vào MC-47.
+  - **Bằng chứng:** MC-47 mục "Sự cố hạ tầng".
+
+## 5. Còn lại
+
+- [ ] 5.1 Bảng gene → CLI flag (`tasks.md` §4.2 của change `thesis-p0`) để genome
+  chạy được, không chỉ validate được.
+- [ ] 5.2 Xác định **shape thật** của T65 gốc (`system=690` ≠ `system=745`): MC-31
+  mô tả "system prompt trung tính" nhưng proxy log ghi 690 ký tự. Cần một lần chạy
+  đúng cấu hình MC-31 để **hoặc xác nhận hoặc đính chính** MC-31/32.
+- [ ] 5.3 Nếu luận văn cần: lặp thêm từng ô (thu hẹp CI tương tác) và mở rộng
+  factorial ra `reading400` — hiện mọi kết luận mới chỉ dựa trên `legal_mc`.

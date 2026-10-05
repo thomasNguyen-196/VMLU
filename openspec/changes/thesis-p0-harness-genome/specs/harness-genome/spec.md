@@ -95,6 +95,13 @@ and ledger CSVs **by path** (never copies them), and a reproduce command.
 - **THEN** the bundle's diff is empty and `code_changed` is `false` — an honest
   empty, since most mutations should be config-only.
 
+#### Scenario: Two conditions with identical genes but different scaffolds
+- **WHEN** a direct call and a scaffolded run carry the same gene values
+- **THEN** their bundles are named `<container>__<genome_id>` and differ, because
+  the gene grammar cannot express "is the prompt scaffolded at all" — the largest
+  measured variance source — and one folder per identity must not be shared by two
+  conditions.
+
 #### Scenario: Missing artifacts
 - **WHEN** a named results CSV does not exist
 - **THEN** the bundle write fails fast rather than recording a bundle that points
