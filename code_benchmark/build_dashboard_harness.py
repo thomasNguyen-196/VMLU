@@ -87,6 +87,25 @@ ARMS = [
     ("ompT65_Qwen3_5-9B-65K", "ompT65_Qwen3_5-9B-65K", "T65",
      "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
      "MC-31/32"),
+    # ── MC-46/47: the persona × tools FACTORIAL on the model under test. On 28K the
+    #    two genes were indistinguishable from zero and the scaffold took the blame;
+    #    on 65K the reading INVERTS — the minimal scaffold cell is nearly free and
+    #    the tools plus omp's own persona are what cost. Same arm, one gene moved.
+    ("ompF5clean_Qwen3_5-9B-65K", "ompF5clean_Qwen3_5-9B-65K", "F5",
+     "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+     "MC-46/47"),
+    ("ompF7clean_Qwen3_5-9B-65K", "ompF7clean_Qwen3_5-9B-65K", "F7",
+     "65K: omp sạch, KHÔNG tool, system prompt gốc của omp", "MC-46/47"),
+    ("ompF8clean_Qwen3_5-9B-65K", "ompF8clean_Qwen3_5-9B-65K", "F8",
+     "65K: omp sạch + tool menu đầy đủ, system prompt gốc của omp", "MC-46/47"),
+    # Two clean repeats of the tools+minimal-prompt cell: the 65K noise floor. They
+    # are arms in their own right because a repeat that is not displayed is a
+    # measurement nobody can see — and the floor is what every small contrast is
+    # measured against.
+    ("ompT65r2_Qwen3_5-9B-65K", "ompT65r2_Qwen3_5-9B-65K", "T65r2",
+     "65K: lặp 2 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)", "MC-47"),
+    ("ompT65r3_Qwen3_5-9B-65K", "ompT65r3_Qwen3_5-9B-65K", "T65r3",
+     "65K: lặp 3 của ô tool đầy đủ + prompt trung tính (sàn nhiễu)", "MC-47"),
 ]
 # Short ids of the direct-prompt baselines (one per model). A harness arm is
 # scored against its OWN arm A, so a new model must extend this tuple — the two
@@ -98,10 +117,13 @@ BASELINE_SHORTS = ("A", "A2", "A3")
 ARM_MODEL = {short: "Qwen3.5-9B-28K" for _k, _s, short, _l, _c in ARMS[:10]}
 ARM_MODEL.update({"A2": "MiMo V2.5", "M6": "MiMo V2.5", "M6L": "MiMo V2.5"})
 ARM_MODEL.update({"A3": "Qwen3.5-9B-65K", "T65": "Qwen3.5-9B-65K"})
+# MC-46/47 factorial cells and repeats, all on the model under test.
+ARM_MODEL.update({s: "Qwen3.5-9B-65K" for s in ("F5", "F7", "F8", "T65r2", "T65r3")})
 # The arms that carry the "clean scaffold" condition. An explicit set, not a
 # substring test on the slug: M6L is clean in every way EXCEPT that its sandbox sits
 # inside the repo, and a substring match would silently fold it into the headline.
-CLEAN_ARMS = {"H5", "H6", "H7", "H8", "V1", "M6", "T65"}
+CLEAN_ARMS = {"H5", "H6", "H7", "H8", "V1", "M6", "T65",
+              "F5", "F7", "F8", "T65r2", "T65r3"}
 # The one clean arm that represents its model in the with/without table.
 REPRESENTATIVE = {"Qwen3.5-9B-28K": "H5", "MiMo V2.5": "M6", "Qwen3.5-9B-65K": "T65"}
 DATASETS = ["reading400", "legal_mc", "legal_nli", "bidlqa_val", "vbench_agentic"]
@@ -129,6 +151,9 @@ ARM_DATASETS = {
     "ompM6inrepo_mimo-v2_5": _MC,
     "Qwen3_5-9B-65K": _ALL + ["vbench_mc"],
     "ompT65_Qwen3_5-9B-65K": _ALL + ["vbench_mc"],
+    "ompF5clean_Qwen3_5-9B-65K": _MC, "ompF7clean_Qwen3_5-9B-65K": _MC,
+    "ompF8clean_Qwen3_5-9B-65K": _MC,
+    "ompT65r2_Qwen3_5-9B-65K": _MC, "ompT65r3_Qwen3_5-9B-65K": _MC,
 }
 
 
@@ -590,22 +615,38 @@ def repeatability(results_dir: Path, arms: list = ARMS) -> list[dict]:
     # ARMS so they can never leak into the headline ladder.
     by_slug = {slug: (short, label, card) for _k, slug, short, label, card in arms}
     slugs = list(by_slug)
-    for folder in sorted(results_dir.glob("ompH*_r[0-9]*_*")):
-        if folder.is_dir() and folder.name not in by_slug:
-            slugs.append(folder.name)
+    for pattern in ("ompH*_r[0-9]*_*", "ompT65r[0-9]*_*"):
+        for folder in sorted(results_dir.glob(pattern)):
+            if folder.is_dir() and folder.name not in by_slug:
+                slugs.append(folder.name)
     for slug in slugs:
         folder = results_dir / slug
         if not folder.exists():
             continue
         # `clean?` would REQUIRE the literal "clea" (the ? binds to n only), so
         # ompH1…ompH4 silently fell back to the full slug as the cell name.
-        match = re.match(r"(ompH\d+(?:clean)?)(?:_r(\d+))?_Qwen", slug)
-        cell = match.group(1) if match else slug
+        # The 65K family needs its own branch: `ompT65r2` has no underscore before
+        # the repeat number, and the F-cells are not ompH* at all. Without both, each
+        # 65K repeat becomes its own one-run cell and the 65K noise floor is never
+        # computed — a measurement that exists on disk and is invisible in the UI.
+        match = re.match(r"(ompH\d+(?:clean)?)(?:_r(\d+))?_Qwen", slug) or \
+            re.match(r"(ompF\d+clean)(?:_r(\d+))?_Qwen", slug) or \
+            re.match(r"(ompT65)(?:_?r(\d+))?_Qwen", slug)
+        if match and match.group(1) == "ompT65" and match.group(2) is None:
+            # The ORIGINAL T65 arm is its own cell, never pooled with its repeats:
+            # its proxy log shows a 690-char system prompt where the repeats show
+            # 745, so a "run-to-run spread" across them would be measuring a
+            # prompt-shape change and calling it noise — the exact pooling MC-47
+            # refused, and the reason its shape is still an open item.
+            cell = "ompT65orig"
+        else:
+            cell = match.group(1) if match else slug
         repeat = int(match.group(2)) if (match and match.group(2)) else 1
         if slug in by_slug:
             short, label, card = by_slug[slug]
         else:  # a repeat: inherit the label of the cell it repeats
-            base = by_slug.get(f"{cell}_Qwen3_5-9B-28K")
+            base = (by_slug.get(f"{cell}_Qwen3_5-9B-28K")
+                    or by_slug.get(f"{cell}_Qwen3_5-9B-65K"))
             short, label, card = (f"{cell}·r{repeat}", f"{base[1]} — lặp {repeat}" if base
                                   else slug, base[2] if base else None)
         for dataset in datasets_for(slug):
@@ -667,6 +708,26 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         clean_by_model.setdefault(r.get("model", ""), []).append(r)
     claims: list[dict] = []
 
+    # The noise floor per model, from the repeated cells (>=2 runs at a fixed n).
+    # A contrast smaller than this is not a result, so any claim about a small
+    # difference must name it rather than assert the difference.
+    spread_by_model: dict[str, float] = {}
+    for row in reps:
+        value = row.get("cell_spread")
+        if value in (None, ""):
+            continue
+        # A repeatability row carries no `model`; the cell name does. Reading it off
+        # the registry instead would miss every DISCOVERED repeat (ompH5clean·r2),
+        # so the 28K floor would silently never be cited.
+        cell = str(row.get("cell", ""))
+        model = ("Qwen3.5-9B-65K" if cell.startswith(("ompT65", "ompF"))
+                 else "MiMo V2.5" if cell.startswith("ompM")
+                 else "Qwen3.5-9B-28K" if cell.startswith("ompH") else "")
+        if not model:
+            continue
+        spread_by_model[model] = max(spread_by_model.get(model, 0.0), float(value))
+    rep_spread = None
+
     # 1. Phạt của việc đi qua tiến trình agent — TÍNH RIÊNG cho từng model.
     # Một dải min…max đi ngang hai model sẽ là con số vô nghĩa: đó là so hai
     # condition khác nhau chứ không phải một hiệu ứng.
@@ -686,8 +747,7 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
                      + f" trên {len(ds)} tập ({', '.join(ds)})"
                      + ("" if worse else
                         ", tức không tìm thấy khoản phạt nào ở đây")
-                     + f". Khoảng này không đổi theo cấu hình nào được bật: bật cả menu công cụ lẫn "
-                     f"system prompt của omp vẫn cho kết quả nằm trong cùng dải. Trong {len(rows_m)} "
+                     + f". Trong {len(rows_m)} "
                      f"phép so sánh đó, {excl0} phép có khoảng tin cậy 95% loại trừ 0"
                      + ("" if excl0 == len(rows_m) else
                         f"; {len(rows_m) - excl0} phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin "
@@ -723,6 +783,49 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
                         + [{"label": f"{m}: Δ thấp nhất", "value": f"{best[m]:+.2f}đ"}
                            for m in sorted(clean_by_model)],
         })
+
+    # 1c. WHICH configuration costs, per model. The sentence the 28K factorial
+    # supported — "the range does not move with the configuration" — is false on 65K,
+    # where the minimal scaffold cell is indistinguishable from arm A and the
+    # tool+persona cell is clearly worse. So the claim is derived rather than asserted:
+    # a model whose clean arms on ONE dataset straddle 0 gets a claim naming the arms,
+    # and a model whose arms all sit on one side of 0 does not.
+    for model, rows_m in sorted(clean_by_model.items()):
+        rep_spread = spread_by_model.get(model)
+        by_ds: dict[str, list[dict]] = {}
+        for r in rows_m:
+            by_ds.setdefault(r["dataset_label"].split(" (")[0], []).append(r)
+        for ds_label, group in sorted(by_ds.items()):
+            clear = [r for r in group if r["ci95_high"] < 0 or r["ci95_low"] > 0]
+            flat = [r for r in group if r not in clear]
+            if not (clear and flat):
+                continue
+            flat.sort(key=lambda r: r["delta"], reverse=True)
+            clear.sort(key=lambda r: r["delta"])
+            claims.append({
+                "id": f"configuration:{model}:{ds_label}",
+                "title": (f"{model} / {ds_label}: cấu hình nào tốn điểm thì tùy — "
+                          f"scaffold tối giảu gần như miễn phí, thêm công cụ và persona thì tốn"),
+                "body": (f"Trên cùng một tập và cùng arm A, các arm scaffold sạch của {model} "
+                         f"trải Δ từ {flat[0]['delta']:+.2f} (arm {flat[0]['arm']}, "
+                         f"CI [{flat[0]['ci95_low']:+.2f}, {flat[0]['ci95_high']:+.2f}] — **không khác 0** "
+                         f"thống kê) tới {clear[0]['delta']:+.2f} (arm {clear[0]['arm']}, "
+                         f"CI [{clear[0]['ci95_low']:+.2f}, {clear[0]['ci95_high']:+.2f}]). "
+                         f"Nghĩa là **chính cái scaffold không phải là nơi mất điểm**: ô tối giảu "
+                         f"(không công cụ, system prompt trung tính) gần như ngang với gọi thẳng, "
+                         f"và điểm chỉ rơi khi bật menu công cụ và/hoặc system prompt gốc của omp. "
+                         f"Đọc một dải Δ của riêng model này mà không ghi cấu hình sẽ gán nhầm "
+                         f"chi phí cho agent thay vì cho những gì ta thêm vào nó."
+                         + (f" Sàn nhiễu của chính các ô lặp ở model này là "
+                            f"{rep_spread:.2f} điểm, nên những chênh lệch dưới mức đó "
+                            f"không đọc được."
+                            if rep_spread is not None else "")),
+                "evidence": [{"label": f"arm {r['arm']}", "value": f"{r['delta']:+.2f}đ"}
+                             for r in ([flat[0]] + clear[:2])]
+                            + ([{"label": "sàn nhiễu (lặp)", "value": f"{rep_spread:.2f}đ"}]
+                               if rep_spread is not None else []),
+            })
+            break        # one claim per model: the widest dataset is enough to make it
 
     # 2. V-Bench: thống kê cục bộ gợi ý nhẹ hơn thực tế 3,4 lần
     models_seen = []
@@ -943,7 +1046,7 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
     return {
         "benchmark_name": ("Harness arm — mỗi model so với chính nó "
                                "(omp vs gọi API trực tiếp)"),
-        "date": "2026-09-26 → 2026-10-02",
+        "date": "2026-09-26 → 2026-10-05",
         "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
         "endpoint": ("https://llmapi.iec-uit.com/v1 (Qwen 28K, lúc còn sống) · "
                      "https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go) · "
@@ -954,7 +1057,7 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
                       "Qwen-65K: temperature 0 (+ reasoning tắt cho MiMo) được GHIM BẰNG PROXY trong "
                       "suốt vì omp không gửi được các field đó; sandbox đặt ngoài repo nên không có "
                       "AGENTS.md nạp vào (MC-29/MC-30)."),
-        "measurement_card": "MC-15…MC-32",
+        "measurement_card": "MC-15…MC-47",
         "measurement_card_hash": measurement_card_hash(),
         "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
         "ladder": ladder,
@@ -999,6 +1102,15 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
             "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, "
             "2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi "
             "cổng ngoài sập cert.",
+            "Các arm F5/F7/F8 và T65r2/T65r3 chỉ chạy legal_mc (146 câu, một miền). "
+            "Đọc dải Δ của chúng như một kết luận về 58 môn VMLU là không có cơ sở.",
+            "Arm T65 GỐC không được gộp với hai lặp của nó, dù cùng nhãn điều kiện: proxy log của "
+            "lần chạy gốc ghi system prompt dài 690 ký tự, còn hai lặp dài 745 (MC-47). Shape thật "
+            "của T65 gốc chưa xác định, nên nó không xuất hiện trong bảng sàn nhiễu.",
+            "Sàn nhiễu tính trên arm 65K chỉ có 2 lặp, yếu hơn sàn ở 28K (3 lặp); một chênh lệch "
+            "65K nhỏ hơn sàn đó thì chưa đọc được (MC-47).",
+            "Calibration (MC-44) CỐ Ý không nằm trong block này: nó đo độ tin cậy của điểm theo môn, "
+            "không phải một contrast ghép đôi giữa các arm, nên thuộc /benchmark chứ không phải /harness.",
         ],
         "sources": {
             "runner": "code_benchmark/run_harness_eval.py (run | compare | speed)",

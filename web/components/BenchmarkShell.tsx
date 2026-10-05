@@ -1,17 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import SiteNav from "./SiteNav.tsx";
 import {
   BenchmarkDashboard,
   viewToDashboardData,
   type BenchmarkView,
 } from "./BenchmarkDashboard.tsx";
+import type { HarnessContrastMap } from "@/lib/harness-contrast.ts";
 
 /** Client shell: holds the active model + remounts the dashboard per model
  *  so tab/filter/modal state never leaks across models. Model switch is a
- *  full server round-trip (?model=) — the URL stays shareable. */
-export function BenchmarkShell({ view }: { view: BenchmarkView }) {
+ *  full server round-trip (?model=) — the URL stays shareable.
+ *
+ *  `harness` is the frozen-block cross-link index (see lib/harness-contrast.ts):
+ *  it lets every dataset tab show what the agent-in-the-path arm scored on that
+ *  same cell, so /harness stops being a separate destination. */
+export function BenchmarkShell({
+  view,
+  harness,
+}: {
+  view: BenchmarkView;
+  harness: HarnessContrastMap;
+}) {
   const [pending, setPending] = useState(false);
   const { data, questions } = viewToDashboardData(view);
 
@@ -29,12 +40,9 @@ export function BenchmarkShell({ view }: { view: BenchmarkView }) {
           Đang tải số liệu model mới…
         </div>
       )}
+      <SiteNav />
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-2 text-xs text-slate-500">
-          <Link href="/" className="font-semibold text-indigo-700 hover:underline">
-            ← Review
-          </Link>
-          <span aria-hidden>·</span>
           <span>
             Model <span className="font-mono font-semibold text-slate-800">{view.activeModel.id}</span>
             {view.activeModel.quantization && (
@@ -51,6 +59,8 @@ export function BenchmarkShell({ view }: { view: BenchmarkView }) {
         models={view.models}
         activeModelId={view.activeModel.id}
         onModelChange={onModelChange}
+        harness={harness}
+        modelDisplayName={view.activeModel.display_name}
       />
     </div>
   );

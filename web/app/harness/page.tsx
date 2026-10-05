@@ -8,6 +8,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { HARNESS_BLOB_HINT, readHarnessBlock, rowsForDataset, type HarnessBlock } from "@/lib/harness-block.ts";
+import SiteNav from "@/components/SiteNav.tsx";
 import ThemeToggle from "@/components/ThemeToggle.tsx";
 import TocNav, { type TocItem } from "@/components/TocNav.tsx";
 
@@ -125,6 +126,8 @@ export default async function HarnessPage() {
   toc.push({ id: "thuat-ngu", label: "Thuật ngữ" });
   toc.push({ id: "gioi-han", label: "Giới hạn khi trích" });
   return (
+    <>
+    <SiteNav />
     <div className="mx-auto flex max-w-[1360px] items-start gap-6 px-6 py-12">
       <aside className="hidden w-52 shrink-0 self-stretch lg:block">
         <TocNav items={toc} />
@@ -764,10 +767,13 @@ export default async function HarnessPage() {
           <a className="underline" href="/benchmark">
             /benchmark
           </a>{" "}
-          (bảng điểm chính) · bản offline: <code className="font-mono">harness_report.html</code>
+          (bảng điểm chính) · mỗi dataset ở đây cũng có một dòng tương ứng trong tab cùng
+          dataset của /benchmark · bản offline:{" "}
+          <code className="font-mono">harness_report.html</code>
         </p>
       </section>
       </main>
     </div>
+    </>
   );
 }

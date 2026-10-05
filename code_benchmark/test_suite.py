@@ -3798,6 +3798,160 @@ class TestHarnessGenome(unittest.TestCase):
                           "rag", "tools", "resources", "agentic_extra"))
 
 
+class TestGenomeToCli(unittest.TestCase):
+    """`genome_to_cli.py` — gene → runner flag.
+
+    The point of the module is not the commands but the support matrix: several genes
+    in the plan's grammar have no runner behind them, and a genome can be *valid* and
+    still not be *runnable*. These tests pin that gap so it cannot quietly close by
+    dropping a gene from a command.
+    """
+
+    def setUp(self):
+        from code_benchmark import genome_to_cli as g2c
+        from code_benchmark.harness_genome import validate, minimal_genome, baseline_genome
+        self.g2c = g2c
+        self.validate = validate
+        self.minimal = minimal_genome
+        self.baseline = baseline_genome
+
+    def _genome(self, **over):
+        spec = self.minimal().to_dict()
+        for key, value in over.items():
+            if key in ("fewshot", "answer_format", "rag", "resources", "agentic_extra"):
+                spec[key] = value
+            else:
+                spec[key] = value
+        return self.validate(spec)
+
+    # ── the seeds must be runnable ──────────────────────────────────────────
+    def test_both_seeds_plan_without_a_blocker(self):
+        # A seed that cannot run is the P0 failure mode all over again: a validated
+        # value nobody can execute.
+        for name, genome in (("minimal", self.minimal()), ("baseline", self.baseline())):
+            argv = self.g2c.plan(genome, "harness", dataset="legal_mc", label="probe")
+            self.assertTrue(argv, name)
+
+    def test_the_baseline_encodes_a_measured_arm_not_the_plan_wish_list(self):
+        # MC-47 measured: tools=all, no retrieval, one deterministic sample. The
+        # earlier version encoded bm25 + calculator + enum_verbatim_lookup, which
+        # describes no run in this repo and cannot be executed (not in omp's menu).
+        b = self.baseline()
+        self.assertEqual(b.tools, ("all",))
+        self.assertEqual(b.rag_mode, "off")
+        self.assertEqual(b.samples_per_item, 1)
+        self.assertEqual(b.temperature, 0.0)
+        self.assertEqual(b.elicitation, "zero_shot_minimal")
+
+    # ── the emitted command ─────────────────────────────────────────────────
+    def test_minimal_on_the_harness_is_the_command_mc_47_actually_ran(self):
+        argv = self.g2c.plan(self.minimal(), "harness", dataset="legal_mc",
+                             label="ompF5clean_Qwen3_5-9B-65K")
+        self.assertIn("--system-prompt", argv)
+        self.assertEqual(argv[argv.index("--system-prompt") + 1], "minimal")
+        self.assertEqual(argv[argv.index("--tools") + 1], "none")
+
+    def test_the_baseline_is_the_omp_default_menu_with_a_neutral_prompt(self):
+        # This is the ompT65r2/r3 cell: --tools all plus the neutral system prompt.
+        argv = self.g2c.plan(self.baseline(), "harness", dataset="legal_mc", label="x")
+        self.assertEqual(argv[argv.index("--tools") + 1], "all")
+        self.assertEqual(argv[argv.index("--system-prompt") + 1], "minimal")
+
+    def test_the_ablated_seed_is_the_scaffold_with_nothing_added(self):
+        from code_benchmark.harness_genome import baseline_genome_vs_direct
+        ablated = baseline_genome_vs_direct(self.baseline())
+        self.assertEqual(ablated.tools, ("none",))
+        argv = self.g2c.plan(ablated, "harness", dataset="legal_mc", label="x")
+        self.assertEqual(argv[argv.index("--tools") + 1], "none")
+
+    def test_vbench_agentic_routes_to_the_detailed_prompt_and_the_guided_pass(self):
+        g = self.validate({"elicitation": "zero_shot_detailed",
+                           "fewshot": {"k": 0, "selection": "random"},
+                           "option_order": "as_is",
+                           "answer_format": {"template_id": "vbench_agentic", "retries": 0,
+                                             "repair_syntax_only": True},
+                           "rag": {"mode": "off", "corpus": "viwiki", "top_k": 0,
+                                   "merge": "none"},
+                           "tools": ["none"],
+                           "resources": {"max_tokens": 512, "temperature": 0.0,
+                                         "samples_per_item": 1},
+                           "agentic_extra": {"guided_fallback": True}})
+        argv = self.g2c.plan(g, "vbench", dataset="vbench_agentic", label="x")
+        self.assertEqual(argv[argv.index("--track") + 1], "agentic")
+        self.assertEqual(argv[argv.index("--prompt-style") + 1], "detailed")
+        self.assertIn("--guided", argv)
+        # the third elicitation condition must announce itself
+        self.assertTrue(any("thứ ba" in d for d in g.required_declarations()))
+
+    # ── genes no runner can express ─────────────────────────────────────────
+    def _plan_fails(self, **over):
+        with self.assertRaises(SystemExit) as ctx:
+            self.g2c.plan(self._genome(**over), "harness", dataset="legal_mc", label="x")
+        return str(ctx.exception)
+
+    def test_a_gene_with_no_runner_is_an_error_not_a_dropped_flag(self):
+        self.assertIn("cot", self._plan_fails(elicitation="cot"))
+        self.assertIn("fewshot", self._plan_fails(
+            elicitation="fewshot_k", fewshot={"k": 3, "selection": "random"}))
+        self.assertIn("mode=bm25", self._plan_fails(
+            rag={"mode": "bm25", "corpus": "mixed", "top_k": 3, "merge": "concat"}))
+        self.assertIn("samples_per_item", self._plan_fails(
+            resources={"max_tokens": 4, "temperature": 0.0, "samples_per_item": 5}))
+        self.assertIn("calculator", self._plan_fails(tools=["calculator"]))
+
+    def test_the_error_names_the_gene_and_says_it_was_not_applied(self):
+        message = self._plan_fails(elicitation="cot")
+        self.assertIn("elicitation=cot", message)
+        self.assertIn("condition it did not apply", message)
+
+    def test_a_named_tool_reports_the_menu_that_actually_exists(self):
+        message = self._plan_fails(tools=["date_arith"])
+        for tool in self.g2c.OMP_DEFAULT_MENU:
+            self.assertIn(tool, message)      # the reader can see what IS available
+
+    def test_temperature_is_a_flag_on_a_direct_runner_but_a_proxy_on_the_harness(self):
+        def temp_status(runner):
+            rows = {(r["gene"], r["value"]): r
+                    for r in self.g2c.support_matrix(self.minimal(), runner)}
+            return rows[("resources", "temperature=0.0")]
+        self.assertEqual(temp_status("harness")["status"], self.g2c.EXTERNAL)
+        self.assertIn("proxy", temp_status("harness")["mechanism"])
+        self.assertEqual(temp_status("mc")["status"], self.g2c.IMPLEMENTED)
+        # and the harness command must not pretend otherwise
+        self.assertNotIn("--temperature", self.g2c.plan(
+            self.minimal(), "harness", dataset="legal_mc", label="x"))
+        self.assertIn("--temperature", self.g2c.plan(
+            self.minimal(), "mc", dataset="vmlu_mqa_v1.5", label="x"))
+
+    def test_a_shuffled_option_order_is_its_own_pipeline_not_a_flag(self):
+        g = self._genome(option_order="seed_shuffle", shuffle_seed=1234)
+        with self.assertRaises(SystemExit) as ctx:
+            self.g2c.plan(g, "harness", dataset="legal_mc", label="x")
+        self.assertIn("make_shuffled_mc_input.py", str(ctx.exception))
+
+    def test_an_unknown_runner_is_refused(self):
+        with self.assertRaises(SystemExit):
+            self.g2c.plan(self.minimal(), "nope", dataset="legal_mc", label="x")
+
+    # ── the matrix itself ───────────────────────────────────────────────────
+    def test_every_matrix_row_carries_a_status_from_the_vocabulary(self):
+        vocabulary = {self.g2c.IMPLEMENTED, self.g2c.ROUTED, self.g2c.EXTERNAL,
+                      self.g2c.PIPELINE, self.g2c.UNSUPPORTED}
+        rows = self.g2c.support_matrix()
+        self.assertGreater(len(rows), 10)
+        for row in rows:
+            self.assertIn(row["status"], vocabulary, row)
+            self.assertTrue(row["mechanism"], f"no mechanism for {row}")
+
+    def test_the_whole_grammar_reports_the_planned_tools_as_unsupported(self):
+        rows = self.g2c.support_matrix()
+        named = {r["value"]: r["status"] for r in rows if r["gene"] == "tools"}
+        self.assertEqual(named["none"], self.g2c.IMPLEMENTED)
+        self.assertEqual(named["all"], self.g2c.IMPLEMENTED)
+        for planned in ("calculator", "date_arith", "enum_verbatim_lookup"):
+            self.assertEqual(named[planned], self.g2c.UNSUPPORTED)
+
+
 class TestRq1Decomposition(unittest.TestCase):
     """`build_rq1_decomposition.py` — the thesis RQ1 table.
 
