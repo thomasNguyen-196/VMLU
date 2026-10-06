@@ -5,6 +5,7 @@
  * benchmark look with live Mongo numbers. Replaces the frozen
  * public/benchmark-data.json read path; /results redirects here.
  */
+import type { Metadata } from "next";
 import { promises as fs } from "fs";
 import path from "path";
 import { getBenchmarkView } from "@/lib/benchmark-view.ts";
@@ -13,6 +14,11 @@ import { indexHarnessContrasts, type HarnessContrastMap } from "@/lib/harness-co
 import { BenchmarkShell } from "@/components/BenchmarkShell.tsx";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Kết quả Benchmark đa nhiệm tiếng Việt",
+  description: "Bảng tổng hợp kết quả đánh giá các mô hình ngôn ngữ lớn trên các tập chuẩn VMLU, V-Bench, LegalSLM, Reading-400, VM14K.",
+};
 
 /** The frozen harness block, read here so each dataset tab can cross-link into
  *  it. FAIL-OPEN on purpose: a missing or invalid `.harness` block must not take

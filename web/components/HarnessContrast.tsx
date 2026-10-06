@@ -10,17 +10,18 @@
  *  beside the direct number is what makes that visible; a link to a study page
  *  only asserts it.
  *
- *  Two honesty rules, both from `lib/harness-contrast.ts`:
+ *  Three honesty rules, all from `lib/harness-contrast.ts`:
  *  · arm A is labelled the STUDY'S OWN direct arm. It is not claimed to be the
  *    Mongo run above, because no run id proves that yet.
  *  · no arms → say so. An absent arm is not an arm scoring zero.
+ *  · `agreement` / `valid_rate` are announced as NOT accuracy BEFORE their
+ *    numbers appear. A reader who has just seen "Accuracy 45,22%" two lines
+ *    above will otherwise read "97,40 · −2,60" as a score on the same scale —
+ *    which is how MC-48's −22,39 agreement got mistaken for a 22-point loss.
  */
 import Link from "next/link";
 import type { HarnessContrastVM } from "@/lib/harness-contrast.ts";
-
-function fmt(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(2);
-}
+import { fmtDelta, fmtNum } from "@/lib/format.ts";
 
 export function HarnessContrast({
   contrast,
@@ -48,6 +49,7 @@ export function HarnessContrast({
   // metrics on different subsets. Blend them and the strip states a falsehood.
   const metrics = [...new Set(contrast.arms.map((a) => a.metric))];
   const mixed = metrics.length > 1;
+  const hasNonScore = metrics.some((m) => m === "agreement" || m === "valid_rate");
 
   return (
     <div className="border-t border-slate-100 pt-2 mt-2 space-y-1.5">
@@ -56,23 +58,44 @@ export function HarnessContrast({
         cùng model, cùng câu, chỉ khác đường truy xuất câu trả lời
         {mixed ? " — lưu ý cell này gộp 2 metric khác nhau, xem từng dòng" : ""}.
       </p>
+
+      {hasNonScore && (
+        <p className="rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11px] leading-relaxed text-amber-900">
+          <b>⚠ Số dưới đây KHÔNG phải accuracy.</b>{" "}
+          {metrics.includes("agreement") && (
+            <>
+              <span className="font-mono">agreement</span> = tỉ lệ agent trả lời{" "}
+              <em>giống hệt</em> lời gọi trực tiếp, tức đo agent có <em>đổi</em> đáp án — đổi sang
+              chữ sai vẫn là đổi.
+            </>
+          )}
+          {metrics.includes("agreement") && metrics.includes("valid_rate") ? " " : null}
+          {metrics.includes("valid_rate") && (
+            <>
+              <span className="font-mono">valid_rate</span> = tỉ lệ lời gọi hàm khớp schema,
+              không bảo đảm gọi đúng hàm (MC-28: thiệt hại thật gấp 3,4× con số này).
+            </>
+          )}{" "}
+          Số hero của tab này là <b>accuracy</b> — thang khác, không so trực tiếp.
+        </p>
+      )}
+
       <ul className="space-y-1">
         {contrast.arms.map((a) => (
           <li key={a.arm} className="text-[11px] leading-relaxed flex flex-wrap items-baseline gap-x-2">
             <span className="font-mono font-semibold text-slate-900">{a.arm}</span>
             <span className="font-mono text-slate-700">
-              {a.metric} {fmt(a.armB)}
+              {a.metric} {fmtNum(a.armB, 2)}
             </span>
             <span
               className={`font-mono font-semibold ${
                 a.delta < 0 ? "text-rose-700" : a.delta > 0 ? "text-emerald-700" : "text-slate-600"
               }`}
             >
-              ({a.delta > 0 ? "+" : ""}
-              {fmt(a.delta)} so với arm A {fmt(a.armA)} của chính nghiên cứu này)
+              ({fmtDelta(a.delta, 2)} so với arm A {fmtNum(a.armA, 2)} của chính nghiên cứu này)
             </span>
             <span className="font-mono text-slate-400">
-              CI95 [{fmt(a.ci95Low)}, {fmt(a.ci95High)}] · McNemar p={a.mcnemarP} · n={a.n}
+              CI95 [{fmtNum(a.ci95Low, 2)}, {fmtNum(a.ci95High, 2)}] · McNemar p={a.mcnemarP} · n={a.n}
             </span>
             {a.card && <span className="font-mono text-slate-500">card {a.card}</span>}
           </li>

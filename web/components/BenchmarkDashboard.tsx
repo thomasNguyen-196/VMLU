@@ -6,6 +6,7 @@ import { InsightPanel } from "@/components/InsightPanel.tsx";
 import { OverviewTab } from "@/components/OverviewTab.tsx";
 import { HarnessContrast } from "@/components/HarnessContrast.tsx";
 import { summaryFromBlob } from "@/lib/insights.ts";
+import { fmtDelta, fmtInt, fmtNum, fmtPct } from "@/lib/format.ts";
 import {
   harnessContrastFor,
   type HarnessContrastMap,
@@ -354,23 +355,23 @@ function ReadingTabView({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
             <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Số câu (n)</div>
-            <div className="text-2xl font-black font-mono mt-1">{block.overall.n}</div>
+            <div className="text-2xl font-black font-mono mt-1">{fmtInt(block.overall.n)}</div>
           </div>
           <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
             <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">EM</div>
-            <div className="text-2xl font-black font-mono mt-1">{block.overall.em.toFixed(2)}%</div>
+            <div className="text-2xl font-black font-mono mt-1">{fmtPct(block.overall.em)}</div>
             <div className="text-[11px] text-emerald-200/70 font-mono">
-              {block.overall.em_count}/{block.overall.n}
+              {fmtInt(block.overall.em_count)}/{fmtInt(block.overall.n)}
             </div>
           </div>
           <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
             <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">char-F1</div>
-            <div className="text-2xl font-black font-mono mt-1">{block.overall.char_f1.toFixed(2)}%</div>
+            <div className="text-2xl font-black font-mono mt-1">{fmtPct(block.overall.char_f1)}</div>
           </div>
           <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
             <div className="text-emerald-300 text-[11px] font-semibold uppercase tracking-wide">Chênh EM→F1</div>
             <div className="text-2xl font-black font-mono mt-1 text-amber-300">
-              {(block.overall.char_f1 - block.overall.em).toFixed(2)}
+              {fmtDelta(block.overall.char_f1 - block.overall.em)}
             </div>
           </div>
         </div>
@@ -378,7 +379,7 @@ function ReadingTabView({
 
       <DatasetStrip
         meta={meta}
-        headline={`EM ${block.overall.em.toFixed(2)}% · F1 ${block.overall.char_f1.toFixed(2)}% (n=${block.overall.n})`}
+        headline={`EM ${fmtPct(block.overall.em)} · F1 ${fmtPct(block.overall.char_f1)} (n=${fmtInt(block.overall.n)})`}
         contrast={contrast}
         datasetName={datasetId}
       />
@@ -391,12 +392,12 @@ function ReadingTabView({
               <div>
                 <h3 className="font-bold text-slate-900">{src.label}</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  n = {src.n} · {src.em_count} câu exact
+                  n = {fmtInt(src.n)} · {fmtInt(src.em_count)} câu exact
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-xl font-black font-mono text-emerald-600">{src.em.toFixed(2)}%</div>
-                <div className="text-[11px] text-slate-500 font-mono">EM · F1 {src.char_f1.toFixed(2)}%</div>
+                <div className="text-xl font-black font-mono text-emerald-600">{fmtPct(src.em)}</div>
+                <div className="text-[11px] text-slate-500 font-mono">EM · F1 {fmtPct(src.char_f1)}</div>
               </div>
             </div>
             <table className="w-full text-left text-xs border-collapse">
@@ -414,16 +415,16 @@ function ReadingTabView({
                   .map((st) => (
                     <tr key={st.stratum}>
                       <td className="py-2 px-4">{st.label}</td>
-                      <td className="py-2 px-3 text-right font-mono">{st.n}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(st.n)}</td>
                       <td
                         className={`py-2 px-3 text-right font-mono font-bold ${
                           st.em < 60 ? "text-rose-600" : st.em < 80 ? "text-amber-600" : "text-emerald-600"
                         }`}
                       >
-                        {st.em.toFixed(2)}
+                        {fmtNum(st.em)}
                       </td>
                       <td className="py-2 px-3 text-right font-mono text-slate-600">
-                        {st.char_f1.toFixed(2)}
+                        {fmtNum(st.char_f1)}
                       </td>
                     </tr>
                   ))}
@@ -485,49 +486,49 @@ export function BenchmarkDashboard({
     data.vmlu.overall.n > 0 && {
       id: "vmlu" as const,
       label: "🇻🇳 VMLU Benchmark",
-      badge: `${data.vmlu.overall.accuracy.toFixed(2)}%`,
+      badge: fmtPct(data.vmlu.overall.accuracy),
       badgeClass: "bg-indigo-50 text-indigo-700",
     },
     data.vbench.total_items > 0 && {
       id: "vbench" as const,
       label: "🚀 V-Bench",
-      badge: `${data.vbench.macro_score.toFixed(2)}`,
+      badge: fmtNum(data.vbench.macro_score),
       badgeClass: "bg-slate-100 text-slate-700",
     },
     data.reading.overall.n > 0 && {
       id: "reading" as const,
       label: "📖 Đọc hiểu (400 câu)",
-      badge: `EM ${data.reading.overall.em.toFixed(2)}%`,
+      badge: `EM ${fmtPct(data.reading.overall.em)}`,
       badgeClass: "bg-emerald-50 text-emerald-700",
     },
     data.legal.overall.n > 0 && {
       id: "legal" as const,
       label: "⚖️ LegalSLM (146 câu)",
-      badge: `${data.legal.overall.accuracy.toFixed(2)}%`,
+      badge: fmtPct(data.legal.overall.accuracy),
       badgeClass: "bg-sky-50 text-sky-700",
     },
     data.legal_nli && data.legal_nli.overall.n > 0 && {
       id: "nli" as const,
       label: "🔀 Legal — khả năng hỗ trợ (150 câu)",
-      badge: `${data.legal_nli.overall.accuracy.toFixed(2)}%`,
+      badge: fmtPct(data.legal_nli.overall.accuracy),
       badgeClass: "bg-violet-50 text-violet-700",
     },
     data.bidlqa_val && data.bidlqa_val.overall.n > 0 && {
       id: "bidlqa-val" as const,
-      label: `📑 BidLQA val (${data.bidlqa_val.overall.n})`,
-      badge: `EM ${data.bidlqa_val.overall.em.toFixed(2)}%`,
+      label: `📑 BidLQA val (${fmtInt(data.bidlqa_val.overall.n)})`,
+      badge: `EM ${fmtPct(data.bidlqa_val.overall.em)}`,
       badgeClass: "bg-teal-50 text-teal-700",
     },
     data.bidlqa_test && data.bidlqa_test.overall.n > 0 && {
       id: "bidlqa-test" as const,
-      label: `📑 BidLQA test (${data.bidlqa_test.overall.n})`,
-      badge: `EM ${data.bidlqa_test.overall.em.toFixed(2)}%`,
+      label: `📑 BidLQA test (${fmtInt(data.bidlqa_test.overall.n)})`,
+      badge: `EM ${fmtPct(data.bidlqa_test.overall.em)}`,
       badgeClass: "bg-teal-50 text-teal-700",
     },
     data.vm14k && data.vm14k.overall.n > 0 && {
       id: "vm14k" as const,
-      label: `🩺 VM14K (${data.vm14k.overall.n})`,
-      badge: `${data.vm14k.overall.accuracy.toFixed(2)}%`,
+      label: `🩺 VM14K (${fmtInt(data.vm14k.overall.n)})`,
+      badge: fmtPct(data.vm14k.overall.accuracy),
       badgeClass: "bg-cyan-50 text-cyan-700",
     },
   ].filter((t): t is { id: "overview" | "vmlu" | "vbench" | "reading" | "legal" | "nli" | "bidlqa-val" | "bidlqa-test" | "vm14k"; label: string; badge: string; badgeClass: string } => Boolean(t));
@@ -638,26 +639,26 @@ export function BenchmarkDashboard({
                     <span>Chuẩn Đánh Giá Tiếng Việt</span> &bull; <span>58 Môn Học</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                    VMLU Benchmark (1,047 câu Gold Dev+Valid)
+                    VMLU Benchmark ({fmtInt(data.vmlu.overall.n)} câu Gold Dev+Valid)
                   </h2>
                   <p className="text-slate-300 text-sm leading-relaxed">
                     Mô hình đạt độ chính xác chung{" "}
-                    <strong className="text-emerald-400 font-mono text-base">73.35%</strong>{" "}
-                    (768 / 1,047 câu đúng). Tuy nhiên bộc lộ sự phân hóa cực đoan: các môn tự nhiên STEM
+                    <strong className="text-emerald-400 font-mono text-base">{fmtPct(data.vmlu.overall.accuracy)}</strong>{" "}
+                    ({fmtInt(data.vmlu.overall.correct)} / {fmtInt(data.vmlu.overall.n)} câu đúng). Tuy nhiên bộc lộ sự phân hóa cực đoan: các môn tự nhiên STEM
                     đạt gần 80%, nhưng nhóm Pháp luật, Thuế và Nghiệp vụ công chức rớt xuống 30%–47%.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shrink-0">
                   <div className="text-center px-3 border-r border-white/10">
-                    <div className="text-3xl font-black text-emerald-400 font-mono">73.35%</div>
+                    <div className="text-3xl font-black text-emerald-400 font-mono">{fmtPct(data.vmlu.overall.accuracy)}</div>
                     <div className="text-[11px] text-slate-300 uppercase tracking-wider mt-0.5">
                       Độ chính xác
                     </div>
                   </div>
                   <div className="text-center px-3">
                     <div className="text-2xl font-bold text-white font-mono">
-                      768<span className="text-sm font-normal text-slate-400">/1047</span>
+                      {fmtInt(data.vmlu.overall.correct)}<span className="text-sm font-normal text-slate-400">/{fmtInt(data.vmlu.overall.n)}</span>
                     </div>
                     <div className="text-[11px] text-slate-300 uppercase tracking-wider mt-0.5">
                       Số câu đúng
@@ -672,10 +673,10 @@ export function BenchmarkDashboard({
                   <div key={cat.name} className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/5">
                     <div className="text-xs text-indigo-200 font-medium truncate">{cat.name}</div>
                     <div className="text-2xl font-bold font-mono text-emerald-400 mt-1">
-                      {cat.accuracy.toFixed(2)}%
+                      {fmtPct(cat.accuracy)}
                     </div>
                     <div className="text-xs text-slate-400 mt-0.5">
-                      {cat.correct} / {cat.n} câu
+                      {fmtInt(cat.correct)} / {fmtInt(cat.n)} câu
                     </div>
                     <div className="w-full bg-white/10 h-1.5 rounded-full mt-2 overflow-hidden">
                       <div
@@ -690,7 +691,7 @@ export function BenchmarkDashboard({
 
             <DatasetStrip
               meta={data.datasetMeta["vmlu-mqa-all-gold"]}
-              headline={`Accuracy ${data.vmlu.overall.accuracy.toFixed(2)}% (${data.vmlu.overall.correct}/${data.vmlu.overall.n}) · 4 categories + 58 subjects`}
+              headline={`Độ chính xác ${fmtPct(data.vmlu.overall.accuracy)} (${fmtInt(data.vmlu.overall.correct)}/${fmtInt(data.vmlu.overall.n)}) · 4 nhóm ngành + 58 môn học`}
               contrast={hc("vmlu-mqa-all-gold")}
               datasetName="VMLU-MQA"
             />
@@ -703,11 +704,8 @@ export function BenchmarkDashboard({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">
                     <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                    Top 6 Môn Yếu Nhất (Điểm trũng cần can thiệp)
+                    Top 6 môn thấp nhất
                   </h3>
-                  <span className="text-xs font-semibold px-2 py-0.5 bg-rose-50 text-rose-700 rounded border border-rose-200">
-                    Cần Tra cứu VBPL
-                  </span>
                 </div>
                 <div className="space-y-2">
                   {data.vmlu.weakest_subjects.slice(0, 6).map((s) => (
@@ -720,7 +718,7 @@ export function BenchmarkDashboard({
                         <span className="font-medium text-slate-800">{s.name}</span>
                       </div>
                       <span className="font-mono font-bold text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200">
-                        {s.accuracy.toFixed(1)}%
+                        {fmtPct(s.accuracy)}
                       </span>
                     </div>
                   ))}
@@ -732,11 +730,8 @@ export function BenchmarkDashboard({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    Top 6 Môn Mạnh Nhất (Thế mạnh tri thức tham số)
+                    Top 6 môn cao nhất
                   </h3>
-                  <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">
-                    Fast Path (Zero-shot)
-                  </span>
                 </div>
                 <div className="space-y-2">
                   {data.vmlu.strongest_subjects.slice(0, 6).map((s) => (
@@ -749,7 +744,7 @@ export function BenchmarkDashboard({
                         <span className="font-medium text-slate-800">{s.name}</span>
                       </div>
                       <span className="font-mono font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
-                        {s.accuracy.toFixed(1)}%
+                        {fmtPct(s.accuracy)}
                       </span>
                     </div>
                   ))}
@@ -761,7 +756,7 @@ export function BenchmarkDashboard({
             <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
               <div className="p-5 border-b border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">Bảng Xếp Hạng 58 Môn Học VMLU</h3>
+                  <h3 className="font-bold text-slate-900 text-base">Bảng xếp hạng 58 môn học VMLU</h3>
                   <p className="text-xs text-slate-500">
                     Tra cứu chi tiết tỷ lệ đúng, số lượng mẫu và nhóm ngành
                   </p>
@@ -838,11 +833,11 @@ export function BenchmarkDashboard({
                           </td>
                           <td className="py-2.5 px-4 text-right font-mono font-bold">
                             <span className={`px-2 py-0.5 rounded border ${badgeColor}`}>
-                              {s.accuracy.toFixed(1)}%
+                              {fmtPct(s.accuracy)}
                             </span>
                           </td>
                           <td className="py-2.5 px-4 text-right font-mono text-slate-600">
-                            {s.correct} / {s.n}
+                            {fmtInt(s.correct)} / {fmtInt(s.n)}
                           </td>
                           <td className="py-2.5 px-4">
                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
@@ -867,7 +862,7 @@ export function BenchmarkDashboard({
                   <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
                     <span>🔍 Câu trả lời sai (Wrong-answer explorer)</span>
                     <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-rose-100 text-rose-800">
-                      {filteredQuestions.length} câu
+                      {fmtInt(filteredQuestions.length)} câu
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500">
@@ -900,10 +895,11 @@ export function BenchmarkDashboard({
 
               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
                 {filteredQuestions.slice(0, 50).map((q) => (
-                  <div
+                  <button
                     key={q.id}
+                    type="button"
                     onClick={() => setSelectedQuestion(q)}
-                    className="p-4 rounded-xl border transition-all cursor-pointer border-rose-200 bg-rose-50/20 hover:border-rose-400"
+                    className="w-full text-left p-4 rounded-xl border transition-all cursor-pointer border-rose-200 bg-rose-50/20 hover:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500"
                   >
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <div className="flex items-center gap-2">
@@ -921,7 +917,7 @@ export function BenchmarkDashboard({
                     <div className="text-xs text-slate-900 font-medium line-clamp-2">
                       {q.question}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -941,20 +937,18 @@ export function BenchmarkDashboard({
                     <span>Bảng Xếp Hạng Độc Lập</span> &bull; <span>Public Test v2026.03.28</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                    V-Bench Leaderboard (5,141 câu)
+                    V-Bench Leaderboard ({fmtInt(data.vbench.total_items)} câu)
                   </h2>
                   <p className="text-slate-300 text-sm leading-relaxed">
-                    Kết quả chính thức được chấm bởi hệ thống máy chủ{" "}
-                    <strong className="text-white">vbench.ai</strong>. Đo lường ở điều kiện trung thực{" "}
-                    <span className="text-sky-300 font-mono">minimal prompt</span> (không mớm rule,
-                    không CoT, temp 0, seed 42).
+                    Mô hình được chấm độc lập bởi máy chủ{" "}
+                    <strong className="text-white">vbench.ai</strong>. Đo lường ở điều kiện trung thực (temp 0, seed 42; 5.127 câu trắc nghiệm dùng minimal prompt, 14 câu cần hướng dẫn JSON schema).
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 shrink-0">
                   <div className="text-center px-2">
                     <div className="text-3xl font-black text-sky-400 font-mono">
-                      {data.vbench.macro_score.toFixed(2)}
+                      {fmtNum(data.vbench.macro_score)}
                     </div>
                     <div className="text-[11px] text-slate-300 uppercase tracking-wider mt-0.5">
                       Macro Score (13)
@@ -962,10 +956,10 @@ export function BenchmarkDashboard({
                   </div>
                   <div className="text-center px-2 border-l border-white/10">
                     <div className="text-3xl font-black text-emerald-400 font-mono">
-                      {data.vbench.micro_accuracy.toFixed(2)}%
+                      {fmtPct(data.vbench.micro_accuracy)}
                     </div>
                     <div className="text-[11px] text-slate-300 uppercase tracking-wider mt-0.5">
-                      Micro Acc ({data.vbench.total_correct}/{data.vbench.total_items})
+                      Micro Acc ({fmtInt(data.vbench.total_correct)}/{fmtInt(data.vbench.total_items)})
                     </div>
                   </div>
                 </div>
@@ -979,15 +973,15 @@ export function BenchmarkDashboard({
                       📋 Multiple-Choice Track (12 domains)
                     </div>
                     <div className="text-xl font-bold font-mono text-white mt-1">
-                      {data.vbench.tracks.multiple_choice.accuracy.toFixed(2)}%{" "}
+                      {fmtPct(data.vbench.tracks.multiple_choice.accuracy)}{" "}
                       <span className="text-xs font-normal text-slate-400">
-                        ({data.vbench.tracks.multiple_choice.correct} /{" "}
-                        {data.vbench.tracks.multiple_choice.total} câu)
+                        ({fmtInt(data.vbench.tracks.multiple_choice.correct)} /{" "}
+                        {fmtInt(data.vbench.tracks.multiple_choice.total)} câu)
                       </span>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded bg-sky-500/20 text-sky-300 text-xs font-mono font-bold">
-                    4,141 items
+                    {fmtInt(data.vbench.tracks.multiple_choice.total)} items
                   </span>
                 </div>
 
@@ -997,15 +991,15 @@ export function BenchmarkDashboard({
                       🤖 Agentic Function Calling Track
                     </div>
                     <div className="text-xl font-bold font-mono text-white mt-1">
-                      {data.vbench.tracks.agentic.accuracy.toFixed(2)}%{" "}
+                      {fmtPct(data.vbench.tracks.agentic.accuracy)}{" "}
                       <span className="text-xs font-normal text-slate-400">
-                        ({data.vbench.tracks.agentic.correct} /{" "}
-                        {data.vbench.tracks.agentic.total} câu đúng)
+                        ({fmtInt(data.vbench.tracks.agentic.correct)} /{" "}
+                        {fmtInt(data.vbench.tracks.agentic.total)} câu đúng)
                       </span>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 text-xs font-mono font-bold">
-                    1,000 items
+                    {fmtInt(data.vbench.tracks.agentic.total)} items
                   </span>
                 </div>
               </div>
@@ -1013,7 +1007,7 @@ export function BenchmarkDashboard({
 
             <DatasetStrip
               meta={data.datasetMeta["vbench-public-test"]}
-              headline={`Micro ${data.vbench.micro_accuracy.toFixed(2)}% (${data.vbench.total_correct}/${data.vbench.total_items}) · Macro ${data.vbench.macro_score.toFixed(2)} (13 miền)`}
+              headline={`Micro ${fmtPct(data.vbench.micro_accuracy)} (${fmtInt(data.vbench.total_correct)}/${fmtInt(data.vbench.total_items)}) · Macro ${fmtNum(data.vbench.macro_score)} (13 miền)`}
               contrast={hc("vbench-public-test")}
               datasetName="V-Bench public test"
             />
@@ -1024,7 +1018,7 @@ export function BenchmarkDashboard({
               <div className="p-5 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-slate-900 text-base">
-                    Bảng Xếp Hạng 13 Miền Tri Thức (Domains)
+                    Bảng xếp hạng 13 miền tri thức (Domains)
                   </h3>
                   <p className="text-xs text-slate-500">
                     Phân hóa mạnh mẽ giữa tri thức ngữ nghĩa và năng lực suy luận toán logic
@@ -1068,7 +1062,7 @@ export function BenchmarkDashboard({
                             <span
                               className={`px-2 py-0.5 rounded text-[11px] font-mono ${
                                 d.track === "function-calling"
-                                  ? "bg-purple-100 text-purple-800"
+                                    ? "bg-purple-100 text-purple-800"
                                   : "bg-slate-100 text-slate-700"
                               }`}
                             >
@@ -1076,10 +1070,10 @@ export function BenchmarkDashboard({
                             </span>
                           </td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-sm text-slate-900">
-                            {d.score.toFixed(2)}%
+                            {fmtPct(d.score)}
                           </td>
                           <td className="py-3 px-4 text-right font-mono text-slate-600">
-                            {d.correct} / {d.total}
+                            {fmtInt(d.correct)} / {fmtInt(d.total)}
                           </td>
                           <td className="py-3 px-4">
                             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
@@ -1122,7 +1116,7 @@ export function BenchmarkDashboard({
                 <div className="flex items-center gap-2 text-sky-300 text-xs font-semibold uppercase tracking-wider">
                   <span>Tiền đăng ký · seed 42 · closed-book · card MC-6</span>
                 </div>
-                <h2 className="text-2xl font-bold">Luật trắc nghiệm — {data.legal.overall.n} câu</h2>
+                <h2 className="text-2xl font-bold">Luật trắc nghiệm — {fmtInt(data.legal.overall.n)} câu</h2>
                 <p className="text-sm text-sky-100/80 leading-relaxed">
                   {data.legal.condition}
                 </p>
@@ -1131,30 +1125,30 @@ export function BenchmarkDashboard({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Accuracy</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal.overall.accuracy.toFixed(2)}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtPct(data.legal.overall.accuracy)}</div>
                   <div className="text-[11px] text-sky-200/70 font-mono">
-                    {data.legal.overall.correct}/{data.legal.overall.n}
+                    {fmtInt(data.legal.overall.correct)}/{fmtInt(data.legal.overall.n)}
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Baseline ({data.legal.baseline.label})</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal.baseline.majority_accuracy.toFixed(2)}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtPct(data.legal.baseline.majority_accuracy)}</div>
                   <div className="text-[11px] text-sky-200/70 font-mono">
-                    {data.legal.baseline.majority_n}/{data.legal.overall.n}
+                    {fmtInt(data.legal.baseline.majority_n)}/{fmtInt(data.legal.overall.n)}
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Hơn baseline</div>
+                  <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Chênh mốc đối chứng</div>
                   <div className="text-2xl font-black font-mono mt-1 text-emerald-300">
-                    +{(data.legal.overall.accuracy - data.legal.baseline.majority_accuracy).toFixed(2)}
+                    {fmtDelta(data.legal.overall.accuracy - data.legal.baseline.majority_accuracy)}
                   </div>
                   <div className="text-[11px] text-sky-200/70">điểm phần trăm</div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-sky-300 text-[11px] font-semibold uppercase tracking-wide">Valid (parse được)</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal.overall.valid}/{data.legal.overall.n}</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtInt(data.legal.overall.valid)}/{fmtInt(data.legal.overall.n)}</div>
                   <div className="text-[11px] text-sky-200/70 font-mono">
-                    sai trong số parse được: {data.legal.overall.wrong_parsed}
+                    sai trong số parse được: {fmtInt(data.legal.overall.wrong_parsed)}
                   </div>
                 </div>
               </div>
@@ -1162,7 +1156,7 @@ export function BenchmarkDashboard({
 
             <DatasetStrip
               meta={data.datasetMeta["legal-mc-146"]}
-              headline={`Accuracy ${data.legal.overall.accuracy.toFixed(2)}% (${data.legal.overall.correct}/${data.legal.overall.n}) · baseline ${data.legal.baseline.majority_accuracy.toFixed(2)}%`}
+              headline={`Accuracy ${fmtPct(data.legal.overall.accuracy)} (${fmtInt(data.legal.overall.correct)}/${fmtInt(data.legal.overall.n)}) · mốc đối chứng ${fmtPct(data.legal.baseline.majority_accuracy)}`}
               contrast={hc("legal-mc-146")}
               datasetName="LegalSLM MC-146"
             />
@@ -1187,10 +1181,10 @@ export function BenchmarkDashboard({
                   {data.legal.by_gold.map((g) => (
                     <tr key={g.gold}>
                       <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
-                      <td className="py-2 px-3 text-right font-mono">{g.n}</td>
-                      <td className="py-2 px-3 text-right font-mono">{g.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(g.n)}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(g.correct)}</td>
                       <td className="py-2 px-3 text-right font-mono font-bold text-sky-700">
-                        {g.accuracy.toFixed(2)}
+                        {fmtPct(g.accuracy)}
                       </td>
                     </tr>
                   ))}
@@ -1219,7 +1213,7 @@ export function BenchmarkDashboard({
                 <div className="flex items-center gap-2 text-violet-300 text-xs font-semibold uppercase tracking-wider">
                   <span>Nhị phân Có→A / Không→B · seed 42 · MC runner frozen</span>
                 </div>
-                <h2 className="text-2xl font-bold">Khả năng văn bản hỗ trợ câu hỏi — {data.legal_nli.overall.n} câu</h2>
+                <h2 className="text-2xl font-bold">Khả năng văn bản hỗ trợ câu hỏi — {fmtInt(data.legal_nli.overall.n)} câu</h2>
                 <p className="text-sm text-violet-100/80 leading-relaxed">
                   {data.legal_nli.condition}
                 </p>
@@ -1228,30 +1222,30 @@ export function BenchmarkDashboard({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Accuracy</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal_nli.overall.accuracy.toFixed(2)}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtPct(data.legal_nli.overall.accuracy)}</div>
                   <div className="text-[11px] text-violet-200/70 font-mono">
-                    {data.legal_nli.overall.correct}/{data.legal_nli.overall.n}
+                    {fmtInt(data.legal_nli.overall.correct)}/{fmtInt(data.legal_nli.overall.n)}
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Baseline ({data.legal_nli.baseline.label})</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal_nli.baseline.majority_accuracy.toFixed(2)}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtPct(data.legal_nli.baseline.majority_accuracy)}</div>
                   <div className="text-[11px] text-violet-200/70 font-mono">
-                    {data.legal_nli.baseline.majority_n}/{data.legal_nli.overall.n}
+                    {fmtInt(data.legal_nli.baseline.majority_n)}/{fmtInt(data.legal_nli.overall.n)}
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Chênh mốc đối chứng</div>
                   <div className="text-2xl font-black font-mono mt-1 text-emerald-300">
-                    +{(data.legal_nli.overall.accuracy - data.legal_nli.baseline.majority_accuracy).toFixed(2)}
+                    {fmtDelta(data.legal_nli.overall.accuracy - data.legal_nli.baseline.majority_accuracy)}
                   </div>
                   <div className="text-[11px] text-violet-200/70">điểm phần trăm</div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-violet-300 text-[11px] font-semibold uppercase tracking-wide">Câu trả lời hợp lệ</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.legal_nli.overall.valid}/{data.legal_nli.overall.n}</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtInt(data.legal_nli.overall.valid)}/{fmtInt(data.legal_nli.overall.n)}</div>
                   <div className="text-[11px] text-violet-200/70 font-mono">
-                    sai trong số parse được: {data.legal_nli.overall.wrong_parsed}
+                    sai trong số parse được: {fmtInt(data.legal_nli.overall.wrong_parsed)}
                   </div>
                 </div>
               </div>
@@ -1259,7 +1253,7 @@ export function BenchmarkDashboard({
 
             <DatasetStrip
               meta={data.datasetMeta["legal-nli-150"]}
-              headline={`Accuracy ${data.legal_nli.overall.accuracy.toFixed(2)}% (${data.legal_nli.overall.correct}/${data.legal_nli.overall.n}) · mốc đối chứng ${data.legal_nli.baseline.majority_accuracy.toFixed(2)}%`}
+              headline={`Accuracy ${fmtPct(data.legal_nli.overall.accuracy)} (${fmtInt(data.legal_nli.overall.correct)}/${fmtInt(data.legal_nli.overall.n)}) · mốc đối chứng ${fmtPct(data.legal_nli.baseline.majority_accuracy)}`}
               contrast={hc("legal-nli-150")}
               datasetName="LegalSLM NLI-150"
             />
@@ -1284,10 +1278,10 @@ export function BenchmarkDashboard({
                   {data.legal_nli.by_gold.map((g) => (
                     <tr key={g.gold}>
                       <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
-                      <td className="py-2 px-3 text-right font-mono">{g.n}</td>
-                      <td className="py-2 px-3 text-right font-mono">{g.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(g.n)}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(g.correct)}</td>
                       <td className="py-2 px-3 text-right font-mono font-bold text-violet-700">
-                        {g.accuracy.toFixed(2)}
+                        {fmtPct(g.accuracy)}
                       </td>
                     </tr>
                   ))}
@@ -1330,7 +1324,7 @@ export function BenchmarkDashboard({
                 <div className="flex items-center gap-2 text-teal-300 text-xs font-semibold uppercase tracking-wider">
                   <span>Public release · shuffled0 · closed-book · seed 42 · card MC-14b</span>
                 </div>
-                <h2 className="text-2xl font-bold">Trắc nghiệm Y khoa — {data.vm14k.overall.n} câu</h2>
+                <h2 className="text-2xl font-bold">Trắc nghiệm Y khoa — {fmtInt(data.vm14k.overall.n)} câu</h2>
                 <p className="text-sm text-teal-100/80 leading-relaxed">
                   {data.vm14k.condition}
                 </p>
@@ -1339,30 +1333,30 @@ export function BenchmarkDashboard({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Accuracy</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.vm14k.overall.accuracy.toFixed(2)}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtPct(data.vm14k.overall.accuracy)}</div>
                   <div className="text-[11px] text-teal-200/70 font-mono">
-                    {data.vm14k.overall.correct}/{data.vm14k.overall.n}
+                    {fmtInt(data.vm14k.overall.correct)}/{fmtInt(data.vm14k.overall.n)}
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Baseline ({data.vm14k.baseline.label})</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.vm14k.baseline.majority_accuracy.toFixed(2)}%</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtPct(data.vm14k.baseline.majority_accuracy)}</div>
                   <div className="text-[11px] text-teal-200/70 font-mono">
-                    {data.vm14k.baseline.majority_n}/{data.vm14k.overall.n}
+                    {fmtInt(data.vm14k.baseline.majority_n)}/{fmtInt(data.vm14k.overall.n)}
                   </div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                  <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Hơn baseline</div>
+                  <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Chênh mốc đối chứng</div>
                   <div className="text-2xl font-black font-mono mt-1 text-emerald-300">
-                    +{(data.vm14k.overall.accuracy - data.vm14k.baseline.majority_accuracy).toFixed(2)}
+                    {fmtDelta(data.vm14k.overall.accuracy - data.vm14k.baseline.majority_accuracy)}
                   </div>
                   <div className="text-[11px] text-teal-200/70">điểm phần trăm</div>
                 </div>
                 <div className="bg-white/10 rounded-xl p-4 backdrop-blur-sm border border-white/10">
                   <div className="text-teal-300 text-[11px] font-semibold uppercase tracking-wide">Valid (parse được)</div>
-                  <div className="text-2xl font-black font-mono mt-1">{data.vm14k.overall.valid}/{data.vm14k.overall.n}</div>
+                  <div className="text-2xl font-black font-mono mt-1">{fmtInt(data.vm14k.overall.valid)}/{fmtInt(data.vm14k.overall.n)}</div>
                   <div className="text-[11px] text-teal-200/70 font-mono">
-                    sai trong số parse được: {data.vm14k.overall.wrong_parsed}
+                    sai trong số parse được: {fmtInt(data.vm14k.overall.wrong_parsed)}
                   </div>
                 </div>
               </div>
@@ -1370,7 +1364,7 @@ export function BenchmarkDashboard({
 
             <DatasetStrip
               meta={data.datasetMeta["vm14k-public-12488"]}
-              headline={`Accuracy ${data.vm14k.overall.accuracy.toFixed(2)}% (${data.vm14k.overall.correct}/${data.vm14k.overall.n}) · baseline ${data.vm14k.baseline.majority_accuracy.toFixed(2)}%`}
+              headline={`Accuracy ${fmtPct(data.vm14k.overall.accuracy)} (${fmtInt(data.vm14k.overall.correct)}/${fmtInt(data.vm14k.overall.n)}) · mốc đối chứng ${fmtPct(data.vm14k.baseline.majority_accuracy)}`}
               contrast={hc("vm14k-public-12488")}
               datasetName="VM14K"
             />
@@ -1398,10 +1392,10 @@ export function BenchmarkDashboard({
                   {data.vm14k.by_category.map((d) => (
                     <tr key={d.category}>
                       <td className="py-2 px-4 font-semibold">{d.category}</td>
-                      <td className="py-2 px-3 text-right font-mono">{d.n}</td>
-                      <td className="py-2 px-3 text-right font-mono">{d.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(d.n)}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(d.correct)}</td>
                       <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
-                        {d.accuracy.toFixed(2)}
+                        {fmtPct(d.accuracy)}
                       </td>
                     </tr>
                   ))}
@@ -1432,10 +1426,10 @@ export function BenchmarkDashboard({
                     {data.vm14k.by_difficulty.map((d) => (
                       <tr key={d.difficulty}>
                         <td className="py-2 px-4 font-semibold">{d.difficulty}</td>
-                        <td className="py-2 px-3 text-right font-mono">{d.n}</td>
-                        <td className="py-2 px-3 text-right font-mono">{d.correct}</td>
+                        <td className="py-2 px-3 text-right font-mono">{fmtInt(d.n)}</td>
+                        <td className="py-2 px-3 text-right font-mono">{fmtInt(d.correct)}</td>
                         <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
-                          {d.accuracy.toFixed(2)}
+                          {fmtPct(d.accuracy)}
                         </td>
                       </tr>
                     ))}
@@ -1465,10 +1459,10 @@ export function BenchmarkDashboard({
                     {data.vm14k.by_n_choices.map((d) => (
                       <tr key={d.n_choices}>
                         <td className="py-2 px-4 font-mono font-bold">{d.n_choices}</td>
-                        <td className="py-2 px-3 text-right font-mono">{d.n}</td>
-                        <td className="py-2 px-3 text-right font-mono">{d.correct}</td>
+                        <td className="py-2 px-3 text-right font-mono">{fmtInt(d.n)}</td>
+                        <td className="py-2 px-3 text-right font-mono">{fmtInt(d.correct)}</td>
                         <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
-                          {d.accuracy.toFixed(2)}
+                          {fmtPct(d.accuracy)}
                         </td>
                       </tr>
                     ))}
@@ -1496,10 +1490,10 @@ export function BenchmarkDashboard({
                   {data.vm14k.by_gold.map((g) => (
                     <tr key={g.gold}>
                       <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
-                      <td className="py-2 px-3 text-right font-mono">{g.n}</td>
-                      <td className="py-2 px-3 text-right font-mono">{g.correct}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(g.n)}</td>
+                      <td className="py-2 px-3 text-right font-mono">{fmtInt(g.correct)}</td>
                       <td className="py-2 px-3 text-right font-mono font-bold text-teal-700">
-                        {g.accuracy.toFixed(2)}
+                        {fmtPct(g.accuracy)}
                       </td>
                     </tr>
                   ))}
@@ -1524,11 +1518,19 @@ export function BenchmarkDashboard({
 
       {/* MODAL INSPECTOR */}
       {selectedQuestion && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-question-id"
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+        >
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-200 text-slate-800 rounded">
+                <span
+                  id="modal-question-id"
+                  className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-200 text-slate-800 rounded"
+                >
                   {selectedQuestion.id}
                 </span>
                 <span className="text-xs font-semibold text-slate-600">
@@ -1536,7 +1538,9 @@ export function BenchmarkDashboard({
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedQuestion(null)}
+                aria-label="Đóng"
                 className="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
               >
                 &times;
@@ -1597,6 +1601,7 @@ export function BenchmarkDashboard({
 
             <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-end">
               <button
+                type="button"
                 onClick={() => setSelectedQuestion(null)}
                 className="px-4 py-1.5 text-xs font-semibold bg-slate-800 text-white rounded-lg hover:bg-slate-700"
               >
@@ -1675,22 +1680,51 @@ export function BenchmarkDashboard({
       </aside>
       </div>
 
-      {/* MOBILE dataset switcher (rail is lg+) */}
-      <div className="lg:hidden max-w-7xl mx-auto px-4 sm:px-6 pb-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs flex gap-2 overflow-x-auto">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-3 py-2 text-xs font-semibold rounded-xl border whitespace-nowrap transition-colors ${
-                tab === t.id
-                  ? "border-indigo-600 bg-indigo-600 text-white"
-                  : "border-slate-200 bg-white text-slate-600"
-              }`}
-            >
-              {t.label} · {t.badge}
-            </button>
-          ))}
+      {/* MOBILE model + dataset switcher (rail is lg+) */}
+      <div className="lg:hidden max-w-7xl mx-auto px-4 sm:px-6 pb-6 space-y-3">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Chọn mô hình</p>
+          <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Chọn mô hình">
+            {models.map((m) => {
+              const active = m.id === activeModelId;
+              return (
+                <button
+                  key={m.id}
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => {
+                    if (!active) onModelChange(m.id);
+                  }}
+                  className={`px-3 py-1.5 text-xs font-mono font-medium rounded-xl border whitespace-nowrap transition-colors ${
+                    active
+                      ? "border-indigo-600 bg-indigo-50 text-indigo-900 font-bold"
+                      : "border-slate-200 bg-white text-slate-700"
+                  }`}
+                >
+                  {m.display_name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bộ dữ liệu</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`px-3 py-2 text-xs font-semibold rounded-xl border whitespace-nowrap transition-colors ${
+                  tab === t.id
+                    ? "border-indigo-600 bg-indigo-600 text-white"
+                    : "border-slate-200 bg-white text-slate-600"
+                }`}
+              >
+                {t.label} · {t.badge}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

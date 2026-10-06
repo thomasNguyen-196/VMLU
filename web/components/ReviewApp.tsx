@@ -5,6 +5,7 @@ import { itemKey, type ItemState, type ReviewBlob } from "@/lib/types.ts";
 import Link from "next/link";
 import { useReviewStore } from "@/lib/review-store.ts";
 import { computeStats, nextUnreviewed, passageGroups, passagePosition } from "@/lib/review-logic.ts";
+import { fmtInt, fmtNum } from "@/lib/format.ts";
 import { Filmstrip } from "./Filmstrip.tsx";
 import SiteNav from "./SiteNav.tsx";
 import { ItemPane } from "./ItemPane.tsx";
@@ -81,7 +82,7 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
       const k = itemKey(blob.items[idx]);
       if (bucketLoadingRef.current) return; // bucket being adopted — a write here would vanish
       if (peers[k]) {
-        toast2(`Câu này ${peers[k].reviewer} đã chốt (${peers[k].decision}) — bỏ qua`);
+        toast2(`Câu này ${peers[k].reviewer} đã chốt (${peers[k].decision === "accept" ? "chấp nhận" : "bác bỏ"}) — bỏ qua`);
         return;
       }
       const bk = useReviewStore.getState().bucket;
@@ -200,14 +201,14 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
               VMLU · {blob.items.length} câu · issue&nbsp;#3
             </span>
           </div>
-          <Stat label="accept %" value={stats.acceptPct === null ? "—" : stats.acceptPct.toFixed(1)} tone="accept" />
-          <Stat label="đã review" value={`${stats.reviewed}/${stats.total}`} />
-          <Stat label="reject" value={String(stats.reject)} tone="reject" />
+          <Stat label="% chấp nhận" value={stats.acceptPct === null ? "—" : fmtNum(stats.acceptPct, 1)} tone="accept" />
+          <Stat label="đã review" value={`${fmtInt(stats.reviewed)}/${fmtInt(stats.total)}`} />
+          <Stat label="bác bỏ" value={fmtInt(stats.reject)} tone="reject" />
           <Link
-            href="/results"
+            href="/benchmark"
             className="inline-flex items-center gap-1.5 rounded-lg border border-hair bg-card px-3 py-1.5 text-[12px] font-semibold text-ink-2 transition-colors hover:border-ink-2 hover:text-ink"
           >
-            <span>Results (DB, đa model)</span>
+            <span>Benchmark (DB, đa model)</span>
           </Link>
           <div className="min-w-2 flex-1" />
           <label className="flex items-center gap-2">
@@ -241,9 +242,9 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
           {item && <Filmstrip items={blob.items} bucket={bucket} peers={peers} idx={idx} onJump={go} />}
         </div>
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-3.5 gap-y-1.5 px-4 pb-2.5 text-[12px] text-ink-3 sm:px-8">
-          <Key swatch="bg-accept">accept</Key>
-          <Key swatch="bg-reject">reject</Key>
-          <Key swatch="bg-flag">reject thiếu đáp án sửa</Key>
+          <Key swatch="bg-accept">chấp nhận</Key>
+          <Key swatch="bg-reject">bác bỏ</Key>
+          <Key swatch="bg-flag">bác bỏ thiếu đáp án sửa</Key>
           <Key swatch="bg-null">chưa review</Key>
           <Key striped>người khác đã chốt</Key>
           <span>· mỗi vạch đứng = một đoạn văn, click để nhảy tới câu</span>
@@ -324,8 +325,8 @@ export function ReviewApp({ blob }: { blob: ReviewBlob }) {
               [
                 ["j / ↓", "Câu kế tiếp"],
                 ["k / ↑", "Câu trước"],
-                ["a · space", "Accept (lần 2 = bỏ trống)"],
-                ["r", "Reject · focus ô sửa nếu đang trống"],
+                ["a · space", "Chấp nhận (lần 2 = bỏ trống)"],
+                ["r", "Bác bỏ · chuyển tới ô sửa nếu đang trống"],
                 ["u", "Bỏ trống quyết định"],
                 ["e", "Tới ô đáp án sửa"],
                 ["n", "Tới ô ghi chú"],

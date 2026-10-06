@@ -166,6 +166,96 @@ DATASET_LABEL = {"reading400": "reading-400 (EM)", "legal_mc": "legal-MC (accura
                  "vbench_agentic": "V-Bench agentic (schema validity — KHÔNG có gold)",
                  "vbench_mc": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)"}
 
+# WHAT EACH METRIC IS, in the reader's terms. Every table carries the metric name,
+# and a bare name is not enough: `agreement` and `valid_rate` both read like a
+# score to anyone who has just seen "Accuracy 73,35%" two rows up, and both are
+# something else entirely. This is the single place that says which is which —
+# the page renders it next to every number, so a metric can never be read as an
+# accuracy it is not. `not_a_score: true` drives the loud styling: those two
+# metrics never appear in a range the prose calls "điểm" (see `insight`).
+METRIC_NOTE: dict[str, dict] = {
+    "accuracy": {
+        "unit": "điểm", "not_a_score": False,
+        "what": "số câu đúng / tổng số câu — có vàng cục bộ nên đây là điểm thật.",
+    },
+    "EM": {
+        "unit": "điểm", "not_a_score": False,
+        "what": "exact match trên gold đã hiệu đính — có vàng cục bộ nên đây là điểm thật.",
+    },
+    # NOT the same as `accuracy`: there is no local gold here, the site grades it,
+    # and it cannot be recomputed offline. Calling it `accuracy` made the page
+    # print "có vàng cục bộ nên đây là điểm thật" under a number that came from
+    # a server we cannot re-run — the exact false assurance this table exists to
+    # prevent. `b_blanks` also means something different (items not submitted,
+    # scored wrong) rather than "unparsed by our reader".
+    "server_accuracy": {
+        "unit": "điểm", "not_a_score": False,
+        "what": ("điểm do máy chủ vbench.ai chấm. KHÔNG có vàng cục bộ nên không kiểm chứng "
+                 "lại được offline; câu không nộp/không trích được vẫn nằm trong mẫu số "
+                 "và bị tính sai."),
+    },
+    "valid_rate": {
+        "unit": "tỉ lệ", "not_a_score": True,
+        "what": ("tỉ lệ lời gọi hàm khớp schema của chính câu hỏi đó. Đây KHÔNG phải điểm: "
+                 "hợp lệ về cấu trúc không bảo đảm gọi đúng hàm (MC-28 đo chênh 3,4×)."),
+    },
+    "agreement": {
+        "unit": "tỉ lệ", "not_a_score": True,
+        "what": ("tỉ lệ câu mà agent trả lời GIỐNG HỆT lời gọi trực tiếp trên cùng câu hỏi. "
+                 "Đây KHÔNG phải điểm: nó đo agent có đổi đáp án hay không, chứ không đo đáp án "
+                 "đó tốt hơn hay xấu hơi — đổi sang chữ sai vẫn là đổi. Điểm thật của "
+                 "12 domain do máy chủ vbench.ai chấm, xem cột `Điểm server`."),
+    },
+}
+
+# Server-side ACCURACY for V-Bench MC's 12 domains, read from the snapshot the
+# grade endpoint returned. This is the one number in the whole block that answers
+# "did the model actually get more answers wrong" — agreement cannot, and before
+# MC-48 the block carried no such column at all, which is how a −22.39 agreement
+# delta got read as a −22.39 quality drop that does not exist (MiMo's real MC
+# accuracy went UP 2.13 points under the same scaffold).
+# The same metric is spelled two ways in the artifacts: `arm_metrics` computes
+# it and calls it `agreement`, while the `compare` CSV carries the machine name
+# `agreement_with_arm_A`. Two spellings for one metric meant the page's note
+# lookup silently missed and rendered "agreement_with_arm_A (?)" -- the exact
+# ambiguity this table exists to remove. One alias table, one canonical name;
+# the verbatim CSV name is kept as `metric_raw` for provenance.
+METRIC_ALIASES = {
+    "agreement_with_arm_A": "agreement",
+}
+
+
+def canonical_metric(metric: str) -> str:
+    return METRIC_ALIASES.get(metric, metric)
+
+
+SERVER_MC_REQUIRED = {"domain", "score", "correct", "total"}
+
+
+def vbench_mc_server(folder: Path, slug: str) -> dict | None:
+    """Server accuracy over the 12 MC domains for one arm, or None if ungraded.
+
+    Aggregated from the per-domain rows the site returned, never from prose. The
+    site's denominator is `totalQuestions`, so a blank/unparsed answer we did not
+    submit counts as WRONG — it is not dropped, and this number therefore already
+    carries the cost of any crash in that arm.
+    """
+    snap = folder / f"vbench_server_scores_{slug}.csv"
+    if not snap.exists():
+        return None
+    rows = read_csv_checked(snap, required=SERVER_MC_REQUIRED, label=f"{slug} server MC snapshot")
+    mc = [r for r in rows if r["domain"] != "agentic"]
+    if not mc:
+        return None
+    correct = sum(int(r["correct"]) for r in mc)
+    total = sum(int(r["total"]) for r in mc)
+    if total <= 0:
+        return None
+    domains = {r["domain"]: round(f2(r["score"]), 2) for r in mc}
+    return {"score": round(100.0 * correct / total, 2), "correct": correct, "total": total,
+            "matched": sum(int(r["matched"]) for r in mc) if "matched" in mc[0] else "",
+            "domains": domains}
+
 
 def _int_or_blank(value: str) -> int | str:
     """A paired cell that the track deliberately leaves empty stays empty.
@@ -284,9 +374,21 @@ def arm_metrics(folder: Path, dataset: str, spec: dict, slug: str,
         same = (len(shared) if b is None
                 else sum(1 for i in shared if a[i] and b[i] and a[i] == b[i]))
         n = len(shared)
-        return {"n": n, "metric": "agreement", "score": round(100.0 * same / n, 2),
-                "correct": same, "blanks": n - same, "char_f1": None,
-                "unit": "cùng chữ cái với arm A"}
+        out = {"n": n, "metric": "agreement", "score": round(100.0 * same / n, 2),
+               "correct": same, "blanks": n - same, "char_f1": None,
+               "unit": "cùng chữ cái với arm A"}
+        # The REAL accuracy for this cell, when the site has graded it. Agreement
+        # and accuracy can point opposite ways (MiMo: −22.39 agreement, +2.13
+        # accuracy), so a block that shows only agreement invites reading a
+        # "changed answers" count as a "lost points" count.
+        mc_server = vbench_mc_server(folder, slug)
+        if mc_server:
+            out["server_mc"] = mc_server
+        if arm_a_slug and arm_a_slug != slug:
+            a_server = vbench_mc_server(folder.parent / arm_a_slug, arm_a_slug)
+            if a_server:
+                out["server_mc_arm_a"] = a_server
+        return out
     name = "reading_scores_bidlqa_val" if dataset == "bidlqa_val" else "reading_scores"
     path = folder / f"{name}_{slug}.csv"
     if not path.exists():
@@ -403,6 +505,20 @@ def build_ladder(results_dir: Path, arms: list = ARMS) -> tuple[list[dict], list
                 base.update({"server_score": own["server_score"],
                              "server_correct": own["server_correct"],
                              "server_total": own["server_total"]})
+            # V-Bench MC's real accuracy rides beside its agreement. Named
+            # `server_mc_*`, NOT `server_*`: the latter is the agentic track's
+            # trio, and reusing the name would let a reader compare a 12-domain
+            # MC accuracy against a function-calling accuracy as if one scale.
+            if own.get("server_mc") is not None:
+                base.update({"server_mc_score": own["server_mc"]["score"],
+                             "server_mc_correct": own["server_mc"]["correct"],
+                             "server_mc_total": own["server_mc"]["total"],
+                             "server_mc_domains": own["server_mc"]["domains"]})
+            a_mc = own.get("server_mc_arm_a")
+            if a_mc:
+                base.update({"arm_a_server_mc_score": a_mc["score"],
+                             "arm_a_server_mc_correct": a_mc["correct"],
+                             "arm_a_server_mc_total": a_mc["total"]})
             if baseline:
                 rows.append({**base, "role": "baseline", "arm_a": own["score"],
                              "delta": 0.0, "ci95_low": 0.0, "ci95_high": 0.0,
@@ -531,6 +647,17 @@ def breakdown(results_dir: Path, arms: list = ARMS) -> list[dict]:
                 required={"metric", "group", "n", "arm_a", "arm_b", "delta",
                           "ci95_low", "ci95_high", "mcnemar_p"},
                 label=f"breakdown {slug}/{dataset}")
+            # V-Bench MC only: this arm's and its own arm A's per-domain server
+            # accuracy. Both sides are needed — a group delta needs a baseline to
+            # be a delta — and both live in the arm's OWN snapshot files.
+            own_b = own_a = None
+            if dataset == "vbench_mc":
+                own_b = vbench_mc_server(folder, slug)
+                base_slug = next((s for _k, s, sh, _l, _c in arms
+                                  if sh in BASELINE_SHORTS and ARM_MODEL[sh] == ARM_MODEL[short]),
+                                 None)
+                if base_slug and base_slug != slug:
+                    own_a = vbench_mc_server(folder.parent / base_slug, base_slug)
             groups = []
             for r in rows:
                 lo, hi = f2(r["ci95_low"]), f2(r["ci95_high"])
@@ -540,10 +667,23 @@ def breakdown(results_dir: Path, arms: list = ARMS) -> list[dict]:
                 if abs(f2(r["delta"]) - (f2(r["arm_b"]) - f2(r["arm_a"]))) > 0.02:
                     raise SystemExit(f"Error: {slug}/{dataset}/{r['group']}: "
                                      f"delta {r['delta']} != arm_b - arm_a")
-                groups.append({"group": r["group"], "n": int(r["n"]),
-                               "arm_a": f2(r["arm_a"]), "arm_b": f2(r["arm_b"]),
-                               "delta": f2(r["delta"]), "ci95_low": lo,
-                               "ci95_high": hi, "mcnemar_p": r["mcnemar_p"]})
+                g = {"group": r["group"], "n": int(r["n"]),
+                     "arm_a": f2(r["arm_a"]), "arm_b": f2(r["arm_b"]),
+                     "delta": f2(r["delta"]), "ci95_low": lo,
+                     "ci95_high": hi, "mcnemar_p": r["mcnemar_p"]}
+                # For V-Bench MC the group IS a domain, so the server accuracy for
+                # that domain attaches to the group. Without it the domain table
+                # shows only agreement, and a reader sees "-40,89 at logics" with
+                # no way to learn the real delta was -4.88.
+                if dataset == "vbench_mc":
+                    dom = g["group"]
+                    b_dom = (own_b or {}).get("domains", {}).get(dom)
+                    a_dom = (own_a or {}).get("domains", {}).get(dom)
+                    if b_dom is not None and a_dom is not None:
+                        g["server_mc_arm_a"] = a_dom
+                        g["server_mc_arm_b"] = b_dom
+                        g["server_mc_delta"] = round(b_dom - a_dom, 2)
+                groups.append(g)
             cmp_row = read_compare(folder, dataset)
             if cmp_row is not None and sum(g["n"] for g in groups) != int(cmp_row["n"]):
                 raise SystemExit(f"Error: {slug}/{dataset}: breakdown groups sum to "
@@ -551,7 +691,8 @@ def breakdown(results_dir: Path, arms: list = ARMS) -> list[dict]:
             out.append({"arm": short, "arm_slug": slug, "label": label,
                         "model": ARM_MODEL[short], "dataset": dataset,
                         "dataset_label": DATASET_LABEL[dataset],
-                        "metric": rows[0]["metric"], "groups": groups})
+                        "metric": canonical_metric(rows[0]["metric"]),
+                        "metric_raw": rows[0]["metric"], "groups": groups})
     return out
 
 
@@ -752,6 +893,11 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
                      + ("" if excl0 == len(rows_m) else
                         f"; {len(rows_m) - excl0} phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin "
                         f"cậy còn ngang bằng bản thân khoản thay đổi")
+                     # Name the exclusion. Without it, "+0.00…+7.00 trên 4 tập"
+                     # reads as MiMo's overall result while the tables below show
+                     # MiMo at -22.39 — a different metric on a 12-domain set.
+                     + ". Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ "
+                       "agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`)"
                      + "."),
             "evidence": [{"label": "Δ nhỏ nhất", "value": f"{deltas[0]:+.2f}"},
                          {"label": "Δ lớn nhất", "value": f"{deltas[-1]:+.2f}"},
@@ -965,6 +1111,29 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
             # Ngữ nghĩa theo metric — accuracy/EM mới hiện ở trang.
             "a_blanks": r.get("blanks", ""), "b_blanks": arm_b.get("blanks", ""),
         })
+        # V-Bench MC: a SECOND row carrying the real accuracy, so the agreement
+        # row above can never be the only number a reader sees for this cell.
+        # MiMo's two rows disagree in SIGN (-22.39 agreement vs +2.13 accuracy),
+        # which is precisely why one row without the other misleads.
+        server_a = (r.get("arm_a_server_mc_score") if r.get("arm_a_server_mc_score") is not None
+                      else r.get("server_mc_score"))
+        if (server_a is not None and arm_b.get("server_mc_score") is not None):
+            comparison.append({
+                "model": r.get("model", ""),
+                "dataset": "vbench_mc_accuracy",
+                "dataset_label": "V-Bench MC 12 domain — điểm máy chủ (KHÔNG phải trùng khớp)",
+                "metric": "server_accuracy", "n": arm_b.get("server_mc_total", r["server_mc_total"]),
+                "no_harness": round(server_a, 2),
+                "with_harness": round(arm_b["server_mc_score"], 2),
+                "delta": round(arm_b["server_mc_score"] - server_a, 2),
+                # `a_blanks` is OMITTED, not blanked: the validator treats a blank
+                # string as a malformed integer, and an absent key is the honest
+                # reading anyway — arm A had no unparsed rows to count. b_blanks
+                # IS reported: those items were not submitted and the server scored
+                # them wrong, so the reader must see them inside the delta.
+                "b_blanks": arm_b.get("blanks", ""),
+                "server_scored": True,
+            })
     for model in models_seen:
         vb_pair = [r for r in ladder if r["dataset"] == "vbench_agentic" and r.get("model") == model]
         vb = next((r for r in vb_pair if r["role"] == "harness"), None)
@@ -974,7 +1143,9 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         comparison.append({
             "model": model,
             "dataset": "vbench_agentic", "dataset_label": "V-Bench function-calling (điểm máy chủ)",
-            "metric": "accuracy", "n": vb["n"],
+            # server-scored, no local gold — same caveat as `vbench_mc_accuracy`,
+            # so it carries the same metric key rather than the optimistic one.
+            "metric": "server_accuracy", "n": vb["n"],
             "no_harness": round(vb_a["server_score"], 2), "with_harness": round(vb["server_score"], 2),
             "delta": round(vb["server_score"] - vb_a["server_score"], 2),
             "a_blanks": vb_a.get("blanks", ""), "b_blanks": vb.get("blanks", ""),
@@ -990,9 +1161,17 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
             f"{m} {min(r['delta'] for r in rs):+.2f}…{max(r['delta'] for r in rs):+.2f} điểm"
             for m, rs in sorted(clean_by_model.items()))
         helped = [m for m, rs in clean_by_model.items() if max(r["delta"] for r in rs) > 0]
+        # The range above is built from the rows that ARE scores. V-Bench is
+        # absent from it on purpose, so say so — otherwise "MiMo +0.00…+7.00"
+        # reads as MiMo's overall result while the table below it shows MiMo at
+        # -22.39 (agreement, a different thing entirely).
+        scored_datasets = sorted({r["dataset"] for rs in clean_by_model.values() for r in rs})
+        excluded = "V-Bench MC (trùng khớp, không phải điểm) và V-Bench agentic (validity)"
         verdict = (
             f"Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm "
             f"đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: {rng}. "
+            f"Phạm vi này chỉ gồm {len(scored_datasets)} tập có điểm thật ({', '.join(scored_datasets)})"
+            f" và KHÔNG gồm {excluded} — dải Δ ở đây không nói gì về V-Bench. "
             f"Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không "
             f"phải chi phí của việc đi qua một tiến trình agent"
             + (f" — và trên {len(helped)}/{len(clean_by_model)} model, scaffold còn tăng điểm."
@@ -1065,6 +1244,11 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
         "repeatability": reps,
         "breakdown": groups,
         "arg_credit": credit,
+        # Both spellings present on purpose: a block written before canonical_metric
+        # existed carries `agreement_with_arm_A`, and the page must still find its note.
+        "metric_note": {**METRIC_NOTE,
+                        **{a: METRIC_NOTE[c] for a, c in METRIC_ALIASES.items()
+                           if c in METRIC_NOTE}},
         "insight": insight(ladder, secondary, reps, speed_rows),
         "cost": costs,
         "speed": speed_rows,
@@ -1098,7 +1282,13 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
             "bị bỏ qua im lặng). Các card ghi \"temperature 0\" là đúng cho arm A nhưng SAI cho mọi arm "
             "B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
             "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên "
-            "cùng câu hỏi. Điểm V-Bench thật do máy chủ chấm; ta không có vàng cục bộ.",
+            "cùng câu hỏi — nó đo agent có ĐỔI đáp án, không đo đáp án đó tốt hơn hay xấu hơi. Điểm thật "
+            "của 12 domain do máy chủ vbench.ai chấm (MC-48) và nằm ở cột `Điểm server`; hai số này có "
+            "thể VÁNG DẤU: MiMo giảm 22,39 điểm trùng khớp nhưng TĂNG 2,13 điểm accuracy thật. Đừng "
+            "đọc Δ của dòng agreement như Δ điểm.",
+            "`valid_rate` (V-Bench agentic) cũng không phải điểm, và nhỏ hơn nhiều so với thiệt hại "
+            "thật: MC-28 đo validity −2,60 trong khi điểm máy chủ là −8,90 (chênh 3,4×), vì phần lớn "
+            "lỗi là gọi đúng hàm sai tham số — thứ validator schema không bắt được.",
             "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, "
             "2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi "
             "cổng ngoài sập cert.",

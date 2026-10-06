@@ -1305,6 +1305,25 @@ http nội bộ). Vì vậy bảng dưới là **bảng đặt cạnh**, mỗi �
 mất điểm ở mọi tập MC/reading (cả 28K lẫn 65K), trong khi MiMo giữ nguyên hoặc nhỉnh hơn —
 cùng hướng với kết luận MC-30, nay lặp lại trên model thứ ba (65K) với tập thứ sáu.
 
+> **⚠ Cột `vbench_mc` ở bảng trên KHÔNG so được như các hàng khác** — nó là mức **trùng khớp**
+> (tỉ lệ agent đổi đáp án), không phải điểm. Ba ô dưới đây là **điều kiện đo**, không chỉ là
+> model: đọc Δ của `vbench_mc` như Δ chất lượng là sai, và sai theo **hai** chiều (xem MC-48).
+
+| Điều kiện đo | 28K H5 sạch | 65K T65 | MiMo M6 sạch |
+| --- | --- | --- | --- |
+| `tools` của `omp` | `--no-tools` (H5) | **`--tools all`** | `--no-tools` |
+| `reasoning_effort` ghim qua proxy | không (model không suy luận) | không | **`"none"`** (model có suy luận) |
+| `system prompt` | trung tính | trung tính | trung tính |
+| `max_time` | 180s | 180s | 180s |
+| `sandbox` | ngoài repo | ngoài repo | ngoài repo |
+| `vbench_mc` — Δ **accuracy thật** (MC-48) | (không chạy) | **−9,22** (−382 câu) | **+2,13** (+88 câu) |
+| `vbench_mc` — Δ **trùng khớp** (không phải điểm) | (không chạy) | −36,63 | −22,39 |
+
+Hai hàng cuối **vắng dấu**: MiMo giảm 22,39 điểm trùng khớp nhưng **tăng** 2,13 điểm accuracy thật.
+Ngoài ra `MiMo M6` và `65K T65` chạy **hai condition khác nhau** (`--no-tools` vs `--tools all`,
+`reasoning_effort` ghim vs không), nên bảng đặt cạnh này không tách được tác dụng của scaffold
+với tác dụng của menu công cụ. Cần arm **MiMo + `--tools all`** mới tách được — chưa có.
+
 ### Không được quy
 
 1. `vbench_mc` là **mức trùng khớp**, không phải accuracy (không có gold cục bộ); McNemar
@@ -1880,6 +1899,111 @@ nhiều lần ⇒ đọc được. Tương tác thì không.
 `harness_compare_legal_mc_vsA_omp{F5clean,F7clean,F8clean,T65r2,T65r3}_Qwen3_5-9B-65K.csv` ·
 `harness_ledger_legal_mc_*` · proxy log `/tmp/opencode/mc46/proxy2.log` (tạm, mất khi reboot) ·
 bảng tổng hợp `docs/rq1-decomposition.md` (sinh tự động).
+
+## MC-48 — **Điểm máy chủ cho `vbench_mc` 12 domain: `agreement` và accuracy VÁNG DẤU**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-48` |
+| `ngay_chay` | 2026-10-05 — **không chạy model**, chỉ nộp 4 tập câu trả lời **đã có sẵn** lên `vbench.ai/api/grade` rồi rebuild block |
+| `vi_sao_lam` | Đo bổ sung (không thay thế MC-32/MC-33). Lý do: `vbench_mc` trong các card trước chỉ có **mức trùng khớp**, vì không có vàng cục bộ. Người đọc bảng breakdown thấy "MiMo −40,89 ở logics" và hiểu là mất 40 điểm — nhưng đó là tỉ lệ agent **đổi** đáp án. Không có tập số nào trong repo trả lời "số câu đúng thực sự giảm bao nhiêu", nên câu hỏi đó không có câu trả lời. |
+| `dieu_kien` | Không phát sinh. Payload = đúng các chữ cái arm đã ghi: arm A từ `vbench_result_4141_*.csv` / `vbench_full_evaluation_*.csv`, arm B từ `harness_ledger_vbench_mc_*.csv`. Một arm = một submission, không trộn track. **Điều kiện đo model/prompt/scorer là của MC-31/MC-32 và MC-30 — thẻ này KHÔNG đổi điều kiện đó.** |
+| `endpoint` | `POST https://vbench.ai/api/grade`, release `v2026.03.28`. Payload 132–144 KB, **một lần nộp liền được** — WAF F5 của MC-26 chỉ chặn ở ~400 KB. |
+| `khong_co_gold` | Đúng, và đây là điểm mấu chốt: **số dưới đây là số máy chủ chấm, không phải số ta tự chấm.** Không có cách nào kiểm chứng lại offline. |
+
+### Kết quả — MC 12 domain, máy chủ chấm
+
+| Arm | Điều kiện | MC đúng | micro | macro 12 domain |
+| --- | --- | ---: | ---: | ---: |
+| Qwen3.5-9B-65K arm A | gọi thẳng | 1.927/4.141 | **46,53** | 45,28 |
+| Qwen3.5-9B-65K T65 | `omp` sạch + `--tools all` | 1.545/4.141 | **37,31** | 36,86 |
+| MiMo V2.5 arm A | gọi thẳng | 2.118/4.141 | **51,15** | 50,22 |
+| MiMo V2.5 M6 | `omp` sạch + `--no-tools` | 2.206/4.141 | **53,27** | 51,17 |
+
+| Phép so | `agreement` (đã có từ MC-33) | **accuracy thật** (thẻ này) |
+| --- | ---: | ---: |
+| Qwen3.5-9B-65K (T65) | −36,63 | **−9,22** (−382 câu) |
+| MiMo V2.5 (M6) | −22,39 | **+2,13** (+88 câu) |
+
+### Đọc hai bảng cùng nhau
+
+1. **Hai thước đo VÁNG DẤU**, không phải hai ước lượng của cùng thứ. Ở MiMo `agreement` giảm
+   22,39 điểm trong khi accuracy **tăng** 2,13. Đọc Δ của `agreement` như Δ điểm là sai;
+   đó chính là cách bảng breakdown cũ dễ bị hiểu nhầm.
+2. **Phần lớn thay đổi là trôi GIỮA các chữ sai**, không phải đi từ đúng sang sai: MiMo đổi
+   918 chữ cái (n=4.141) mà tổng số câu đúng vẫn tăng.
+3. **MiMo mạnh hơn Qwen ở cả hai arm**, và vượt ở bốn miền rõ rệt: dialect 78,65 (so 59,96),
+   laws 75,39 (so 60,73), computer_science 73,40 (so 69,15), philosophy 68,06 (so 65,40).
+4. **Mẫu số của máy chủ là `totalQuestions`**: câu trống/không nộp vẫn tính **sai**, không bị loại.
+   Vì vậy Δ của Qwen (−9,22) **đã bao gồm** thiệt hại của 184 câu trống; đó không phải số sạch.
+
+### ⚠ `max_time` là một điều kiện đo, và nó đã ảnh hưởng tới điểm
+
+`--max-time` mặc định của `run_harness_eval.py` là **180s**, truyền thẳng cho `omp
+--max-time`; runner bọc thêm `timeout_slack=60` nên trần cứng là 240s. Trần cứng **không**
+được chạm lần nào (`exit_code=-9` = 0 item ở cả 42 ledger) — mọi lỗi dừng ở 180,7–181,4s do
+chính `omp` bỏ cuộc. Trên `vbench_agentic` của T65, **474/1000 item `omp exit 1`**, và 474 item
+rơi vào khoảng 175–190s (item hợp lệ có `wall_s` trung vị 36,1s — chênh 5×).
+
+Phân rã 474 item đó: **131** là vòng lặp tool thật (≥5 `tool_calls`, `output_tokens` trung vị
+933, max 4.664) — lỗi scaffold; **222** treo im không stream gì (`tool_calls=0`,
+`output_tokens=0`); **121** lenh giữa chừng. 222 item treo im phân bố **đều theo thứ tự chạy**
+(id 8.169→9.131, mỗi nhóm 100 id đều có), không tập trung đầu/cuối — nên chưa đủ bằng chứng để quy
+cho gateway (một đợt chết để lại dấu vết theo thời gian).
+
+**Vì sao MiMo không timeout:** cùng scaffold, cùng `--max-time 180`, nhưng trần thời gian của
+MiMo là **45,7s** — cách mốc 180s gấp 4 lần (`legal_mc` của chính T65: 0/146 timeout, trung vị
+2,6s). Nếu 180s là nguyên nhân thì MiMo cũng phải chết. Không chết ⇒ **180s là ngưỡng cắt do ta
+chọn, không phải nguyên nhân**; khác biệt thật là M6 chạy `--no-tools` (`turns` trung vị 1,
+không có vòng lặp).
+
+→ **Hệ quả đọc `vbench_agentic` của T65:** Δ −50,10 validity **không** là một thước đo sạch
+của scaffold. Nó trộn chất lượng agent + một ngưỡng timeout do ta đặt + một sự cố đường truyền
+chưa xác định. Muốn tách: chạy lại với `--max-time` lớn hơn, sau khi dựng lại proxy. **Chưa làm.**
+
+### Phát hiện phụ đáng ghi: MiMo trả lời chữ ngoài khoảng lựa chọn
+
+Arm A của MiMo có **13 câu trả lời `E` trên câu chỉ có 4 đáp án**. Parser clamp đúng đã loại
+(→ `answer` rỗng → tính sai), nhưng đây là hành vi lệch: model không kiểm tra số lựa chọn.
+Nên đo bằng metric riêng, không gộp vào agreement/accuracy. **Chưa có card cho việc này** —
+ghi ở đây để không mất, chưa kết luận gì thêm.
+
+### Sửa bảng điều kiện đo (những gì thay đổi ở giao diện)
+
+Các sửa dưới đây **không đổi bất kỳ số đo nào**; chúng làm rõ cách hiện số.
+
+| Chỗ | Trước | Sau |
+| --- | --- | --- |
+| Cột Δ của bảng breakdown | `Không dùng` / `Dùng`, không nói metric | `Không dùng (arm A — gọi thẳng)` / `Dùng (arm B — qua agent)`, kèm badge metric và cột **`Điểm thật (máy chủ)`** |
+| Bảng so sánh trực tiếp | dòng `agreement` đứng một mình | thêm dòng `vbench_mc_accuracy` ngay cạnh, **cùng model**, nên hai dòng luôn cùng dấu hoặc trái dấu nhau một cách nhìn thấy được |
+| Cột `Server` của bảng ladder | số 30,80 đứng cạnh validity 97,40 | tiêu đề ghi rõ **thang KHÁC — điểm thật**; ô MC hiện cả arm A và Δ |
+| Verdict | "MiMo +0,00…+7,00 điểm" không nói phạm vi | nói rõ chỉ gồm 4 tập có điểm thật và **KHÔNG gồm** V-Bench |
+| Claim `penalty:*` | liệt kê tên 4 tập rồi im | thêm câu "Phạm vi này KHÔNG gồm V-Bench MC…" |
+| Dải liên kết trên `/benchmark` | in `valid_rate 97.40 (−2.60)` ngay dưới hero `Accuracy 45.22` | thêm hộp cảnh báo **trước khi in số**: số này không phải accuracy, khác thang với số hero |
+| Block `.harness` | không có chú giải metric | thêm `metric_note`; validator **fail loud** nếu có dòng `agreement`/`valid_rate` mà thiếu chú giải `not_a_score: true` |
+
+### Guard mới (validator, `web/lib/harness-block.ts`)
+
+1. Dòng `agreement`/`valid_rate` mà block không có `metric_note` → fail.
+2. `metric_note.<m>.not_a_score !== true` → fail (đúng lỗi đã gây ra MC-48).
+3. Bộ ba `server_mc_score/correct/total` phải đủ cả ba và `score == 100·correct/total`.
+4. Dòng harness có `server_mc_score` mà thiếu `arm_a_server_mc_score` → fail: **một phía không phải một phép so**.
+5. Mỗi nhóm breakdown có bộ ba `server_mc_*` phải đủ và `delta == arm_b − arm_a`.
+
+### Artifact
+
+`all_res/ollama_result/{Qwen3_5-9B-65K,ompT65_Qwen3_5-9B-65K,mimo-v2_5,ompM6clean_mimo-v2_5}/vbench_server_scores_*.csv`
+(12 domain/arm, có `server_source` + `server_note` ghi cách nộp và quy tắc mẫu số) ·
+`submissions/Qwen3_5-9B-65K/submission_vbench_mc_armA_*.jsonl` ·
+`submissions/{mimo-v2_5,ompM6clean_mimo-v2_5}/submission_vbench_mc_arm{A,B}_*.jsonl`
+(gitignored) · response thô của cả 4 lần nộp.
+
+### Chưa làm, và cần một arm riêng
+
+MiMo chạy `--no-tools`, Qwen 65K chạy `--tools all` — **hai condition khác nhau** (khác cả
+`reasoning_effort`: MiMo ghim `"none"` qua proxy vì là model có suy luận, Qwen không ghim).
+Bảng đặt cạnh của MC-32 đang đặt chúng cạnh nhau như thể chỉ khác model. Muốn kết luận
+"scaffold không gây hại" thì cần **MiMo + `--tools all`** trên `vbench_mc`. **Chưa có arm đó.**
 
 ## Quy tắc dùng card
 

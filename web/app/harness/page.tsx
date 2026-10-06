@@ -5,14 +5,22 @@
  * step — the block is written by `code_benchmark/build_dashboard_harness.py`
  * and the same numbers also render offline in `harness_report.html`.
  */
+import type { Metadata } from "next";
 import { promises as fs } from "fs";
 import path from "path";
 import { HARNESS_BLOB_HINT, readHarnessBlock, rowsForDataset, type HarnessBlock } from "@/lib/harness-block.ts";
 import SiteNav from "@/components/SiteNav.tsx";
+import type { HarnessMetricNote } from "@/lib/harness-block.ts";
 import ThemeToggle from "@/components/ThemeToggle.tsx";
 import TocNav, { type TocItem } from "@/components/TocNav.tsx";
+import { fmtDelta, fmtInt, fmtNum, fmtPct } from "@/lib/format.ts";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Nghiên cứu Harness Arm — Tác động của khung Agent",
+  description: "Phân tích tác động thực nghiệm của coding agent harness (omp) đối với kết quả benchmark tiếng Việt.",
+};
 
 
 /** Thuật ngữ chuyên ngành giữ nguyên tiếng Anh trong phần diễn giải, vì dịch
@@ -66,7 +74,7 @@ const GLOSSARY: { term: string; vi: string; def: string }[] = [
   },
   {
     term: "persona",
-    vi: "vai trò / lề (persona)",
+    vi: "vai trò / phong cách trả lời (persona)",
     def: "Lớp hướng dẫn phong cách trả lời mà agent nhận thêm, độc lập với nhiệm vụ. Trong nghiên cứu này có hai mức: system prompt trung tính và system prompt sẵn có của omp.",
   },
   {
@@ -84,6 +92,39 @@ async function load(): Promise<HarnessBlock> {
   const block = readHarnessBlock(JSON.parse(raw));
   if (!block) throw new Error("benchmark-data.json chưa có khối .harness");
   return block;
+}
+
+/** What this metric actually measures, rendered next to the name.
+ *
+ * WHY this exists: `agreement` and `valid_rate` both read like a score to
+ * anyone who has just seen an accuracy two rows up, and neither is one. A bare
+ * name is not enough — MC-48 measured the cost of that: a -22.39 agreement was
+ * read as a 22-point quality loss when the real accuracy had gone UP 2.12. */
+function MetricTag({ metric, notes }: { metric: string; notes?: Record<string, HarnessMetricNote> }) {
+  const note = notes?.[metric];
+  if (!note) {
+    return (
+      <span
+        className="inline-block rounded-full border border-hair px-1.5 py-px font-mono text-[11px] text-ink-2"
+        title="Chưa có chú giải cho metric này — coi như chưa biết nó có phải điểm không"
+      >
+        {metric} (?)
+      </span>
+    );
+  }
+  return (
+    <span
+      className={
+        note.not_a_score
+          ? "inline-block rounded-full border border-flag/50 bg-flag-soft/60 px-1.5 py-px font-mono text-[11px] font-semibold text-flag"
+          : "inline-block rounded-full border border-hair px-1.5 py-px font-mono text-[11px] text-ink-2"
+      }
+      title={note.what}
+    >
+      {metric}
+      {note.not_a_score ? " ✗không phải điểm" : ""}
+    </span>
+  );
 }
 
 export default async function HarnessPage() {
@@ -146,7 +187,7 @@ export default async function HarnessPage() {
         </ul>
       </details>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-[24px] font-semibold">{block.benchmark_name}</h1>
+        <h1 className="font-disp text-[24px] font-semibold">{block.benchmark_name}</h1>
         <ThemeToggle />
       </div>
       <p className="mt-2 text-[13px] text-ink-2">
@@ -204,7 +245,7 @@ export default async function HarnessPage() {
         <p className="mt-1 text-[12.5px] text-ink-2">
           Cùng một model và cùng một prompt; chỉ khác ở chỗ có đưa câu hỏi qua tiến trình agent của{" "}
           <code className="font-mono">{block.harness}</code> hay không. Cột bên phải là cấu hình scaffold
-          sạch (trung tính × không công cụ), xếp theo từng model, trong mỗi model từ nặng đến nhẹ.
+          sạch (trung tính × không công cụ), xếp theo từng model, trong mỗi model xếp theo mức thay đổi.
         </p>
         {[...new Set(block.insight.comparison.map((c) => c.model))].map((m) => {
           const mrows = block.insight.comparison.filter((c) => c.model === m);
@@ -214,51 +255,60 @@ export default async function HarnessPage() {
                 {m}{" "}
                 <span className="font-normal text-ink-2">— cùng model ở cả hai cột</span>
               </h3>
+              <div className="overflow-x-auto">
               <table className="mt-1.5 w-full border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-hair text-left text-ink-2">
                     <th className="py-1.5 pr-2 font-medium">Tập dữ liệu</th>
                     <th className="py-1.5 pr-2 font-medium">Thước đo</th>
                     <th className="py-1.5 pr-2 text-right font-medium tabular-nums">n</th>
-                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Không dùng harness</th>
-                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Dùng harness</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">
+                      Không dùng harness
+                      <span className="block text-[10.5px] font-normal normal-case text-ink-3">
+                        arm A — gọi thẳng
+                      </span>
+                    </th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">
+                      Dùng harness
+                      <span className="block text-[10.5px] font-normal normal-case text-ink-3">
+                        arm B — qua agent
+                      </span>
+                    </th>
                     <th className="py-1.5 text-right font-medium tabular-nums">Δ</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mrows.map((c) => (
+                  {mrows.map((c) => {
+                    const note = block.metric_note?.[c.metric];
+                    return (
                     <tr key={`${c.model}/${c.dataset}`} className="border-b border-hair/60 last:border-0">
                       <td className="py-1.5 pr-2">{c.dataset_label}</td>
                       <td className="py-1.5 pr-2">
-                        <span
-                          className="inline-block rounded-full border border-hair px-1.5 py-px font-mono text-[11px] text-ink-2"
-                          title={
-                            c.metric === "agreement"
-                              ? "Không phải điểm: tỉ lệ agent cho giống hệt lời gọi trực tiếp"
-                              : `Thước đo của tập này: ${c.metric}`
-                          }
-                        >
-                          {c.metric}
-                        </span>
+                        <MetricTag metric={c.metric} notes={block.metric_note} />
+                        {note?.what ? (
+                          <span className="mt-0.5 block max-w-[240px] text-[11px] leading-snug text-ink-2">
+                            {note.what}
+                          </span>
+                        ) : null}
                       </td>
-                      <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{c.n}</td>
+                      <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{fmtInt(c.n)}</td>
                       <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
-                        {c.no_harness.toFixed(2)}%
-                        {(c.metric === "accuracy" || c.metric === "EM") &&
-                        typeof c.a_blanks === "number" &&
-                        c.a_blanks > 0 ? (
+                        {fmtPct(c.no_harness, 2)}
+                        {typeof c.a_blanks === "number" && c.a_blanks > 0 ? (
                           <span className="block text-[11px] font-normal text-ink-2">
-                            trống {c.a_blanks}
+                            {c.metric === "server_accuracy"
+                              ? `không nộp ${fmtInt(c.a_blanks)} (máy chủ tính sai)`
+                              : `trống ${fmtInt(c.a_blanks)}`}
                           </span>
                         ) : null}
                       </td>
                       <td className="py-1.5 pr-2 text-right font-mono font-semibold tabular-nums">
-                        {c.with_harness.toFixed(2)}%
-                        {(c.metric === "accuracy" || c.metric === "EM") &&
-                        typeof c.b_blanks === "number" &&
-                        c.b_blanks > 0 ? (
+                        {fmtPct(c.with_harness, 2)}
+                        {typeof c.b_blanks === "number" && c.b_blanks > 0 ? (
                           <span className="block text-[11px] font-normal text-ink-2">
-                            trống {c.b_blanks}
+                            {c.metric === "server_accuracy"
+                              ? `không nộp ${fmtInt(c.b_blanks)} (máy chủ tính sai)`
+                              : `trống ${fmtInt(c.b_blanks)}`}
                           </span>
                         ) : null}
                       </td>
@@ -270,14 +320,15 @@ export default async function HarnessPage() {
                               : "inline-block min-w-[68px] rounded-full border border-hair px-2 py-px text-center"
                           }
                         >
-                          {c.delta >= 0 ? "+" : ""}
-                          {c.delta.toFixed(2)}
+                          {fmtDelta(c.delta, 2)}
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
+              </div>
             </div>
           );
         })}
@@ -287,10 +338,13 @@ export default async function HarnessPage() {
           model — đó là kết quả của phép so, không phải tiêu chí xếp hạng.{" "}
           {block.insight.comparison.some((c) => c.metric === "agreement") && (
             <>
-              Dòng <span className="font-mono">agreement</span> KHÔNG phải điểm: đó là tỉ lệ câu
-              trả lời mà agent cho <em>giống hệt</em> lời gọi trực tiếp trên cùng câu hỏi, nên nó
-              đo mức agent làm đổi đáp án chứ không đo chất lượng — V-Bench chấm điểm ở máy chủ, ta
-              không có vàng cục bộ.
+              <b className="text-flag">Đọc cột Thước đo trước khi đọc số.</b> Dòng
+              <span className="font-mono"> agreement</span> KHÔNG phải điểm: đó là tỉ lệ câu trả
+              lời mà agent cho <em>giống hệt</em> lời gọi trực tiếp trên cùng câu hỏi, nên nó đo mức
+              agent làm <em>đổi</em> đáp án chứ không đo chất lượng — đổi sang chữ sai vẫn là đổi. Điểm
+              thật của 12 domain nằm ở dòng <span className="font-mono">accuracy</span> ngay cạnh nó
+              (máy chủ vbench.ai chấm, MC-48), và <b>hai dòng có thể ngược dấu</b>: MiMo mất 22,39
+              điểm trùng khớp nhưng <em>tăng</em> 2,13 điểm accuracy thật.
             </>
           )}
         </p>
@@ -303,24 +357,57 @@ export default async function HarnessPage() {
           </summary>
           <p className="mt-1 text-[12.5px] text-ink-2">
             Mỗi dòng vẫn là so ghép cặp trong <strong>cùng model</strong>, chỉ thu hẹp xuống một
-            nhóm (domain V-Bench, dạng câu reading). Nhóm nhỏ giữ nguyên CI rộng của nó — khoảng
-            tin cậy nói thay cho việc giấu đi.
+            nhóm (domain V-Bench, dạng câu reading). Nhóm nhỏ giữ nguyên CI rộng của nó — giữ nguyên
+            khoảng tin cậy rộng, không che đi.
           </p>
+          {block.breakdown.some((d) => d.metric === "agreement") && (
+            <p className="mt-2 rounded-lg border border-flag/40 bg-flag-soft/50 p-3 text-[12.5px] leading-relaxed">
+              <b className="text-flag">⚠ Cột Δ ở bảng này KHÔNG phải điểm.</b> Với nhóm là domain
+              V-Bench, thước đo là <span className="font-mono">agreement</span> — tỉ lệ agent trả lời
+              giống hệt lời gọi trực tiếp, tức đo agent có <em>đổi</em> đáp án, không đo đáp án đó tốt
+              hay xấu. Cột <b>Điểm thật (máy chủ)</b> mới là điểm thật của domain đó, và hai cột có
+              thể <b>ngược dấu</b>: ở MiMo, logics mất 40,89 điểm trùng khớp nhưng chỉ mất
+              <em className="font-semibold">4,88</em> điểm thật; ở culture, trùng khớp mất 25,35 nhưng
+              điểm thật <em className="font-semibold">tăng 6,91</em>.
+            </p>
+          )}
           {block.breakdown.map((d) => (
             <div key={`${d.arm_slug}/${d.dataset}`} className="mt-4">
               <h3 className="text-[13.5px] font-semibold">
                 {d.model} · {d.dataset_label}{" "}
                 <span className="font-normal text-ink-2">— {d.label}</span>
               </h3>
+              <div className="overflow-x-auto">
               <table className="mt-1.5 w-full border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-hair text-left text-ink-2">
-                    <th className="py-1.5 pr-2 font-medium">Nhóm</th>
+                    <th className="py-1.5 pr-2 font-medium">
+                      Nhóm
+                      <span className="mt-0.5 block">
+                        <MetricTag metric={d.metric} notes={block.metric_note} />
+                      </span>
+                    </th>
                     <th className="py-1.5 pr-2 text-right font-medium tabular-nums">n</th>
-                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Không dùng</th>
-                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Dùng</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">
+                      Không dùng
+                      <span className="block text-[10.5px] font-normal normal-case text-ink-3">
+                        arm A — gọi thẳng
+                      </span>
+                    </th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">
+                      Dùng
+                      <span className="block text-[10.5px] font-normal normal-case text-ink-3">
+                        arm B — qua agent
+                      </span>
+                    </th>
                     <th className="py-1.5 pr-2 text-right font-medium tabular-nums">Δ</th>
-                    <th className="py-1.5 text-right font-medium tabular-nums">CI 95%</th>
+                    <th className="py-1.5 pr-2 text-right font-medium tabular-nums">CI 95%</th>
+                    <th className="py-1.5 text-right font-medium tabular-nums">
+                      Điểm thật (máy chủ)
+                      <span className="block text-[10.5px] font-normal normal-case text-ink-3">
+                        arm A → arm B
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -329,12 +416,12 @@ export default async function HarnessPage() {
                     .map((g) => (
                       <tr key={g.group} className="border-b border-hair/60 last:border-0">
                         <td className="py-1.5 pr-2 font-mono text-[12.5px]">{g.group}</td>
-                        <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{g.n}</td>
+                        <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{fmtInt(g.n)}</td>
                         <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
-                          {g.arm_a.toFixed(2)}%
+                          {fmtPct(g.arm_a, 2)}
                         </td>
                         <td className="py-1.5 pr-2 text-right font-mono font-semibold tabular-nums">
-                          {g.arm_b.toFixed(2)}%
+                          {fmtPct(g.arm_b, 2)}
                         </td>
                         <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
                           <span
@@ -344,17 +431,39 @@ export default async function HarnessPage() {
                                 : "inline-block min-w-[68px] rounded-full border border-hair px-2 py-px text-center"
                             }
                           >
-                            {g.delta >= 0 ? "+" : ""}
-                            {g.delta.toFixed(2)}
+                            {fmtDelta(g.delta, 2)}
                           </span>
                         </td>
-                        <td className="py-1.5 text-right font-mono text-[12px] text-ink-2 tabular-nums">
-                          {g.ci95_low.toFixed(2)}..{g.ci95_high.toFixed(2)}
+                        <td className="py-1.5 pr-2 text-right font-mono text-[12px] text-ink-2 tabular-nums">
+                          {fmtNum(g.ci95_low, 2)}..{fmtNum(g.ci95_high, 2)}
+                        </td>
+                        <td className="py-1.5 text-right font-mono tabular-nums">
+                          {g.server_mc_delta === undefined ? (
+                            <span className="text-ink-3">—</span>
+                          ) : (
+                            <>
+                              <span className="text-ink-2">
+                                {fmtNum(g.server_mc_arm_a, 2)} → {fmtNum(g.server_mc_arm_b, 2)}
+                              </span>
+                              <span
+                                className={`block text-[12px] font-semibold ${
+                                  g.server_mc_delta < 0
+                                    ? "text-flag"
+                                    : g.server_mc_delta > 0
+                                      ? "text-accept"
+                                      : "text-ink-3"
+                                }`}
+                              >
+                                Δ {fmtDelta(g.server_mc_delta, 2)}
+                              </span>
+                            </>
+                          )}
                         </td>
                       </tr>
                     ))}
                 </tbody>
               </table>
+              </div>
             </div>
           ))}
         </details>
@@ -372,6 +481,7 @@ export default async function HarnessPage() {
             câu đã ra được call), <code>precision</code> = tham số hợp lệ / tham số đã đưa ra.
             Câu không ra call không đóng góp vào tỉ lệ nào và được đếm riêng ở cột cuối.
           </p>
+          <div className="overflow-x-auto">
           <table className="mt-2 w-full border-collapse text-[13px]">
             <thead>
               <tr className="border-b border-hair text-left text-ink-2">
@@ -390,25 +500,26 @@ export default async function HarnessPage() {
                     <span className="font-mono text-[12.5px]">{a.arm}</span>{" "}
                     <span className="text-ink-2">{a.model}</span>
                   </td>
-                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{a.n_items}</td>
-                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{a.n_attempted}</td>
+                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{fmtInt(a.n_items)}</td>
+                  <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{fmtInt(a.n_attempted)}</td>
                   <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
-                    <span className="font-semibold">{a.required_fill_rate.toFixed(2)}%</span>{" "}
+                    <span className="font-semibold">{fmtPct(a.required_fill_rate, 2)}</span>{" "}
                     <span className="text-[11.5px] text-ink-2">
-                      ({a.n_required_ok}/{a.n_required_slots})
+                      ({fmtInt(a.n_required_ok)}/{fmtInt(a.n_required_slots)})
                     </span>
                   </td>
                   <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
-                    <span className="font-semibold">{a.arg_precision.toFixed(2)}%</span>{" "}
+                    <span className="font-semibold">{fmtPct(a.arg_precision, 2)}</span>{" "}
                     <span className="text-[11.5px] text-ink-2">
-                      ({a.n_supplied_ok}/{a.n_supplied})
+                      ({fmtInt(a.n_supplied_ok)}/{fmtInt(a.n_supplied)})
                     </span>
                   </td>
-                  <td className="py-1.5 text-right font-mono tabular-nums">{a.n_unparseable}</td>
+                  <td className="py-1.5 text-right font-mono tabular-nums">{fmtInt(a.n_unparseable)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </details>
       ) : null}
 
@@ -431,10 +542,11 @@ export default async function HarnessPage() {
                     {m || "—"}
                     {base ? (
                       <span className="ml-2 text-[12.5px] font-normal text-ink-2">
-                        arm A = {base.arm_b.toFixed(2)}%
+                        arm A = {fmtPct(base.arm_b, 2)}
                       </span>
                     ) : null}
                   </h3>
+                  <div className="overflow-x-auto">
                   <table className="mt-1.5 w-full border-collapse text-[13px]">
               <thead>
                 <tr className="border-b border-hair text-left text-ink-2">
@@ -444,7 +556,7 @@ export default async function HarnessPage() {
                   <th className="py-1.5 pr-2 font-medium">Arm B</th>
                   <th className="py-1.5 pr-2 font-medium">Δ</th>
                   <th className="py-1.5 pr-2 font-medium">Server</th>
-              <th className="py-1.5 pr-2 font-medium">CI 95%</th>
+                  <th className="py-1.5 pr-2 font-medium">CI 95%</th>
                   <th className="py-1.5 pr-2 font-medium">p</th>
                   <th className="py-1.5 font-medium">Card</th>
                 </tr>
@@ -453,18 +565,17 @@ export default async function HarnessPage() {
                 {mrows.map((r) => (
                   <tr key={`${r.arm}-${r.dataset}`} className="border-b border-hair/60">
                     <td className="py-1.5 pr-2">{r.label}</td>
-                    <td className="py-1.5 pr-2 font-mono">{r.n}</td>
-                    <td className="py-1.5 pr-2 font-mono">{r.char_f1 === null ? "—" : r.char_f1.toFixed(2)}</td>
+                    <td className="py-1.5 pr-2 font-mono">{fmtInt(r.n)}</td>
+                    <td className="py-1.5 pr-2 font-mono">{r.char_f1 === null ? "—" : fmtNum(r.char_f1, 2)}</td>
                     <td className="py-1.5 pr-2 font-mono font-semibold">
-                      {r.role === "baseline" ? "—" : `${r.arm_b.toFixed(2)}%`}
+                      {r.role === "baseline" ? "—" : fmtPct(r.arm_b, 2)}
                     </td>
                     <td className="py-1.5 pr-2 font-mono">
                       {r.role === "baseline" ? (
                         "—"
                       ) : (
-                        <span className={r.delta < 0 ? "text-flag" : "text-ok"}>
-                          {r.delta >= 0 ? "+" : ""}
-                          {r.delta.toFixed(2)}
+                        <span className={r.delta < 0 ? "text-flag" : "text-accept"}>
+                          {fmtDelta(r.delta, 2)}
                         </span>
                       )}
                     </td>
@@ -472,13 +583,13 @@ export default async function HarnessPage() {
                       {r.server_score === undefined ? (
                         <span className="text-ink-2">—</span>
                       ) : (
-                        <span title={`${r.server_correct}/${r.server_total} (điểm server, khác validity)`}>
-                          {r.server_score.toFixed(2)}%
+                        <span title={`${fmtInt(r.server_correct)}/${fmtInt(r.server_total)} (điểm server, khác validity)`}>
+                          {fmtPct(r.server_score, 2)}
                         </span>
                       )}
                     </td>
                     <td className="py-1.5 pr-2 font-mono text-ink-2">
-                      {r.role === "baseline" ? "—" : `${r.ci95_low.toFixed(2)}..${r.ci95_high.toFixed(2)}`}
+                      {r.role === "baseline" ? "—" : `${fmtNum(r.ci95_low, 2)}..${fmtNum(r.ci95_high, 2)}`}
                     </td>
                     <td className="py-1.5 pr-2 font-mono text-ink-2">{r.mcnemar_p || "—"}</td>
                     <td className="py-1.5 font-mono text-ink-2">{r.card ?? "—"}</td>
@@ -486,6 +597,7 @@ export default async function HarnessPage() {
                 ))}
               </tbody>
             </table>
+                  </div>
                 </div>
               );
             })}
@@ -495,6 +607,7 @@ export default async function HarnessPage() {
 
       <section id="chi-phi" className="mt-10 scroll-mt-6">
         <h2 className="text-[16px] font-semibold">Chi phí & kiểm định hiệu lực (gộp mọi tập)</h2>
+        <div className="overflow-x-auto">
         <table className="mt-2 w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-hair text-left text-ink-2">
@@ -505,27 +618,28 @@ export default async function HarnessPage() {
               <th className="py-1.5 pr-2 font-medium">lỗi</th>
               <th className="py-1.5 pr-2 font-medium">dùng tool</th>
               <th className="py-1.5 pr-2 font-medium">gọi mạng</th>
-              <th className="py-1.5 font-medium">trốn sandbox</th>
+              <th className="py-1.5 font-medium">thoát sandbox</th>
             </tr>
           </thead>
           <tbody>
             {block.cost.map((c) => (
               <tr key={c.arm} className="border-b border-hair/60">
                 <td className="py-1.5 pr-2">{c.label}</td>
-                <td className="py-1.5 pr-2 font-mono">{c.n}</td>
-                <td className="py-1.5 pr-2 font-mono">{c.wall_s_per_item.toFixed(2)}s</td>
-                <td className="py-1.5 pr-2 font-mono">{c.completion_tokens}</td>
-                <td className="py-1.5 pr-2 font-mono">{c.failures}</td>
-                <td className="py-1.5 pr-2 font-mono">{c.tool_use_items}</td>
-                <td className="py-1.5 pr-2 font-mono">{c.net_attempt_items}</td>
-                <td className="py-1.5 font-mono">{c.path_escape_items}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(c.n)}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtNum(c.wall_s_per_item, 2)}s</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(c.completion_tokens)}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(c.failures)}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(c.tool_use_items)}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(c.net_attempt_items)}</td>
+                <td className="py-1.5 font-mono">{fmtInt(c.path_escape_items)}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
         <p className="mt-2 text-[12.5px] text-ink-2">
-          Tổng {t.items_harness} item harness · {t.failures} lỗi · {t.tool_use_items} item dùng tool ·{" "}
-          {t.net_attempt_items} lần gọi mạng · {t.path_escape_items} lần trốn sandbox (không lần nào
+          Tổng {fmtInt(t.items_harness)} item harness · {fmtInt(t.failures)} lỗi · {fmtInt(t.tool_use_items)} item dùng tool ·{" "}
+          {fmtInt(t.net_attempt_items)} lần gọi mạng · {fmtInt(t.path_escape_items)} lần thoát sandbox (không lần nào
           thành công).
         </p>
       </section>
@@ -539,6 +653,7 @@ export default async function HarnessPage() {
           Mỗi tập có hai dòng: <b>direct</b> là chính lời gọi HTTP của arm A, <b>omp</b> là cùng item đó
           đi qua agent. <code>overhead</code> là chênh lệch wall/item của cặp.
         </p>
+        <div className="overflow-x-auto">
         <table className="mt-2 w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-hair text-left text-ink-2">
@@ -569,24 +684,25 @@ export default async function HarnessPage() {
                   {s.side === "omp" ? "omp" : <span className="text-ink-2">direct</span>}
                 </td>
                 <td className="py-1.5 pr-2 font-mono text-ink-2">{s.dataset}</td>
-                <td className="py-1.5 pr-2 font-mono">{s.n}</td>
-                <td className="py-1.5 pr-2 font-mono text-ink-2">{s.workers}</td>
-                <td className="py-1.5 pr-2 font-mono">{s.wall_p50_s}s</td>
-                <td className="py-1.5 pr-2 font-mono">{s.items_per_min}</td>
-                <td className="py-1.5 pr-2 font-mono">{s.prompt_tok_per_item}</td>
-                <td className="py-1.5 pr-2 font-mono">{s.completion_tok_per_item}</td>
-                <td className="py-1.5 pr-2 font-mono font-semibold">{s.total_tok_per_item}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(s.n)}</td>
+                <td className="py-1.5 pr-2 font-mono text-ink-2">{fmtInt(s.workers)}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtNum(s.wall_p50_s, 2)}s</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtNum(s.items_per_min, 2)}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(s.prompt_tok_per_item)}</td>
+                <td className="py-1.5 pr-2 font-mono">{fmtInt(s.completion_tok_per_item)}</td>
+                <td className="py-1.5 pr-2 font-mono font-semibold">{fmtInt(s.total_tok_per_item)}</td>
                 <td className="py-1.5 font-mono">
                   {s.side === "direct" ? (
                     <span className="text-ink-2">— gốc</span>
                   ) : (
-                    <span className="text-flag">+{s.overhead_s_per_item}s</span>
+                    <span className="text-flag">+{fmtNum(s.overhead_s_per_item, 2)}s</span>
                   )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
         <p className="mt-2 text-[12.5px] text-ink-2">
           <b>Không dùng <code>input + cacheRead</code> làm kích thước request</b>: bộ đếm cache của
           gateway IEC là tích luỹ theo thời gian, làm MC-19 phình ~8×. Số ở đây lấy từ{" "}
@@ -600,7 +716,7 @@ export default async function HarnessPage() {
         <p className="mt-2 text-[12.5px] text-ink-2">
           Cột <b>Server</b> là <i>accuracy thật</i> từ vbench.ai — khác hẳn cột Arm B ở tập V-Bench,
           vốn chỉ là <i>schema validity</i> (call có khớp schema không). Ở function-calling hai thứ
-          lệch nhau <b>gấp 3,4 lần</b> (validity −2,60đ nhưng accuracy −8,90đ): phần lớn lỗi là{" "}
+          lệch nhau <b>gấp 3,4 lần</b> (validity −2,60 điểm nhưng accuracy −8,90 điểm): phần lớn lỗi là{" "}
           <b>gọi đúng hàm sai tham số</b>, không phải sinh JSON sai. Mẫu số là <b>1.000</b> (26 dòng
           invalid không nộp được tính sai).
         </p>
@@ -609,7 +725,7 @@ export default async function HarnessPage() {
       {block.secondary_metrics?.length ? (
         <section id="metric-phu" className="mt-10 scroll-mt-6">
           <h2 className="text-[16px] font-semibold">
-            Metric phụ — EM nguyên văn vs EM sau khi cắt vỏ
+            Metric phụ — EM nguyên văn vs EM sau khi bóc lớp bọc
           </h2>
           <p className="mt-1 text-[12.5px] text-ink-2">
             <b>Không thay số chính.</b> Cùng một câu trả lời, chấm hai lần: nguyên văn (đúng cách
@@ -617,6 +733,7 @@ export default async function HarnessPage() {
             code, dòng hỏi lại). Chênh lệch = phần <i>đúng nội dung nhưng bị chấm 0</i>. Câu sai
             vẫn sai.
           </p>
+          <div className="overflow-x-auto">
           <table className="mt-2 w-full border-collapse text-[13px]">
             <thead>
               <tr className="border-b border-hair text-left text-ink-2">
@@ -624,8 +741,8 @@ export default async function HarnessPage() {
                 <th className="py-1.5 pr-2 font-medium">Tập</th>
                 <th className="py-1.5 pr-2 font-medium">n</th>
                 <th className="py-1.5 pr-2 font-medium">EM nguyên văn</th>
-                <th className="py-1.5 pr-2 font-medium">EM sau cắt vỏ</th>
-                <th className="py-1.5 font-medium">Giá của vỏ</th>
+                <th className="py-1.5 pr-2 font-medium">EM sau bóc lớp bọc</th>
+                <th className="py-1.5 font-medium">Chi phí lớp bọc</th>
               </tr>
             </thead>
             <tbody>
@@ -633,10 +750,10 @@ export default async function HarnessPage() {
                 <tr key={`${m.arm}-${m.dataset}`} className="border-b border-hair/60">
                   <td className="py-1.5 pr-2">{m.label}</td>
                   <td className="py-1.5 pr-2">{m.dataset_label}</td>
-                  <td className="py-1.5 pr-2 font-mono">{m.n}</td>
-                  <td className="py-1.5 pr-2 font-mono">{m.em_verbatim.toFixed(2)}%</td>
+                  <td className="py-1.5 pr-2 font-mono">{fmtInt(m.n)}</td>
+                  <td className="py-1.5 pr-2 font-mono">{fmtPct(m.em_verbatim, 2)}</td>
                   <td className="py-1.5 pr-2 font-mono font-semibold">
-                    {m.em_stripped.toFixed(2)}%
+                    {fmtPct(m.em_stripped, 2)}
                   </td>
                   <td
                     className={
@@ -645,15 +762,15 @@ export default async function HarnessPage() {
                         : "py-1.5 font-mono text-ink-2"
                     }
                   >
-                    {m.wrapper_cost >= 0 ? "+" : ""}
-                    {m.wrapper_cost.toFixed(2)}
+                    {fmtDelta(m.wrapper_cost, 2)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
           <p className="mt-2 text-[12.5px] text-ink-2">
-            Arm sạch (H5) cắt vỏ được <b>+0,00</b> ở cả hai tập: câu trả lời của nó vốn đã trần, không
+            Arm sạch (H5) bóc lớp bọc được <b>+0,00</b> ở cả hai tập: câu trả lời của nó vốn đã trần, không
             vỏ. Toàn bộ chi phí vỏ nằm ở arm bị rò cấu hình — cơ chế MC-22, giờ có số.
           </p>
         </section>
@@ -667,10 +784,11 @@ export default async function HarnessPage() {
             ở <code>temperature 0</code> — <b>contrast nhỏ hơn số này thì không phải kết quả</b>.
             Không gộp khác <code>n</code> (100 item và 146 item là hai thí nghiệm khác nhau).
           </p>
+          <div className="overflow-x-auto">
           <table className="mt-2 w-full border-collapse text-[13px]">
             <thead>
               <tr className="border-b border-hair text-left text-ink-2">
-                <th className="py-1.5 pr-2 font-medium">Ô</th>
+                <th className="py-1.5 pr-2 font-medium">Cell</th>
                 <th className="py-1.5 pr-2 font-medium">Tập</th>
                 <th className="py-1.5 pr-2 font-medium">n</th>
                 <th className="py-1.5 pr-2 font-medium">Lặp</th>
@@ -678,8 +796,8 @@ export default async function HarnessPage() {
                 <th className="py-1.5 pr-2 font-medium">Arm B</th>
                 <th className="py-1.5 pr-2 font-medium">Δ</th>
                 <th className="py-1.5 pr-2 font-medium">CI 95%</th>
-                <th className="py-1.5 pr-2 font-medium">TB ô</th>
-                <th className="py-1.5 font-medium">Spread ô</th>
+                <th className="py-1.5 pr-2 font-medium">TB cell</th>
+                <th className="py-1.5 font-medium">Biên độ cell</th>
               </tr>
             </thead>
             <tbody>
@@ -693,24 +811,23 @@ export default async function HarnessPage() {
                     <span className="text-ink-2">{r.label.replace(/ — lặp \d+$/, "")}</span>
                   </td>
                   <td className="py-1.5 pr-2 text-ink-2">{r.dataset}</td>
-                  <td className="py-1.5 pr-2 font-mono">{r.n}</td>
+                  <td className="py-1.5 pr-2 font-mono">{fmtInt(r.n)}</td>
                   <td className="py-1.5 pr-2 font-mono text-ink-2">r{r.repeat}</td>
-                  <td className="py-1.5 pr-2 font-mono">{r.arm_a.toFixed(2)}</td>
-                  <td className="py-1.5 pr-2 font-mono font-semibold">{r.arm_b.toFixed(2)}%</td>
+                  <td className="py-1.5 pr-2 font-mono">{fmtNum(r.arm_a, 2)}</td>
+                  <td className="py-1.5 pr-2 font-mono font-semibold">{fmtPct(r.arm_b, 2)}</td>
                   <td className="py-1.5 pr-2 font-mono">
-                    <span className={r.delta < 0 ? "text-flag" : "text-ok"}>
-                      {r.delta >= 0 ? "+" : ""}
-                      {r.delta.toFixed(2)}
+                    <span className={r.delta < 0 ? "text-flag" : "text-accept"}>
+                      {fmtDelta(r.delta, 2)}
                     </span>
                   </td>
                   <td className="py-1.5 pr-2 font-mono text-ink-2">
-                    {r.ci95_low.toFixed(2)}..{r.ci95_high.toFixed(2)}
+                    {fmtNum(r.ci95_low, 2)}..{fmtNum(r.ci95_high, 2)}
                   </td>
                   <td className="py-1.5 pr-2 font-mono">
                     {r.cell_mean === undefined ? (
                       <span className="text-ink-2">—</span>
                     ) : (
-                      r.cell_mean.toFixed(2)
+                      fmtNum(r.cell_mean, 2)
                     )}
                   </td>
                   <td
@@ -723,13 +840,14 @@ export default async function HarnessPage() {
                     {r.cell_spread === undefined ? (
                       <span className="text-ink-2">1 lặp</span>
                     ) : (
-                      `±${(r.cell_spread / 2).toFixed(2)}`
+                      `±${fmtNum(r.cell_spread / 2, 2)}`
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </section>
       ) : null}
 

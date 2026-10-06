@@ -19,7 +19,6 @@ const ITEMS = [
   { href: "/", label: "Review", hint: "400 câu đọc hiểu" },
   { href: "/benchmark", label: "Benchmark", hint: "số live từ Mongo" },
   { href: "/harness", label: "Harness", hint: "đường truy xuất có agent" },
-  { href: "/results", label: "Results", hint: "duyệt DB đa model" },
 ] as const;
 
 export default function SiteNav() {

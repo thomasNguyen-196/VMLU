@@ -32,7 +32,7 @@ export const DATASET_META: Record<string, DatasetMeta> = {
   reading: {
     about: "Đọc hiểu 400 câu tiền đăng ký (200 Vi-SQuAD trích xuất + 200 Vi-DROP suy luận số) — đo đọc hiểu tiếng Việt có ngữ cảnh.",
     shape: "Trả lời tự do từ đoạn văn cho sẵn (open-book, 48 token)",
-    metric: "EM = khớp tuyệt đối · char-F1 = tín chỉ từng phần theo ký tự",
+    metric: "EM = khớp tuyệt đối · char-F1 = điểm từng phần theo ký tự",
     metricNote: "Không phải accept-rate (tỷ lệ duyệt viên bấm chấp nhận) — EM/F1 chấm trên gold đã hiệu đính.",
   },
   legal: {
@@ -62,7 +62,7 @@ export const DATASET_META: Record<string, DatasetMeta> = {
   vm14k: {
     about: "Trắc nghiệm Y khoa tiếng Việt 12.488 câu (VM14K public release, shuffled0) — đo mảng Y đã lộ yếu trên V-Bench medicine.",
     shape: "Trắc nghiệm A–E qua MC runner frozen (4 token, closed-book); lẫn 1.240 câu Đúng/Sai + câu 1 lựa chọn",
-    metric: "Accuracy + baseline majority + bẻ theo độ khó / số lựa chọn",
+    metric: "Accuracy + baseline majority + phân tích theo độ khó / số lựa chọn",
     metricNote: "Chỉ đối chiếu hướng với V-Bench medicine (khác dạng câu); báo 4-lựa-chọn làm số chính.",
   },
 };
