@@ -1,0 +1,127 @@
+{
+  "protocol_id": "vi-multimodel-expansion-v2",
+  "protocol_version": 2,
+  "execution_transport": "omp",
+  "omp_version_required": "omp/18.0.0",
+  "omp_mode": "json",
+  "omp_system_prompt": "Answer the user's question.",
+  "omp_tools": "none",
+  "omp_session_policy": "one isolated process per item; no persisted session; stable request session ID",
+  "omp_max_time_seconds": 300,
+  "workers_per_profile": 4,
+  "max_parallel_opencode_profiles": 2,
+  "max_retries": 0,
+  "request_timeout_seconds": 60,
+  "probe_max_tokens": 16,
+  "reasoning_policy": "provider-native profile setting; final answer only; model effort is not assumed equivalent across providers",
+  "prompt_version": "vi-multimodel-expansion-v2",
+  "vbench_release": "v2026.03.28",
+  "phases": {
+    "pilot": {
+      "measurement_card_ids": {
+        "muse-spark-1-3-contributor": "MC-58",
+        "mimo-v2-6-flash": "MC-59",
+        "mimo-v2-5": "MC-60",
+        "qwen3-5-9b-65k": "MC-61"
+      },
+      "vmlu_dev_unique": 100,
+      "synthetic_agentic_unique": 80,
+      "repeat_requests": 20,
+      "expected_requests_per_profile": 200,
+      "max_completion_tokens": {
+        "multiple_choice": 4096,
+        "function_call": 2048
+      },
+      "seed": 42,
+      "budget_guard_usd_equivalent": {
+        "muse-spark-1-3-contributor": 0.2,
+        "mimo-v2-6-flash": 0.25,
+        "mimo-v2-5": 0.25,
+        "qwen3-5-9b-65k": 1.0
+      }
+    },
+    "vmlu": {
+      "measurement_card_ids": {
+        "muse-spark-1-3-contributor": "MC-62",
+        "mimo-v2-6-flash": "MC-63",
+        "mimo-v2-5": "MC-64",
+        "qwen3-5-9b-65k": "MC-65"
+      },
+      "splits": {
+        "valid": 744,
+        "dev": 303,
+        "test": 9833
+      },
+      "expected_items_per_profile": 10880,
+      "max_completion_tokens": {
+        "multiple_choice": 4096
+      },
+      "reuse_v1_valid_n": 744,
+      "test_gold": "withheld",
+      "budget_guard_usd_equivalent": {
+        "muse-spark-1-3-contributor": 10.0,
+        "mimo-v2-6-flash": 14.0,
+        "mimo-v2-5": 14.0,
+        "qwen3-5-9b-65k": 1.0
+      }
+    },
+    "vbench": {
+      "measurement_card_ids": {
+        "muse-spark-1-3-contributor": "MC-66",
+        "mimo-v2-6-flash": "MC-67",
+        "mimo-v2-5": "MC-68",
+        "qwen3-5-9b-65k": "MC-69"
+      },
+      "tracks": {
+        "mc": 4141,
+        "agentic": 1000
+      },
+      "safety_open_skipped": 4000,
+      "expected_items_per_profile": 5141,
+      "max_completion_tokens": {
+        "multiple_choice": 4096,
+        "function_call": 2048
+      },
+      "prompt_style": "minimal",
+      "budget_guard_usd_equivalent": {
+        "muse-spark-1-3-contributor": 6.0,
+        "mimo-v2-6-flash": 8.5,
+        "mimo-v2-5": 8.5,
+        "qwen3-5-9b-65k": 1.0
+      }
+    }
+  },
+  "safety_policy": "the local v2026.03.28 scorable release omits 4,000 safety/open rows; do not infer safety performance",
+  "reuse_policy": {
+    "vmlu_valid_from_v1_n": 0,
+    "reuse_v1_outputs": false,
+    "reason": "v2 uses the explicit benchmark User-Agent and a new whole-file card snapshot; rerun all VMLU splits under one v2 condition",
+    "historical_v1_valid_n": 744,
+    "otherwise": "keep v1 outputs as historical results; do not splice them into the v2 headline"
+  },
+  "gold_policy": {
+    "vmlu_valid": "local",
+    "vmlu_dev": "local",
+    "vmlu_test": "withheld; server score only",
+    "vbench_mc": "withheld; server score only",
+    "vbench_agentic": "withheld; local schema validity is not correctness",
+    "synthetic_pilot": "local exact function+argument gold"
+  },
+  "scoring": {
+    "vmlu_local_mc": "accuracy with Wilson CI95; unparsed answer stays incorrect in denominator",
+    "vmlu_test": "official server score; no local accuracy without gold",
+    "vbench_mc": "server correctness by domain; local parse validity reported separately",
+    "vbench_agentic": "server function-call correctness; schema validity and required-slot rate are diagnostics only",
+    "technical_request_errors": "pending until bounded resume; never scored as a wrong model answer",
+    "model_invalid_answers": "remain in the denominator and are not selectively retried"
+  },
+  "budget_policy": {
+    "opencode_go": "quota-equivalent preflight from frozen prompt bytes + output caps; observe 5-hour, weekly, monthly allowances",
+    "qwen_internal": "no declared token tariff; guard by item count, tokens, concurrency, timeout, and infrastructure limits",
+    "pay_as_you_go": false,
+    "qwen_internal_guard_note": "USD-equivalent guard is not a cost estimate; enforce fixed request count, token cap, workers, timeout, and stop on provider/infrastructure limits"
+  },
+  "max_technical_recovery_attempts": 3,
+  "sdk_retries": 0,
+  "attempt_semantics": "only failed transport/process attempts may resume; completed invalid answers are not retried or dropped"
+}

@@ -18,6 +18,7 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { href: "/", label: "Review", hint: "400 câu đọc hiểu" },
   { href: "/benchmark", label: "Benchmark", hint: "số live từ Mongo" },
+  { href: "/table", label: "Bảng", hint: "kết quả main tiếng Việt đã chấm" },
   { href: "/harness", label: "Harness", hint: "đường truy xuất có agent" },
 ] as const;
 
