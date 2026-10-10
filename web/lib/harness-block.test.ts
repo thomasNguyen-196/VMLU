@@ -121,6 +121,15 @@ const block = (ladder: unknown[] = [row(), row({ role: "baseline", arm: "A", del
   cost: [],
   speed: speedPair(),
   secondary_metrics: [secondary()],
+  // Since MC-48. Required whenever the ladder carries a non-score metric, so
+  // the fixture declares it unconditionally — the validator's job is to catch a
+  // block that LOST it, not one that never had it.
+  metric_note: {
+    accuracy: { unit: "điểm", not_a_score: false, what: "số câu đúng / tổng số câu." },
+    EM: { unit: "điểm", not_a_score: false, what: "exact match trên gold." },
+    valid_rate: { unit: "tỉ lệ", not_a_score: true, what: "lời gọi hàm khớp schema — KHÔNG phải điểm." },
+    agreement: { unit: "tỉ lệ", not_a_score: true, what: "agent có trả lời giống arm A — KHÔNG phải điểm." },
+  },
   insight: {
     verdict: "V1",
     comparison: [
@@ -544,5 +553,105 @@ describe("rowsForDataset", () => {
     expect(rowsForDataset(b, "legal_mc")).toHaveLength(1);
     expect(rowsForDataset(b, "reading400")).toHaveLength(2);
     expect(rowsForDataset(b, "nope")).toHaveLength(0);
+  });
+});
+
+describe("metric_note — what stops a non-score being read as an accuracy", () => {
+  const agreementLadder = () => [
+    row({ role: "baseline", model: "MiMo V2.5", arm: "A2", dataset: "vbench_mc",
+      dataset_label: "V-Bench MC", metric: "agreement", n: 4141, arm_a: 100, arm_b: 100,
+      delta: 0, ci95_low: 0, ci95_high: 0, mcnemar_p: "" }),
+    row({ model: "MiMo V2.5", arm: "M6", dataset: "vbench_mc",
+      dataset_label: "V-Bench MC", metric: "agreement", n: 4141, arm_a: 100, arm_b: 77.61,
+      delta: -22.39, ci95_low: -23.4, ci95_high: -20.91, mcnemar_p: "" }),
+  ];
+
+  test("rejects a block with an agreement row and NO note — a non-score with no explanation is read as a score", () => {
+    const b = { ...block(agreementLadder()) } as Record<string, unknown>;
+    delete b.metric_note;
+    expect(() => parseHarnessBlock(b)).toThrow(/thiếu .metric_note/);
+  });
+
+  test("rejects a note that does not declare the metric a non-score", () => {
+    // The exact failure this key exists to prevent: `not_a_score: false` on
+    // `agreement` would let the page style it like an accuracy.
+    const b = block(agreementLadder());
+    b.metric_note = { ...b.metric_note, agreement: { unit: "tỉ lệ", not_a_score: false, what: "x" } };
+    expect(() => parseHarnessBlock(b)).toThrow(/not_a_score/);
+  });
+
+  test("a block with only score metrics does not need a note", () => {
+    const b = { ...block() } as Record<string, unknown>;
+    delete b.metric_note;
+    expect(parseHarnessBlock(b).ladder).toHaveLength(2);
+  });
+});
+
+describe("server_mc — the REAL V-Bench MC accuracy beside the agreement", () => {
+  const mcRows = () => [
+    row({ role: "baseline", model: "MiMo V2.5", arm: "A2", dataset: "vbench_mc",
+      dataset_label: "V-Bench MC", metric: "agreement", n: 4141, arm_a: 100, arm_b: 100,
+      delta: 0, ci95_low: 0, ci95_high: 0, mcnemar_p: "",
+      server_mc_score: 51.15, server_mc_correct: 2118, server_mc_total: 4141 }),
+    row({ model: "MiMo V2.5", arm: "M6", dataset: "vbench_mc",
+      dataset_label: "V-Bench MC", metric: "agreement", n: 4141, arm_a: 100, arm_b: 77.61,
+      delta: -22.39, ci95_low: -23.4, ci95_high: -20.91, mcnemar_p: "",
+      server_mc_score: 53.27, server_mc_correct: 2206, server_mc_total: 4141,
+      arm_a_server_mc_score: 51.15, arm_a_server_mc_correct: 2118, arm_a_server_mc_total: 4141 }),
+  ];
+
+  test("accepts the pair, and the two metrics may disagree in SIGN", () => {
+    // -22.39 agreement with +2.12 real accuracy is the actual finding (MC-48).
+    const b = block(mcRows());
+    const r = b.ladder as Record<string, number>[];
+    expect(r[0].arm_b - r[0].server_mc_score!).toBeGreaterThan(0);
+    expect(r[1].delta).toBeLessThan(0);
+    expect(r[1].server_mc_score! - r[1].arm_a_server_mc_score!).toBeGreaterThan(0);
+  });
+
+  test("rejects a half-present MC trio", () => {
+    for (const bad of [{ server_mc_correct: 2118 }, { server_mc_score: 51.15 }]) {
+      const rows = mcRows();
+      rows[0] = { ...rows[0], ...bad, server_mc_score: bad.server_mc_score ?? rows[0].server_mc_score,
+        server_mc_correct: bad.server_mc_correct ?? rows[0].server_mc_correct, server_mc_total: undefined };
+      expect(() => parseHarnessBlock(block(rows))).toThrow(/server_mc/);
+    }
+  });
+
+  test("rejects a harness row showing only its OWN side", () => {
+    // One side is not a comparison — and a lone number invites reading it as the
+    // arm's standalone score.
+    const rows = mcRows();
+    const { arm_a_server_mc_score, ...rest } = rows[1];
+    expect(() => parseHarnessBlock(block([rows[0], rest]))).toThrow(/thiếu arm A/);
+  });
+
+  test("a baseline row needs no arm_a twin — it IS arm A", () => {
+    expect(() => parseHarnessBlock(block(mcRows()))).not.toThrow();
+  });
+});
+
+describe("breakdown group server deltas", () => {
+  const withServer = (over: Record<string, unknown> = {}) => ({
+    arm: "M6", arm_slug: "ompM6clean_mimo-v2_5", label: "omp sạch", model: "MiMo V2.5",
+    dataset: "vbench_mc", dataset_label: "V-Bench MC", metric: "agreement",
+    groups: [{ group: "logics", n: 225, arm_a: 100, arm_b: 59.11, delta: -40.89,
+      ci95_low: -47.56, ci95_high: -34.67, mcnemar_p: "",
+      server_mc_arm_a: 24.44, server_mc_arm_b: 19.56, server_mc_delta: -4.88, ...over }],
+  });
+
+  test("accepts a group whose real delta disagrees with its agreement delta", () => {
+    const b = { ...block(), breakdown: [withServer()] };
+    expect(parseHarnessBlock(b).breakdown![0].groups[0].server_mc_delta).toBe(-4.88);
+  });
+
+  test("rejects a half-present group trio", () => {
+    const b = { ...block(), breakdown: [withServer({ server_mc_delta: undefined })] };
+    expect(() => parseHarnessBlock(b)).toThrow(/phải có đủ cả ba/);
+  });
+
+  test("rejects a group server_delta that is not arm_b − arm_a", () => {
+    const b = { ...block(), breakdown: [withServer({ server_mc_delta: -1 })] };
+    expect(() => parseHarnessBlock(b)).toThrow(/server_mc_delta/);
   });
 });

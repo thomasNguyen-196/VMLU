@@ -1305,6 +1305,25 @@ http nội bộ). Vì vậy bảng dưới là **bảng đặt cạnh**, mỗi �
 mất điểm ở mọi tập MC/reading (cả 28K lẫn 65K), trong khi MiMo giữ nguyên hoặc nhỉnh hơn —
 cùng hướng với kết luận MC-30, nay lặp lại trên model thứ ba (65K) với tập thứ sáu.
 
+> **⚠ Cột `vbench_mc` ở bảng trên KHÔNG so được như các hàng khác** — nó là mức **trùng khớp**
+> (tỉ lệ agent đổi đáp án), không phải điểm. Ba ô dưới đây là **điều kiện đo**, không chỉ là
+> model: đọc Δ của `vbench_mc` như Δ chất lượng là sai, và sai theo **hai** chiều (xem MC-48).
+
+| Điều kiện đo | 28K H5 sạch | 65K T65 | MiMo M6 sạch |
+| --- | --- | --- | --- |
+| `tools` của `omp` | `--no-tools` (H5) | **`--tools all`** | `--no-tools` |
+| `reasoning_effort` ghim qua proxy | không (model không suy luận) | không | **`"none"`** (model có suy luận) |
+| `system prompt` | trung tính | trung tính | trung tính |
+| `max_time` | 180s | 180s | 180s |
+| `sandbox` | ngoài repo | ngoài repo | ngoài repo |
+| `vbench_mc` — Δ **accuracy thật** (MC-48) | (không chạy) | **−9,22** (−382 câu) | **+2,13** (+88 câu) |
+| `vbench_mc` — Δ **trùng khớp** (không phải điểm) | (không chạy) | −36,63 | −22,39 |
+
+Hai hàng cuối **vắng dấu**: MiMo giảm 22,39 điểm trùng khớp nhưng **tăng** 2,13 điểm accuracy thật.
+Ngoài ra `MiMo M6` và `65K T65` chạy **hai condition khác nhau** (`--no-tools` vs `--tools all`,
+`reasoning_effort` ghim vs không), nên bảng đặt cạnh này không tách được tác dụng của scaffold
+với tác dụng của menu công cụ. Cần arm **MiMo + `--tools all`** mới tách được — chưa có.
+
 ### Không được quy
 
 1. `vbench_mc` là **mức trùng khớp**, không phải accuracy (không có gold cục bộ); McNemar
@@ -1880,6 +1899,499 @@ nhiều lần ⇒ đọc được. Tương tác thì không.
 `harness_compare_legal_mc_vsA_omp{F5clean,F7clean,F8clean,T65r2,T65r3}_Qwen3_5-9B-65K.csv` ·
 `harness_ledger_legal_mc_*` · proxy log `/tmp/opencode/mc46/proxy2.log` (tạm, mất khi reboot) ·
 bảng tổng hợp `docs/rq1-decomposition.md` (sinh tự động).
+
+## MC-48 — **Điểm máy chủ cho `vbench_mc` 12 domain: `agreement` và accuracy VÁNG DẤU**
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-48` |
+| `ngay_chay` | 2026-10-05 — **không chạy model**, chỉ nộp 4 tập câu trả lời **đã có sẵn** lên `vbench.ai/api/grade` rồi rebuild block |
+| `vi_sao_lam` | Đo bổ sung (không thay thế MC-32/MC-33). Lý do: `vbench_mc` trong các card trước chỉ có **mức trùng khớp**, vì không có vàng cục bộ. Người đọc bảng breakdown thấy "MiMo −40,89 ở logics" và hiểu là mất 40 điểm — nhưng đó là tỉ lệ agent **đổi** đáp án. Không có tập số nào trong repo trả lời "số câu đúng thực sự giảm bao nhiêu", nên câu hỏi đó không có câu trả lời. |
+| `dieu_kien` | Không phát sinh. Payload = đúng các chữ cái arm đã ghi: arm A từ `vbench_result_4141_*.csv` / `vbench_full_evaluation_*.csv`, arm B từ `harness_ledger_vbench_mc_*.csv`. Một arm = một submission, không trộn track. **Điều kiện đo model/prompt/scorer là của MC-31/MC-32 và MC-30 — thẻ này KHÔNG đổi điều kiện đó.** |
+| `endpoint` | `POST https://vbench.ai/api/grade`, release `v2026.03.28`. Payload 132–144 KB, **một lần nộp liền được** — WAF F5 của MC-26 chỉ chặn ở ~400 KB. |
+| `khong_co_gold` | Đúng, và đây là điểm mấu chốt: **số dưới đây là số máy chủ chấm, không phải số ta tự chấm.** Không có cách nào kiểm chứng lại offline. |
+
+### Kết quả — MC 12 domain, máy chủ chấm
+
+| Arm | Điều kiện | MC đúng | micro | macro 12 domain |
+| --- | --- | ---: | ---: | ---: |
+| Qwen3.5-9B-65K arm A | gọi thẳng | 1.927/4.141 | **46,53** | 45,28 |
+| Qwen3.5-9B-65K T65 | `omp` sạch + `--tools all` | 1.545/4.141 | **37,31** | 36,86 |
+| MiMo V2.5 arm A | gọi thẳng | 2.118/4.141 | **51,15** | 50,22 |
+| MiMo V2.5 M6 | `omp` sạch + `--no-tools` | 2.206/4.141 | **53,27** | 51,17 |
+
+| Phép so | `agreement` (đã có từ MC-33) | **accuracy thật** (thẻ này) |
+| --- | ---: | ---: |
+| Qwen3.5-9B-65K (T65) | −36,63 | **−9,22** (−382 câu) |
+| MiMo V2.5 (M6) | −22,39 | **+2,13** (+88 câu) |
+
+### Đọc hai bảng cùng nhau
+
+1. **Hai thước đo VÁNG DẤU**, không phải hai ước lượng của cùng thứ. Ở MiMo `agreement` giảm
+   22,39 điểm trong khi accuracy **tăng** 2,13. Đọc Δ của `agreement` như Δ điểm là sai;
+   đó chính là cách bảng breakdown cũ dễ bị hiểu nhầm.
+2. **Phần lớn thay đổi là trôi GIỮA các chữ sai**, không phải đi từ đúng sang sai: MiMo đổi
+   918 chữ cái (n=4.141) mà tổng số câu đúng vẫn tăng.
+3. **MiMo mạnh hơn Qwen ở cả hai arm**, và vượt ở bốn miền rõ rệt: dialect 78,65 (so 59,96),
+   laws 75,39 (so 60,73), computer_science 73,40 (so 69,15), philosophy 68,06 (so 65,40).
+4. **Mẫu số của máy chủ là `totalQuestions`**: câu trống/không nộp vẫn tính **sai**, không bị loại.
+   Vì vậy Δ của Qwen (−9,22) **đã bao gồm** thiệt hại của 184 câu trống; đó không phải số sạch.
+
+### ⚠ `max_time` là một điều kiện đo, và nó đã ảnh hưởng tới điểm
+
+`--max-time` mặc định của `run_harness_eval.py` là **180s**, truyền thẳng cho `omp
+--max-time`; runner bọc thêm `timeout_slack=60` nên trần cứng là 240s. Trần cứng **không**
+được chạm lần nào (`exit_code=-9` = 0 item ở cả 42 ledger) — mọi lỗi dừng ở 180,7–181,4s do
+chính `omp` bỏ cuộc. Trên `vbench_agentic` của T65, **474/1000 item `omp exit 1`**, và 474 item
+rơi vào khoảng 175–190s (item hợp lệ có `wall_s` trung vị 36,1s — chênh 5×).
+
+Phân rã 474 item đó: **131** là vòng lặp tool thật (≥5 `tool_calls`, `output_tokens` trung vị
+933, max 4.664) — lỗi scaffold; **222** treo im không stream gì (`tool_calls=0`,
+`output_tokens=0`); **121** lenh giữa chừng. 222 item treo im phân bố **đều theo thứ tự chạy**
+(id 8.169→9.131, mỗi nhóm 100 id đều có), không tập trung đầu/cuối — nên chưa đủ bằng chứng để quy
+cho gateway (một đợt chết để lại dấu vết theo thời gian).
+
+**Vì sao MiMo không timeout:** cùng scaffold, cùng `--max-time 180`, nhưng trần thời gian của
+MiMo là **45,7s** — cách mốc 180s gấp 4 lần (`legal_mc` của chính T65: 0/146 timeout, trung vị
+2,6s). Nếu 180s là nguyên nhân thì MiMo cũng phải chết. Không chết ⇒ **180s là ngưỡng cắt do ta
+chọn, không phải nguyên nhân**; khác biệt thật là M6 chạy `--no-tools` (`turns` trung vị 1,
+không có vòng lặp).
+
+→ **Hệ quả đọc `vbench_agentic` của T65:** Δ −50,10 validity **không** là một thước đo sạch
+của scaffold. Nó trộn chất lượng agent + một ngưỡng timeout do ta đặt + một sự cố đường truyền
+chưa xác định. Muốn tách: chạy lại với `--max-time` lớn hơn, sau khi dựng lại proxy. **Chưa làm.**
+
+### Phát hiện phụ đáng ghi: MiMo trả lời chữ ngoài khoảng lựa chọn
+
+Arm A của MiMo có **13 câu trả lời `E` trên câu chỉ có 4 đáp án**. Parser clamp đúng đã loại
+(→ `answer` rỗng → tính sai), nhưng đây là hành vi lệch: model không kiểm tra số lựa chọn.
+Nên đo bằng metric riêng, không gộp vào agreement/accuracy. **Chưa có card cho việc này** —
+ghi ở đây để không mất, chưa kết luận gì thêm.
+
+### Sửa bảng điều kiện đo (những gì thay đổi ở giao diện)
+
+Các sửa dưới đây **không đổi bất kỳ số đo nào**; chúng làm rõ cách hiện số.
+
+| Chỗ | Trước | Sau |
+| --- | --- | --- |
+| Cột Δ của bảng breakdown | `Không dùng` / `Dùng`, không nói metric | `Không dùng (arm A — gọi thẳng)` / `Dùng (arm B — qua agent)`, kèm badge metric và cột **`Điểm thật (máy chủ)`** |
+| Bảng so sánh trực tiếp | dòng `agreement` đứng một mình | thêm dòng `vbench_mc_accuracy` ngay cạnh, **cùng model**, nên hai dòng luôn cùng dấu hoặc trái dấu nhau một cách nhìn thấy được |
+| Cột `Server` của bảng ladder | số 30,80 đứng cạnh validity 97,40 | tiêu đề ghi rõ **thang KHÁC — điểm thật**; ô MC hiện cả arm A và Δ |
+| Verdict | "MiMo +0,00…+7,00 điểm" không nói phạm vi | nói rõ chỉ gồm 4 tập có điểm thật và **KHÔNG gồm** V-Bench |
+| Claim `penalty:*` | liệt kê tên 4 tập rồi im | thêm câu "Phạm vi này KHÔNG gồm V-Bench MC…" |
+| Dải liên kết trên `/benchmark` | in `valid_rate 97.40 (−2.60)` ngay dưới hero `Accuracy 45.22` | thêm hộp cảnh báo **trước khi in số**: số này không phải accuracy, khác thang với số hero |
+| Block `.harness` | không có chú giải metric | thêm `metric_note`; validator **fail loud** nếu có dòng `agreement`/`valid_rate` mà thiếu chú giải `not_a_score: true` |
+
+### Guard mới (validator, `web/lib/harness-block.ts`)
+
+1. Dòng `agreement`/`valid_rate` mà block không có `metric_note` → fail.
+2. `metric_note.<m>.not_a_score !== true` → fail (đúng lỗi đã gây ra MC-48).
+3. Bộ ba `server_mc_score/correct/total` phải đủ cả ba và `score == 100·correct/total`.
+4. Dòng harness có `server_mc_score` mà thiếu `arm_a_server_mc_score` → fail: **một phía không phải một phép so**.
+5. Mỗi nhóm breakdown có bộ ba `server_mc_*` phải đủ và `delta == arm_b − arm_a`.
+
+### Artifact
+
+`all_res/ollama_result/{Qwen3_5-9B-65K,ompT65_Qwen3_5-9B-65K,mimo-v2_5,ompM6clean_mimo-v2_5}/vbench_server_scores_*.csv`
+(12 domain/arm, có `server_source` + `server_note` ghi cách nộp và quy tắc mẫu số) ·
+`submissions/Qwen3_5-9B-65K/submission_vbench_mc_armA_*.jsonl` ·
+`submissions/{mimo-v2_5,ompM6clean_mimo-v2_5}/submission_vbench_mc_arm{A,B}_*.jsonl`
+(gitignored) · response thô của cả 4 lần nộp.
+
+### Chưa làm, và cần một arm riêng
+
+MiMo chạy `--no-tools`, Qwen 65K chạy `--tools all` — **hai condition khác nhau** (khác cả
+`reasoning_effort`: MiMo ghim `"none"` qua proxy vì là model có suy luận, Qwen không ghim).
+Bảng đặt cạnh của MC-32 đang đặt chúng cạnh nhau như thể chỉ khác model. Muốn kết luận
+"scaffold không gây hại" thì cần **MiMo + `--tools all`** trên `vbench_mc`. **Chưa có arm đó.**
+
+## MC-49 — preregister pilot đa model: Muse Spark 1.3 Contributor qua OpenCode Go
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-49` |
+| `trạng_thái` | Preregister ngày 2026-10-06; chưa gửi request |
+| `model_id` | `muse-spark-1.3-contributor`, Contributor variant qua `zen-go/muse-spark-1.3-contributor` |
+| `endpoint` / `billing` | OpenCode Go Responses API tại `https://opencode.ai/zen/go/v1`; subscription quota, không gọi Meta pay-as-you-go |
+| `privacy` | OpenCode Go ghi rõ Contributor prompts/completions được dùng huấn luyện và retention không ZDR; model chỉ khả dụng ở region được phép |
+| `sample` | 180 câu duy nhất (100 VMLU-dev + 80 ViBidLQA-val) + 20 lượt lặp; tính điểm pilot trên câu duy nhất, lặp báo riêng |
+| `prompt` | OMP `-p --mode json --no-tools`; user prompt giữ nguyên byte; system prompt tối giản `Answer the user's question.` |
+| `reasoning` | Provider-native qua `--thinking auto`; Responses API; output cap gồm reasoning tokens |
+| `temperature` / `seed` / `workers` | Temperature và seed bỏ qua theo provider default; workers 4; timeout 300 giây/item |
+| `max_output_tokens` | 2.048 cho mỗi request pilot, áp dụng cho cả MC và đọc hiểu |
+| `retry` | Một attempt/item; retry SDK tắt; lỗi chỉ chạy lại bằng `--resume` trong cùng cap |
+| `scorer` | MC accuracy; đọc hiểu EM giữ dấu + token-F1; legacy scorer kèm đối chiếu |
+| `quota` | Rate-equivalent $0.10 input / $0.20 output mỗi triệu token; OpenCode Go quota model $60/tháng; run cap $1 quota-equivalent |
+| `gold` | Dùng gold đã review trong repo; pilot không dùng để xếp hạng model |
+
+## MC-50 — preregister pilot đa model: MiMo V2.6 Flash qua OpenCode Go
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-50` |
+| `trạng_thái` | Preregister ngày 2026-10-06; chưa gửi request |
+| `model_id` | `mimo-v2.6-flash` qua `zen-go/mimo-v2.6-flash` |
+| `endpoint` / `billing` | OpenCode Go Chat Completions API tại `https://opencode.ai/zen/go/v1`; subscription quota, không gọi Xiaomi pay-as-you-go |
+| `sample` | 180 câu duy nhất (100 VMLU-dev + 80 ViBidLQA-val) + 20 lượt lặp; tính điểm pilot trên câu duy nhất, lặp báo riêng |
+| `prompt` | OMP `-p --mode json --no-tools`; user prompt giữ nguyên byte; system prompt tối giản `Answer the user's question.` |
+| `reasoning` | Gửi thinking enabled qua model config; provider-native reasoning; output cap gồm reasoning tokens |
+| `temperature` / `seed` / `workers` | Không gửi temperature/seed; thinking dùng temperature hiệu lực 1.0; workers 4; timeout 300 giây/item |
+| `max_completion_tokens` | 2.048 cho mỗi request pilot, áp dụng cho cả MC và đọc hiểu |
+| `retry` | Một attempt/item; retry SDK tắt; lỗi chỉ chạy lại bằng `--resume` trong cùng cap |
+| `scorer` | MC accuracy; đọc hiểu EM giữ dấu + token-F1; legacy scorer kèm đối chiếu |
+| `quota` | Rate-equivalent $0.14 input / $0.28 output mỗi triệu token (cache-miss); OpenCode Go quota model $60/tháng; run cap $1 quota-equivalent |
+| `gold` | Dùng gold đã review trong repo; pilot không dùng để xếp hạng model |
+
+## MC-51 — preregister pilot đa model: MiMo V2.5 qua OpenCode Go
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-51` |
+| `trạng_thái` | Preregister ngày 2026-10-06; chưa gửi request |
+| `model_id` | `mimo-v2.5` qua `zen-go/mimo-v2.5` |
+| `endpoint` / `billing` | OpenCode Go Chat Completions API tại `https://opencode.ai/zen/go/v1`; subscription quota, không gọi Xiaomi pay-as-you-go |
+| `sample` | 180 câu duy nhất (100 VMLU-dev + 80 ViBidLQA-val) + 20 lượt lặp; tính điểm pilot trên câu duy nhất, lặp báo riêng |
+| `prompt` | OMP `-p --mode json --no-tools`; user prompt giữ nguyên byte; system prompt tối giản `Answer the user's question.` |
+| `reasoning` | Gửi thinking enabled qua model config; provider-native reasoning; output cap gồm reasoning tokens |
+| `temperature` / `seed` / `workers` | Không gửi temperature/seed; thinking dùng temperature hiệu lực 1.0; workers 4; timeout 300 giây/item |
+| `max_completion_tokens` | 2.048 cho mỗi request pilot, áp dụng cho cả MC và đọc hiểu |
+| `retry` | Một attempt/item; retry SDK tắt; lỗi chỉ chạy lại bằng `--resume` trong cùng cap |
+| `scorer` | MC accuracy; đọc hiểu EM giữ dấu + token-F1; legacy scorer kèm đối chiếu |
+| `quota` | Rate-equivalent $0.14 input / $0.28 output mỗi triệu token (cache-miss); OpenCode Go quota model $60/tháng; run cap $1 quota-equivalent |
+| `gold` | Dùng gold đã review trong repo; pilot không dùng để xếp hạng model |
+
+## MC-52 — preregister pilot đa model: Qwen3.5-9B-65K qua omp/IEC
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-52` |
+| `trạng_thái` | OMP attempt ban đầu lỗi trước khi sinh token do IEC host chưa reachable; output rỗng/0 usage, không chấm điểm; xem lần chạy lại MC-57 |
+| `model_id` | `Qwen3.5-9B-65K` qua `iec/Qwen3.5-9B-65K` |
+| `endpoint` / `billing` | IEC internal endpoint từ `OPENAI_BASE_URL`; key lấy từ `OPENAI_API_KEY` |
+| `sample` | 180 câu duy nhất (100 VMLU-dev + 80 ViBidLQA-val) + 20 lượt lặp; tính điểm pilot trên câu duy nhất, lặp báo riêng |
+| `prompt` | OMP `-p --mode json --no-tools`; user prompt giữ nguyên byte; system prompt tối giản `Answer the user's question.` |
+| `reasoning` | Cho phép provider-native reasoning qua `--thinking auto`; output cap 2.048 |
+| `temperature` / `seed` / `workers` | Temperature 0 / seed 42; workers 4; timeout 300 giây/item |
+| `max_tokens` | 2.048 cho mỗi request pilot, áp dụng cho cả MC và đọc hiểu |
+| `retry` | Một attempt/item; retry SDK tắt; lỗi chỉ chạy lại bằng `--resume` trong cùng cap |
+| `scorer` | MC accuracy; đọc hiểu EM giữ dấu + token-F1; legacy scorer kèm đối chiếu |
+| `quota` | Internal endpoint không có token tariff đã khai báo; cap bảo vệ ngân sách USD-equivalent không tính hạ tầng IEC |
+| `gold` | Dùng gold đã review trong repo; pilot không dùng để xếp hạng model |
+
+## MC-57 — Qwen3.5-9B-65K OMP pilot sau sửa adapter IEC
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-57` |
+| `trạng_thái` | Preregister lần chạy lại ngày 2026-10-06; MC-52 OMP attempt kết thúc `finish_reason=error`, rỗng và không có token usage; attempt đó không tính điểm |
+| `model_id` | `Qwen3.5-9B-65K` qua `iec/Qwen3.5-9B-65K` |
+| `endpoint` / `billing` | IEC internal endpoint từ `OPENAI_BASE_URL`; key lấy từ `OPENAI_API_KEY`; infrastructure cost không được quy đổi USD |
+| `sample` | Cùng pilot item set: 180 câu duy nhất (100 VMLU-dev + 80 ViBidLQA-val) + 20 lượt lặp; kết quả MC-52 lỗi không được dùng |
+| `prompt` | OMP `-p --mode json --no-tools`; user prompt giữ nguyên byte; system prompt tối giản `Answer the user's question.` |
+| `reasoning` | IEC OMP profile đã dùng cho model này đặt `reasoning: false`; chạy `--thinking off` vì route không hoàn tất request ở `auto` |
+| `temperature` / `seed` / `workers` | Temperature 0 / seed 42; workers 4; timeout 300 giây/item |
+| `max_tokens` | 2.048 cho mỗi request pilot |
+| `retry` | Một attempt/item; lỗi chỉ chạy lại bằng `--resume` trong cùng cap |
+| `scorer` | MC accuracy; đọc hiểu EM giữ dấu + token-F1; 20 lượt lặp báo agreement riêng |
+| `quota` | IEC không có per-token tariff khai báo; cap USD-equivalent không tính hạ tầng nội bộ |
+| `gold` | Dùng gold đã review trong repo; kết quả pilot không dùng để xếp hạng model |
+
+## MC-53 — main benchmark tiếng Việt: Muse Spark 1.3 Contributor qua OpenCode Go
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-53` |
+| `trạng_thái` | Đóng băng sau pilot ngày 2026-10-06; main chưa bắt đầu |
+| `model_id` | `muse-spark-1.3-contributor` qua `zen-go/muse-spark-1.3-contributor` |
+| `endpoint` / `billing` | OpenCode Go Responses API; subscription quota, không dùng pay-as-you-go |
+| `sample` | Manifest main `main_v1.json`: 2.043 câu/model (744 VMLU valid, 200 Vi-SQuAD, 200 Vi-DROP, 146 legal MC, 150 legal NLI, 603 ViBidLQA test) |
+| `prompt` | OMP `-p --mode json --no-tools`; prompt byte-identical theo manifest; system prompt `Answer the user's question.`; không lưu session |
+| `reasoning` | Provider-native qua `--thinking auto`; cap output bao gồm reasoning token; không giả định effort tương đương provider khác |
+| `temperature` / `seed` / `workers` | Provider dùng temperature hiệu lực 1.0; bỏ seed theo Responses API; workers 4; timeout 300 giây/item |
+| `max_output_tokens` | 4.096 cho MC; 2.048 cho đọc hiểu |
+| `retry` | Một attempt/item; SDK retry tắt; request thiếu/lỗi chỉ resume từ checkpoint với cùng cap |
+| `scorer` | Accuracy cho MC; EM giữ dấu và token-F1 cho đọc hiểu; khoảng tin cậy 95% và coverage được lưu |
+| `quota` | Rate-equivalent $0.10 input / $0.20 output mỗi triệu token; OpenCode Go model quota $60/tháng; run cap $1.55 quota-equivalent |
+| `gold` | Dùng source/gold hash đã đóng băng trong manifest; không gửi gold trong prompt |
+
+## MC-54 — main benchmark tiếng Việt: MiMo V2.6 Flash qua OpenCode Go
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-54` |
+| `trạng_thái` | Đóng băng sau pilot ngày 2026-10-06; main chưa bắt đầu |
+| `model_id` | `mimo-v2.6-flash` qua `zen-go/mimo-v2.6-flash` |
+| `endpoint` / `billing` | OpenCode Go Chat Completions API; subscription quota, không dùng pay-as-you-go |
+| `sample` | Manifest main `main_v1.json`: 2.043 câu/model (744 VMLU valid, 200 Vi-SQuAD, 200 Vi-DROP, 146 legal MC, 150 legal NLI, 603 ViBidLQA test) |
+| `prompt` | OMP `-p --mode json --no-tools`; prompt byte-identical theo manifest; system prompt `Answer the user's question.`; không lưu session |
+| `reasoning` | Thinking bật trong model profile; effort qua `--thinking auto`; cap output bao gồm reasoning token |
+| `temperature` / `seed` / `workers` | Temperature hiệu lực 1.0; không gửi seed theo API; workers 4; timeout 300 giây/item |
+| `max_completion_tokens` | 4.096 cho MC; 2.048 cho đọc hiểu |
+| `retry` | Một attempt/item; SDK retry tắt; request thiếu/lỗi chỉ resume từ checkpoint với cùng cap |
+| `scorer` | Accuracy cho MC; EM giữ dấu và token-F1 cho đọc hiểu; khoảng tin cậy 95% và coverage được lưu |
+| `quota` | Rate-equivalent $0.14 input / $0.28 output mỗi triệu token; OpenCode Go model quota $60/tháng; run cap $2.15 quota-equivalent |
+| `gold` | Dùng source/gold hash đã đóng băng trong manifest; không gửi gold trong prompt |
+
+## MC-55 — main benchmark tiếng Việt: MiMo V2.5 qua OpenCode Go
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-55` |
+| `trạng_thái` | Đóng băng sau pilot ngày 2026-10-06; main chưa bắt đầu |
+| `model_id` | `mimo-v2.5` qua `zen-go/mimo-v2.5` |
+| `endpoint` / `billing` | OpenCode Go Chat Completions API; subscription quota, không dùng pay-as-you-go |
+| `sample` | Manifest main `main_v1.json`: 2.043 câu/model (744 VMLU valid, 200 Vi-SQuAD, 200 Vi-DROP, 146 legal MC, 150 legal NLI, 603 ViBidLQA test) |
+| `prompt` | OMP `-p --mode json --no-tools`; prompt byte-identical theo manifest; system prompt `Answer the user's question.`; không lưu session |
+| `reasoning` | Thinking bật trong model profile; effort qua `--thinking auto`; cap output bao gồm reasoning token |
+| `temperature` / `seed` / `workers` | Temperature hiệu lực 1.0; không gửi seed theo API; workers 4; timeout 300 giây/item |
+| `max_completion_tokens` | 4.096 cho MC; 2.048 cho đọc hiểu |
+| `retry` | Một attempt/item; SDK retry tắt; request thiếu/lỗi chỉ resume từ checkpoint với cùng cap |
+| `scorer` | Accuracy cho MC; EM giữ dấu và token-F1 cho đọc hiểu; khoảng tin cậy 95% và coverage được lưu |
+| `quota` | Rate-equivalent $0.14 input / $0.28 output mỗi triệu token; OpenCode Go model quota $60/tháng; run cap $2.15 quota-equivalent |
+| `gold` | Dùng source/gold hash đã đóng băng trong manifest; không gửi gold trong prompt |
+
+## MC-56 — main benchmark tiếng Việt: Qwen3.5-9B-65K qua IEC
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-56` |
+| `trạng_thái` | Đóng băng sau pilot MC-57 ngày 2026-10-06; main chưa bắt đầu |
+| `model_id` | `Qwen3.5-9B-65K` qua `iec/Qwen3.5-9B-65K` |
+| `endpoint` / `billing` | IEC internal endpoint từ `OPENAI_BASE_URL`; key lấy từ `OPENAI_API_KEY`; chi phí hạ tầng không được định giá |
+| `sample` | Manifest main `main_v1.json`: 2.043 câu/model (744 VMLU valid, 200 Vi-SQuAD, 200 Vi-DROP, 146 legal MC, 150 legal NLI, 603 ViBidLQA test) |
+| `prompt` | OMP `-p --mode json --no-tools`; prompt byte-identical theo manifest; system prompt `Answer the user's question.`; không lưu session |
+| `reasoning` | `--thinking off` theo adapter IEC đã dùng ở MC-57; không suy diễn mức reasoning tương đương với OpenCode Go |
+| `temperature` / `seed` / `workers` | Temperature 0 và seed 42 theo adapter IEC; workers 4; timeout 300 giây/item |
+| `max_tokens` | 4.096 cho MC; 2.048 cho đọc hiểu |
+| `retry` | Một attempt/item; SDK retry tắt; request thiếu/lỗi chỉ resume từ checkpoint với cùng cap |
+| `scorer` | Accuracy cho MC; EM giữ dấu và token-F1 cho đọc hiểu; khoảng tin cậy 95% và coverage được lưu |
+| `quota` | Không có tariff token khai báo; runner guard $1 USD-equivalent không tính hạ tầng IEC |
+| `gold` | Dùng source/gold hash đã đóng băng trong manifest; không gửi gold trong prompt |
+
+## MC-58 — pilot mở rộng v2: Muse Spark 1.3 Contributor
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-58` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `protocol` | `vi-multimodel-expansion-v2`, pilot manifest `pilot_v2.json`; 100 VMLU-dev đã lọc trùng held-out, 80 synthetic agentic có gold, 20 lượt lặp; 200 request/profile |
+| `model / API` | `muse-spark-1.3-contributor` · `zen-go/muse-spark-1.3-contributor` · OpenCode Go Responses |
+| `harness` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools tắt, không session history; user-agent `vmlu-benchmark/2.0` và stable session ID |
+| `prompt` | VMLU frozen `build_prompt`; synthetic/V-Bench agentic format `minimal`; system prompt `Answer the user's question.` |
+| `reasoning / sampling` | `--thinking auto`; effective temperature 1.0 theo provider; seed không gửi |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `retry` | SDK retries 0; chỉ lỗi transport/process được resume, tối đa 3 technical attempts/item; invalid answer hoàn tất không gọi lại |
+| `scoring` | VMLU-dev accuracy; synthetic exact function+arguments và schema validity; 20 repeats báo agreement, không vào accuracy mẫu duy nhất |
+| `budget guard` | $0.20 quota-equivalent; preflight/recovery reservation ghi riêng |
+
+## MC-59 — pilot mở rộng v2: MiMo V2.6 Flash
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-59` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `protocol / sample` | Cùng manifest và 200 request/profile của MC-58 |
+| `model / API` | `mimo-v2.6-flash` · `zen-go/mimo-v2.6-flash` · OpenCode Go Chat Completions |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools/session tắt; same user prompts và system prompt của protocol v2 |
+| `reasoning / sampling` | Thinking enabled, `--thinking auto`; effective temperature 1.0 theo provider; seed không gửi |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `retry / scoring` | SDK retries 0; technical recovery tối đa 3 attempt/item; scoring pilot như MC-58 |
+| `budget guard` | $0.25 quota-equivalent |
+
+## MC-60 — pilot mở rộng v2: MiMo V2.5
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-60` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `protocol / sample` | Cùng manifest và 200 request/profile của MC-58 |
+| `model / API` | `mimo-v2.5` · `zen-go/mimo-v2.5` · OpenCode Go Chat Completions |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools/session tắt; same user prompts và system prompt của protocol v2 |
+| `reasoning / sampling` | Thinking enabled, `--thinking auto`; effective temperature 1.0 theo provider; seed không gửi |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `retry / scoring` | SDK retries 0; technical recovery tối đa 3 attempt/item; scoring pilot như MC-58 |
+| `budget guard` | $0.25 quota-equivalent |
+
+## MC-61 — pilot mở rộng v2: Qwen3.5-9B-65K qua IEC
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-61` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy; chờ người dùng duyệt sau khi Go hoàn tất |
+| `protocol / sample` | Cùng manifest và 200 request/profile của MC-58 |
+| `model / API` | `Qwen3.5-9B-65K` · `iec/Qwen3.5-9B-65K` · IEC internal OpenAI-compatible Chat Completions qua VPN |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools/session tắt; same user prompts và system prompt của protocol v2 |
+| `reasoning / sampling` | `--thinking off`; temperature 0, seed 42 |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `retry / scoring` | SDK retries 0; technical recovery tối đa 3 attempt/item; scoring pilot như MC-58 |
+| `budget guard` | $1 guard không phải dự toán chi phí; tariff IEC chưa khai báo, do đó guard thêm request/token/concurrency |
+
+## MC-62 — VMLU full v2: Muse Spark 1.3 Contributor
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-62` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `sample` | 10.880 ID: valid 744, dev 303, test withheld 9.833; 58 subjects. Toàn split chạy mới để mọi item có một card/hash v2 |
+| `model / API` | `muse-spark-1.3-contributor` · `zen-go/muse-spark-1.3-contributor` · OpenCode Go Responses |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools/session tắt; frozen VMLU `build_prompt`, same across profiles |
+| `reasoning / sampling` | `--thinking auto`; effective temperature 1.0 theo provider; seed không gửi |
+| `output cap / timeout` | MC 4.096; timeout 300 giây/item |
+| `scoring` | Local accuracy + Wilson CI95 trên valid/dev. Test 9.833 không có gold local; nộp CSV id,answer và lưu score server riêng. Không gộp dev diagnostics thành headline held-out test |
+| `retry` | SDK retries 0; technical recovery tối đa 3 attempt/item; model-invalid đáp án giữ trong mẫu số |
+| `budget guard` | $10 quota-equivalent; bound full rerun $9.689538 theo rates đã đối chiếu 2026-10-07, trước probe/recovery margin |
+
+## MC-63 — VMLU full v2: MiMo V2.6 Flash
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-63` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `sample` | Cùng 10.880 VMLU ID và split của MC-62; chạy mới toàn bộ trong condition v2 |
+| `model / API` | `mimo-v2.6-flash` · `zen-go/mimo-v2.6-flash` · OpenCode Go Chat Completions |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools/session tắt; frozen VMLU `build_prompt` |
+| `reasoning / sampling` | Thinking enabled, `--thinking auto`; effective temperature 1.0 theo provider; seed không gửi |
+| `output cap / timeout` | MC 4.096; timeout 300 giây/item |
+| `scoring / retry` | Local accuracy + Wilson trên valid/dev; test server-only; SDK retries 0; technical recovery tối đa 3 lần, model-invalid vẫn tính sai |
+| `budget guard` | $14 quota-equivalent; bound full rerun $13.565354 theo rates đã đối chiếu 2026-10-07, trước probe/recovery margin |
+
+## MC-64 — VMLU full v2: MiMo V2.5
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-64` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `sample` | Cùng 10.880 VMLU ID và split của MC-62; chạy mới toàn bộ trong condition v2 |
+| `model / API` | `mimo-v2.5` · `zen-go/mimo-v2.5` · OpenCode Go Chat Completions |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools/session tắt; frozen VMLU `build_prompt` |
+| `reasoning / sampling` | Thinking enabled, `--thinking auto`; effective temperature 1.0 theo provider; seed không gửi |
+| `output cap / timeout` | MC 4.096; timeout 300 giây/item |
+| `scoring / retry` | Local accuracy + Wilson trên valid/dev; test server-only; SDK retries 0; technical recovery tối đa 3 lần, model-invalid vẫn tính sai |
+| `budget guard` | $14 quota-equivalent; bound full rerun $13.565354 theo rates đã đối chiếu 2026-10-07, trước probe/recovery margin |
+
+## MC-65 — VMLU full v2: Qwen3.5-9B-65K qua IEC
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-65` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy; chờ người dùng duyệt sau khi Go hoàn tất |
+| `sample` | Cùng 10.880 VMLU ID và split của MC-62; chạy mới toàn bộ trong condition v2 |
+| `model / API` | `Qwen3.5-9B-65K` · `iec/Qwen3.5-9B-65K` · IEC internal Chat Completions qua VPN |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, 1 process/item, tools/session tắt; frozen VMLU `build_prompt` |
+| `reasoning / sampling` | `--thinking off`; temperature 0, seed 42 |
+| `output cap / timeout` | MC 4.096; timeout 300 giây/item |
+| `scoring / retry` | Local accuracy + Wilson trên valid/dev; test server-only; SDK retries 0; technical recovery tối đa 3 lần, model-invalid vẫn tính sai |
+| `budget guard` | $1 guard không phải dự toán chi phí; tariff IEC chưa khai báo, do đó guard thêm request/token/concurrency |
+
+## MC-66 — V-Bench v2026.03.28: Muse Spark 1.3 Contributor
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-66` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `sample` | 5.141 dòng scorable: MC 4.141 + agentic 1.000. 4.000 safety/open không nằm trong runner release, không suy ra điểm safety |
+| `model / API` | `muse-spark-1.3-contributor` · OpenCode Go Responses, OMP adapter frozen |
+| `harness / prompt` | OMP 18.0.0, 4 worker, no tools/session; V-Bench MC prompt và function schema `minimal` đã đóng băng |
+| `reasoning / sampling` | `--thinking auto`; provider default temperature; seed không gửi |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `scoring` | Correctness do V-Bench server chấm theo domain/track; local parser/schema validity là diagnostic, không gọi là accuracy |
+| `retry / budget` | SDK retries 0; technical recovery tối đa 3 attempt; guard $6 quota-equivalent, bound $5.270295 trước probe/recovery |
+
+## MC-67 — V-Bench v2026.03.28: MiMo V2.6 Flash
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-67` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `sample` | 5.141 scorable: MC 4.141 + agentic 1.000; safety/open 4.000 được ghi là skipped |
+| `model / API` | `mimo-v2.6-flash` · OpenCode Go Chat Completions, OMP adapter frozen |
+| `harness / prompt` | OMP 18.0.0, 4 worker, no tools/session; V-Bench `minimal` MC/function prompts |
+| `reasoning / sampling` | Thinking enabled, `--thinking auto`; effective temperature 1.0; seed không gửi |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `scoring / retry` | Correctness server-side, schema validity local; SDK retries 0; technical recovery tối đa 3 attempt, invalid model answer không retry |
+| `budget guard` | $8.50 quota-equivalent; bound $7.378413 trước probe/recovery margin |
+
+## MC-68 — V-Bench v2026.03.28: MiMo V2.5
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-68` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy |
+| `sample` | 5.141 scorable: MC 4.141 + agentic 1.000; safety/open 4.000 được ghi là skipped |
+| `model / API` | `mimo-v2.5` · OpenCode Go Chat Completions, OMP adapter frozen |
+| `harness / prompt` | OMP 18.0.0, 4 worker, no tools/session; V-Bench `minimal` MC/function prompts |
+| `reasoning / sampling` | Thinking enabled, `--thinking auto`; effective temperature 1.0; seed không gửi |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `scoring / retry` | Correctness server-side, schema validity local; SDK retries 0; technical recovery tối đa 3 attempt, invalid model answer không retry |
+| `budget guard` | $8.50 quota-equivalent; bound $7.378413 trước probe/recovery margin |
+
+## MC-69 — V-Bench v2026.03.28: Qwen3.5-9B-65K qua IEC
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-69` |
+| `trạng_thái` | Preregister ngày 2026-10-07; chưa chạy; chờ người dùng duyệt sau khi Go hoàn tất |
+| `sample` | 5.141 scorable: MC 4.141 + agentic 1.000; safety/open 4.000 được ghi là skipped |
+| `model / API` | `Qwen3.5-9B-65K` · IEC internal Chat Completions qua VPN |
+| `harness / prompt` | OMP 18.0.0, 4 worker, no tools/session; V-Bench `minimal` MC/function prompts |
+| `reasoning / sampling` | `--thinking off`; temperature 0, seed 42 |
+| `output cap / timeout` | MC 4.096, function call 2.048; timeout 300 giây/item |
+| `scoring / retry` | Correctness server-side, schema validity local; SDK retries 0; technical recovery tối đa 3 attempt, invalid model answer không retry |
+| `budget guard` | $1 guard không phải dự toán chi phí; tariff IEC chưa khai báo, do đó guard thêm request/token/concurrency |
+
+## MC-70 — VMLU full v2 matched condition: Qwen3.5-9B-65K qua IEC
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-70` |
+| `trạng_thái` | Hoàn tất inference 10.880/10.880, 0 request error; user-provided VMLU Test server grade đã nhận |
+| `sample` | Chính xác 10.880 VMLU ID/split như MC-62–MC-64; manifest sha256 `553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a` |
+| `protocol` | `vi-multimodel-expansion-v2`; protocol sha256 `4ed32f67afe83bd5f06fcba696921c7e78497d7924318496e09faa23610118fd` |
+| `model / API` | `Qwen3.5-9B-65K` · `iec/Qwen3.5-9B-65K` · IEC internal Chat Completions qua VPN |
+| `harness / prompt` | OMP 18.0.0, JSON mode, 4 worker, một tiến trình/item, tools/session tắt; dùng frozen VMLU `build_prompt` như MC-62–MC-64 |
+| `reasoning / sampling` | `--thinking auto`, model reasoning bật; temperature 1.0; seed không gửi để khớp các profile OpenCode Go |
+| `output cap / timeout` | MC 4.096; timeout 300 giây/item |
+| `scoring / retry` | Accuracy + Wilson trên valid/dev; test không có gold local và chỉ chấm server; SDK retries 0; technical recovery tối đa 3 lần; đáp án model không parse được vẫn tính sai |
+| `budget guard` | $1 guard; IEC chưa khai báo tariff theo token, không diễn giải guard thành chi phí |
+| `kết_quả` | VMLU-dev 216/303 = 71,29% (CI95 65,95–76,09); valid 518/744 = 69,62% (CI95 66,23–72,82); pooled Dev+Valid 734/1.047 = 70,11% (CI95 67,26–72,80); test score không suy ra local |
+| `server score` | VMLU Test overall 63,86%; STEM 61,76%; Social Science 72,13%; Humanity 64,15%; Other 58,97%. User-provided; per-subject denominator/correct counts không được cung cấp. |
+| `submission` | `submissions/vi_multimodel_v2/qwen3-5-9b-65k/submission_vmlu_test.csv`, 9.833 ID, 1 answer trống do unparseable; Codex không upload, người dùng đã cung cấp server score. |
+| `probe note` | Một probe không chấm đã gọi item `28-0021` trước run với seed 42 để kiểm tra route; probe không nằm trong ledger/điểm MC-70. Lượt MC-70 bỏ seed như các profile Go. |
+
+## MC-71 — Muse Spark 1.3 Contributor legal-MC full-tool harness
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-71` |
+| `trạng_thái` | Hoàn tất 2026-10-09 14:39 (+07); 146/146 item, 0 lỗi; preregistration được ghi trước mọi dataset item |
+| `dataset` | `legal_mc`, 146 item, manifest `data/legal_slm_multichoice_manifest.json`, gold cục bộ đã review; giữ prompt/parser đã đóng băng |
+| `model / API` | Muse Spark 1.3 Contributor · `zen-go/muse-spark-1.3-contributor` · OpenCode Go Responses |
+| `harness` | OMP 18.0.0, JSON mode, `--fixed-shards`; label `muse-spark-1-3-contributor-h2-legal-mc-full-tools-auto`; isolated agent dir `.omp-muse-spark-full` |
+| `tools / persona` | `--tools all` (bỏ cờ để dùng full default menu của OMP); giữ system prompt coding-agent mặc định; `--auto-approve` bật theo runner; không session/title/extensions/skills/rules/LSP |
+| `reasoning / sampling` | `--thinking auto`; temperature hiệu dụng 1.0 theo provider default, không gửi seed |
+| `output cap / timeout` | Model `maxTokens=4096`; `--max-time 180` giây/item |
+| `workers / sandbox` | 4 fixed shard 37/37/36/36 theo thứ tự manifest; một worker giữ một shard và xử lý tuần tự, barrier để cả 4 worker cùng bắt đầu; một tiến trình + scratch sandbox riêng/item, scratch ở `/tmp`, không có repo instructions |
+| `preflight` | Probe đầu `Respond with exactly OK.` trả text nhưng không qua MC parser, nên không khởi chạy shard. Probe sửa lại dùng câu trả lời ngắn ngoài dataset và kiểm tra OMP route/transport; mọi probe đều không vào ledger hay điểm |
+| `kết_quả / audit` | 136/146 đúng (**93,15%**); 0 đáp án rỗng; 36 item có tool call, tổng 39 calls (37 `web_search`, 2 `read`); 0 lỗi, 1 network-attempt audit, 0 path escape; 21,9 giây/item trung bình |
+| `scoring` | Accuracy trên gold cục bộ; lượt này là score riêng của Muse qua harness, không tính delta với direct arm của model khác |
+| `credential handling` | Dùng credential OpenCode Go tại máy và inject vào tiến trình khi chạy; không lưu secret trong repo, log hoặc card |
+
+## MC-72 — Qwen matched condition trên năm dataset ngoài VMLU
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-72` |
+| `trạng_thái` | Preregistered 2026-10-10; launcher đã tạo, chưa gọi endpoint |
+| `sample` | Legal MC 146, Legal NLI 150, Vi-SQuAD 200, Vi-DROP 200, ViBidLQA Test 603; tổng 1.299 item từ frozen main v1; không chạy lại VMLU |
+| `manifest` | Parent `data/vi_multimodel_v1/main_v1.json`, sha256 `0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551`; derived sha256 `c364a66e5862bab3ea81eb93e87421aa5bac2ac15203b1a258adebbd8907dcc8` |
+| `model / API` | Qwen3.5-9B-65K · `iec/Qwen3.5-9B-65K` · IEC internal Chat Completions; credential đọc lúc execute |
+| `harness / prompt` | OMP JSON, 4 worker, một process/item; tools none; system prompt `Answer the user's question.`; frozen v1 prompts byte-identical với MC-53–MC-55; HOME tạm và absolute agent dir riêng |
+| `reasoning / sampling` | Model reasoning bật, `--thinking auto`, temperature 1.0 explicit, không gửi seed; cùng cấu hình danh nghĩa với các model Go, không giả định provider diễn giải auto giống nhau |
+| `output cap / timeout` | MC/NLI 4.096, reading 2.048; 300 giây/item + 60 giây process slack; SDK retries 0 |
+| `scoring / recovery` | Frozen v1 MC parser; reading EM + Vietnamese token-F1 và legacy metrics; đáp án không parse giữ trong mẫu số; --resume chỉ gọi lại request chưa complete, không tự retry đáp án model; score khi đủ coverage |
+| `gold caveat` | Reading-400 dùng gold user-reviewed, có đáp án kế thừa từ model; lexical metrics không thay thế đánh giá đúng nghĩa |
+| `budget guard` | $1 internal guard mặc định; tariff IEC chưa khai báo, không coi $0 preflight là chi phí hạ tầng bằng 0 |
+| `launcher / output` | `code_benchmark/run_qwen_matched_main.py`; `all_res/qwen_matched_mc72/main/qwen3-5-9b-65k/`; giữ nguyên MC-56 và MC-70; không upload hoặc tự xuất điểm lên dashboard |
 
 ## Quy tắc dùng card
 

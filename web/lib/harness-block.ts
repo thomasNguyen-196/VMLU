@@ -42,6 +42,24 @@ export interface HarnessRow {
   server_score?: number;
   server_correct?: number;
   server_total?: number;
+  /** The REAL accuracy for V-Bench MC's 12 domains (MC-48), aggregated over the
+   *  per-domain rows the site returned. This is the only number in the block
+   *  that answers "did the model get more answers wrong" — `arm_b` is AGREEMENT
+   *  there ("did the agent change the letter") and the two can point opposite
+   *  ways: MiMo lost 22.39 points of agreement while GAINING 2.12 accuracy.
+   *  Named `server_mc_*`, never `server_*`: that name is the function-calling
+   *  track's trio, and reusing it would invite comparing two different scales. */
+  server_mc_score?: number;
+  server_mc_correct?: number;
+  server_mc_total?: number;
+  /** Per-domain server accuracy, so the breakdown table can show each domain's
+   *  real delta beside its agreement delta. */
+  server_mc_domains?: Record<string, number>;
+  /** arm A's own server accuracy for the same cell — needed because a harness
+   *  row's own `server_mc_*` is arm B's. */
+  arm_a_server_mc_score?: number;
+  arm_a_server_mc_correct?: number;
+  arm_a_server_mc_total?: number;
   blanks: number;
 }
 
@@ -96,6 +114,23 @@ export interface HarnessBreakdownGroup {
   ci95_low: number;
   ci95_high: number;
   mcnemar_p: string;
+  /** V-Bench MC only (MC-48): the real server accuracy for THIS domain. Without
+   *  it the domain table shows agreement alone, which is how "-40.89 at logics"
+   *  got read as a 40-point loss when the true delta was -4.88. */
+  server_mc_arm_a?: number;
+  server_mc_arm_b?: number;
+  server_mc_delta?: number;
+}
+
+/** What a metric measures, in the reader's terms. The page renders this next to
+ *  every table, because `agreement` and `valid_rate` both read like a score to
+ *  anyone who has just seen an accuracy, and neither is one. `not_a_score` marks
+ *  the two that must never be read as accuracy — and it is also why those rows
+ *  stay out of any range the prose calls "điểm" (see the builder's `insight`). */
+export interface HarnessMetricNote {
+  unit: string;
+  not_a_score: boolean;
+  what: string;
 }
 
 export interface HarnessBreakdown {
@@ -105,7 +140,12 @@ export interface HarnessBreakdown {
   model: string;
   dataset: string;
   dataset_label: string;
+  /** Canonical metric name. `agreement` and the CSV's machine spelling
+   *  `agreement_with_arm_A` are the SAME measurement — the builder aliases them
+   *  so the note lookup cannot miss and render "(?)" on the one metric most
+   *  likely to be misread. `metric_raw` below is the verbatim CSV value. */
   metric: string;
+  metric_raw?: string;
   groups: HarnessBreakdownGroup[];
 }
 
@@ -221,6 +261,9 @@ export interface HarnessBlock {
   speed: HarnessSpeedRow[];
   secondary_metrics: HarnessSecondaryRow[];
   repeatability: HarnessRepeatRow[];
+  /** Per-metric plain-language note. Present since MC-48; an older block lacks it
+   *  and the page falls back to a generic warning (never to silence). */
+  metric_note?: Record<string, HarnessMetricNote>;
   /** Per-stratum paired cuts (1.2). Optional like secondary_metrics: an older
    *  block predates it, but when present every group must add up. */
   breakdown?: HarnessBreakdown[];
@@ -280,6 +323,47 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
       }
       if (Math.abs(row.server_score! - (100 * row.server_correct!) / row.server_total!) > 0.02) {
         fail(`${row.arm}/${row.dataset}: server_score ${row.server_score} ≠ 100·correct/total`);
+      }
+    }
+    // The MC trio obeys the same arithmetic. It is checked SEPARATELY from the
+    // agentic trio above on purpose: the two tracks are different measurements on
+    // different item sets, so a validator that pooled them would only ever be
+    // able to check one at a time.
+    const mcTrio = [row.server_mc_score, row.server_mc_correct, row.server_mc_total];
+    if (mcTrio.some((v) => v != null)) {
+      if (mcTrio.some((v) => v == null)) {
+        fail(`${row.arm}/${row.dataset}: server_mc_score/correct/total phải có đủ cả ba`);
+      }
+      if (row.server_mc_total! <= 0) fail(`${row.arm}/${row.dataset}: server_mc_total phải > 0`);
+      if (row.server_mc_correct! > row.server_mc_total!) {
+        fail(`${row.arm}/${row.dataset}: server_mc_correct > server_mc_total`);
+      }
+      if (Math.abs(row.server_mc_score! - (100 * row.server_mc_correct!) / row.server_mc_total!) > 0.02) {
+        fail(`${row.arm}/${row.dataset}: server_mc_score ${row.server_mc_score} ≠ 100·correct/total`);
+      }
+    }
+    // `arm_a_server_mc_*` exists so a harness row can show BOTH ends. It is
+    // meaningless on a baseline row (a baseline IS arm A), so requiring it there
+    // would be requiring a number that cannot exist.
+    if (row.role === "harness" && row.server_mc_score != null && row.arm_a_server_mc_score == null) {
+      fail(`${row.arm}/${row.dataset}: có server_mc_score cho arm B mà thiếu arm A — ` +
+        `dòng chỉ hiện được một phía, và một phía không phải là một phép so`);
+    }
+  }
+  // `metric_note` (MC-48) is what stops a non-score being read as an accuracy.
+  // If a ladder row uses `agreement` or `valid_rate`, the block MUST carry a note
+  // naming that metric as not-a-score — otherwise the page falls back to a generic
+  // warning, which is exactly the ambiguity this key exists to remove.
+  if (b.ladder.some((r) => r.metric === "agreement" || r.metric === "valid_rate")) {
+    if (!b.metric_note) {
+      fail("block .harness có dòng `agreement`/`valid_rate` nhưng thiếu .metric_note — " +
+        "metric không phải điểm mà không có chú giải thì đọc nhầm là điểm là chắc chắn");
+    }
+    for (const m of ["agreement", "valid_rate"]) {
+      const note = b.metric_note[m];
+      if (b.ladder.some((r) => r.metric === m) && (!note || note.not_a_score !== true)) {
+        fail(`block .harness .metric_note.${m} phải nói not_a_score: true — ` +
+          `đây là metric dễ đọc nhầm thành accuracy nhất`);
       }
     }
   }
@@ -347,6 +431,18 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
         }
         if (g.ci95_low > g.ci95_high) {
           fail(`${d.arm}/${d.dataset}/${g.group}: CI đảo ngược (${g.ci95_low} > ${g.ci95_high})`);
+        }
+        // The per-domain server trio must satisfy the same delta rule, and all
+        // three fields travel together — a half-present trio would silently
+        // render one domain's real delta and another's agreement delta.
+        const gd = [g.server_mc_arm_a, g.server_mc_arm_b, g.server_mc_delta];
+        if (gd.some((v) => v != null)) {
+          if (gd.some((v) => v == null)) {
+            fail(`${d.arm}/${d.dataset}/${g.group}: server_mc_arm_a/arm_b/delta phải có đủ cả ba`);
+          }
+          if (Math.abs(g.server_mc_delta! - (g.server_mc_arm_b! - g.server_mc_arm_a!)) > 0.02) {
+            fail(`${d.arm}/${d.dataset}/${g.group}: server_mc_delta ≠ arm_b − arm_a`);
+          }
         }
       }
     }

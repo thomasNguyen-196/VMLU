@@ -1,0 +1,67 @@
+{
+  "protocol_id": "vi-multimodel-v1",
+  "protocol_version": 1,
+  "execution_transport": "omp",
+  "omp_mode": "json",
+  "omp_system_prompt": "Answer the user's question.",
+  "omp_tools": "none",
+  "omp_session_policy": "one process per item; no persisted session; stable x-opencode-session per item",
+  "omp_max_time_seconds": 300,
+  "temperature": 0.0,
+  "seed": 42,
+  "workers": 4,
+  "max_retries": 0,
+  "request_timeout_seconds": 60,
+  "tool_policy": "none",
+  "reasoning_policy": "provider-native via omp --thinking auto; final answer only; record actual controls and returned model ID",
+  "prompt_version": "vi-multimodel-prompt-v1",
+  "scorer_version": "vi-reading-v2",
+  "gold_version": "reading-400-reviewed-v1",
+  "pilot": {
+    "measurement_card_ids": {
+      "muse-spark-1-3-contributor": "MC-49",
+      "mimo-v2-6-flash": "MC-50",
+      "mimo-v2-5": "MC-51",
+      "qwen3-5-9b-65k": "MC-52"
+    },
+    "max_completion_tokens": {
+      "multiple_choice": 2048,
+      "reading": 2048
+    },
+    "unique_items_per_profile": 180,
+    "repeat_requests_per_profile": 20,
+    "expected_requests_per_profile": 200
+  },
+  "pilot_omp": {
+    "measurement_card_ids": {
+      "qwen3-5-9b-65k": "MC-57"
+    },
+    "max_completion_tokens": {
+      "multiple_choice": 2048,
+      "reading": 2048
+    },
+    "unique_items_per_profile": 180,
+    "repeat_requests_per_profile": 20,
+    "expected_requests_per_profile": 200
+  },
+  "main": {
+    "measurement_card_ids": {
+      "muse-spark-1-3-contributor": "MC-53",
+      "mimo-v2-6-flash": "MC-54",
+      "mimo-v2-5": "MC-55",
+      "qwen3-5-9b-65k": "MC-56"
+    },
+    "max_completion_tokens": {
+      "multiple_choice": 4096,
+      "reading": 2048
+    }
+  },
+  "datasets": [
+    { "id": "vi-multimodel-v1-vmlu-valid", "label": "VMLU valid", "task": "multiple_choice", "n": 744 },
+    { "id": "vi-multimodel-v1-vi-squad-200", "label": "Vi-SQuAD", "task": "reading", "n": 200 },
+    { "id": "vi-multimodel-v1-vi-drop-200", "label": "Vi-DROP", "task": "reading", "n": 200 },
+    { "id": "vi-multimodel-v1-legal-mc-146", "label": "Legal MC", "task": "multiple_choice", "n": 146 },
+    { "id": "vi-multimodel-v1-legal-nli-150", "label": "Legal NLI", "task": "multiple_choice", "n": 150 },
+    { "id": "vi-multimodel-v1-bidlqa-test", "label": "ViBidLQA test", "task": "reading", "n": 603 }
+  ]
+}

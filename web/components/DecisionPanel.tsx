@@ -4,6 +4,7 @@ import { memo } from "react";
 import type { ItemState } from "@/lib/types.ts";
 import type { PeerDecision, RecordFileRow } from "@/lib/records.ts";
 import type { Stats } from "@/lib/review-logic.ts";
+import { fmtInt, fmtPct } from "@/lib/format.ts";
 
 /** Right column: the verdict instruments — decision radios, the correction
  *  field (enabled only on Reject, red-flagged when Reject has no text, because
@@ -55,14 +56,14 @@ function DecisionPanelInner({
               <b className="font-semibold text-ink">{peerLock.reviewer}</b>{" "}
               {peerLock.decision === "accept" ? (
                 <>
-                  đã <b className="text-accept">accept</b> — model answer thành gold:
+                  đã <b className="text-accept">chấp nhận</b> — model answer thành gold:
                   <span className="mt-1.5 block rounded-lg bg-hair/30 px-3 py-2 text-[13.5px] leading-[1.6]">
                     {modelAnswer || "—"}
                   </span>
                 </>
               ) : (
                 <>
-                  đã <b className="text-reject">reject</b> — đáp án sửa thành gold:
+                  đã <b className="text-reject">bác bỏ</b> — đáp án sửa thành gold:
                   <span className="mt-1.5 block rounded-lg bg-hair/30 px-3 py-2 text-[13.5px] leading-[1.6]">
                     {peerLock.c}
                   </span>
@@ -73,7 +74,7 @@ function DecisionPanelInner({
               )}
             </p>
             <p className="mt-3 rounded-lg bg-hair/20 px-3 py-2 text-[12.5px] leading-snug text-ink-2">
-              Câu này khóa chỉ-đọc để hai người không làm trùng (sổ phân công{" "}
+              Câu này ở chế độ chỉ đọc vì đã có người chốt (sổ phân công{" "}
               <code className="font-mono">review_records/</code>). Phím{" "}
               <kbd className="rounded border border-hair bg-card px-1.5 py-0.5 font-mono text-[11px]">t</kbd>{" "}
               nhảy tới câu chưa có người làm.
@@ -86,22 +87,22 @@ function DecisionPanelInner({
         </span>
         <div role="radiogroup" aria-label="Quyết định" className="mt-2.5 grid grid-cols-3 gap-2">
           <SegBtn on={d === "accept"} kind="accept" k="a" onClick={() => onDecision("accept")}>
-            Accept
+            Chấp nhận
           </SegBtn>
           <SegBtn on={d === "reject"} kind="reject" k="r" onClick={() => onDecision("reject")}>
-            Reject
+            Bác bỏ
           </SegBtn>
           <SegBtn on={d === ""} kind="null" k="u" onClick={() => onDecision("clear")}>
             Bỏ trống
           </SegBtn>
         </div>
         <p className="mt-2.5 text-[12px] leading-snug text-ink-3">
-          Accept = đáp án của model thành gold. Reject = đáp án sửa bên dưới thành gold.
+          Chấp nhận = đáp án của model thành gold. Bác bỏ = đáp án sửa bên dưới thành gold.
         </p>
 
         <div className="mt-4">
           <label htmlFor="corr" className="block text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">
-            Đáp án sửa <span className="normal-case tracking-normal">— bắt buộc khi Reject</span>{" "}
+            Đáp án sửa <span className="normal-case tracking-normal">— bắt buộc khi Bác bỏ</span>{" "}
             <kbd className="font-mono text-[11px]">e</kbd>
           </label>
           <textarea
@@ -122,7 +123,7 @@ function DecisionPanelInner({
           />
           {badFlag && (
             <p className="mt-1.5 text-[12px] font-medium text-reject">
-              Reject cần một đáp án sửa — nếu không, gold không suy ra được và câu này rơi vào adjudication.
+              Bác bỏ cần một đáp án sửa — nếu không, gold không suy ra được và câu này rơi vào adjudication.
             </p>
           )}
         </div>
@@ -137,7 +138,7 @@ function DecisionPanelInner({
             rows={3}
             value={st?.n ?? ""}
             onChange={(e) => onNote(e.target.value)}
-            placeholder="Lý do reject, nguồn span… (không bắt buộc)"
+            placeholder="Lý do bác bỏ, nguồn span… (không bắt buộc)"
             className="mt-1.5 w-full resize-y rounded-lg border border-hair bg-card px-3 py-2.5 text-[14px] leading-[1.6] transition-colors placeholder:text-ink-3 focus:border-ink-2 focus:outline-none"
           />
         </div>
@@ -150,16 +151,16 @@ function DecisionPanelInner({
           Tiến độ theo nhóm câu
         </span>
         <div className="mt-2.5 text-[13px]">
-          <StatRow k="toàn bộ" v={`${stats.accept}/${stats.reviewed} · ${stats.reviewed ? Math.round((100 * stats.accept) / stats.reviewed) : 0}%`} />
+          <StatRow k="toàn bộ" v={`${fmtInt(stats.accept)}/${fmtInt(stats.reviewed)} · ${stats.reviewed ? fmtPct((100 * stats.accept) / stats.reviewed, 0) : "0%"}`} />
           {Object.entries(stats.byDataset)
             .sort()
             .map(([k, [a, r]]) => (
-              <StatRow key={k} k={k} v={`${a}/${r} · ${r ? Math.round((100 * a) / r) : 0}%`} />
+              <StatRow key={k} k={k} v={`${fmtInt(a)}/${fmtInt(r)} · ${r ? fmtPct((100 * a) / r, 0) : "0%"}`} />
             ))}
           {Object.entries(stats.byStratum)
             .sort()
             .map(([k, [a, r]]) => (
-              <StatRow key={k} k={k} v={`${a}/${r} · ${r ? Math.round((100 * a) / r) : 0}%`} muted />
+              <StatRow key={k} k={k} v={`${fmtInt(a)}/${fmtInt(r)} · ${r ? fmtPct((100 * a) / r, 0) : "0%"}`} muted />
             ))}
         </div>
       </div>
@@ -199,7 +200,7 @@ function DecisionPanelInner({
                   </li>
                 ) : (
                   <li key={f.file}>
-                    <code className="font-mono">{f.file}</code> — {f.annotator}: {f.decided} câu đã chốt
+                    <code className="font-mono">{f.file}</code> — {f.annotator}: {fmtInt(f.decided)} câu đã chốt
                   </li>
                 ),
               )}

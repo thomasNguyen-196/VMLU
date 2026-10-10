@@ -90,3 +90,8 @@ Mongo only for `/benchmark` (`/harness` needs nothing): `docker run -d --name vm
 - **Python `unittest` (stdlib) only** — no pytest/jest/vitest. Main suite `code_benchmark/test_suite.py` (~130 tests/24 classes, tempdirs + MagicMock, offline, root-only package imports) + standalone parity reference `code_benchmark/test_parsing.py` (17 cases, run as script) + `test_score_reading.py` (EM/char-F1). `test_generative*.py` are live-endpoint runners despite `test_` prefix — not CI.
 - **Web `bun:test`** (local-only): `web/lib/harness-block.test.ts`, `insights.test.ts`, `results-api.test.ts` (in-memory fake DB, no Mongo); `TestNextContracts` in `test_suite.py` shells to real `web/lib/slug.ts` + `export-csv.ts` (skips without bun/node≥22).
 - **Gates (`.github/workflows/ci.yml`, PR+push to `main`):** `ruff check .` + `bandit -r code_benchmark -c .bandit.yml -q` (skips `B101` asserts, `B311` seeded sampling by design) + both Python suites exit 0. **No coverage gate** anywhere; style rules, pyright, web build/typecheck/tests, `openspec validate`, and all live benchmark runs are explicitly not gated.
+
+## Codex Skills
+
+- Project skills are exposed through `.agents/skills/`, with each skill linked to its source under `.claude/skills/`. Invoke one directly with `$skill-name`, or let Codex select it from its description.
+- Some source skills name Claude or OpenCode tools and slash commands. Treat those names as workflow intent and use the equivalent Codex capabilities; do not assume tools such as `webfetch`, `Task`, `AskUserQuestion`, or `/opsx:*` exist in Codex.

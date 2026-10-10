@@ -3901,7 +3901,7 @@
     "harness": "omp (Oh My Pi) v18.2.7",
     "condition": "prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo và Qwen-65K: temperature 0 (+ reasoning tắt cho MiMo) được GHIM BẰNG PROXY trong suốt vì omp không gửi được các field đó; sandbox đặt ngoài repo nên không có AGENTS.md nạp vào (MC-29/MC-30).",
     "measurement_card": "MC-15…MC-47",
-    "measurement_card_hash": "bca93fa50bab11bfb0978411a0e45559dfc92a09f7bd73d39664ed5bfe31bf26",
+    "measurement_card_hash": "6a583830d96c7c2e7bcc7635ea48632f713e3c5fe0653b49420db4c666501841",
     "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
     "ladder": [
       {
@@ -4523,6 +4523,23 @@
         "arm_b": 100.0,
         "char_f1": null,
         "blanks": 0,
+        "server_mc_score": 51.15,
+        "server_mc_correct": 2118,
+        "server_mc_total": 4141,
+        "server_mc_domains": {
+          "chemistry": 39.22,
+          "computer_science": 73.4,
+          "culture": 42.86,
+          "dialect": 78.65,
+          "laws": 75.39,
+          "literature": 40.1,
+          "logics": 24.44,
+          "mathematics": 28.0,
+          "medicine": 38.57,
+          "philosophy": 68.06,
+          "physics": 42.86,
+          "psychology": 51.13
+        },
         "role": "baseline",
         "arm_a": 100.0,
         "delta": 0.0,
@@ -4667,6 +4684,26 @@
         "arm_b": 77.61,
         "char_f1": null,
         "blanks": 927,
+        "server_mc_score": 53.27,
+        "server_mc_correct": 2206,
+        "server_mc_total": 4141,
+        "server_mc_domains": {
+          "chemistry": 37.13,
+          "computer_science": 73.94,
+          "culture": 49.77,
+          "dialect": 78.65,
+          "laws": 75.92,
+          "literature": 44.93,
+          "logics": 19.56,
+          "mathematics": 28.0,
+          "medicine": 44.49,
+          "philosophy": 69.96,
+          "physics": 36.05,
+          "psychology": 55.64
+        },
+        "arm_a_server_mc_score": 51.15,
+        "arm_a_server_mc_correct": 2118,
+        "arm_a_server_mc_total": 4141,
         "role": "harness",
         "arm_a": 100.0,
         "delta": -22.39,
@@ -4835,6 +4872,23 @@
         "arm_b": 100.0,
         "char_f1": null,
         "blanks": 0,
+        "server_mc_score": 46.53,
+        "server_mc_correct": 1927,
+        "server_mc_total": 4141,
+        "server_mc_domains": {
+          "chemistry": 39.52,
+          "computer_science": 69.15,
+          "culture": 47.93,
+          "dialect": 59.96,
+          "laws": 60.73,
+          "literature": 41.26,
+          "logics": 23.11,
+          "mathematics": 21.6,
+          "medicine": 36.33,
+          "philosophy": 65.4,
+          "physics": 29.93,
+          "psychology": 48.5
+        },
         "role": "baseline",
         "arm_a": 100.0,
         "delta": 0.0,
@@ -4979,6 +5033,26 @@
         "arm_b": 63.37,
         "char_f1": null,
         "blanks": 1517,
+        "server_mc_score": 37.31,
+        "server_mc_correct": 1545,
+        "server_mc_total": 4141,
+        "server_mc_domains": {
+          "chemistry": 29.94,
+          "computer_science": 58.51,
+          "culture": 31.8,
+          "dialect": 52.31,
+          "laws": 51.31,
+          "literature": 25.29,
+          "logics": 22.67,
+          "mathematics": 17.6,
+          "medicine": 30.41,
+          "philosophy": 58.56,
+          "physics": 25.17,
+          "psychology": 38.72
+        },
+        "arm_a_server_mc_score": 46.53,
+        "arm_a_server_mc_correct": 1927,
+        "arm_a_server_mc_total": 4141,
         "role": "harness",
         "arm_a": 100.0,
         "delta": -36.63,
@@ -5915,6 +5989,7 @@
         "dataset": "reading400",
         "dataset_label": "reading-400 (EM)",
         "metric": "EM",
+        "metric_raw": "EM",
         "groups": [
           {
             "group": "add_sub",
@@ -6036,6 +6111,7 @@
         "dataset": "reading400",
         "dataset_label": "reading-400 (EM)",
         "metric": "EM",
+        "metric_raw": "EM",
         "groups": [
           {
             "group": "add_sub",
@@ -6157,6 +6233,7 @@
         "dataset": "reading400",
         "dataset_label": "reading-400 (EM)",
         "metric": "EM",
+        "metric_raw": "EM",
         "groups": [
           {
             "group": "add_sub",
@@ -6277,7 +6354,8 @@
         "model": "MiMo V2.5",
         "dataset": "vbench_mc",
         "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
-        "metric": "agreement_with_arm_A",
+        "metric": "agreement",
+        "metric_raw": "agreement_with_arm_A",
         "groups": [
           {
             "group": "chemistry",
@@ -6287,7 +6365,10 @@
             "delta": -27.25,
             "ci95_low": -32.04,
             "ci95_high": -22.46,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 39.22,
+            "server_mc_arm_b": 37.13,
+            "server_mc_delta": -2.09
           },
           {
             "group": "computer_science",
@@ -6297,7 +6378,10 @@
             "delta": -9.04,
             "ci95_low": -13.3,
             "ci95_high": -5.32,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 73.4,
+            "server_mc_arm_b": 73.94,
+            "server_mc_delta": 0.54
           },
           {
             "group": "culture",
@@ -6307,7 +6391,10 @@
             "delta": -25.35,
             "ci95_low": -31.34,
             "ci95_high": -19.82,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 42.86,
+            "server_mc_arm_b": 49.77,
+            "server_mc_delta": 6.91
           },
           {
             "group": "dialect",
@@ -6317,7 +6404,10 @@
             "delta": -11.92,
             "ci95_low": -14.77,
             "ci95_high": -9.25,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 78.65,
+            "server_mc_arm_b": 78.65,
+            "server_mc_delta": 0.0
           },
           {
             "group": "laws",
@@ -6327,7 +6417,10 @@
             "delta": -12.57,
             "ci95_low": -17.28,
             "ci95_high": -8.38,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 75.39,
+            "server_mc_arm_b": 75.92,
+            "server_mc_delta": 0.53
           },
           {
             "group": "literature",
@@ -6337,7 +6430,10 @@
             "delta": -25.62,
             "ci95_low": -29.12,
             "ci95_high": -22.3,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 40.1,
+            "server_mc_arm_b": 44.93,
+            "server_mc_delta": 4.83
           },
           {
             "group": "logics",
@@ -6347,7 +6443,10 @@
             "delta": -40.89,
             "ci95_low": -47.56,
             "ci95_high": -34.67,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 24.44,
+            "server_mc_arm_b": 19.56,
+            "server_mc_delta": -4.88
           },
           {
             "group": "mathematics",
@@ -6357,7 +6456,10 @@
             "delta": -38.4,
             "ci95_low": -47.2,
             "ci95_high": -29.6,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 28.0,
+            "server_mc_arm_b": 28.0,
+            "server_mc_delta": 0.0
           },
           {
             "group": "medicine",
@@ -6367,7 +6469,10 @@
             "delta": -27.35,
             "ci95_low": -31.43,
             "ci95_high": -23.27,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 38.57,
+            "server_mc_arm_b": 44.49,
+            "server_mc_delta": 5.92
           },
           {
             "group": "philosophy",
@@ -6377,7 +6482,10 @@
             "delta": -9.51,
             "ci95_low": -12.93,
             "ci95_high": -6.08,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 68.06,
+            "server_mc_arm_b": 69.96,
+            "server_mc_delta": 1.9
           },
           {
             "group": "physics",
@@ -6387,7 +6495,10 @@
             "delta": -30.61,
             "ci95_low": -38.1,
             "ci95_high": -23.13,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 42.86,
+            "server_mc_arm_b": 36.05,
+            "server_mc_delta": -6.81
           },
           {
             "group": "psychology",
@@ -6397,7 +6508,10 @@
             "delta": -21.93,
             "ci95_low": -24.81,
             "ci95_high": -19.17,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 51.13,
+            "server_mc_arm_b": 55.64,
+            "server_mc_delta": 4.51
           }
         ]
       },
@@ -6409,6 +6523,7 @@
         "dataset": "reading400",
         "dataset_label": "reading-400 (EM)",
         "metric": "EM",
+        "metric_raw": "EM",
         "groups": [
           {
             "group": "add_sub",
@@ -6529,7 +6644,8 @@
         "model": "Qwen3.5-9B-65K",
         "dataset": "vbench_mc",
         "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
-        "metric": "agreement_with_arm_A",
+        "metric": "agreement",
+        "metric_raw": "agreement_with_arm_A",
         "groups": [
           {
             "group": "chemistry",
@@ -6539,7 +6655,10 @@
             "delta": -34.43,
             "ci95_low": -39.52,
             "ci95_high": -29.64,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 39.52,
+            "server_mc_arm_b": 29.94,
+            "server_mc_delta": -9.58
           },
           {
             "group": "computer_science",
@@ -6549,7 +6668,10 @@
             "delta": -29.79,
             "ci95_low": -36.17,
             "ci95_high": -23.4,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 69.15,
+            "server_mc_arm_b": 58.51,
+            "server_mc_delta": -10.64
           },
           {
             "group": "culture",
@@ -6559,7 +6681,10 @@
             "delta": -44.24,
             "ci95_low": -50.69,
             "ci95_high": -37.79,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 47.93,
+            "server_mc_arm_b": 31.8,
+            "server_mc_delta": -16.13
           },
           {
             "group": "dialect",
@@ -6569,7 +6694,10 @@
             "delta": -27.76,
             "ci95_low": -31.49,
             "ci95_high": -24.02,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 59.96,
+            "server_mc_arm_b": 52.31,
+            "server_mc_delta": -7.65
           },
           {
             "group": "laws",
@@ -6579,7 +6707,10 @@
             "delta": -25.65,
             "ci95_low": -31.94,
             "ci95_high": -19.9,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 60.73,
+            "server_mc_arm_b": 51.31,
+            "server_mc_delta": -9.42
           },
           {
             "group": "literature",
@@ -6589,7 +6720,10 @@
             "delta": -48.42,
             "ci95_low": -52.41,
             "ci95_high": -44.43,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 41.26,
+            "server_mc_arm_b": 25.29,
+            "server_mc_delta": -15.97
           },
           {
             "group": "logics",
@@ -6599,7 +6733,10 @@
             "delta": -29.33,
             "ci95_low": -35.56,
             "ci95_high": -23.56,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 23.11,
+            "server_mc_arm_b": 22.67,
+            "server_mc_delta": -0.44
           },
           {
             "group": "mathematics",
@@ -6609,7 +6746,10 @@
             "delta": -42.4,
             "ci95_low": -51.2,
             "ci95_high": -33.6,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 21.6,
+            "server_mc_arm_b": 17.6,
+            "server_mc_delta": -4.0
           },
           {
             "group": "medicine",
@@ -6619,7 +6759,10 @@
             "delta": -41.02,
             "ci95_low": -45.31,
             "ci95_high": -36.73,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 36.33,
+            "server_mc_arm_b": 30.41,
+            "server_mc_delta": -5.92
           },
           {
             "group": "philosophy",
@@ -6629,7 +6772,10 @@
             "delta": -29.66,
             "ci95_low": -35.36,
             "ci95_high": -23.95,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 65.4,
+            "server_mc_arm_b": 58.56,
+            "server_mc_delta": -6.84
           },
           {
             "group": "physics",
@@ -6639,7 +6785,10 @@
             "delta": -30.61,
             "ci95_low": -38.1,
             "ci95_high": -23.13,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 29.93,
+            "server_mc_arm_b": 25.17,
+            "server_mc_delta": -4.76
           },
           {
             "group": "psychology",
@@ -6649,7 +6798,10 @@
             "delta": -38.97,
             "ci95_low": -42.36,
             "ci95_high": -35.59,
-            "mcnemar_p": ""
+            "mcnemar_p": "",
+            "server_mc_arm_a": 48.5,
+            "server_mc_arm_b": 38.72,
+            "server_mc_delta": -9.78
           }
         ]
       }
@@ -6746,13 +6898,45 @@
         "n_unparseable": 496
       }
     ],
+    "metric_note": {
+      "accuracy": {
+        "unit": "điểm",
+        "not_a_score": false,
+        "what": "số câu đúng / tổng số câu — có vàng cục bộ nên đây là điểm thật."
+      },
+      "EM": {
+        "unit": "điểm",
+        "not_a_score": false,
+        "what": "exact match trên gold đã hiệu đính — có vàng cục bộ nên đây là điểm thật."
+      },
+      "server_accuracy": {
+        "unit": "điểm",
+        "not_a_score": false,
+        "what": "điểm do máy chủ vbench.ai chấm. KHÔNG có vàng cục bộ nên không kiểm chứng lại được offline; câu không nộp/không trích được vẫn nằm trong mẫu số và bị tính sai."
+      },
+      "valid_rate": {
+        "unit": "tỉ lệ",
+        "not_a_score": true,
+        "what": "tỉ lệ lời gọi hàm khớp schema của chính câu hỏi đó. Đây KHÔNG phải điểm: hợp lệ về cấu trúc không bảo đảm gọi đúng hàm (MC-28 đo chênh 3,4×)."
+      },
+      "agreement": {
+        "unit": "tỉ lệ",
+        "not_a_score": true,
+        "what": "tỉ lệ câu mà agent trả lời GIỐNG HỆT lời gọi trực tiếp trên cùng câu hỏi. Đây KHÔNG phải điểm: nó đo agent có đổi đáp án hay không, chứ không đo đáp án đó tốt hơn hay xấu hơi — đổi sang chữ sai vẫn là đổi. Điểm thật của 12 domain do máy chủ vbench.ai chấm, xem cột `Điểm server`."
+      },
+      "agreement_with_arm_A": {
+        "unit": "tỉ lệ",
+        "not_a_score": true,
+        "what": "tỉ lệ câu mà agent trả lời GIỐNG HỆT lời gọi trực tiếp trên cùng câu hỏi. Đây KHÔNG phải điểm: nó đo agent có đổi đáp án hay không, chứ không đo đáp án đó tốt hơn hay xấu hơi — đổi sang chữ sai vẫn là đổi. Điểm thật của 12 domain do máy chủ vbench.ai chấm, xem cột `Điểm server`."
+      }
+    },
     "insight": {
-      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm; Qwen3.5-9B-65K -15.75…-1.37 điểm. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/3 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
+      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm; Qwen3.5-9B-65K -15.75…-1.37 điểm. Phạm vi này chỉ gồm 4 tập có điểm thật (bidlqa_val, legal_mc, legal_nli, reading400) và KHÔNG gồm V-Bench MC (trùng khớp, không phải điểm) và V-Bench agentic (validity) — dải Δ ở đây không nói gì về V-Bench. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/3 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
       "claims": [
         {
           "id": "penalty:MiMo V2.5",
           "title": "MiMo V2.5: đi qua tiến trình agent KHÔNG làm giảm điểm",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch có Δ từ +0.00 đến +7.00 điểm trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400), tức không tìm thấy khoản phạt nào ở đây. Trong 4 phép so sánh đó, 1 phép có khoảng tin cậy 95% loại trừ 0; 3 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch có Δ từ +0.00 đến +7.00 điểm trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400), tức không tìm thấy khoản phạt nào ở đây. Trong 4 phép so sánh đó, 1 phép có khoảng tin cậy 95% loại trừ 0; 3 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi. Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`).",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
@@ -6775,7 +6959,7 @@
         {
           "id": "penalty:Qwen3.5-9B-28K",
           "title": "Qwen3.5-9B-28K: chi phí của việc đưa một prompt qua tiến trình agent",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 7 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0.",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 7 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0. Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`).",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
@@ -6798,7 +6982,7 @@
         {
           "id": "penalty:Qwen3.5-9B-65K",
           "title": "Qwen3.5-9B-65K: chi phí của việc đưa một prompt qua tiến trình agent",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 9 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0; 2 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi.",
+          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 9 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0; 2 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi. Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`).",
           "evidence": [
             {
               "label": "Δ nhỏ nhất",
@@ -6964,6 +7148,18 @@
         },
         {
           "model": "MiMo V2.5",
+          "dataset": "vbench_mc_accuracy",
+          "dataset_label": "V-Bench MC 12 domain — điểm máy chủ (KHÔNG phải trùng khớp)",
+          "metric": "server_accuracy",
+          "n": 4141,
+          "no_harness": 51.15,
+          "with_harness": 53.27,
+          "delta": 2.12,
+          "b_blanks": 927,
+          "server_scored": true
+        },
+        {
+          "model": "MiMo V2.5",
           "dataset": "bidlqa_val",
           "dataset_label": "ViBidLQA val (EM)",
           "metric": "EM",
@@ -7050,7 +7246,7 @@
           "model": "Qwen3.5-9B-28K",
           "dataset": "vbench_agentic",
           "dataset_label": "V-Bench function-calling (điểm máy chủ)",
-          "metric": "accuracy",
+          "metric": "server_accuracy",
           "n": 1000,
           "no_harness": 39.7,
           "with_harness": 30.8,
@@ -7093,6 +7289,18 @@
           "delta": -14.5,
           "a_blanks": 0,
           "b_blanks": 0
+        },
+        {
+          "model": "Qwen3.5-9B-65K",
+          "dataset": "vbench_mc_accuracy",
+          "dataset_label": "V-Bench MC 12 domain — điểm máy chủ (KHÔNG phải trùng khớp)",
+          "metric": "server_accuracy",
+          "n": 4141,
+          "no_harness": 46.53,
+          "with_harness": 37.31,
+          "delta": -9.22,
+          "b_blanks": 1517,
+          "server_scored": true
         },
         {
           "model": "Qwen3.5-9B-65K",
@@ -7768,7 +7976,8 @@
       "Số arm A mang hash measurement card cũ; các card mới thêm sau khi chấm.",
       "MC-29: sandbox từng mặc định nằm TRONG repo, nên omp nạp toàn bộ AGENTS.md của chính repo này (27.501 ký tự, ~7k token) vào system prompt của MỌI item tới MC-28. Nhãn \"scaffold sạch\" của các arm cũ nghĩa là sạch persona/tool, không có nghĩa là sạch chỉ dẫn dự án. Ablation trên MiMo (cùng arm, khác vị trí sandbox): +7.003 token/câu, Δ +0,68 điểm — tốn tiền, không tốn điểm.",
       "omp KHÔNG gửi temperature và reasoning_effort (bắt bằng proxy; `options:` trong models.yml bị bỏ qua im lặng). Các card ghi \"temperature 0\" là đúng cho arm A nhưng SAI cho mọi arm B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
-      "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên cùng câu hỏi. Điểm V-Bench thật do máy chủ chấm; ta không có vàng cục bộ.",
+      "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên cùng câu hỏi — nó đo agent có ĐỔI đáp án, không đo đáp án đó tốt hơn hay xấu hơi. Điểm thật của 12 domain do máy chủ vbench.ai chấm (MC-48) và nằm ở cột `Điểm server`; hai số này có thể VÁNG DẤU: MiMo giảm 22,39 điểm trùng khớp nhưng TĂNG 2,13 điểm accuracy thật. Đừng đọc Δ của dòng agreement như Δ điểm.",
+      "`valid_rate` (V-Bench agentic) cũng không phải điểm, và nhỏ hơn nhiều so với thiệt hại thật: MC-28 đo validity −2,60 trong khi điểm máy chủ là −8,90 (chênh 3,4×), vì phần lớn lỗi là gọi đúng hàm sai tham số — thứ validator schema không bắt được.",
       "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, 2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi cổng ngoài sập cert.",
       "Các arm F5/F7/F8 và T65r2/T65r3 chỉ chạy legal_mc (146 câu, một miền). Đọc dải Δ của chúng như một kết luận về 58 môn VMLU là không có cơ sở.",
       "Arm T65 GỐC không được gộp với hai lặp của nó, dù cùng nhãn điều kiện: proxy log của lần chạy gốc ghi system prompt dài 690 ký tự, còn hai lặp dài 745 (MC-47). Shape thật của T65 gốc chưa xác định, nên nó không xuất hiện trong bảng sàn nhiễu.",
