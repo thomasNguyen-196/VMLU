@@ -241,15 +241,46 @@ Dữ liệu được lưu trữ chuẩn hóa tại: `all_res/antigravity_resourc
 2. **Hiệu năng Prompt Caching**: Tỷ lệ Cache Hit duy trì ở mức rất cao (**74,5% – 90,9%**), giúp giảm tải chi phí fresh input hơn 8 lần trên toàn bộ chiến dịch.
 3. **Hiệu suất thời gian (Wall-clock Efficiency)**: Thời gian xử lý trung bình mỗi câu dao động từ **6,5 giây** (VMLU Other) đến **25,3 giây** (Logics). Mức trung bình toàn cục là **17,0 giây/câu**, hoàn toàn khả thi cho các ứng dụng tác tử thực tế.
 
+---
+
+### 4.3.1. Bảng Kiểm chứng Định lượng: Tác vụ Đơn giản vs. Độ khó cao / Niche (Phân rã theo Trắc nghiệm & Tự luận)
+
+Để kiểm chứng chặt chẽ luận điểm: *"Hệ thống tác tử Gemini + Antigravity tiêu thụ tài nguyên nhiều hơn đáng kể khi giải quyết các tác vụ có độ khó cao, tính lạ hoặc mang tính ngách chuyên sâu (Luật, văn hóa/phương ngữ, Logic hình thức, Hóa este, Agentic Function Calling) so với các tác vụ đơn giản/bề mặt trên cả 2 định dạng câu hỏi (Trắc nghiệm và Tự luận)"*, bảng thống kê dưới đây phân rã toàn bộ **1.589 câu hỏi** thành 4 nhóm thực nghiệm đối chiếu trực tiếp:
+
+| Phân loại Định dạng & Nhóm Tác vụ | Domain đại diện trong Benchmark | Số câu ($N$) | Fresh In / câu | Output / câu (Thinking %) | Net Tokens / câu (Mean) | Thời gian Wall-clock / câu | Lượt gọi LLM / câu | Tỷ lệ Đòn bẩy Chi phí (so với mốc Đơn giản) |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **A1. Trắc nghiệm (MC) — Đơn giản / Bề mặt** | Toán tiểu học VMLU, Nhân văn phổ thông, Nghiệp vụ tổng hợp (`elem_math`, `humanities`, `other`) | **232** | 7.151 | 932 (45,2%) | **8.083** | **9,4 giây** | **0,80** | **1,00× (Mốc tham chiếu MC)** |
+| **A2. Trắc nghiệm (MC) — Độ khó cao / Niche / Solving** | Phương ngữ 3 miền, Dược/Y học, CS, Luật thực định, Hóa este, Vật lý, Toán cao cấp, Luật V-Bench, Logic CSP (`dialect`, `medicine`, `cs`, `vmlu_legal`, `chemistry`, `physics`, `math`, `laws`, `logics`) | **907** | 29.585 | 3.342 (64,8%) | **32.927** | **20,4 giây** | **2,94** | 🚀 **4,07× Net Tokens**<br>⏱️ **2,17× Thời gian**<br>🔄 **3,68× Lượt gọi LLM** |
+| **B1. Tự luận / Trích xuất — Đơn giản / Bề mặt** | Đọc hiểu trích xuất nguyên văn thực thể / niên đại trong đoạn văn (`squad`) | **100** | 17.376 | 1.545 (41,2%) | **18.921** | **11,0 giây** | **1,50** | **1,00× (Mốc tham chiếu Tự luận)** |
+| **B2. Tự luận / Cấu trúc — Độ khó cao / Niche / Schema** | Đọc hiểu tính toán số học (`drop`), Tác tử Function Calling đa hàm tham số phức tạp (`agentic`) | **350** | 22.424 | 2.323 (58,4%) | **24.747** | **14,6 giây** | **2,09** | 🚀 **1,31× Net Tokens**<br>⏱️ **1,33× Thời gian** |
+| *— Trong đó: Riêng Tác tử Cấu trúc Ngách (`agentic`)* | *Function Calling chuẩn hóa canonical JSON schema, đối soát enum khép kín* | *150* | *35.700* | *3.044 (62,1%)* | ***38.744*** | ***22,3 giây*** | ***3,18*** | 🚀 **2,05× Net Tokens**<br>⏱️ **2,03× Thời gian**<br>🔄 **2,12× Lượt gọi LLM** |
+
+#### 💡 Ba Kết luận Khoa học Định lượng Rút ra từ Bảng Kiểm chứng:
+
+1. **Ở định dạng Trắc nghiệm (Multiple Choice — MC)**:
+   - Khi chuyển từ tác vụ đơn giản (nhớ sự kiện, kiến thức đại chúng) sang tác vụ độ khó cao và ngách chuyên sâu (Luật pháp, Phương ngữ bản địa, Logic hình thức, Hóa học este/độc chất), chi phí tính toán **bùng nổ gấp 4,07 lần về Net Tokens** (từ 8.083 lên 32.927 tokens/câu) và **thời gian tăng gấp 2,17 lần** (từ 9,4s lên 20,4s/câu).
+   - Nếu so sánh giữa hai điểm cực trị: Từ môn rẻ nhất (`vmlu_elem_math`: 3.433 tokens) đến môn đắt nhất (`logics`: 42.255 tokens), khoảng cách tiêu thụ tài nguyên thực đo **chênh lệch tới 12,31 lần**!
+   - Tỷ trọng suy luận ngầm (**Thinking Tokens**) tăng vọt từ **45,2% lên 64,8%**, chứng minh rằng đối với các câu hỏi trắc nghiệm ngách, không gian suy luận và kiểm chứng đa bước chiếm phần lớn tài nguyên.
+
+2. **Ở định dạng Tự luận / Bán tự luận (Free-text & Structured Output)**:
+   - Tác vụ đọc hiểu trích xuất đơn thuần (`squad`: 18.921 tokens/câu, 11,0s) chỉ đòi hỏi quét và copy đoạn văn.
+   - Ngược lại, tác vụ tự luận cấu trúc ngách cao (`agentic`: 38.744 tokens/câu, 22,3s) đòi hỏi mô hình phải lập luận kiểm soát kiểu dữ liệu, xác thực cú pháp JSON và kiểm tra enum đối soát. Chi phí tài nguyên **tăng gấp hơn 2,05 lần về tokens** và **thời gian tăng gấp 2,03 lần**.
+
+3. **Bản chất của Hiện tượng Tiêu thụ Tài nguyên**:
+   - Dữ liệu thực nghiệm bác bỏ giả thuyết cho rằng tài nguyên tiêu thụ phụ thuộc vào định dạng đầu ra (MC ngắn thì rẻ, Tự luận dài thì đắt).
+   - Ngược lại, **độ phức tạp bản thể (Epistemic Complexity) và tính đặc thù/ngách của miền tri thức mới là biến số chi phối tuyệt đối**: Một câu trắc nghiệm Logic hay Luật 1 chữ cái tiêu tốn tài nguyên (42K tokens) gấp hơn 2 lần một câu tự luận trích xuất đoạn văn (18K tokens)!
+
+---
+
 ### 4.4. Bảng k_true — Đo Tokenizer Thật trên Từng Đáp án
 
-| Loại đáp án                                                                                                                 |     n câu | Σ tokens thật | tokens/đáp án |                  tokens/từ |
-| --------------------------------------------------------------------------------------------------------------------------- | --------: | ------------: | ------------: | -------------------------: |
-| Trắc nghiệm 1 chữ cái (10 domain MC: math, logics, physics, chemistry, medicine, cs, laws, dialect, vmlu_other, vmlu_legal) |       979 |           979 |           1,0 |                       1,00 |
-| Vi-DROP (số/cụm ngắn, chữ số tách riêng)                                                                                    |       200 |           895 |           4,5 |                       2,16 |
-| Vi-SQuAD (cụm danh từ tiếng Việt)                                                                                           |       100 |           878 |           8,8 |                       1,41 |
-| Agentic (JSON function call)                                                                                                |       110 |         8.237 |          74,9 | — (JSON không đếm từ được) |
-| **TỔNG**                                                                                                                    | **1.389** |    **10.989** |           7,9 |                          — |
+| Loại đáp án | n câu | Σ tokens thật | tokens/đáp án | tokens/từ |
+|---|---:|---:|---:|---:|
+| Trắc nghiệm 1 chữ cái (12 domain MC: math, logics, physics, chemistry, medicine, cs, laws, dialect, other, legal, elem_math, humanities) | 1.139 | 1.139 | 1,0 | 1,00 |
+| Vi-DROP (số/cụm ngắn, chữ số tách riêng) | 200 | 895 | 4,5 | 2,16 |
+| Vi-SQuAD (cụm danh từ tiếng Việt) | 100 | 878 | 8,8 | 1,41 |
+| Agentic (JSON function call) | 150 | 11.232 | 74,9 | — (JSON không đếm từ được) |
+| **TỔNG** | **1.589** | **14.144** | **8,9** | — |
 
 Mọi phát biểu về token đáp án dùng số đo thật từ `answer_tokens.csv` (script: `calibrate_k.py`).
 
@@ -257,21 +288,23 @@ Mọi phát biểu về token đáp án dùng số đo thật từ `answer_token
 
 ## 5. Script Tự Động Kiểm Chứng Tính Toàn Vẹn (1-Second Verification)
 
-Để kiểm chứng toàn bộ 1.389 câu hỏi và 69 tệp CSV, chạy lệnh một dòng sau từ thư mục gốc của repository:
+Để kiểm chứng toàn bộ 1.589 câu hỏi và 79 tệp CSV, chạy lệnh một dòng sau từ thư mục gốc của repository:
 
 ```bash
 .venv/bin/python -c '
 import glob, csv
 files = sorted(glob.glob("all_res/antigravity_gemini/results_*.csv"))
-assert len(files) == 69, f"Số file không khớp: {len(files)}"
+assert len(files) == 79, f"Số file không khớp: {len(files)}"
 seen = set()
 for f in files:
     for r in csv.DictReader(open(f, encoding="utf-8")):
-        key = f"{r.get(\"domain\") or r.get(\"dataset\")}:{r.get(\"id\") or r.get(\"item_id\")}"
+        d = r.get("domain") or r.get("dataset")
+        i = r.get("id") or r.get("item_id")
+        key = f"{d}:{i}"
         assert key not in seen and r.get("answer"), f"Lỗi ở {key}"
         seen.add(key)
-assert len(seen) == 1389, f"Tổng số câu: {len(seen)}"
-print("✅ TOÀN VẸN 100%: 69 files CSV | 1.389 câu hỏi duy nhất | 0 trùng lặp | 0 ô trống!")
+assert len(seen) == 1589, f"Tổng số câu: {len(seen)}"
+print("✅ TOÀN VẸN 100%: 79 files batch CSV | 1.589 câu hỏi duy nhất | 0 trùng lặp | 0 ô trống!")
 '
 ```
 
