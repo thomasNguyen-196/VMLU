@@ -240,9 +240,12 @@ def convert_md_to_docx(md_path, docx_path):
 
 if __name__ == "__main__":
     src = "vmlu_docs/02_upper_bound_campaign/GITHUB_ISSUE_UPPER_BOUND_18_BATCHES.md"
-    dst1 = "vmlu_docs/02_upper_bound_campaign/Bao_Cao_Upper_Bound_1589_Cau.docx"
-    dst2 = "report_upper_bound_1589_cau.docx"
+    dst1 = "vmlu_docs/02_upper_bound_campaign/Bao_Cao_Upper_Bound_1837_Cau.docx"
+    dst2 = "report_upper_bound_1837_cau.docx"
     convert_md_to_docx(src, dst1)
     import shutil
     shutil.copyfile(dst1, dst2)
-    print(f"Copied to root: {dst2}")
+    # Also update legacy/alias names
+    shutil.copyfile(dst1, "vmlu_docs/02_upper_bound_campaign/Bao_Cao_Upper_Bound_1589_Cau.docx")
+    shutil.copyfile(dst1, "report_upper_bound_1589_cau.docx")
+    print(f"Generated 1837 and updated 1589 docx files.")
