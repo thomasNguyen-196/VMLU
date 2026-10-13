@@ -4,6 +4,14 @@
 
 VMLU (Vietnamese Multitask Language Understanding) — evaluation of Vietnamese language models: the 58-subject, 10,880-question multiple-choice benchmark (ZaloAI-Jaist/VMLU, ACL-2025 paper in repo) plus a **pre-registered 400-question reading-comprehension eval** (issue #3: 200 Vi-SQuAD + 200 Vi-DROP, seed 42). Active work is the reading-eval gold-annotation + human-review pass; the MC pipeline is frozen.
 
+### Active Focus (Nguyễn Quang Tùng — Research & Thesis)
+
+Theo biên bản họp ngày **06/10/2026** (`vmlu_docs/01_thesis_and_proposals/MEETING_NOTE_WEEK_5_06_10_2026.md`):
+- **Phần việc của Quang Tùng**: Phân tích các ngữ cảnh dataset và quan sát dữ liệu tiêu thụ tài nguyên từ Sổ cái thực đo (`all_res/antigravity_resource_ledger/`, 4.461 lượt gọi LLM, 59,07M net tokens) để trích xuất các **INSIGHTS khoa học cho Luận văn tốt nghiệp**.
+- **SSOT của số liệu Naked Baseline (`Qwen3-8-27B Q4_K_M`)**: Hai báo cáo chính thức tại thư mục gốc là **`report_vmlu.pdf`** (03/09/2026) và **`report_vbench.pdf`** (04/09/2026) là **Single Source of Truth (SSOT)** tuyệt đối cho toàn bộ điểm số và phân tích lỗi của mô hình chạy trần (Naked Baseline) trên VMLU và V-Bench. Tuyệt đối KHÔNG lấy các con số suy diễn/ghi lệch trong các file `.md` cũ (ví dụ: trên V-Bench, `laws` đạt 60,73% và `dialect` đạt 59,96% thuộc nhóm Top 4 khá nhất chứ không phải đáy; trên VMLU, Giáo dục mầm non là 30% chứ không phải 42,8%).
+- **Quy tắc định hướng**: Tuyệt đối KHÔNG viết script chạy lại (re-run replication) hay code runner mới khi đã có dữ liệu Ground Truth. Tuyệt đối KHÔNG nhầm sang phần việc của Nguyễn Thanh Tùng (Thanh Tùng phụ trách chạy bảng benchmark đa mô hình tiếng Việt với Qwen 3.5 9B vs MIMO V2.5 Flash trên `oh-my-pi`).
+- Chi tiết steering: xem `vmlu_docs/SESSION_HANDOFF_RESOURCE_BENCHMARK.md` và `vmlu_docs/START_HERE.md`.
+
 ## Architecture & Data Flow
 
 Three independent pipelines, one shared review layer. Contracts are **byte-frozen across surfaces** and asserted by CI.
