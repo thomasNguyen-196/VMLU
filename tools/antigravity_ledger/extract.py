@@ -28,9 +28,7 @@ import glob
 import os
 import re
 import sqlite3
-import sys
 from collections import defaultdict
-from datetime import datetime, timezone
 
 HOME = os.path.expanduser("~")
 CONV_DIR = f"{HOME}/.gemini/antigravity/conversations"
@@ -206,7 +204,7 @@ def load_summaries() -> dict[str, dict]:
     cols = [r[1] for r in con.execute("PRAGMA table_info(conversation_summaries)")]
     out = {}
     for row in con.execute("SELECT * FROM conversation_summaries"):
-        rec = dict(zip(cols, row))
+        rec = dict(zip(cols, row, strict=True))
         out[rec["conversation_id"]] = rec
     con.close()
     return out
@@ -447,7 +445,7 @@ def main() -> None:
 
     net = sum(s["fresh_input"] + s["output"] for s in session_rows)
     cached = sum(s["cache_read"] for s in session_rows)
-    print(f"\n=== ANTIMAGRAVITY RESOURCE LEDGER (campaign-filtered) ===")
+    print("\n=== ANTIMAGRAVITY RESOURCE LEDGER (campaign-filtered) ===")
     print(f"sessions kept: {len(session_rows)} | excluded: {len(excluded_rows)} "
           f"| llm_calls: {len(call_rows)}")
     print(f"fresh_input: {sum(s['fresh_input'] for s in session_rows):,}")

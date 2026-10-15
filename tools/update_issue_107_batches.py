@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Update GITHUB_ISSUE_UPPER_BOUND_18_BATCHES.md to 107 Batches (2,137 questions)."""
 
-import os
 import shutil
 
 MD_CONTENT = """# [Research / Milestone] Upper Bound Ceiling Benchmark across 107 Batches (2,137 Questions): Statistical Stopping Criteria, Stratified Sampling, and Full Agentic Harness Verification

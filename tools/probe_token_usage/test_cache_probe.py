@@ -38,10 +38,10 @@ client = OpenAI(
 )
 
 print("=" * 65)
-print(f"🧪 KIỂM TRA IMPLICIT CONTEXT CACHING TRÊN GEMINI 3.8 FLASH")
+print("🧪 KIỂM TRA IMPLICIT CONTEXT CACHING TRÊN GEMINI 3.8 FLASH")
 print(f"• Endpoint : {BASE_URL}")
 print(f"• Model    : {MODEL}")
-print(f"• Quy tắc Google: Gemini 3.8 Flash yêu cầu tối thiểu 4.096 tokens để bật Cache!")
+print("• Quy tắc Google: Gemini 3.8 Flash yêu cầu tối thiểu 4.096 tokens để bật Cache!")
 print("=" * 65)
 
 # Tạo một đoạn tài liệu dài chuẩn xác khoảng 4.500 - 5.000 tokens
@@ -70,7 +70,7 @@ messages_1 = [
     {"role": "user", "content": "Tóm tắt ngắn gọn trong 1 câu: Tài liệu trên nói về bộ luật nào?"},
 ]
 
-print(f"\n📡 [LẦN 1] Gửi request với prompt dài (~4.500+ tokens) để nạp cache (warm-up)...")
+print("\n📡 [LẦN 1] Gửi request với prompt dài (~4.500+ tokens) để nạp cache (warm-up)...")
 t0 = time.perf_counter()
 try:
     res1 = client.chat.completions.create(
@@ -98,7 +98,7 @@ messages_2 = [
     {"role": "user", "content": "Quan hệ dân sự có yếu tố nước ngoài bao gồm những trường hợp nào? Trả lời thật ngắn gọn."},
 ]
 
-print(f"\n📡 [LẦN 2] Gửi request ngay lập tức với CÙNG tiền tố ngữ cảnh dài để kiểm tra Cache Hit...")
+print("\n📡 [LẦN 2] Gửi request ngay lập tức với CÙNG tiền tố ngữ cảnh dài để kiểm tra Cache Hit...")
 t1 = time.perf_counter()
 try:
     res2 = client.chat.completions.create(
@@ -129,7 +129,7 @@ try:
     if c2 and c2 > 0:
         print(f"🎉 XÁC NHẬN: Cache Hit thành công {c2} tokens! CommandCode forward chuẩn 100%!")
     else:
-        print(f"ℹ️ Cache Hit vẫn bằng 0. (Proxy không chia sẻ cache session hoặc Google chưa kịp cache giữa 2 request độc lập).")
+        print("ℹ️ Cache Hit vẫn bằng 0. (Proxy không chia sẻ cache session hoặc Google chưa kịp cache giữa 2 request độc lập).")
     print("=" * 65)
 
 except Exception as e:

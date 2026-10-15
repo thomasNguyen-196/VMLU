@@ -3,7 +3,6 @@
 import glob
 import json
 import csv
-from pathlib import Path
 
 from code_benchmark.common import SQUAD_DEFAULT, DROP_DEFAULT, MANIFEST_DEFAULT
 from code_benchmark.run_reading_eval import load_manifest, index_sources, join_manifest

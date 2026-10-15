@@ -25,7 +25,6 @@ import glob
 import json
 import os
 import ssl
-import sys
 import time
 import urllib.error
 import urllib.request
@@ -89,7 +88,7 @@ def api_prompt_tokens(content: str, timeout: int = 90) -> int:
         except urllib.error.HTTPError as e:
             code = e.code
             if code in (401, 403):
-                raise SystemExit(f"Error: auth rejected ({code}) — check the API key.")
+                raise SystemExit(f"Error: auth rejected ({code}) — check the API key.") from e
             last = f"HTTP {code}: {e.read()[:120]!r}"
             time.sleep(30 if code == 429 else 5 * attempt)
         except Exception as e:
@@ -110,8 +109,8 @@ def calibrate_accounting() -> int:
             raise SystemExit(f"Error: prompt accounting has a frame now — "
                              f"prompt({content!r})={got}, expected ≤{expect_max}. "
                              "Re-calibrate before trusting any count.")
-    print(f"[calibration] frame-free accounting confirmed (\" \"→1, \"D\"→1, "
-          f"\"24,10%\"→6) → C = 0")
+    print("[calibration] frame-free accounting confirmed (\" \"→1, \"D\"→1, "
+          "\"24,10%\"→6) → C = 0")
     return 0
 
 

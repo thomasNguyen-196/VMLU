@@ -3,7 +3,6 @@
 culture, literature, psychology (100 questions each -> 5 batches of 20).
 """
 import json
-import os
 
 def extract_domain_batches(domain_name, total_target=100, batch_size=20):
     items = []

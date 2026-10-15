@@ -43,7 +43,7 @@ client = OpenAI(
 )
 
 print("=" * 65)
-print(f"🚀 BẮT ĐẦU TEST PROBE TOKEN USAGE & LATENCY")
+print("🚀 BẮT ĐẦU TEST PROBE TOKEN USAGE & LATENCY")
 print(f"• Base URL : {BASE_URL}")
 print(f"• Model    : {MODEL}")
 print("=" * 65)

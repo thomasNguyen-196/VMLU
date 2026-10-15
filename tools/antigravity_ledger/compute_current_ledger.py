@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, glob, sqlite3, json, csv, re
+import os, glob, sqlite3, csv, re
 from collections import defaultdict
 import sys
 
