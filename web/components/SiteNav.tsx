@@ -13,7 +13,7 @@
  * nothing about datasets, models or cards — those belong to the pages.
  */
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const ITEMS = [
   { href: "/", label: "Review", hint: "400 câu đọc hiểu" },
@@ -24,6 +24,7 @@ const ITEMS = [
 
 export default function SiteNav() {
   const path = usePathname() ?? "/";
+  const router = useRouter();
   return (
     <nav
       aria-label="Các mặt phẳng nghiên cứu"
@@ -39,6 +40,19 @@ export default function SiteNav() {
             <Link
               key={it.href}
               href={it.href}
+              scroll={false}
+              onNavigate={(event) => {
+                try {
+                  const saved = sessionStorage.getItem(`vmlu-last-url:${it.href}`);
+                  if (saved && saved !== it.href) {
+                    const url = new URL(saved, window.location.origin);
+                    if (url.origin === window.location.origin && url.pathname === it.href) {
+                      event.preventDefault();
+                      router.push(`${url.pathname}${url.search}`, { scroll: false });
+                    }
+                  }
+                } catch { /* Fall back to the normal link if storage is unavailable. */ }
+              }}
               aria-current={active ? "page" : undefined}
               title={it.hint}
               className={`rounded-lg px-2.5 py-1 text-[12.5px] leading-none transition-colors ${

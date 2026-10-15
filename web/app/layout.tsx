@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import ScrollRestoration from "@/components/ScrollRestoration.tsx";
 import { Be_Vietnam_Pro, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -47,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
       </head>
-      <body className="min-h-full bg-paper text-ink">{children}</body>
+      <body className="min-h-full bg-paper text-ink"><Suspense fallback={null}><ScrollRestoration /></Suspense>{children}</body>
     </html>
   );
 }
