@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-VMLU (Vietnamese Multitask Language Understanding) — evaluation of Vietnamese language models: the 58-subject, 10,880-question multiple-choice benchmark (ZaloAI-Jaist/VMLU, ACL-2025 paper in repo) plus a **pre-registered 400-question reading-comprehension eval** (issue #3: 200 Vi-SQuAD + 200 Vi-DROP, seed 42). Active work is the reading-eval gold-annotation + human-review pass; the MC pipeline is frozen.
+VMLU is a Vietnamese multitask LLM benchmark: 58 subjects, 10,880 MC questions (STEM/Humanities/Social/Other) plus active pre-registered 400-item reading eval (200 Vi-SQuAD + 200 Vi-DROP) and external V-Bench leaderboard arm.
 
 ### Active Focus (Nguyễn Quang Tùng — Research & Thesis)
 
@@ -14,104 +14,92 @@ Theo biên bản họp ngày **06/10/2026** (`vmlu_docs/01_thesis_and_proposals/
 
 ## Architecture & Data Flow
 
-Three independent pipelines, one shared review layer. Contracts are **byte-frozen across surfaces** and asserted by CI.
+Python eval toolkit (`code_benchmark/` package) + Next.js 16 review/results app (`web/`). Three independent inference pipelines share kernel `common.py` / `llm.py` / `checkpoint.py`, one shared human-review layer.
 
-**MC pipeline** (frozen):
-`vmlu_mqa_v1.5/<file>.jsonl` (`id, question, choices[], answer?`) → `code_benchmark/run_mc_eval.py` prompts → OpenAI-compatible endpoint (ThreadPool `--workers`, 30×30s retry, auth fail-fast) → checkpoints `all_res/ollama_result/raw_result_<n>_<model>.csv` → finals `full_evaluation_<model>.csv`, `accuracy_<model>.csv`, root `submission.csv` (`id,answer`; redirect with `--submission-out`).
-Scoring: `detect_scorable` is all-or-none (mixed gold → no scoring, warning); case-insensitive exact letter match; unparseable = incorrect but stays in denominator; subject = id prefix `XX-YYYY` via the in-code `SUBJECTS` dict (**`data/dataset_stat.csv` ordering is different — never use it**); unknown prefixes get an explicit "unknown" bucket.
+- **MC (frozen):** `vmlu_mqa_v1.5/*.jsonl` (`id,question,choices[],answer`) → `run_mc_eval.py` prompts OpenAI-compatible endpoint (`ThreadPool`, 30×30s retry) → `all_res/ollama_result/<model>/raw_result_<n>_<slug>.csv` → `full_evaluation_<model>.csv`, `accuracy_<model>.csv`, `submissions/<model>/submission.csv` (`id,answer`).
+- **Reading-400:** `make_eval_sample.py` → `data/eval_set_manifest.csv` (gold empty, pre-registered) + source JSONs → `run_reading_eval.py` (open-book Vietnamese prompt) → `reading_result_<n>_<slug>.csv` → `reading_answers_<model>.csv` (free text; EM/char-F1 scored later via `score_reading_eval.py`).
+- **V-Bench (external, no local gold):** `v_bench/public-test.jsonl` → `run_vbench_eval.py` `--track mc|agentic` → `vbench_result_<n>_<slug>.csv` → `submissions/<model>/submission_vbench_<model>.jsonl` (server-side scoring at vbench.ai).
+- **Harness arm:** `run_harness_eval.py run|compare|speed` replays same items through `omp` coding agent with byte-identical prompts. One condition per `--label` slug.
+- **Review/display:** `build_review_ui.py` joins workbook + answers → `review_ui.html` + tracked `web/data/review-blob.json`; `build_dashboard_*.py` patches one key of `web/public/benchmark-data.json` → `web/lib/*.ts` validators → `/harness`, `/benchmark` pages.
 
-**Reading pipeline**:
-`make_eval_sample.py` → `data/eval_set_manifest.csv` (6 cols; `gold_answer` ships empty — pre-registration) → `run_reading_eval.py` (manifest + source JSON join with question-drift fail-fast; open-book Vietnamese prompt, 48-token budget; checkpoints `reading_result_<n>_<model>.csv`) → `reading_answers_<model>.csv` (free text; no scoring here — EM/char-F1 is a later step).
-
-**V-Bench pipeline** (external leaderboard, vbench.ai release v2026.03.28):
-`v_bench/public-test.jsonl` (gitignored download; `id:int, question, choices[], function[], domain`) → `run_vbench_eval.py` → `data/submission_vbench_<model>.jsonl` uploaded at vbench.ai (server-side scoring, no gold, aggregate-only). Tracks: `mc` (letter answer via the FROZEN shared `build_prompt`/`extract_answer`, clamped to the row's choice count) + `agentic` (`[{"<fn>":{args}}]` validated against the row's own schemas — required present, enum verbatim, unknown/hallucinated fields rejected; invalid calls are dropped, never guessed — braceless `["fn":{…}]` output is rebracketed but its content is never altered). **Prompt conditions** (`--prompt-style`, agentic): `minimal` (default; honest condition — question verbatim + row schema + official format line, nothing else) vs `detailed` (role+rules+example+no-CoT variant); keep one condition per `--model` slug so checkpoints never mix — richer prompting measures the prompt, and few-shot/CoT must stay controlled ablations. Safety rows are skipped (not scored this release). Checkpoints `vbench_result_<n>_<model>.csv`; `--submission-only` rebuilds the jsonl from the latest checkpoint; `--resume --retry-unparsed` re-calls ONLY rows unparsed under the current parser; `--resume --guided` re-asks unparsed agentic rows as a numbered interview (model answers by number, tool assembles JSON, transcript in `raw_response`; `load_checkpoint` must NOT re-derive guided rows from their transcript) — guided answers are a THIRD elicitation condition and must be labeled as such when scoring/ablicting. Still-failing rows go verbatim with a diagnosis to `vbench_failures_<model>.csv` (deleted on a clean pass) — a wrong model answer stays wrong, unshipped but logged.
-
-**Review layer** (one data contract, three surfaces — Python builder, Next app, static fallback):
-`build_review_ui.py` joins workbook + answers (fail-fast: unknown keys, coverage unless `--allow-partial`) → `review_ui.html` (offline fallback, localStorage) and `web/data/review-blob.json` (**tracked**; Next app input). Decision semantics: accept ⇒ model answer becomes gold; reject ⇒ reviewer's correction (reject without correction is flagged, lands in adjudication). State autosaves to gitignored `review_state/<slug(reviewer)>__<slug(model)>.json`; exporting CSV publishes the 9-column record to tracked `review_records/review_<slug>_<slug>.csv` (peer locks in split-400). Merge: `export_annotation_workbooks.py review --a --b [--apply]` (both-reviewer intersection; drift/difference → adjudication) or `merge-split` (union; N≥1 reviewer — a fully-owned split is legal).
-The blind `merge` workflow (`annotation_workbooks/`) is the separate stricter-IAA path — **blind books never contain model answers**; do not `--apply` review golds into the manifest while annotation is still running (print reminder in `build_review_ui.py`).
+Byte-frozen contracts throughout: `build_prompt`/`extract_answer`, `slug()`, `REVIEW_COLS`, `SCHEMA_VERSION=1`, `itemKey=dataset:item_id`. Fail-fast `SystemExit` on drift; never guess.
 
 ## Key Directories
 
-- `code_benchmark/` — all pipeline Python (a real package: `__init__.py`). Shared kernel: `common.py` (stdlib-only — slug, `dataset:item_id` key, endpoint/argparse/logging resolution, atomic CSV; the two dependency-free files run through it on system python3), `llm.py` (client + retry + probe), `checkpoint.py` (per-model checkpoint naming/lookup). Runners: `run_mc_eval.py` (MC pipeline, ex `test_ollama.py`) + `run_reading_eval.py` + `run_vbench_eval.py` (V-Bench public test, imports the frozen MC prompt/parser). `legacy/` is frozen history (openai==0.28.0 / transformers+GPU; excluded from every linter, not in CI) — leave it alone.
-- `web/` — Next.js 16 review app (own `web/AGENTS.md`). App code in `components/`, concurrency-free logic in `lib/`, disk APIs in `app/api/`.
-- `vmlu_mqa_v1.5/`, `vmlu_squad_v1/`, `vmlu_drop_v1/` — gitignored datasets (unpacked from tracked `vmlu_datasets.zip`). SQuAD: `{id, question, context}`; DROP: `{question_id, category, context, question}`; MQA: `{id, question, choices[], answer}`.
-- `v_bench/` — gitignored V-Bench public-test download from vbench.ai (re-fetchable; source of truth is the site).
-- `data/` — repo-root data files, no longer scattered. **Tracked contracts:** `eval_set_manifest.csv` (pre-registered 400), `dataset_stat.csv` (source snapshot; its subject ordering is NOT the code's), `example_submission.csv` (VMLU upload template). **Gitignored/derived:** `review_gold_agreed.csv`/`review_adjudication.csv`/`gold_agreed.csv`/`adjudication.csv` (regenerate via `export_annotation_workbooks.py`), `submission.csv` + `submission_vbench_*.jsonl` (runner output), `sample_submission.jsonl` (V-Bench official sample).
-- `all_res/ollama_result/`, `annotation_workbooks/`, `review_state/`, `logs/` — gitignored local artifacts.
-- `review_records/` — **tracked** shared sync log (the durable record for split-400; commit + push to hand work over).
-- `openspec/` — spec-driven design docs; canonical spec `openspec/specs/eval-scoring/spec.md`. `docs/agents/` — agent workspace conventions.
+- `code_benchmark/` — all pipelines: `run_*` runners, `make_*` samplers/adapters, `score_*` scorers, `build_*`/`export_*` dashboard/review builders, `common.py`/`llm.py`/`checkpoint.py` kernel. `legacy/` is frozen history — leave alone.
+- `web/` — Next.js 16 review app: `app/` pages + `app/api/` disk APIs, `lib/` concurrency-free logic + validators, `components/` UI.
+- `vmlu_mqa_v1.5/`, `vmlu_squad_v1/`, `vmlu_drop_v1/`, `v_bench/` — gitignored datasets (unpacked from `vmlu_datasets.zip`; V-Bench re-fetchable).
+- `data/` — tracked contracts: `eval_set_manifest.csv` (pre-reg 400, never regenerate casually), `example_submission.csv`, `sample_submission.jsonl`; gitignored `data/gold/`.
+- `submissions/<model>/`, `all_res/ollama_result/<model>/`, `logs/<model>/` — gitignored per-model outputs (checkpoints + finals + uploadables + logs).
+- `annotation_workbooks/`, `review_state/` — gitignored local artifacts; `review_records/` — tracked shared sync log (commit + push to hand over).
+- `openspec/specs/` — canonical specs (`eval-scoring/spec.md` authoritative); `docs/`, `docs/agents/`, `measurement_card.md` (MC-n cards), `tools/html2pdf_server.py` (loopback PDF dev service).
 
 ## Development Commands
 
-All from repo root with `.venv/bin/python` unless noted:
+Run from repo root with `.venv/bin/python` (no build step):
 
 ```bash
-# MC evaluation (gold answers required for scoring: use all_gold.jsonl / dev / valid)
+# MC / reading / V-Bench
 python code_benchmark/run_mc_eval.py --folder vmlu_mqa_v1.5 --file all_gold.jsonl --workers 4 [--resume]
-
-# Reading comprehension inference
 python code_benchmark/run_reading_eval.py --workers 4 [--resume]
+python code_benchmark/run_vbench_eval.py --workers 4 [--resume] [--track mc|agentic] [--submission-only|--retry-unparsed|--guided]
 
-# V-Bench public test -> uploadable submission (no gold; scoring is server-side)
-python code_benchmark/run_vbench_eval.py --workers 4 [--resume] [--track mc|agentic] [--submission-only]
-python code_benchmark/run_vbench_eval.py --resume --retry-unparsed   # re-call only unparsed rows
-python code_benchmark/run_vbench_eval.py --resume --guided           # numbered-interview retry (agentic)
-python code_benchmark/run_vbench_eval.py --track agentic --prompt-style minimal   # honest default condition
-# Stratified manifest (stdlib-only; regenerating changes the pre-registration!)
-python code_benchmark/make_eval_sample.py
+# Harness arm — HOME override MANDATORY, absolute --agent-dir
+HOME=/tmp/fakehome python code_benchmark/run_harness_eval.py run --dataset legal_mc --workers 6 \
+  --label <slug> --tools none --system-prompt minimal --agent-dir .omp-clean
+python code_benchmark/run_harness_eval.py compare --dataset legal_mc --label <slug> --tag vsA
+python code_benchmark/run_harness_eval.py speed --dataset legal_mc --label <slug>
 
-# Gold/review tools
+# Review / annotation (export-blob after every answers change)
+python code_benchmark/build_review_ui.py export-blob
+python code_benchmark/build_review_ui.py build
 python code_benchmark/export_annotation_workbooks.py build
-python code_benchmark/export_annotation_workbooks.py merge --apply
 python code_benchmark/export_annotation_workbooks.py review --a A.csv --b B.csv [--apply]
 python code_benchmark/export_annotation_workbooks.py merge-split review_records/*.csv [--apply]
 
-# Blob + fallback (regenerate blob after every run_reading_eval / answers change)
-python code_benchmark/build_review_ui.py export-blob     # -> web/data/review-blob.json
-python code_benchmark/build_review_ui.py build           # -> review_ui.html
+# Lint + tests (CI mirror)
+uvx ruff@0.16.1 check .
+uvx --from bandit bandit -r code_benchmark -c .bandit.yml -q
+python code_benchmark/test_parsing.py
+python -m unittest code_benchmark.test_suite  # MUST run from root
 
-# Web app
-cd web && npm install && npm run dev    # 127.0.0.1 only; blob is re-read per request (force-dynamic)
-cd web && bunx tsc --noEmit             # typecheck (no script exists for it)
+# Web (local-only, not CI-gated)
+cd web && npm run dev    # 127.0.0.1:3000, blob re-read per request
+cd web && bunx tsc --noEmit
+cd web && bun test lib/harness-block.test.ts
 ```
 
-Env: `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_API_KEY` (default `"ollama"`) via `.env`; CLI flags override. `VMLU_REVIEW_BLOB` / `VMLU_REVIEW_STATE_DIR` / `VMLU_REVIEW_RECORDS_DIR` override the web app's paths.
+Mongo only for `/benchmark` (`/harness` needs nothing): `docker run -d --name vmlu-mongo -p 27017:27017 -v vmlu-mongo-data:/data/db mongo:7`, then `seed_registries.py && migrate_results_to_mongo.py && verify_results_db.py`.
 
 ## Code Conventions & Common Patterns
 
-- **Fail-fast everywhere**: `SystemExit` on contract drift, duplicate/unknown keys, header mismatch, mixed identities. Never guess, never silently skip (exception: web `parseCsvRows` is documented fail-open — locks only).
-- **Byte-frozen contracts**: `extract_answer`/`build_prompt` (MC), `REVIEW_COLS` (9 columns, BOM+CRLF, one per item in workbook order), `slug()` rule (lowercase, NFD-strip diacritics, non-alnum → `_`, trim `_`), `SCHEMA_VERSION = 1`, StateEnvelope shape `{schema_version, annotator, model, saved_at, items:{key:{d,c,n}}}`. Changing one = deliberate multi-surface change (Python + `web/lib/` + template) with CI parity updates. `test_parsing.py` deliberately duplicates the parser — never dedupe.
-- **Pre-registration**: manifest committed before any gold annotation; `join_manifest` treats question-text drift as wrong source.
-- **Per-model checkpoints**: `raw_result_<count>_<model>.csv` / `reading_result_<count>_<model>.csv` / `vbench_result_<count>_<model>.csv` (`sanitize_model`: non-`[a-zA-Z0-9_-]` → `_`). Legacy count-only files carry no model identity and are never resumed.
-- **Single source of truth**: `SUBJECTS` (subject map; official README numbering), `REVIEW_COLS` (Python vs `web/lib/export-csv.ts`), `SCHEMA_VERSION`, `itemKey = dataset:item_id` (universal key).
-- **Blind protocol**: gold annotation without model answers; state is per-`(reviewer, model)` slug bucket — never import another reviewer's state.
-- **Concurrency**: `ThreadPoolExecutor` + one `Lock` around shared results; checkpoints every 100; atomic file writes via tmp + rename.
-- **Web patterns**: keyboard protocol (`j/k/a/r/u/e/n/t/Home/End/?`; ignored while typing); NavDock boundaries disable (no wrap) while next-unreviewed wraps; Filmstrip = one cell per item grouped per passage; decisions blocked while a bucket is loading; model switch flushes the pending autosave.
-- Lint scope is deliberately narrow: ruff `F,B,E9` only, bandit skips `B101/B311` by design; `legacy/` excluded everywhere.
+- **Formatting:** ruff `F,B,E9` only (style E/W/C/I ungated), `target py312`, `line-length 120`; `from __future__ import annotations`; module docstring with WHY + run-from-root example.
+- **Naming:** `run_*` runners, `make_*` samplers/adapters, `score_*` scorers, `build_dashboard_*` blob patchers, `test_*` tests; funcs `snake_case` (`build_prompt`, `extract_answer`, `sanitize_model`, `find_latest_checkpoint`); consts `UPPER` (`SUBJECTS`, `REVIEW_COLS`, `SCHEMA_VERSION`, `DROP_PINNED=40`, `PASSAGE_CAP=2`). Per-model `sanitize_model` (`[^a-zA-Z0-9_-]→_`) distinct from reviewer `slug()` (lowercase, NFD-strip, non-alnum→`_`).
+- **Error handling:** fail-fast everywhere, e.g. `raise SystemExit(f"Error: duplicate key {k}")`, `read_csv_checked(path, required=...)`, sha256/gold cross-checks. LLM generic errors retry 30×30s, auth probe fail-fast; unparseable answers stay in denominator. Atomic writes via tmp+rename (`write_csv_atomic`). Only documented fail-open: web `parseCsvRows`.
+- **Async:** no asyncio — `ThreadPoolExecutor(max_workers=4) + threading.Lock + tqdm`, checkpoints every 100. Local HTTP via `ThreadingHTTPServer` on `127.0.0.1`.
+- **DI:** argparse + env: shared `add_endpoint_args()` + `resolve_endpoint()` (flag > env > fail with hint; temp 0.0, seed 42, workers 4). `common.py` stays stdlib-only; dual-import `try: code_benchmark.X except ImportError: X` for root-vs-direct runs. `model_dirs(model)` seam returns `(results, submissions, logs)`.
+- **State:** files, not memory — per-model dirs, `StateEnvelope {schema_version, annotator, model, saved_at, items:{key:{d,c,n}}}`, universal `itemKey=dataset:item_id` mirrored in `web/lib/types.ts`. Web: logic in `lib/`, disk in `app/api/`, keyboard `j/k/a/r/u/e/n/t`.
 
 ## Important Files
 
-- `code_benchmark/run_mc_eval.py` — MC pipeline: prompt/parser contract, `SUBJECTS`, checkpoint + scoring (retry/auth now in `llm.py`).
-- `code_benchmark/common.py` — the shared kernel both runners import (stdlib-only): `sanitize_model`, `item_key`/`split_item_key`, `resolve_endpoint`, `add_endpoint_args`, `setup_logging`, `read_csv_checked`, `write_csv_atomic`.
-- `code_benchmark/make_eval_sample.py` — sampler constants (`DROP_PINNED=40`, `PASSAGE_CAP=2`, `SQUAD_INFER_FLOOR=5`, bounds 230/400).
-- `code_benchmark/run_reading_eval.py`, `run_vbench_eval.py`, `export_annotation_workbooks.py`, `build_review_ui.py` — reading + V-Bench pipelines and gold/review tools (subcommands `build|merge|review|merge-split`, `build|export-blob`).
-- `data/eval_set_manifest.csv` — the pre-registered 400; `gold_answer` filled only via `--apply`.
-- `web/data/review-blob.json` — tracked blob input (regenerate via `export-blob`; the revamp design doc's claim it's gitignored is stale).
-- `web/lib/types.ts` (TS contract mirror), `web/lib/slug.ts`, `web/components/hooks/` (persistence+peer-sync / transfer / keyboard), `ReviewApp.tsx` (orchestration/layout only).
-- `code_benchmark/review_ui_template.html` — static fallback whose JS mirrors `web/lib` (parity asserted).
-- `.github/workflows/ci.yml`, `ruff.toml`, `.bandit.yml`, `pyrightconfig.json`, `.env.example`, `vmlu_datasets.zip`.
+- Entry: `code_benchmark/run_mc_eval.py`, `run_reading_eval.py`, `run_vbench_eval.py`, `run_harness_eval.py`, `make_eval_sample.py`, `export_annotation_workbooks.py`, `build_review_ui.py`, `build_dashboard_harness.py`; web `app/harness/page.tsx`, `lib/harness-block.ts`.
+- Config: `ruff.toml`, `.bandit.yml`, `pyrightconfig.json` (scope only, not gated), `.env.example`, `openspec/config.yaml`, `web/package.json`, `web/tsconfig.json`, `web/eslint.config.mjs`, `.github/workflows/ci.yml`.
+- Key modules: `code_benchmark/common.py`, `llm.py`, `checkpoint.py`, `review_ui_template.html` (static fallback, JS mirrors `web/lib`); contracts `data/eval_set_manifest.csv`, `web/data/review-blob.json`, `openspec/specs/eval-scoring/spec.md`, `measurement_card.md`.
 
 ## Runtime/Tooling Preferences
 
-- Python 3.12 in `.venv` (uv-managed per openspec context). Actual runtime deps: `openai`, `pandas`, `python-dotenv`, `tqdm`. `requirements.txt` is a frozen legacy snapshot (torch/nvidia GPU stack for `legacy/`) — do not install it to run the pipelines; CI installs only the four.
-- Node ≥ 22 or bun for TS execution (contract tests use whichever is on PATH, skip when neither).
-- Next 16.3.4, React 19, TypeScript strict, Tailwind v4 via PostCSS; dev/start bind loopback only — localhost tool with no auth beyond the reviewer-name gate; single-researcher, last-atomic-write-wins.
-- **CodeGraph first** (`codegraph_explore` or `codegraph explore "<question>"`) before grep/read; rebuild the index with `codegraph init` after cloning. When a response shows the staleness banner, read those files directly.
-- Git: conventional commits; CI gates PRs/pushes to `main` (ruff + bandit + tests). The web app is not build-gated in CI — typecheck it locally.
+- **Python 3.12** via uv-managed `.venv` (`.venv/bin/python`; venv has no pip — `uv pip install --python .venv/bin/python`). System `python3` is bare — only stdlib-only `make_eval_sample.py` / `test_parsing.py` run there. Deps: `openai pandas python-dotenv tqdm` only; `requirements.txt` is frozen GPU snapshot — never install wholesale. `common.py` must stay stdlib-only.
+- **Node ≥22 or bun** for TS execution only; `npm` in `web/` (`npm install`, `npm run dev/build/start/lint`); `bunx`/`npx` for `tsc --noEmit`, `bun test`. No Dockerfile/Makefile/pyproject; no pinned node file.
+- **Env:** `OPENAI_BASE_URL` (must end `/v1`), `OPENAI_API_KEY` (default `ollama`), `OPENAI_MODEL` (CLI flags override; `run_harness_eval.py` ignores it, pins its own). Web overrides `VMLU_REVIEW_BLOB` / `VMLU_REVIEW_STATE_DIR` / `VMLU_REVIEW_RECORDS_DIR`; results browser `VMLU_MONGO_URI` / `VMLU_MONGO_DB`; harness `PI_CODING_AGENT_DIR` (absolute `.omp-*/` path — isolates config, not scaffold; `HOME` override still required). `.env` gitignored, read by legacy runners only.
+- **Constraints:** `legacy/` excluded from ruff+bandit; `test_parsing.py` duplication intentional — never dedupe; web dev/start loopback-only, start detached (`setsid nohup npm run dev &`); live-endpoint runners and web build never CI-gated.
 
 ## Testing & QA
 
-- Suite: `python code_benchmark/test_parsing.py` (standalone parity reference, 17 cases, run as a script) and `python -m unittest code_benchmark.test_suite` (73 tests / 17 classes; **must run from repo root** — package imports). Both offline: tempdirs + `MagicMock`, no network or keys.
-- The suite covers every pure pipeline function: allocator invariants, stratum functions, manifest shape/caps, checkpoint model isolation, review classifiers (`review` vs `merge-split` semantics), blob validation, render guard, and cross-surface contracts.
-- `TestNextContracts` runs the real TS modules (`web/lib/slug.ts`, `web/lib/export-csv.ts`) against the Python/JS references — slug parity + export-CSV byte compatibility fed back through Python `read_review`. Skips when neither bun nor node ≥ 22 is on PATH.
-- Full benchmark runs (`run_mc_eval.py`, `run_reading_eval.py`, `run_vbench_eval.py`) need a live endpoint and models — not CI-gated.
+- **Python `unittest` (stdlib) only** — no pytest/jest/vitest. Main suite `code_benchmark/test_suite.py` (~130 tests/24 classes, tempdirs + MagicMock, offline, root-only package imports) + standalone parity reference `code_benchmark/test_parsing.py` (17 cases, run as script) + `test_score_reading.py` (EM/char-F1). `test_generative*.py` are live-endpoint runners despite `test_` prefix — not CI.
+- **Web `bun:test`** (local-only): `web/lib/harness-block.test.ts`, `insights.test.ts`, `results-api.test.ts` (in-memory fake DB, no Mongo); `TestNextContracts` in `test_suite.py` shells to real `web/lib/slug.ts` + `export-csv.ts` (skips without bun/node≥22).
+- **Gates (`.github/workflows/ci.yml`, PR+push to `main`):** `ruff check .` + `bandit -r code_benchmark -c .bandit.yml -q` (skips `B101` asserts, `B311` seeded sampling by design) + both Python suites exit 0. **No coverage gate** anywhere; style rules, pyright, web build/typecheck/tests, `openspec validate`, and all live benchmark runs are explicitly not gated.
+
+## Codex Skills
+
+- Project skills are exposed through `.agents/skills/`, with each skill linked to its source under `.claude/skills/`. Invoke one directly with `$skill-name`, or let Codex select it from its description.
+- Some source skills name Claude or OpenCode tools and slash commands. Treat those names as workflow intent and use the equivalent Codex capabilities; do not assume tools such as `webfetch`, `Task`, `AskUserQuestion`, or `/opsx:*` exist in Codex.

@@ -9,13 +9,16 @@
    utilities (bg-paper, text-ink-2, border-hair, …). Mirrors the static
    fallback (code_benchmark/review_ui_template.html) — same token names.
    ========================================================================== */
+/* impeccable-disable cream-palette: warm paper is the committed "exam instrument"
+   identity (openspec revamp-review-ui D5) — a deliberate paper material chosen for
+   a long reading/annotation session, not a reflex default. */
 :root {
   --paper: #f5f3ee;
   --card: #ffffff;
   --card-edge: #e4e0d6;
   --ink: #1a1d23;
   --ink-2: #5a6270;
-  --ink-3: #8c929c;
+  --ink-3: #646b78; /* 3.1:1 on card before — WCAG AA needs 4.5:1 */
   --hair: #d8d4c9;
   --accept: #1e7a46;
   --accept-soft: #e4f1e9;
@@ -35,7 +38,7 @@
     --card-edge: #2c2f35;
     --ink: #e8e6e1;
     --ink-2: #a2a8b2;
-    --ink-3: #767c86;
+    --ink-3: #858b98;
     --hair: #3a3e45;
     --accept: #4cb782;
     --accept-soft: #1c3227;
@@ -54,7 +57,7 @@
   --card-edge: #2c2f35;
   --ink: #e8e6e1;
   --ink-2: #a2a8b2;
-  --ink-3: #767c86;
+  --ink-3: #858b98;
   --hair: #3a3e45;
   --accept: #4cb782;
   --accept-soft: #1c3227;
@@ -109,7 +112,9 @@ details[open] summary > span[aria-hidden]:first-child {
 }
 /* A peer reviewer already locked this item (split-400 sync): hairline
    diagonal hatching over the null swatch — never decision-colored, so a
-   colleague's accept can't masquerade as yours in the filmstrip. */
+   colleague's accept can't masquerade as yours in the filmstrip.
+   impeccable-disable repeating-stripes-gradient: the hatch is a data
+   encoding with its own legend key, not surface decoration. */
 .peer-stripe {
   background-color: var(--null);
   background-image: repeating-linear-gradient(

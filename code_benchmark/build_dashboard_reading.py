@@ -4,8 +4,8 @@ Reads the scorer's own outputs and writes a `reading` key, leaving every other
 key in the dashboard blob untouched (the file also carries ad-hoc VMLU/V-Bench
 sections that this script must not rebuild).
 
-  in : all_res/ollama_result/reading_scores_<model>.csv
-       all_res/ollama_result/reading_summary_<model>.csv
+  in : all_res/ollama_result/<model>/reading_scores_<model>.csv
+       all_res/ollama_result/<model>/reading_summary_<model>.csv
        review_records/review_nttung245_<slug>.csv      (accept / reject counts)
   out: web/public/benchmark-data.json  ->  .reading
 
@@ -56,20 +56,23 @@ def main() -> None:
     ap.add_argument("--dashboard", type=Path, default=DASHBOARD)
     ap.add_argument("--answers", type=Path, default=None,
                     help="reading_answers_<model>.csv (default: newest)")
+    ap.add_argument("--review-record", type=Path, default=None,
+                    help="review_*.csv for the accept/reject split (default: match by model slug; "
+                         "pass the gold-defining record when scoring a different model on the same frozen gold)")
     args = ap.parse_args()
 
     answers = args.answers
     if answers is None:
-        found = sorted(RESULTS_DIR.glob("reading_answers_*.csv"))
+        found = sorted(RESULTS_DIR.rglob("reading_answers_*.csv"))
         if not found:
-            raise SystemExit(f"Error: no reading_answers_*.csv in {RESULTS_DIR}")
+            raise SystemExit(f"Error: no reading_answers_*.csv under {RESULTS_DIR}")
         answers = found[-1]
     slug_full = answers.stem.removeprefix("reading_answers_")
 
-    scores = read_rows(RESULTS_DIR / f"reading_scores_{slug_full}.csv",
+    scores = read_rows(answers.parent / f"reading_scores_{slug_full}.csv",
                        required={"dataset", "item_id", "stratum", "em", "f1"},
                        label="scores")
-    summary_rows = read_rows(RESULTS_DIR / f"reading_summary_{slug_full}.csv",
+    summary_rows = read_rows(answers.parent / f"reading_summary_{slug_full}.csv",
                              required={"dataset", "n", "em_count", "em", "char_f1"},
                              label="summary")
 
@@ -99,12 +102,17 @@ def main() -> None:
         return _re.sub(r"[^a-z0-9]+", "_", s).strip("_")
 
     want = slug(slug_full)
-    reviews = [p for p in Path("review_records").glob("review_*.csv")
-               if slug(p.stem) .endswith(want) or want.endswith(slug(p.stem))]
+    if args.review_record is not None:
+        reviews = [args.review_record]
+        if not reviews[0].exists():
+            raise SystemExit(f"Error: --review-record not found: {reviews[0]}")
+    else:
+        reviews = [p for p in Path("review_records").glob("review_*.csv")
+                   if slug(p.stem) .endswith(want) or want.endswith(slug(p.stem))]
     if not reviews:
         raise SystemExit(
             f"Error: no review record matching model slug {want!r} in review_records/ — "
-            f"expected review_<reviewer>_{want}.csv")
+            f"expected review_<reviewer>_{want}.csv or pass --review-record")
     decisions = read_rows(reviews[0], required={"dataset", "decision"}, label="review")
 
     def group(subset: list[dict]) -> dict:

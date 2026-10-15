@@ -45,7 +45,7 @@ function FilmstripInner({
           onClick={() => onJump(g.first)}
           aria-label={`đoạn ${g.key}, ${g.indices.length} câu`}
           title={`${g.key} · ${g.indices.length} câu`}
-          className="group relative flex-1 basis-0 overflow-hidden border-0 bg-transparent p-0"
+          className="group relative h-5 flex-1 basis-0 border-0 bg-transparent p-0"
           style={{ flexGrow: g.indices.length, minWidth: 3, boxShadow: gi > 0 ? "inset 1.5px 0 0 var(--hair)" : undefined }}
         >
           {g.indices.map((i, k) => {
@@ -56,12 +56,12 @@ function FilmstripInner({
                 key={i}
                 aria-hidden
                 className={[
-                  "absolute bottom-1.5 rounded-[2px] transition-[height,background-color] duration-150 ease-[cubic-bezier(.2,.8,.3,1)]",
-                  s === "" && !locked && "h-[9px] bg-null",
-                  s === "" && locked && "h-5 peer-stripe",
-                  s === "accept" && "h-5 bg-accept",
-                  s === "reject" && "h-5 bg-reject",
-                  s === "flag" && "h-5 bg-flag",
+                  "absolute bottom-1.5 h-5 origin-bottom rounded-[2px] transition-[transform,background-color] duration-150 ease-[cubic-bezier(.2,.8,.3,1)]",
+                  s === "" && !locked && "scale-y-[.45] bg-null",
+                  s === "" && locked && "peer-stripe",
+                  s === "accept" && "bg-accept",
+                  s === "reject" && "bg-reject",
+                  s === "flag" && "bg-flag",
                   "group-hover:brightness-[.86]",
                 ]
                   .filter(Boolean)

@@ -32,7 +32,7 @@ function ItemPaneInner({
   const words = useMemo(() => context.trim().split(/\s+/).filter(Boolean).length, [context]);
   const short = words > 0 && words < SHORT_WORDS;
   return (
-    <section aria-labelledby="q-head" className="rounded-[10px] border border-card-edge bg-card p-5 shadow-[var(--shadow)] sm:p-6">
+    <section aria-labelledby="q-head" className="rounded-[10px] border border-card-edge bg-card p-5 sm:p-6">
       <div className="mb-3.5 flex flex-wrap items-center gap-2">
         <span className="font-disp text-[13px] font-semibold tabular-nums">
           {idx + 1}
@@ -40,22 +40,22 @@ function ItemPaneInner({
         </span>
         <span
           className={
-            "rounded-full border px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[.06em] " +
+            "rounded-full border px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[.06em] " +
             (it.dataset === "squad" ? "border-[#B9D3E6] bg-[#EAF3FA] text-[#1D5C8A] dark:border-[#2C4A63] dark:bg-[#16222E] dark:text-[#7FBBE8]" : "border-[#DAC5EA] bg-[#F4ECF9] text-[#7A4A9E] dark:border-[#4A3358] dark:bg-[#211829] dark:text-[#BC92DB]")
           }
         >
           {it.dataset}
         </span>
-        <span className="rounded-full border border-hair px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[.06em] text-ink-2">{it.stratum}</span>
-        <span className="rounded-full border border-hair px-2.5 py-[3px] text-[10px] font-semibold tracking-[.06em] text-ink-2">#{it.item_id}</span>
-        <span className="ml-auto text-[11.5px] tabular-nums text-ink-3">
+        <span className="rounded-full border border-hair px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[.06em] text-ink-2">{it.stratum}</span>
+        <span className="rounded-full border border-hair px-2.5 py-[3px] text-[11px] font-semibold tracking-[.06em] text-ink-2">#{it.item_id}</span>
+        <span className="ml-auto text-[12px] tabular-nums text-ink-3">
           đoạn {it.passage_key} · câu {position.within}/{position.of} của đoạn này
         </span>
       </div>
 
       <div className="mb-1.5 flex items-baseline gap-2.5">
-        <span className="font-mono text-[11px] text-ink-3">Q</span>
-        <h2 id="q-head" lang="vi" className="text-[17px] font-semibold leading-[1.5]">
+        <span className="font-mono text-[12px] text-ink-3">Q</span>
+        <h2 id="q-head" lang="vi" className="max-w-[62ch] text-[17px] font-semibold leading-[1.5]">
           {it.question}
         </h2>
       </div>
@@ -64,35 +64,37 @@ function ItemPaneInner({
         <summary className="flex cursor-pointer list-none items-center gap-2.5 text-[13px] font-semibold text-ink-2 [&::-webkit-details-marker]:hidden hover:text-ink">
           <span aria-hidden className="text-ink-3 transition-transform duration-150">▸</span>
           Ngữ cảnh — đoạn văn gốc
-          <span className="text-[11px] font-normal tabular-nums text-ink-3">
+          <span className="text-[12px] font-normal tabular-nums text-ink-3">
             · {words.toLocaleString("vi-VN")} từ · {context.length.toLocaleString("vi-VN")} ký tự
           </span>
           {short && (
             <span
               title={`Đoạn chỉ có ${words} từ — nguồn viSQuAD/DROP chỉ cho 1–2 câu văn, dễ thiếu thông tin để trả lời`}
-              className="rounded-full border border-flag/40 bg-flag-soft px-2 py-[2px] text-[10px] font-semibold uppercase tracking-[.06em] text-flag"
+              className="rounded-full border border-flag/40 bg-flag-soft px-2 py-[2px] text-[11px] font-semibold uppercase tracking-[.06em] text-flag"
             >
               ⚠ đoạn cộc
             </span>
           )}
         </summary>
-        <p lang="vi" className="mt-3 whitespace-pre-wrap text-[15.5px] leading-[1.78] break-words text-ink">
+        <p lang="vi" className="mt-3 max-w-[56ch] whitespace-pre-wrap text-[15.5px] leading-[1.78] break-words text-ink">
           {context || "(thiếu ngữ cảnh — chạy lại export-blob)"}
         </p>
       </details>
 
       <div
         className={
-          "mt-4 rounded-lg border border-l-[3px] p-3.5 text-[13.5px] leading-[1.65] break-words whitespace-pre-wrap font-mono " +
-          (answer === null
-            ? "border-hair border-l-ink-3 bg-hair/25 text-ink-3"
-            : "border-flag/25 border-l-flag bg-flag-soft/60 text-ink")
+          "mt-4 rounded-md p-3.5 text-[13.5px] leading-[1.65] break-words whitespace-pre-wrap font-mono " +
+          (answer === null ? "bg-hair/25 text-ink-3" : "bg-flag-soft/60 text-ink")
         }
       >
-        <span className={"mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[.1em] " + (answer === null ? "text-ink-3" : "text-flag")}>
+        <span className={"mb-1.5 block text-[12px] font-semibold tracking-[.02em] " + (answer === null ? "text-ink-3" : "text-flag")}>
           Câu trả lời của model · {model}
         </span>
-        {answer === null ? "(model này không có đáp án cho câu hỏi — n/a)" : answer}
+        {answer === null ? (
+          "(model này không có đáp án cho câu hỏi — n/a)"
+        ) : (
+          <span className="block max-w-[76ch]">{answer}</span>
+        )}
       </div>
     </section>
   );

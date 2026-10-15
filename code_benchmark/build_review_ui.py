@@ -7,8 +7,8 @@ Joins two sources through ONE fail-fast code path (openspec revamp-review-ui):
     gold_answer/note are EMPTY at this stage and intentionally NOT embedded —
     this is the review pass (model answers visible by design); the blind gold
     pass stays a separate pipeline.
-  * reading_answers_<model>.csv (repeatable) -> {model: raw_answer} per item,
-    joined on dataset:item_id.
+  * reading_answers_<model>.csv (repeatable, under all_res/ollama_result/<model>/)
+    -> {model: raw_answer} per item, joined on dataset:item_id.
 
 Two outputs from the same validated join:
 
@@ -132,7 +132,7 @@ def render_html(template: str, blob_json: str, placeholder: str = '"__VMLU_DATA_
 
 
 def default_answers() -> list[Path]:
-    return sorted(RESULTS_DIR.glob(f"{ANSWER_PREFIX}*.csv"))
+    return sorted(RESULTS_DIR.rglob(f"{ANSWER_PREFIX}*.csv"))
 
 
 def validated_blob(args) -> dict:
@@ -165,7 +165,7 @@ def main():
     common = {
         "--workbook": dict(type=Path, default=ANNOTATOR_A_DEFAULT),
         "--answers": dict(type=Path, action="append", default=None,
-                          help=f"{ANSWER_PREFIX}<model>.csv (repeatable; default: every match under all_res/ollama_result/)"),
+                          help=f"{ANSWER_PREFIX}<model>.csv (repeatable; default: every match under all_res/ollama_result/<model>/)"),
         "--allow-partial": dict(action="store_true",
                                 help="permit model coverage < 400 items (default: fail — silent gaps skew acceptance %)"),
     }

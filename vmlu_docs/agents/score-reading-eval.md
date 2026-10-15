@@ -1,7 +1,7 @@
 # Runner mới: `score_reading_eval.py`
 
 Chấm điểm bài đọc hiểu 400 câu bằng **EM** và **char-F1** trên gold đã chốt trong
-`data/review_gold_agreed.csv`. Thay thế cách nói "tỉ lệ chấp nhận" trong báo cáo.
+`data/gold/review_gold_agreed.csv`. Thay thế cách nói "tỉ lệ chấp nhận" trong báo cáo.
 
 ## Vì sao cần
 
@@ -23,16 +23,15 @@ Accept-rate chuyển xuống phụ lục.
 
 # chỉ định rõ file
 .venv/bin/python code_benchmark/score_reading_eval.py \
-    --answers all_res/ollama_result/reading_answers_<model>.csv \
-    --gold data/review_gold_agreed.csv
-```
+    --answers all_res/ollama_result/<model>/reading_answers_<model>.csv \
+    --gold data/gold/review_gold_agreed.csv
 
 ## Vào / ra
 
 | | |
 | --- | --- |
-| Vào | `all_res/ollama_result/reading_answers_<model>.csv` + `data/review_gold_agreed.csv` |
-| Ra | `reading_scores_<model>.csv` (từng câu) · `reading_summary_<model>.csv` (tổng hợp) |
+| Vào | `all_res/ollama_result/<model>/reading_answers_<model>.csv` + `data/gold/review_gold_agreed.csv` |
+| Ra | `all_res/ollama_result/<model>/reading_scores_<model>.csv` (từng câu) · `reading_summary_<model>.csv` (tổng hợp, cùng thư mục) |
 | Bắt buộc | `measurement_card.md` phải tồn tại — thiếu thì script dừng |
 
 Mọi dòng trong file tổng hợp đều mang `measurement_card_hash` (sha256 của card)
@@ -60,7 +59,7 @@ Công thức đầy đủ và bảng ví dụ: [`em-char-f1.md`](em-char-f1.md).
 
 ### Tái tạo gold nếu chưa có
 
-`data/review_gold_agreed.csv` **không được commit** (derived — xem `.gitignore` mục `data/`).
+`data/gold/review_gold_agreed.csv` **không được commit** (derived — xem `.gitignore` mục `data/`).
 Nó là file dẫn xuất từ `review_records/` — bản ghi đã được track. Sinh lại bằng:
 
 ```bash
@@ -68,7 +67,7 @@ Nó là file dẫn xuất từ `review_records/` — bản ghi đã được tra
 ```
 
 Lệnh này **không** ghi vào `data/eval_set_manifest.csv` (không có `--apply`), chỉ tạo hai file
-`data/review_gold_agreed.csv` và `data/review_adjudication.csv`. Muốn chấm điểm thì chỉ cần
+`data/gold/review_gold_agreed.csv` và `data/gold/review_adjudication.csv`. Muốn chấm điểm thì chỉ cần
 file thứ nhất.
 
 ## Kết quả (model Qwen3.8-27B-Q4_K_M, card `MC-3`)

@@ -1,0 +1,175 @@
+{
+  "profiles": [
+    {
+      "profile_id": "muse-spark-1-3-contributor",
+      "measurement_card_ids": {
+        "pilot": "MC-49",
+        "main": "MC-53"
+      },
+      "display_name": "Muse Spark 1.3 Contributor",
+      "provider": "OpenCode Go",
+      "provider_tier": "Go subscription · Muse Contributor",
+      "billing_mode": "opencode-go-subscription",
+      "model_id": "muse-spark-1.3-contributor",
+      "model_ref": "zen-go/muse-spark-1.3-contributor",
+      "api_protocol": "openai-responses",
+      "base_url": "https://opencode.ai/zen/go/v1",
+      "base_url_env": "OPENCODE_GO_BASE_URL",
+      "api_key_env": "OPENCODE_GO_API_KEY",
+      "auth_provider": "opencode-go",
+      "headers_env": "",
+      "input_price_usd_per_million": 0.1,
+      "output_price_usd_per_million": 0.2,
+      "cached_input_price_usd_per_million": 0.002,
+      "monthly_usage_limit_usd": 60,
+      "price_checked_at": "2026-10-06",
+      "price_source": "https://opencode.ai/docs/go/",
+      "temperature": null,
+      "temperature_effective": 1.0,
+      "temperature_policy": "provider default; omitted on Responses API",
+      "send_seed": false,
+      "seed_policy": "omitted on OpenCode Go Responses API",
+      "token_limit_parameter": "max_output_tokens",
+      "measurement_card_ids_v2": {
+        "pilot": "MC-58",
+        "vmlu": "MC-62",
+        "vbench": "MC-66"
+      },
+      "price_checked_at_v2": "2026-10-07",
+      "price_source_v2": "https://opencode.ai/docs/go/",
+      "omp_request_headers": {
+        "User-Agent": "vmlu-benchmark/2.0"
+      }
+    },
+    {
+      "profile_id": "mimo-v2-6-flash",
+      "measurement_card_ids": {
+        "pilot": "MC-50",
+        "main": "MC-54"
+      },
+      "display_name": "MiMo V2.6 Flash",
+      "provider": "OpenCode Go",
+      "provider_tier": "Go subscription · Flash",
+      "billing_mode": "opencode-go-subscription",
+      "model_id": "mimo-v2.6-flash",
+      "model_ref": "zen-go/mimo-v2.6-flash",
+      "api_protocol": "openai-completions",
+      "base_url": "https://opencode.ai/zen/go/v1",
+      "base_url_env": "OPENCODE_GO_BASE_URL",
+      "api_key_env": "OPENCODE_GO_API_KEY",
+      "auth_provider": "opencode-go",
+      "headers_env": "",
+      "input_price_usd_per_million": 0.14,
+      "output_price_usd_per_million": 0.28,
+      "cached_input_price_usd_per_million": 0.0028,
+      "monthly_usage_limit_usd": 60,
+      "price_checked_at": "2026-10-06",
+      "price_source": "https://opencode.ai/docs/go/",
+      "temperature": null,
+      "temperature_effective": 1.0,
+      "temperature_policy": "thinking mode provider default; custom temperature ignored",
+      "send_seed": false,
+      "seed_policy": "omitted; seed is not listed in the provider chat API parameters",
+      "token_limit_parameter": "max_completion_tokens",
+      "omp_options": {
+        "thinking": {
+          "type": "enabled"
+        }
+      },
+      "measurement_card_ids_v2": {
+        "pilot": "MC-59",
+        "vmlu": "MC-63",
+        "vbench": "MC-67"
+      },
+      "price_checked_at_v2": "2026-10-07",
+      "price_source_v2": "https://opencode.ai/docs/go/",
+      "omp_request_headers": {
+        "User-Agent": "vmlu-benchmark/2.0"
+      }
+    },
+    {
+      "profile_id": "mimo-v2-5",
+      "measurement_card_ids": {
+        "pilot": "MC-51",
+        "main": "MC-55"
+      },
+      "display_name": "MiMo V2.5",
+      "provider": "OpenCode Go",
+      "provider_tier": "Go subscription",
+      "billing_mode": "opencode-go-subscription",
+      "model_id": "mimo-v2.5",
+      "model_ref": "zen-go/mimo-v2.5",
+      "api_protocol": "openai-completions",
+      "base_url": "https://opencode.ai/zen/go/v1",
+      "base_url_env": "OPENCODE_GO_BASE_URL",
+      "api_key_env": "OPENCODE_GO_API_KEY",
+      "auth_provider": "opencode-go",
+      "headers_env": "",
+      "input_price_usd_per_million": 0.14,
+      "output_price_usd_per_million": 0.28,
+      "cached_input_price_usd_per_million": 0.0028,
+      "monthly_usage_limit_usd": 60,
+      "price_checked_at": "2026-10-06",
+      "price_source": "https://opencode.ai/docs/go/",
+      "temperature": null,
+      "temperature_effective": 1.0,
+      "temperature_policy": "thinking mode provider default; custom temperature ignored",
+      "send_seed": false,
+      "seed_policy": "omitted; seed is not listed in the provider chat API parameters",
+      "token_limit_parameter": "max_completion_tokens",
+      "omp_options": {
+        "thinking": {
+          "type": "enabled"
+        }
+      },
+      "measurement_card_ids_v2": {
+        "pilot": "MC-60",
+        "vmlu": "MC-64",
+        "vbench": "MC-68"
+      },
+      "price_checked_at_v2": "2026-10-07",
+      "price_source_v2": "https://opencode.ai/docs/go/",
+      "omp_request_headers": {
+        "User-Agent": "vmlu-benchmark/2.0"
+      }
+    },
+    {
+      "profile_id": "qwen3-5-9b-65k",
+      "measurement_card_ids": {
+        "pilot": "MC-52",
+        "pilot_omp": "MC-57",
+        "main": "MC-56"
+      },
+      "display_name": "Qwen3.5-9B-65K",
+      "provider": "IEC internal endpoint",
+      "provider_tier": "",
+      "billing_mode": "internal-shared",
+      "model_id": "Qwen3.5-9B-65K",
+      "model_ref": "iec/Qwen3.5-9B-65K",
+      "api_protocol": "openai-completions",
+      "omp_provider": "iec",
+      "omp_reasoning": false,
+      "omp_thinking": "off",
+      "model_id_env": "OPENAI_MODEL",
+      "base_url": "",
+      "base_url_env": "OPENAI_BASE_URL",
+      "api_key_env": "OPENAI_API_KEY",
+      "headers_env": "OPENAI_EXTRA_HEADERS",
+      "omp_options": {
+        "temperature": 0.0,
+        "seed": 42
+      },
+      "input_price_usd_per_million": 0.0,
+      "output_price_usd_per_million": 0.0,
+      "cached_input_price_usd_per_million": 0.0,
+      "cost_basis": "no per-token API tariff supplied; USD excludes institutional inference infrastructure",
+      "price_checked_at": "",
+      "price_source": "",
+      "measurement_card_ids_v2": {
+        "pilot": "MC-61",
+        "vmlu": "MC-65",
+        "vbench": "MC-69"
+      }
+    }
+  ]
+}

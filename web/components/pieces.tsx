@@ -12,7 +12,7 @@ export function Stat({ label, value, tone }: { label: string; value: string; ton
       <b className={"font-disp text-[21px] font-semibold tabular-nums " + (tone === "accept" ? "text-accept" : tone === "reject" ? "text-reject" : "")}>
         {value}
       </b>
-      <span className="mt-[3px] text-[10.5px] uppercase leading-[1.4] tracking-[.1em] text-ink-3">{label}</span>
+      <span className="mt-[3px] text-[11px] uppercase leading-[1.4] tracking-[.1em] text-ink-3">{label}</span>
     </div>
   );
 }
@@ -46,7 +46,7 @@ export function Gate({ onSubmit }: { onSubmit: (v: string) => void }) {
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="gate-title" className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-5">
       <form
-        className="w-full max-w-[420px] rounded-[14px] border border-card-edge bg-card p-6 shadow-2xl sm:p-8"
+        className="w-full max-w-[420px] rounded-[14px] bg-card p-6 shadow-2xl sm:p-8"
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit(v);
@@ -57,14 +57,14 @@ export function Gate({ onSubmit }: { onSubmit: (v: string) => void }) {
           Nhãn trạng thái được lưu riêng cho từng <b>người review × model</b>. Hai người phải review độc lập — đừng nhập state của người khác.
         </p>
         <label className="mt-5 block">
-          <span className="block text-[10.5px] font-semibold uppercase tracking-[.1em] text-ink-3">Tên người review</span>
+          <span className="block text-[11px] font-semibold uppercase tracking-[.1em] text-ink-3">Tên người review</span>
           <input
             autoFocus
             value={v}
             onChange={(e) => setV(e.target.value)}
             autoComplete="off"
             placeholder="vd: linh (gõ không dấu cũng được)"
-            className="mt-2 w-full rounded-lg border border-hair bg-card px-3.5 py-3 text-[15px] focus:border-ink-2 focus:outline-none"
+            className="mt-2 w-full rounded-lg border border-hair bg-card px-3.5 py-3 text-[15px] placeholder:text-ink-3 focus:border-ink-2 focus:outline-none"
           />
         </label>
         <button
@@ -87,7 +87,7 @@ export function Overlay({ onClose, children }: { onClose: () => void; children: 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-[560px] rounded-[14px] border border-card-edge bg-card p-6 shadow-2xl sm:p-8">{children}</div>
+      <div className="w-full max-w-[560px] rounded-[14px] bg-card p-6 shadow-2xl sm:p-8">{children}</div>
     </div>
   );
 }

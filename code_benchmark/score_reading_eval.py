@@ -2,13 +2,13 @@
 
 Consumes the gold published by the review pass and the model answers:
 
-  data/review_gold_agreed.csv                       (dataset, item_id, gold_answer)
-  all_res/ollama_result/reading_answers_<model>.csv (dataset, item_id, raw_response)
+  data/gold/review_gold_agreed.csv                 (dataset, item_id, gold_answer)
+  all_res/ollama_result/<model>/reading_answers_<model>.csv (dataset, item_id, raw_response)
 
-and writes per-item scores plus a summary table:
+and writes per-item scores plus a summary table (next to the answers file):
 
-  all_res/ollama_result/reading_scores_<model>.csv
-  all_res/ollama_result/reading_summary_<model>.csv
+  all_res/ollama_result/<model>/reading_scores_<model>.csv
+  all_res/ollama_result/<model>/reading_summary_<model>.csv
 
 UNITS — the same name `em` means two different things, do not mix them up when
 reading the outputs:
@@ -45,12 +45,14 @@ from collections import Counter
 from pathlib import Path
 
 try:
-    from code_benchmark.common import write_csv_atomic, setup_logging, item_key
+    from code_benchmark.common import (write_csv_atomic, setup_logging, item_key,
+                                       GOLD_REVIEW_DEFAULT)
 except ImportError:
-    from common import write_csv_atomic, setup_logging, item_key
+    from common import (write_csv_atomic, setup_logging, item_key,
+                        GOLD_REVIEW_DEFAULT)
 
 RESULTS_DIR = Path("all_res/ollama_result")
-GOLD_DEFAULT = Path("data/review_gold_agreed.csv")
+GOLD_DEFAULT = GOLD_REVIEW_DEFAULT
 
 SCORE_COLS = ["dataset", "item_id", "stratum", "gold_answer", "raw_response",
               "prediction", "em", "f1", "exact_raw"]
@@ -192,18 +194,19 @@ def measurement_card_hash(path: Path = MEASUREMENT_CARD) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser(description="EM + char-F1 for the 400-question reading eval.")
     ap.add_argument("--answers", type=Path, default=None,
-                    help="reading_answers_<model>.csv (default: newest in all_res/ollama_result/)")
+                    help="reading_answers_<model>.csv (default: newest under all_res/ollama_result/<model>/)")
     ap.add_argument("--gold", type=Path, default=GOLD_DEFAULT)
-    ap.add_argument("--out-dir", type=Path, default=RESULTS_DIR)
+    ap.add_argument("--out-dir", type=Path, default=None,
+                    help="output dir for scores (default: alongside the answers file)")
     args = ap.parse_args()
 
-    setup_logging(Path("logs") / "score_reading_eval.log")
+    setup_logging(Path("logs") / "legacy" / "score_reading_eval.log")
 
     answers_path = args.answers
     if answers_path is None:
-        candidates = sorted(RESULTS_DIR.glob("reading_answers_*.csv"))
+        candidates = sorted(RESULTS_DIR.rglob("reading_answers_*.csv"))
         if not candidates:
-            raise SystemExit(f"Error: no reading_answers_*.csv in {RESULTS_DIR}")
+            raise SystemExit(f"Error: no reading_answers_*.csv under {RESULTS_DIR}")
         answers_path = candidates[-1]
     if not answers_path.exists():
         raise SystemExit(f"Error: answers file not found: {answers_path}")
@@ -237,7 +240,8 @@ def main() -> None:
             "exact_raw": int(exact_raw),
         })
 
-    scores_path = args.out_dir / f"reading_scores_{model_slug}.csv"
+    out_dir = args.out_dir or answers_path.parent
+    scores_path = out_dir / f"reading_scores_{model_slug}.csv"
     write_csv_atomic(scores_path, rows, SCORE_COLS)
 
     # --- summary, per source and overall -------------------------------------
@@ -261,11 +265,10 @@ def main() -> None:
             "measurement_card_hash": card_hash,
         })
 
-    summary_path = args.out_dir / f"reading_summary_{model_slug}.csv"
+    summary_path = out_dir / f"reading_summary_{model_slug}.csv"
     write_csv_atomic(summary_path, summary, ["dataset", "n", "em_count", "em", "char_f1",
                                              "exact_raw_count",
                                              "measurement_card_hash"])
-
     logging.info("Scored %d items from %s", len(rows), answers_path)
     logging.info("measurement_card_hash=%s", card_hash)
     for s in summary:

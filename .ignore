@@ -11,13 +11,9 @@ vmlu/**
 /datasets/**
 # data/: tracked contracts (manifest, dataset_stat, example_submission) stay searchable;
 # hide the bulky/derived artifacts only
-/data/sample_submission.jsonl
-/data/submission*.csv
-/data/submission*.jsonl
-/data/gold_agreed.csv
-/data/adjudication.csv
-/data/review_gold_agreed.csv
-/data/review_adjudication.csv
+/data/gold/
+# submissions/: per-model uploadables, regenerable from checkpoints + logs
+/submissions/
 
 # Benchmark outputs, logs, and evaluation dumps
 /logs/**
