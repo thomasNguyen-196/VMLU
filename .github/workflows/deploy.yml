@@ -14,7 +14,7 @@ on:
 
 defaults:
   run:
-    shell: pwsh
+    shell: powershell
 
 jobs:
   deploy:
