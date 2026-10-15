@@ -14,7 +14,7 @@ on:
 
 defaults:
   run:
-    shell: powershell
+    shell: powershell -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
 
 jobs:
   deploy:
