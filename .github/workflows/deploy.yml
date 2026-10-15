@@ -21,6 +21,13 @@ jobs:
     name: Deploy web stack on lab PC
     runs-on: [self-hosted, vmlu-pc]
     timeout-minutes: 30
+    env:
+      # safe.directory via env — survives git reinstalls on the PC (the
+      # system-level `git config --system --add safe.directory` can be
+      # clobbered by winget git upgrades). Runner service runs NETWORK SERVICE.
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: safe.directory
+      GIT_CONFIG_VALUE_0: C:/vmlu
     steps:
       - name: Pull latest main
         working-directory: C:\vmlu
