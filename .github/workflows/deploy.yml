@@ -1,0 +1,47 @@
+name: Deploy
+
+# Deploys the web stack to the lab PC (Windows 11, Docker Desktop) via the
+# self-hosted runner registered there (labels: [self-hosted, vmlu-pc]).
+# PC side: C:\vmlu git clone of this repo + docker compose up -d --build.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  deploy:
+    name: Deploy web stack on lab PC
+    runs-on: [self-hosted, vmlu-pc]
+    timeout-minutes: 30
+    steps:
+      - name: Pull latest main
+        working-directory: C:\vmlu
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Rebuild and restart stack
+        working-directory: C:\vmlu
+        run: |
+          docker compose up -d --build web
+          docker compose ps
+
+      - name: Smoke check
+        working-directory: C:\vmlu
+        run: |
+          $tries = 0
+          do {
+            $tries++
+            Start-Sleep -Seconds 5
+            $code = (Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:3000/ -TimeoutSec 10).StatusCode
+          } while ($code -ne 200 -and $tries -lt 12)
+          if ($code -ne 200) { throw "web did not come up (last status $code)" }
+          Write-Output "web up after $tries tries (HTTP $code)"

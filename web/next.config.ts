@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Standalone output for the Docker image (see web/Dockerfile).
+  output: "standalone",
   async redirects() {
     return [
       {
