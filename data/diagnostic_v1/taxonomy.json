@@ -1,0 +1,188 @@
+{
+  "version": "diagnostic-rubric-v3",
+  "labels": [
+    {
+      "id": "external_evidence_gap",
+      "name_vi": "Thiếu bằng chứng ngoài trong input",
+      "definition": "Input lacks necessary information; this does not assert missing parametric knowledge.",
+      "support_requires": "Contrast or reviewed deterministic evidence-sufficiency replay establishes input deficiency; input may be insufficient.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "parametric_knowledge_gap",
+      "name_vi": "Giả thuyết thiếu tri thức tham số",
+      "definition": "The tested model fails a controlled parametric-knowledge probe.",
+      "support_requires": "Closed-book/evidence controls distinguish contextual deficiency and reading/reasoning alternatives; recovery alone is insufficient.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "parametric_knowledge_error",
+      "name_vi": "Giả thuyết tri thức tham số sai",
+      "definition": "A persistent factual conflict is hypothesized in parametric knowledge.",
+      "support_requires": "Verified dated source plus controlled probes; a wrong output alone establishes a factual error, not its internal origin.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "reasoning_gap",
+      "name_vi": "Giả thuyết lỗi suy luận",
+      "definition": "Necessary premises are present but combining/calculation fails.",
+      "support_requires": "Verified premises and a matched reasoning/tool contrast; calculator effects remain distinct from prompt effects.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "reading_representation_gap",
+      "name_vi": "Giả thuyết đọc hiểu/biểu diễn",
+      "definition": "Interpretation of entity, relation, scope or negation is hypothesized to fail.",
+      "support_requires": "Matched representation/reading contrast with unchanged required facts.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "instruction_gap",
+      "name_vi": "Giả thuyết tuân thủ yêu cầu",
+      "definition": "An explicit output/task constraint is violated.",
+      "support_requires": "Matched instruction contrast; raw violation is descriptive evidence only.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "retrieval_gap",
+      "name_vi": "Giả thuyết retriever",
+      "definition": "A versioned corpus contains relevant evidence but the retriever misses it.",
+      "support_requires": "Corpus evidence availability, retrieval trace and reviewed matched/oracle contrast.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "context_assembly_gap",
+      "name_vi": "Giả thuyết ghép context",
+      "definition": "Relevant retrieved evidence is lost, truncated or misplaced during assembly.",
+      "support_requires": "Retrieval-to-input trace and controlled assembly contrast or deterministic replay.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "generator_evidence_use_gap",
+      "name_vi": "Giả thuyết sử dụng evidence",
+      "definition": "Supplied relevant evidence is not used correctly by the generator.",
+      "support_requires": "Matched context-use contrast; do not classify as a retriever failure.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "harness_gap",
+      "name_vi": "Giả thuyết harness",
+      "definition": "Scaffold, tool interface or cap changes the response.",
+      "support_requires": "Same-model/item matched harness contrast with explicit controls.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "parser_gap",
+      "name_vi": "Giả thuyết parser",
+      "definition": "Raw output and parsed prediction differ in a way that changes scoring.",
+      "support_requires": "Hash-linked deterministic parser replay or matched parser contrast; do not alter frozen source scores.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "measurement_gap",
+      "name_vi": "Giả thuyết đo lường",
+      "definition": "Gold or metric representation causes a misleading correctness measurement.",
+      "support_requires": "Reviewed references and hash-linked deterministic scoring/gold comparison; source scores remain intact.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    },
+    {
+      "id": "run_instability",
+      "name_vi": "Giả thuyết bất ổn giữa lần chạy",
+      "definition": "Repeated same-condition outputs produce inconsistent outcomes.",
+      "support_requires": "Registered same-condition repetitions and declared stability criterion; one output is insufficient.",
+      "example": "See the revision-4 operating guide.",
+      "caveat": "Human signoff and confidence do not establish controlled attribution."
+    }
+  ],
+  "observed_issues": [
+    {
+      "id": "answer_mismatch",
+      "name_vi": "Đáp án không phù hợp câu hỏi/nguồn"
+    },
+    {
+      "id": "factual_conflict",
+      "name_vi": "Claim mâu thuẫn nguồn"
+    },
+    {
+      "id": "calculation_error",
+      "name_vi": "Kết quả tính toán sai"
+    },
+    {
+      "id": "wrong_entity_relation",
+      "name_vi": "Sai thực thể/quan hệ/phạm vi"
+    },
+    {
+      "id": "instruction_violation",
+      "name_vi": "Vi phạm yêu cầu/định dạng"
+    },
+    {
+      "id": "missing_input_evidence",
+      "name_vi": "Input thiếu dữ kiện cần thiết"
+    },
+    {
+      "id": "retrieval_miss",
+      "name_vi": "Trace retrieval không lấy được evidence"
+    },
+    {
+      "id": "context_assembly_issue",
+      "name_vi": "Evidence bị mất khi ghép context"
+    },
+    {
+      "id": "parser_mismatch",
+      "name_vi": "Raw output khác prediction đã parse"
+    },
+    {
+      "id": "output_truncation",
+      "name_vi": "Output bị cắt"
+    },
+    {
+      "id": "gold_metric_issue",
+      "name_vi": "Vấn đề gold/metric"
+    },
+    {
+      "id": "run_variation",
+      "name_vi": "Kết quả biến động giữa lần chạy"
+    },
+    {
+      "id": "other",
+      "name_vi": "Vấn đề khác được mô tả"
+    }
+  ],
+  "attribution_status_definitions": {
+    "hypothesis": "Artifact-based candidate explanation; no controlled attribution claim.",
+    "contrast_supported": "A registered, hash-verified, reviewed controlled contrast or deterministic replay supports this specific hypothesis."
+  },
+  "audit_evidence_kinds": [
+    "input_span",
+    "source_comparison",
+    "derivation",
+    "raw_output",
+    "parser_replay",
+    "unavailable"
+  ],
+  "corpus_evidence_availability": [
+    "not_assessed",
+    "present",
+    "absent",
+    "not_applicable"
+  ],
+  "input_evidence_sufficiency": [
+    "sufficient",
+    "insufficient",
+    "unassessable",
+    "not_applicable"
+  ],
+  "action_label_rule": "Action labels require prospective intervention outcomes and budget policy. Unknown cause is an empty hypothesis set; mixed attribution is derived from multiple supported hypotheses."
+}

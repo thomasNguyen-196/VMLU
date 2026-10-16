@@ -1,24 +1,28 @@
 "use client";
 
 /** One nav strip shared by every surface: Review (`/`), Benchmark
- *  (`/benchmark`), Harness (`/harness`) and Results (`/results`).
+ *  (`/benchmark`), frozen results (`/table`), multi-model live view
+ *  (`/multimodel`) and Harness (`/harness`).
  *
- * WHY it exists: the three pages were three products — `/` and `/harness` wore
+ * WHY it exists: the pages were separate products — `/` and `/harness` wore
  * the paper/ink tokens while `/benchmark` wore an indigo/slate skin, and the
- * only link between them was one `← Review` button. Same study, three doors.
+ * only link between them was one `← Review` button. Same study, one shared navigation.
  * The active entry follows the pathname, so every page marks where it is
  * without each one having to say so.
  *
- * Deliberately dumb: a list of destinations and their active state. It knows
- * nothing about datasets, models or cards — those belong to the pages.
+ * Shared site chrome lives here: destinations and the app-wide appearance
+ * control. Dataset, model and card controls stay with their pages.
  */
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle.tsx";
 
 const ITEMS = [
   { href: "/", label: "Review", hint: "400 câu đọc hiểu" },
   { href: "/benchmark", label: "Benchmark", hint: "số live từ Mongo" },
   { href: "/table", label: "Bảng", hint: "kết quả main tiếng Việt đã chấm" },
+  { href: "/diagnostic", label: "Diagnostic", hint: "review pilot lỗi từng câu" },
+  { href: "/multimodel", label: "Ma trận live", hint: "số lấy từ Mongo" },
   { href: "/harness", label: "Harness", hint: "đường truy xuất có agent" },
 ] as const;
 
@@ -35,7 +39,7 @@ export default function SiteNav() {
           VMLU
         </span>
         {ITEMS.map((it) => {
-          const active = path === it.href;
+          const active = path === it.href || (it.href === "/table" && path === "/table/v2");
           return (
             <Link
               key={it.href}
@@ -65,6 +69,7 @@ export default function SiteNav() {
             </Link>
           );
         })}
+        <ThemeToggle className="ml-auto shrink-0" />
       </div>
     </nav>
   );

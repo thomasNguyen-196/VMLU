@@ -6,8 +6,8 @@
  * that `code_benchmark/build_dashboard_harness.py` patches, and validated here
  * so a stale or half-written block fails loudly instead of rendering zeros.
  *
- * Contract: the Python builder is the single source of truth (labels, card ids
- * and the leak/caveat prose live there). Nothing is recomputed in TS.
+ * Contract: the Python builder is the single source of truth for labels, card
+ * ids, structured findings, and caveat groups. Nothing is recomputed in TS.
  */
 
 export interface HarnessRow {
@@ -207,15 +207,20 @@ export interface HarnessRepeatRow {
   cell_max?: number;
 }
 
-/** The interpretation layer. Every number in `body` is INTERPOLATED from the rows
- *  the builder already carries (see `insight()` in build_dashboard_harness.py), so
- *  a claim cannot go stale the way a hand-typed sentence would. Claims whose
- *  evidence rows are absent are omitted, never printed with a hole. */
+/** Structured points for one interpretation claim. Numeric content is derived
+ *  from the builder's rows; labels keep each finding easy to scan. */
+export interface HarnessInsightPoint {
+  label: string;
+  text: string;
+}
+
 export interface HarnessInsightClaim {
   id: string;
   title: string;
-  body: string;
-  evidence: { label: string; value: string }[];
+  points?: HarnessInsightPoint[];
+  /** Legacy fields remain readable while older blobs are migrated. */
+  body?: string;
+  evidence?: { label: string; value: string }[];
 }
 
 /** One row of the direct comparison the study exists for: the same model and the
@@ -244,6 +249,11 @@ export interface HarnessInsight {
   verdict: string;
   claims: HarnessInsightClaim[];
   comparison: HarnessComparisonRow[];
+}
+
+export interface HarnessCaveatSection {
+  title: string;
+  items: string[];
 }
 
 export interface HarnessBlock {
@@ -279,7 +289,9 @@ export interface HarnessBlock {
     path_escape_items: number;
   };
   leak: { what: string; evidence: string; fix: string; guard: string };
-  caveats: string[];
+  /** Grouped caveats replace the old flat list; optional for older blobs. */
+  caveat_sections?: HarnessCaveatSection[];
+  caveats?: string[];
   sources: Record<string, string>;
 }
 
@@ -295,7 +307,22 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
   if (typeof raw !== "object" || raw === null) fail("benchmark-data.json không phải object");
   const b = raw as Partial<HarnessBlock>;
   if (!Array.isArray(b.ladder) || !b.ladder.length) fail("block .harness thiếu .ladder");
-  if (!Array.isArray(b.caveats) || !b.caveats.length) fail("block .harness thiếu .caveats");
+  const hasCaveatSections = Array.isArray(b.caveat_sections) && b.caveat_sections.length > 0;
+  const hasLegacyCaveats = Array.isArray(b.caveats) && b.caveats.length > 0;
+  if (!hasCaveatSections && !hasLegacyCaveats) fail("block .harness thiếu .caveats");
+  if (b.caveat_sections !== undefined) {
+    if (!Array.isArray(b.caveat_sections) || !b.caveat_sections.length) {
+      fail("block .harness .caveat_sections rỗng hoặc không phải mảng");
+    }
+    for (const section of b.caveat_sections) {
+      if (!section.title || !Array.isArray(section.items) || !section.items.length) {
+        fail("block .harness .caveat_sections có nhóm thiếu tiêu đề hoặc ý");
+      }
+      if (section.items.some((item) => typeof item !== "string" || !item.trim())) {
+        fail(`block .harness .caveat_sections.${section.title} có ý rỗng`);
+      }
+    }
+  }
   if (!b.totals) fail("block .harness thiếu .totals");
   for (const row of b.ladder) {
     if (!row.model) {
@@ -474,14 +501,29 @@ export function parseHarnessBlock(raw: unknown): HarnessBlock {
   if (!b.insight.verdict) fail("block .harness .insight.verdict rỗng");
   const seenIds = new Set<string>();
   for (const c of b.insight.claims) {
-    if (!c.id || !c.title || !c.body) fail(`claim thiếu id/title/body: ${JSON.stringify(c).slice(0, 100)}`);
+    const hasPoints = Array.isArray(c.points) && c.points.length > 0;
+    const hasLegacyBody = typeof c.body === "string" && Boolean(c.body.trim());
+    if (!c.id || !c.title || (!hasPoints && !hasLegacyBody)) {
+      fail(`claim thiếu id/title/body: ${JSON.stringify(c).slice(0, 100)}`);
+    }
     if (seenIds.has(c.id)) fail(`claim id trùng: ${c.id}`);
     seenIds.add(c.id);
-    if (!Array.isArray(c.evidence) || !c.evidence.length) {
+    if (c.points !== undefined) {
+      if (!Array.isArray(c.points) || !c.points.length) {
+        fail(`claim ${c.id} thiếu points`);
+      }
+      for (const point of c.points) {
+        if (!point.label || !point.text) fail(`claim ${c.id}: point thiếu label/text`);
+      }
+    }
+    if ((!Array.isArray(c.evidence) || !c.evidence.length) && !hasPoints) {
       fail(`claim ${c.id} không có evidence — một claim không kèm số thể chỉ là ý kiến`);
     }
-    for (const e of c.evidence) {
-      if (!e.label || !e.value) fail(`claim ${c.id}: evidence thiếu label/value`);
+    if (c.evidence !== undefined) {
+      if (!Array.isArray(c.evidence)) fail(`claim ${c.id}: evidence không phải mảng`);
+      for (const e of c.evidence) {
+        if (!e.label || !e.value) fail(`claim ${c.id}: evidence thiếu label/value`);
+      }
     }
   }
   // The with/without-harness table is the study's reason for existing.

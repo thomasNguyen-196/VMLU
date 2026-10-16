@@ -1,0 +1,173 @@
+{
+  "source": "VMLU server grade provided by the user",
+  "recorded_at": "2026-10-14T14:40:41.891144+07:00",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "model_id": "ocg/muse-spark-1.3-contributor",
+  "condition_ids": [
+    "MC-82"
+  ],
+  "item_count": 9833,
+  "submission_path": "all_res/muse13_direct_mc82/vmlu/muse-spark-1-3-contributor-ocg-20k/submission_vmlu_test.csv",
+  "submission_sha256": "f86f4b2a0de31778f61db3cf874220d7b38695fc1deecc55ed8bfaa70ba876a8",
+  "run_path": "all_res/muse13_direct_mc82/vmlu/muse-spark-1-3-contributor-ocg-20k/run.json",
+  "manifest_sha256": "fa5b382ed1d05db6e2ab25cf00580ff14282176d08fe9603b201e28ad5cc1f11",
+  "condition_sha256": "cfdc6a20f37546c39ce2e1b039ba72712443cc059125012515d4ba8a45c713c5",
+  "server_score_status": "scored_user_provided",
+  "total": 88.41,
+  "categories": {
+    "social_science": {
+      "total": 87.85,
+      "subjects": {
+        "middle_school_civil_education": 92.7,
+        "middle_school_geography": 89.8,
+        "principles_of_marxism_and_leninism": 88.89,
+        "sociology": 85.96,
+        "business_administration": 72.41,
+        "high_school_civil_education": 94.44,
+        "high_school_geography": 77.16,
+        "ho_chi_minh_ideology": 93.3,
+        "macroeconomics": 87.22,
+        "microeconomics": 96.67
+      }
+    },
+    "stem": {
+      "total": 91.58,
+      "subjects": {
+        "applied_informatics": 88.89,
+        "computer_architecture": 95.56,
+        "computer_network": 88.27,
+        "discrete_mathematics": 93.94,
+        "electrical_engineering": 83.52,
+        "elementary_mathematics": 96.11,
+        "elementary_science": 95,
+        "high_school_biology": 92.22,
+        "high_school_chemistry": 96.11,
+        "high_school_mathematics": 90.54,
+        "high_school_physics": 89.44,
+        "introduction_to_chemistry": 93.3,
+        "introduction_to_physics": 95.38,
+        "introduction_to_programming": 83.24,
+        "metrology_engineer": 81.56,
+        "middle_school_biology": 93.53,
+        "middle_school_chemistry": 97.78,
+        "middle_school_mathematics": 94.44,
+        "middle_school_physics": 95.56,
+        "operating_system": 81.67,
+        "statistics_and_probability": 97.13
+      }
+    },
+    "other": {
+      "total": 84.29,
+      "subjects": {
+        "accountant": 85.71,
+        "civil_servant": 91.23,
+        "clinical_pharmacology": 86.11,
+        "driving_license_certificate": 99.42,
+        "environmental_engineering": 59.06,
+        "internal_basic_medicine": 85.38,
+        "preschool_pedagogy": 72.55,
+        "tax_accountant": 86.21,
+        "tax_civil_servant": 92.98
+      }
+    },
+    "humanity": {
+      "total": 87.08,
+      "subjects": {
+        "elementary_history": 90.4,
+        "high_school_history": 90.56,
+        "high_school_literature": 90.56,
+        "history_of_world_civilization": 95.56,
+        "idealogical_and_moral_cultivation": 94.44,
+        "introduction_to_laws": 85.71,
+        "introduction_to_vietnam_culture": 83.89,
+        "logic": 85.63,
+        "middle_school_history": 92.22,
+        "middle_school_literature": 83.91,
+        "revolutionary_policy_of_the_vietnamese_commununist_part": 81.67,
+        "vietnamese_language_and_literature": 78.16,
+        "administrative_law": 67.78,
+        "business_law": 89.94,
+        "civil_law": 95,
+        "criminal_law": 93.25,
+        "economic_law": 83.85,
+        "education_law": 84.94
+      }
+    }
+  },
+  "raw_server_result": {
+    "social_science": {
+      "middle_school_civil_education": 92.7,
+      "middle_school_geography": 89.8,
+      "principles_of_marxism_and_leninism": 88.89,
+      "sociology": 85.96,
+      "total": 87.85,
+      "business_administration": 72.41,
+      "high_school_civil_education": 94.44,
+      "high_school_geography": 77.16,
+      "ho_chi_minh_ideology": 93.3,
+      "macroeconomics": 87.22,
+      "microeconomics": 96.67
+    },
+    "stem": {
+      "applied_informatics": 88.89,
+      "computer_architecture": 95.56,
+      "computer_network": 88.27,
+      "discrete_mathematics": 93.94,
+      "electrical_engineering": 83.52,
+      "elementary_mathematics": 96.11,
+      "elementary_science": 95,
+      "high_school_biology": 92.22,
+      "high_school_chemistry": 96.11,
+      "high_school_mathematics": 90.54,
+      "high_school_physics": 89.44,
+      "introduction_to_chemistry": 93.3,
+      "introduction_to_physics": 95.38,
+      "introduction_to_programming": 83.24,
+      "metrology_engineer": 81.56,
+      "middle_school_biology": 93.53,
+      "middle_school_chemistry": 97.78,
+      "middle_school_mathematics": 94.44,
+      "middle_school_physics": 95.56,
+      "operating_system": 81.67,
+      "statistics_and_probability": 97.13,
+      "total": 91.58
+    },
+    "total": 88.41,
+    "other": {
+      "accountant": 85.71,
+      "civil_servant": 91.23,
+      "clinical_pharmacology": 86.11,
+      "driving_license_certificate": 99.42,
+      "environmental_engineering": 59.06,
+      "internal_basic_medicine": 85.38,
+      "preschool_pedagogy": 72.55,
+      "tax_accountant": 86.21,
+      "tax_civil_servant": 92.98,
+      "total": 84.29
+    },
+    "humanity": {
+      "elementary_history": 90.4,
+      "high_school_history": 90.56,
+      "high_school_literature": 90.56,
+      "history_of_world_civilization": 95.56,
+      "idealogical_and_moral_cultivation": 94.44,
+      "introduction_to_laws": 85.71,
+      "introduction_to_vietnam_culture": 83.89,
+      "logic": 85.63,
+      "middle_school_history": 92.22,
+      "middle_school_literature": 83.91,
+      "revolutionary_policy_of_the_vietnamese_commununist_part": 81.67,
+      "vietnamese_language_and_literature": 78.16,
+      "administrative_law": 67.78,
+      "business_law": 89.94,
+      "civil_law": 95,
+      "criminal_law": 93.25,
+      "economic_law": 83.85,
+      "education_law": 84.94,
+      "total": 87.08
+    }
+  },
+  "correct": null,
+  "ci95": null,
+  "note": "User supplied aggregate percentages only; no per-item gold, correct count, or confidence interval supplied. Model Test inference is homogeneous MC-82; Valid elsewhere retains MC-80 provenance."
+}

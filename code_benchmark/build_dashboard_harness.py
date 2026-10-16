@@ -76,11 +76,11 @@ ARMS = [
     ("A2_direct_mimo", "mimo-v2_5", "A2",
      "MiMo V2.5: gọi API trực tiếp (không harness)", None),
     ("ompM6clean_mimo-v2.5", "ompM6clean_mimo-v2_5", "M6",
-     "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, "
-     "temperature 0 + reasoning tắt do proxy ghim", "MC-30"),
+     "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim "
+     "temperature 0 và tắt reasoning", "MC-30"),
     ("ompM6inrepo_mimo-v2.5", "ompM6inrepo_mimo-v2_5", "M6L",
-     "MiMo V2.5: đúng arm M6 nhưng sandbox đặt TRONG repo, nên `AGENTS.md` của chính repo "
-     "này bị nạp vào mọi item (ablation của MC-29)", "MC-30"),
+     "MiMo V2.5: cùng arm M6 nhưng sandbox trong repo, nên AGENTS.md được nạp vào mọi item; "
+     "ablation MC-29", "MC-30"),
     # ── model thứ ba (MC-31/MC-32): Qwen3.5-9B-65K, node duy nhất còn chạy ──
     ("A3_direct", "Qwen3_5-9B-65K", "A3",
      "Qwen3.5-9B-65K: gọi API trực tiếp (không harness)", None),
@@ -92,10 +92,10 @@ ARMS = [
     #    on 65K the reading INVERTS — the minimal scaffold cell is nearly free and
     #    the tools plus omp's own persona are what cost. Same arm, one gene moved.
     ("ompF5clean_Qwen3_5-9B-65K", "ompF5clean_Qwen3_5-9B-65K", "F5",
-     "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+     "65K: omp sạch, không công cụ, prompt trung tính — scaffold tối giản",
      "MC-46/47"),
     ("ompF7clean_Qwen3_5-9B-65K", "ompF7clean_Qwen3_5-9B-65K", "F7",
-     "65K: omp sạch, KHÔNG tool, system prompt gốc của omp", "MC-46/47"),
+     "65K: omp sạch, không công cụ, prompt gốc của omp", "MC-46/47"),
     ("ompF8clean_Qwen3_5-9B-65K", "ompF8clean_Qwen3_5-9B-65K", "F8",
      "65K: omp sạch + tool menu đầy đủ, system prompt gốc của omp", "MC-46/47"),
     # Two clean repeats of the tools+minimal-prompt cell: the 65K noise floor. They
@@ -163,48 +163,30 @@ def datasets_for(slug: str) -> list[str]:
     return ARM_DATASETS.get(slug, DATASETS)
 DATASET_LABEL = {"reading400": "reading-400 (EM)", "legal_mc": "legal-MC (accuracy)",
                  "legal_nli": "legal-NLI (accuracy)", "bidlqa_val": "ViBidLQA val (EM)",
-                 "vbench_agentic": "V-Bench agentic (schema validity — KHÔNG có gold)",
-                 "vbench_mc": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)"}
+                 "vbench_agentic": "V-Bench agentic — schema validity, không có gold cục bộ",
+                 "vbench_mc": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ"}
 
-# WHAT EACH METRIC IS, in the reader's terms. Every table carries the metric name,
-# and a bare name is not enough: `agreement` and `valid_rate` both read like a
-# score to anyone who has just seen "Accuracy 73,35%" two rows up, and both are
-# something else entirely. This is the single place that says which is which —
-# the page renders it next to every number, so a metric can never be read as an
-# accuracy it is not. `not_a_score: true` drives the loud styling: those two
-# metrics never appear in a range the prose calls "điểm" (see `insight`).
+# Short metric notes appear on the metric label and in the shared legend.
 METRIC_NOTE: dict[str, dict] = {
     "accuracy": {
         "unit": "điểm", "not_a_score": False,
-        "what": "số câu đúng / tổng số câu — có vàng cục bộ nên đây là điểm thật.",
+        "what": "Tỷ lệ câu đúng trên bộ gold cục bộ.",
     },
     "EM": {
         "unit": "điểm", "not_a_score": False,
-        "what": "exact match trên gold đã hiệu đính — có vàng cục bộ nên đây là điểm thật.",
+        "what": "Tỷ lệ khớp chính xác trên gold đã hiệu đính.",
     },
-    # NOT the same as `accuracy`: there is no local gold here, the site grades it,
-    # and it cannot be recomputed offline. Calling it `accuracy` made the page
-    # print "có vàng cục bộ nên đây là điểm thật" under a number that came from
-    # a server we cannot re-run — the exact false assurance this table exists to
-    # prevent. `b_blanks` also means something different (items not submitted,
-    # scored wrong) rather than "unparsed by our reader".
     "server_accuracy": {
         "unit": "điểm", "not_a_score": False,
-        "what": ("điểm do máy chủ vbench.ai chấm. KHÔNG có vàng cục bộ nên không kiểm chứng "
-                 "lại được offline; câu không nộp/không trích được vẫn nằm trong mẫu số "
-                 "và bị tính sai."),
+        "what": "Điểm do vbench.ai chấm; không có gold cục bộ để kiểm chứng offline.",
     },
     "valid_rate": {
         "unit": "tỉ lệ", "not_a_score": True,
-        "what": ("tỉ lệ lời gọi hàm khớp schema của chính câu hỏi đó. Đây KHÔNG phải điểm: "
-                 "hợp lệ về cấu trúc không bảo đảm gọi đúng hàm (MC-28 đo chênh 3,4×)."),
+        "what": "Tỷ lệ lời gọi khớp schema; không cho biết hàm và tham số có đúng không.",
     },
     "agreement": {
         "unit": "tỉ lệ", "not_a_score": True,
-        "what": ("tỉ lệ câu mà agent trả lời GIỐNG HỆT lời gọi trực tiếp trên cùng câu hỏi. "
-                 "Đây KHÔNG phải điểm: nó đo agent có đổi đáp án hay không, chứ không đo đáp án "
-                 "đó tốt hơn hay xấu hơi — đổi sang chữ sai vẫn là đổi. Điểm thật của "
-                 "12 domain do máy chủ vbench.ai chấm, xem cột `Điểm server`."),
+        "what": "Tỷ lệ câu agent giữ nguyên đáp án so với arm A; không đo độ đúng.",
     },
 }
 
@@ -273,6 +255,21 @@ def f2(value: str) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def vi_num(value: float, digits: int = 2) -> str:
+    """Format numbers for Vietnamese prose, including grouped thousands."""
+    return f"{value:,.{digits}f}".replace(",", "\0").replace(".", ",").replace("\0", ".")
+
+
+def vi_delta(value: float, digits: int = 2) -> str:
+    """Format a signed score delta with Vietnamese decimal separators."""
+    return f"{value:+,.{digits}f}".replace(",", "\0").replace(".", ",").replace("\0", ".")
+
+
+def vi_int(value: int | float) -> str:
+    """Format an integer count with dot thousands separators."""
+    return f"{int(value):,}".replace(",", ".")
 
 
 def read_compare(folder: Path, dataset: str, tag: str = "vsA") -> dict | None:
@@ -876,58 +873,20 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         deltas = sorted(r["delta"] for r in rows_m)
         ds = sorted({r["dataset_label"].split(" (")[0] for r in rows_m})
         excl0 = sum(1 for r in rows_m if r["ci95_high"] < 0 or r["ci95_low"] > 0)
-        worse = deltas[-1] < 0
+        trend = "mọi phép so đều giảm điểm" if deltas[-1] < 0 else "chưa thấy mức giảm nhất quán"
         claims.append({
             "id": f"penalty:{model}",
-            "title": (f"{model}: chi phí của việc đưa một prompt qua tiến trình agent"
-                      if worse else
-                      f"{model}: đi qua tiến trình agent KHÔNG làm giảm điểm"),
-            "body": ("Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi "
-                     "đường truy xuất câu trả lời: các cấu hình scaffold sạch "
-                     + ("thua" if worse else f"có Δ từ {deltas[0]:+.2f} đến {deltas[-1]:+.2f} điểm")
-                     + f" trên {len(ds)} tập ({', '.join(ds)})"
-                     + ("" if worse else
-                        ", tức không tìm thấy khoản phạt nào ở đây")
-                     + f". Trong {len(rows_m)} "
-                     f"phép so sánh đó, {excl0} phép có khoảng tin cậy 95% loại trừ 0"
-                     + ("" if excl0 == len(rows_m) else
-                        f"; {len(rows_m) - excl0} phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin "
-                        f"cậy còn ngang bằng bản thân khoản thay đổi")
-                     # Name the exclusion. Without it, "+0.00…+7.00 trên 4 tập"
-                     # reads as MiMo's overall result while the tables below show
-                     # MiMo at -22.39 — a different metric on a 12-domain set.
-                     + ". Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ "
-                       "agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`)"
-                     + "."),
-            "evidence": [{"label": "Δ nhỏ nhất", "value": f"{deltas[0]:+.2f}"},
-                         {"label": "Δ lớn nhất", "value": f"{deltas[-1]:+.2f}"},
-                         {"label": "CI 95% loại trừ 0", "value": f"{excl0}/{len(rows_m)}"},
-                         {"label": "tập nhỏ nhất", "value": f"n={min(r['n'] for r in rows_m)}"}],
-        })
-
-    # 1b. Mệnh đề liên model: dấu của hiệu ứng thuộc về model, không thuộc về scaffold
-    if len(clean_by_model) > 1:
-        worst = {m: max(r["delta"] for r in rs) for m, rs in clean_by_model.items()}
-        best = {m: min(r["delta"] for r in rs) for m, rs in clean_by_model.items()}
-        flips = [m for m, rs in clean_by_model.items() if max(r["delta"] for r in rs) > 0]
-        claims.append({
-            "id": "model_dependent",
-            "title": "Scaffold không có một giá riêng: dấu của hiệu ứng đổi theo model",
-            "body": ("Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một "
-                     "đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: "
-                     + "; ".join(f"{m} dao động {best[m]:+.2f}…{worst[m]:+.2f} điểm" 
-                                 for m in sorted(clean_by_model))
-                     + ". Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, "
-                       "không phải chi phí của việc đi qua một tiến trình agent. "
-                     + (f"Trên {len(flips)}/{len(clean_by_model)} model, scaffold thậm chí còn tăng điểm."
-                        if flips else
-                        "Không model nào được scaffold giúp.")
-                     + " Các model còn khác nhau ở chỗ có suy luận hay không, nên đây là so các "
-                       "condition chứ không phải so thứ hạng model."),
-            "evidence": [{"label": f"{m}: Δ cao nhất", "value": f"{worst[m]:+.2f}đ"}
-                         for m in sorted(clean_by_model)]
-                        + [{"label": f"{m}: Δ thấp nhất", "value": f"{best[m]:+.2f}đ"}
-                           for m in sorted(clean_by_model)],
+            "title": f"{model}: kết quả khi dùng scaffold sạch",
+            "points": [
+                {"label": "Kết quả", "text": (
+                    f"Δ từ {vi_delta(deltas[0])} đến {vi_delta(deltas[-1])} điểm trên "
+                    f"{vi_int(len(ds))} tập; {trend}."
+                )},
+                {"label": "Độ tin cậy", "text": (
+                    f"CI 95% không chứa 0 ở {excl0}/{len(rows_m)} phép so."
+                )},
+                {"label": "Cỡ mẫu", "text": f"n nhỏ nhất là {vi_int(min(r['n'] for r in rows_m))}."},
+            ],
         })
 
     # 1c. WHICH configuration costs, per model. The sentence the 28K factorial
@@ -950,26 +909,24 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
             clear.sort(key=lambda r: r["delta"])
             claims.append({
                 "id": f"configuration:{model}:{ds_label}",
-                "title": (f"{model} / {ds_label}: cấu hình nào tốn điểm thì tùy — "
-                          f"scaffold tối giảu gần như miễn phí, thêm công cụ và persona thì tốn"),
-                "body": (f"Trên cùng một tập và cùng arm A, các arm scaffold sạch của {model} "
-                         f"trải Δ từ {flat[0]['delta']:+.2f} (arm {flat[0]['arm']}, "
-                         f"CI [{flat[0]['ci95_low']:+.2f}, {flat[0]['ci95_high']:+.2f}] — **không khác 0** "
-                         f"thống kê) tới {clear[0]['delta']:+.2f} (arm {clear[0]['arm']}, "
-                         f"CI [{clear[0]['ci95_low']:+.2f}, {clear[0]['ci95_high']:+.2f}]). "
-                         f"Nghĩa là **chính cái scaffold không phải là nơi mất điểm**: ô tối giảu "
-                         f"(không công cụ, system prompt trung tính) gần như ngang với gọi thẳng, "
-                         f"và điểm chỉ rơi khi bật menu công cụ và/hoặc system prompt gốc của omp. "
-                         f"Đọc một dải Δ của riêng model này mà không ghi cấu hình sẽ gán nhầm "
-                         f"chi phí cho agent thay vì cho những gì ta thêm vào nó."
-                         + (f" Sàn nhiễu của chính các ô lặp ở model này là "
-                            f"{rep_spread:.2f} điểm, nên những chênh lệch dưới mức đó "
-                            f"không đọc được."
-                            if rep_spread is not None else "")),
-                "evidence": [{"label": f"arm {r['arm']}", "value": f"{r['delta']:+.2f}đ"}
-                             for r in ([flat[0]] + clear[:2])]
-                            + ([{"label": "sàn nhiễu (lặp)", "value": f"{rep_spread:.2f}đ"}]
-                               if rep_spread is not None else []),
+                "title": f"{model} trên {ds_label}: hiệu ứng thay đổi theo cấu hình",
+                "points": [
+                    {"label": f"Arm {flat[0]['arm']}", "text": (
+                        f"Δ {vi_delta(flat[0]['delta'])} điểm; CI 95% từ "
+                        f"{vi_delta(flat[0]['ci95_low'])} đến {vi_delta(flat[0]['ci95_high'])}, "
+                        "còn chứa 0."
+                    )},
+                    {"label": f"Arm {clear[0]['arm']}", "text": (
+                        f"Δ {vi_delta(clear[0]['delta'])} điểm; CI 95% từ "
+                        f"{vi_delta(clear[0]['ci95_low'])} đến {vi_delta(clear[0]['ci95_high'])}, "
+                        "không chứa 0."
+                    )},
+                    {"label": "Cách đọc", "text": (
+                        "Hai arm khác cấu hình; đối chiếu nhãn của từng arm trong bảng."
+                    )},
+                ] + ([{"label": "Sàn nhiễu", "text": (
+                    f"{vi_num(rep_spread)} điểm; chênh lệch nhỏ hơn mức này chưa thể đọc rõ."
+                )}] if rep_spread is not None else []),
             })
             break        # one claim per model: the widest dataset is enough to make it
 
@@ -989,18 +946,24 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         ratio = abs(vdelta / v_b["delta"]) if v_b["delta"] else float("nan")
         claims.append({
             "id": f"vbench:{model}",
-            "title": f"{model}: trên bài function-calling — nơi scaffold duy nhất được lợi thế — "
-                     f"vẫn chỉ thua, và thua nhiều hơn thống kê cục bộ gợi ý",
-            "body": (f"Trên {v_b['n']:.0f} câu lệnh gọi hàm: tính schema validity tại chỗ cho "
-                     f"{v_a['arm_b']:.2f}% → {v_b['arm_b']:.2f}% ({v_b['delta']:+.2f} điểm), nhưng điểm "
-                     f"chấm thật từ máy chủ là {v_a['server_score']:.2f}% → {v_b['server_score']:.2f}% "
-                     f"({vdelta:+.2f} điểm) — lớn hơn {ratio:.1f} lần. Phần lớn lỗi vì vậy không phải do "
-                     f"phát sinh JSON sai cấu trúc, mà do chọn đúng hàm nhưng điền sai tham số: một "
-                     f"lỗi mà bộ kiểm tra schema về cấu trúc không thể phát hiện."),
-            "evidence": [{"label": "Δ schema validity", "value": f"{v_b['delta']:+.2f}đ"},
-                         {"label": "Δ điểm máy chủ", "value": f"{vdelta:+.2f}đ"},
-                         {"label": "hệ số chênh lệch", "value": f"{ratio:.1f}×"},
-                         {"label": "cỡ mẫu", "value": f"{v_b['n']:.0f}"}],
+            "title": f"{model}: điểm máy chủ giảm nhiều hơn schema validity",
+            "points": [
+                {"label": "Schema validity", "text": (
+                    f"{vi_num(v_a['arm_b'])}% → {vi_num(v_b['arm_b'])}%; "
+                    f"Δ {vi_delta(v_b['delta'])} điểm."
+                )},
+                {"label": "Điểm máy chủ", "text": (
+                    f"{vi_num(v_a['server_score'])}% → {vi_num(v_b['server_score'])}%; "
+                    f"Δ {vi_delta(vdelta)} điểm."
+                )},
+                {"label": "Cách đọc", "text": (
+                    f"Mức giảm điểm máy chủ lớn gấp {vi_num(ratio, 1)} lần validity; "
+                    "lời gọi hợp lệ vẫn có thể chọn sai hàm hoặc tham số."
+                    if v_b["delta"] else
+                    "Không thể so tỷ lệ khi Δ validity bằng 0."
+                )},
+                {"label": "Cỡ mẫu", "text": f"{vi_int(v_b['n'])} câu gọi hàm."},
+            ],
         })
 
     # 3. Mức sàn nhiễu: phạt thì vững, còn tương tác persona x tool thì không
@@ -1020,18 +983,21 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
             best = max(abs(r["delta"]) for r in matched)
             claims.append({
                 "id": "noise",
-                "title": "Khoản phạt là thật; còn tương tác giữa persona và menu công cụ thì không "
-                         "tách được khỏi nhiễu",
-                "body": (f"Lặp lại cùng một điều kiện từ hai đến ba lần trên legal-MC: ngay trong một ô, "
-                         f"điểm dao động {min(spreads.values()):.2f}…{noise:.2f} điểm ngay cả khi "
-                         f"`temperature` bằng 0. Khoản phạt của scaffold trên chính tập đó là "
-                         f"{worst:.2f}…{best:.2f} điểm, tức gấp {worst / noise:.1f}–{best / noise:.1f} lần "
-                         f"mức dao động này, nên kết luận là vững. Trái lại, hiệu ứng của việc đổi persona "
-                         f"và bật menu công cụ chỉ {contrast:+.2f} điểm, nhỏ hơn cả dao động nội tại của "
-                         f"một ô — nên không kết luận được, và nguyên nhân không phải là thiếu mẫu."),
-                "evidence": [{"label": "dao động trong một ô", "value": f"{min(spreads.values()):.2f}…{noise:.2f}"},
-                             {"label": "hiệu ứng persona × tool", "value": f"{contrast:+.2f}đ"},
-                             {"label": "Δ scaffold trên legal-MC", "value": f"{worst:.2f}…{best:.2f}đ"}],
+                "title": "Mức giảm scaffold vượt nhiễu; tương tác chưa tách được",
+                "points": [
+                    {"label": "Dao động khi lặp", "text": (
+                        f"{vi_num(min(spreads.values()))}–{vi_num(noise)} điểm qua 2–3 lượt "
+                        "trên legal-MC ở temperature 0."
+                    )},
+                    {"label": "Mức giảm scaffold", "text": (
+                        f"{vi_num(worst)}–{vi_num(best)} điểm, lớn hơn mức nhiễu "
+                        f"{vi_num(worst / noise, 1)}–{vi_num(best / noise, 1)} lần."
+                    )},
+                    {"label": "Persona và công cụ", "text": (
+                        f"Δ {vi_delta(contrast)} điểm, nhỏ hơn dao động trong một ô; "
+                        "chưa thể kết luận về tương tác."
+                    )},
+                ],
             })
 
     # 4. Vỏ câu trả lời: thuộc cấu hình, không thuộc omp
@@ -1043,20 +1009,21 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         if ds:
             d = ds[0]
             a, b = w[("H2", d)], w[("H5", d)]
-            label = a["dataset_label"]
+            label = a["dataset_label"].split(" (")[0]
             claims.append({
                 "id": "wrapper",
-                "title": "Phần lớn “harness tax” ở các lần đo ban đầu đến từ cấu hình trả lời của máy bị "
-                         "lọt vào, không phải từ bản thân omp",
-                "body": (f"Chấm lại chính các câu trả lời đó sau khi bỏ lớp vỏ markdown "
-                         f"({label}, n={a['n']} câu): điểm của cấu hình bị lọt tăng thêm "
-                         f"{a['wrapper_cost']:+.2f} điểm, còn của cấu hình sạch là "
-                         f"{b['wrapper_cost']:+.2f} điểm. Nghĩa là lớp vỏ là hệ quả của cấu hình, "
-                         f"trong khi câu trả lời của cấu hình sạch vốn đã trần. Nguyên nhân đã được xác "
-                         f"định: `PI_CODING_AGENT_DIR` không cô lập được scaffold, vì omp vẫn đọc "
-                         f"`~/.omp/agent/APPEND_SYSTEM.md` từ agent dir mặc định."),
-                "evidence": [{"label": f"bị lọt ({label})", "value": f"{a['wrapper_cost']:+.2f}đ"},
-                             {"label": f"sạch ({label})", "value": f"{b['wrapper_cost']:+.2f}đ"}],
+                "title": "Rò cấu hình giải thích phần lớn chi phí lớp bọc",
+                "points": [
+                    {"label": "Sau khi bóc lớp bọc", "text": (
+                        f"{label}, n={vi_int(a['n'])}: cấu hình bị rò tăng "
+                        f"{vi_delta(a['wrapper_cost'])} điểm; cấu hình sạch tăng "
+                        f"{vi_delta(b['wrapper_cost'])} điểm."
+                    )},
+                    {"label": "Nguyên nhân", "text": (
+                        "PI_CODING_AGENT_DIR không cô lập được cấu hình; omp vẫn nạp "
+                        "~/.omp/agent/APPEND_SYSTEM.md."
+                    )},
+                ],
             })
 
     # 5. Hai cơ chế chi phí là hai loại tiền khác nhau
@@ -1076,19 +1043,23 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
         tools = {"tok": probe("H3", "prompt_tok_per_item") - probe("H4", "prompt_tok_per_item"),
                  "s": probe("H3", "overhead_s_per_item") - probe("H4", "overhead_s_per_item")}
     if leak and tools and leak["out_a"] and leak["out_b"]:
+        completion_ratio = leak["out_b"] / leak["out_a"]
         claims.append({
             "id": "cost",
-            "title": "Hai cơ chế phát sinh chi phí là hai loại tiền khác nhau — không nên gộp chung",
-            "body": (f"Cấu hình bị lọt: {leak['tok']:+.0f} prompt token, gần như không tốn token đầu vào, "
-                     f"nhưng cộng thêm {leak['s']:+.2f} giây mỗi câu và làm số completion token tăng "
-                     f"{leak['out_b'] / leak['out_a']:.0f} lần ({leak['out_a']:.0f} → {leak['out_b']:.0f}). "
-                     f"Menu công cụ: ngược lại, {tools['tok']:+.0f} prompt token (chủ yếu là phần định nghĩa "
-                     f"công cụ) mà gần như không cộng thời gian ({tools['s']:+.2f} giây) và không cộng thêm "
-                     f"điểm. Hàm quyết định thiết kế: muốn giảm độ trễ thì cắt văn bản ép câu trả lời dài, "
-                     f"đừng cắt bộ công cụ."),
-            "evidence": [{"label": "rò cấu hình: token / giây", "value": f"{leak['tok']:+.0f} / {leak['s']:+.2f}s"},
-                         {"label": "menu công cụ: token / giây", "value": f"{tools['tok']:+.0f} / {tools['s']:+.2f}s"},
-                         {"label": "completion token", "value": f"×{leak['out_b'] / leak['out_a']:.0f}"}],
+            "title": "Rò cấu hình và menu công cụ tạo hai loại chi phí",
+            "points": [
+                {"label": "Rò cấu hình", "text": (
+                    f"{vi_delta(leak['tok'], 0)} prompt token và {vi_delta(leak['s'])} giây mỗi câu; "
+                    f"completion token tăng từ {vi_int(leak['out_a'])} lên {vi_int(leak['out_b'])} "
+                    f"gần {vi_num(completion_ratio, 0)} lần."
+                )},
+                {"label": "Menu công cụ", "text": (
+                    f"{vi_delta(tools['tok'], 0)} prompt token và {vi_delta(tools['s'])} giây mỗi câu."
+                )},
+                {"label": "Hàm ý", "text": (
+                    "Muốn giảm độ trễ, rút gọn hướng dẫn tạo câu trả lời dài trước khi bỏ công cụ."
+                )},
+            ],
         })
 
     # Bảng so sánh trực tiếp "không dùng harness" vs "dùng harness", mỗi tập một
@@ -1121,7 +1092,7 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
             comparison.append({
                 "model": r.get("model", ""),
                 "dataset": "vbench_mc_accuracy",
-                "dataset_label": "V-Bench MC 12 domain — điểm máy chủ (KHÔNG phải trùng khớp)",
+                "dataset_label": "V-Bench MC 12 domain — điểm máy chủ",
                 "metric": "server_accuracy", "n": arm_b.get("server_mc_total", r["server_mc_total"]),
                 "no_harness": round(server_a, 2),
                 "with_harness": round(arm_b["server_mc_score"], 2),
@@ -1157,41 +1128,18 @@ def insight(ladder: list[dict], secondary: list[dict], reps: list[dict],
     comparison.sort(key=lambda c: (c["model"], c["metric"] == "agreement", c["delta"]))
 
     if clean_by_model and len(clean_by_model) > 1:
-        rng = "; ".join(
-            f"{m} {min(r['delta'] for r in rs):+.2f}…{max(r['delta'] for r in rs):+.2f} điểm"
-            for m, rs in sorted(clean_by_model.items()))
-        helped = [m for m, rs in clean_by_model.items() if max(r["delta"] for r in rs) > 0]
-        # The range above is built from the rows that ARE scores. V-Bench is
-        # absent from it on purpose, so say so — otherwise "MiMo +0.00…+7.00"
-        # reads as MiMo's overall result while the table below it shows MiMo at
-        # -22.39 (agreement, a different thing entirely).
-        scored_datasets = sorted({r["dataset"] for rs in clean_by_model.values() for r in rs})
-        excluded = "V-Bench MC (trùng khớp, không phải điểm) và V-Bench agentic (validity)"
+        scored_datasets = sorted({
+            r["dataset_label"].split(" (")[0]
+            for rs in clean_by_model.values()
+            for r in rs
+        })
         verdict = (
-            f"Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm "
-            f"đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: {rng}. "
-            f"Phạm vi này chỉ gồm {len(scored_datasets)} tập có điểm thật ({', '.join(scored_datasets)})"
-            f" và KHÔNG gồm {excluded} — dải Δ ở đây không nói gì về V-Bench. "
-            f"Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không "
-            f"phải chi phí của việc đi qua một tiến trình agent"
-            + (f" — và trên {len(helped)}/{len(clean_by_model)} model, scaffold còn tăng điểm."
-               if helped else ".")
-            + " Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn "
-              "token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách "
-              "tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình "
-              "trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp."
+            f"Tác động của scaffold khác theo model. Dải Δ gồm "
+            f"{vi_int(len(scored_datasets))} tập có gold cục bộ; không dùng để xếp hạng."
         )
     elif clean_by_model:
         only = next(iter(clean_by_model))
-        rng = "; ".join(
-            f"{min(r['delta'] for r in rs):+.2f}…{max(r['delta'] for r in rs):+.2f} điểm"
-            for rs in clean_by_model.values())
-        verdict = (
-            f"Với model, prompt và bộ chấm đều giữ nguyên, việc trả lời qua một tiến trình agent đổi "
-            f"điểm {rng} trên {only}, và không tầng cấu hình nào của scaffold chịu trách nhiệm cho phần "
-            f"này. Phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy "
-            f"bị lọt vào scaffold chứ không phải từ bản thân omp."
-        )
+        verdict = f"Kết quả trên {only} chỉ áp dụng trong các điều kiện được đo."
     else:
         verdict = ""
     return {"verdict": verdict, "claims": claims, "comparison": comparison}
@@ -1223,22 +1171,20 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
         "path_escape_items": sum(c["path_escape_items"] for c in costs),
     }
     return {
-        "benchmark_name": ("Harness arm — mỗi model so với chính nó "
-                               "(omp vs gọi API trực tiếp)"),
+        "benchmark_name": "Harness arm — mỗi model so với chính nó",
         "date": "2026-09-26 → 2026-10-05",
         "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
-        "endpoint": ("https://llmapi.iec-uit.com/v1 (Qwen 28K, lúc còn sống) · "
-                     "https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go) · "
-                     "http://llmapi.iec/v1 (Qwen 65K, nội bộ qua VPN)"),
-        "harness": "omp (Oh My Pi) v18.2.7",
-        "condition": ("prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; "
-                      "khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo và "
-                      "Qwen-65K: temperature 0 (+ reasoning tắt cho MiMo) được GHIM BẰNG PROXY trong "
-                      "suốt vì omp không gửi được các field đó; sandbox đặt ngoài repo nên không có "
-                      "AGENTS.md nạp vào (MC-29/MC-30)."),
-        "measurement_card": "MC-15…MC-47",
+        "endpoint": ("Qwen 28K: https://llmapi.iec-uit.com/v1, đã dừng · "
+                     "MiMo: https://opencode.ai/zen/go/v1 · "
+                     "Qwen 65K: http://llmapi.iec/v1, nội bộ qua VPN"),
+        "harness": "omp, Oh My Pi, v18.2.7",
+        "condition": ("Prompt giữ nguyên so với arm A của cùng model; seed 42; bộ chấm cố định. "
+                      "Arm A gọi trực tiếp ở temperature 0. Proxy ghim temperature 0 cho MiMo và "
+                      "Qwen-65K, đồng thời tắt reasoning cho MiMo. Sandbox đặt ngoài repo nên "
+                      "AGENTS.md không được nạp. Tham khảo MC-29 và MC-30."),
+        "measurement_card": "MC-15…MC-48",
         "measurement_card_hash": measurement_card_hash(),
-        "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
+        "scorer": "extract_answer cho trắc nghiệm; score_reading_eval.py cho EM và char-F1; bộ chấm giữ nguyên",
         "ladder": ladder,
         "secondary_metrics": secondary,
         "repeatability": reps,
@@ -1254,53 +1200,48 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
         "speed": speed_rows,
         "totals": totals,
         "leak": {
-            "what": ("~/.omp/agent/APPEND_SYSTEM.md lọt vào mọi arm dù đã đặt PI_CODING_AGENT_DIR; "
-                     "đó là luật trả lời 'verdict → why → the test → the rule' của máy"),
-            "evidence": ("bắt bằng code_benchmark/capture_scaffold.py; system prompt thật bắt đầu "
-                         "bằng \"Answer the user's question.\\n# Global reply style (all projects)…\""),
-            "fix": "chỉ ghi đè HOME mới chặn được (file rỗng trong agent dir riêng không che được)",
-            "guard": "run_harness_eval.py in cảnh báo SCAFFOLD LEAK ở mỗi lần chạy",
+            "what": "Tệp ~/.omp/agent/APPEND_SYSTEM.md được nạp vào mọi arm dù đã đặt PI_CODING_AGENT_DIR.",
+            "evidence": "capture_scaffold.py xác nhận tệp này xuất hiện trong system prompt.",
+            "fix": "Ghi đè HOME bằng thư mục riêng; chỉ tạo agent dir rỗng là chưa đủ.",
+            "guard": "Runner hiển thị cảnh báo rò cấu hình trước mỗi lần chạy.",
         },
-        "caveats": [
-            "Đọc MC-15…MC-21 cùng MC-22: các arm H* đo 'omp + luật trả lời cá nhân bị rò', "
-            "không phải omp trần.",
-            "cacheRead của gateway IEC là bộ đếm cache tích luỹ → ledger thổi phồng token ~8×; "
-            "đừng dùng tỉ lệ token (MC-19) mà soi request thật bằng capture_scaffold.py.",
-            "Arm không tất định ở temperature 0 (MC-18: 13/20 item đổi đáp án) → Δ là hiệu ứng tổng.",
-            "Persona × tools không tách được ở n=100 khi có rò; xem MC-23 cho bản scaffold sạch.",
-            "Bảng speed: chỉ các ô n=24, workers=4 mới so sánh được với nhau. Ô H2 của cost probe "
-            "là n=40 (khác subset) nên không dùng để suy ra tương tác persona×tool (MC-25).",
-            "Bảng metric phụ (EM sau khi cắt vỏ) là để quy kết, KHÔNG thay số chính: nó bỏ vỏ "
-            "markdown rồi chấm lại bằng đúng scorer đóng băng. Câu sai vẫn sai.",
-            "Số arm A mang hash measurement card cũ; các card mới thêm sau khi chấm.",
-            "MC-29: sandbox từng mặc định nằm TRONG repo, nên omp nạp toàn bộ AGENTS.md của chính "
-            "repo này (27.501 ký tự, ~7k token) vào system prompt của MỌI item tới MC-28. Nhãn "
-            "\"scaffold sạch\" của các arm cũ nghĩa là sạch persona/tool, không có nghĩa là sạch chỉ "
-            "dẫn dự án. Ablation trên MiMo (cùng arm, khác vị trí sandbox): +7.003 token/câu, Δ +0,68 "
-            "điểm — tốn tiền, không tốn điểm.",
-            "omp KHÔNG gửi temperature và reasoning_effort (bắt bằng proxy; `options:` trong models.yml "
-            "bị bỏ qua im lặng). Các card ghi \"temperature 0\" là đúng cho arm A nhưng SAI cho mọi arm "
-            "B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
-            "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên "
-            "cùng câu hỏi — nó đo agent có ĐỔI đáp án, không đo đáp án đó tốt hơn hay xấu hơi. Điểm thật "
-            "của 12 domain do máy chủ vbench.ai chấm (MC-48) và nằm ở cột `Điểm server`; hai số này có "
-            "thể VÁNG DẤU: MiMo giảm 22,39 điểm trùng khớp nhưng TĂNG 2,13 điểm accuracy thật. Đừng "
-            "đọc Δ của dòng agreement như Δ điểm.",
-            "`valid_rate` (V-Bench agentic) cũng không phải điểm, và nhỏ hơn nhiều so với thiệt hại "
-            "thật: MC-28 đo validity −2,60 trong khi điểm máy chủ là −8,90 (chênh 3,4×), vì phần lớn "
-            "lỗi là gọi đúng hàm sai tham số — thứ validator schema không bắt được.",
-            "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, "
-            "2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi "
-            "cổng ngoài sập cert.",
-            "Các arm F5/F7/F8 và T65r2/T65r3 chỉ chạy legal_mc (146 câu, một miền). "
-            "Đọc dải Δ của chúng như một kết luận về 58 môn VMLU là không có cơ sở.",
-            "Arm T65 GỐC không được gộp với hai lặp của nó, dù cùng nhãn điều kiện: proxy log của "
-            "lần chạy gốc ghi system prompt dài 690 ký tự, còn hai lặp dài 745 (MC-47). Shape thật "
-            "của T65 gốc chưa xác định, nên nó không xuất hiện trong bảng sàn nhiễu.",
-            "Sàn nhiễu tính trên arm 65K chỉ có 2 lặp, yếu hơn sàn ở 28K (3 lặp); một chênh lệch "
-            "65K nhỏ hơn sàn đó thì chưa đọc được (MC-47).",
-            "Calibration (MC-44) CỐ Ý không nằm trong block này: nó đo độ tin cậy của điểm theo môn, "
-            "không phải một contrast ghép đôi giữa các arm, nên thuộc /benchmark chứ không phải /harness.",
+        "caveat_sections": [
+            {
+                "title": "Điều kiện chạy",
+                "items": [
+                    "Các arm H* ở MC-15–MC-21 gồm cả luật trả lời cá nhân bị rò; đọc kèm MC-22, không xem như omp trần.",
+                    "Ở n=100, persona và công cụ chưa tách được khi còn rò; xem scaffold sạch ở MC-23.",
+                    "Đến MC-28, sandbox trong repo làm omp nạp AGENTS.md gồm 27.501 ký tự. Ablation MiMo thêm 7.003 token mỗi câu; Δ điểm là +0,68.",
+                    "Các lần chạy cũ không ghim được temperature và reasoning_effort cho arm B; MiMo được ghim qua proxy.",
+                    "Arm 65K đổi endpoint sau 1.275 câu đầu vì lỗi chứng chỉ; 2.866 câu còn lại dùng endpoint nội bộ.",
+                    "T65 gốc có prompt 690 ký tự, hai lần lặp có 745; không gộp vì cấu hình gốc chưa xác định.",
+                ],
+            },
+            {
+                "title": "Dữ liệu và metric",
+                "items": [
+                    "cacheRead của gateway IEC tích lũy theo thời gian và làm ledger phình token khoảng 8 lần; dùng capture_scaffold.py để kiểm tra request.",
+                    "temperature 0 vẫn đổi đáp án ở 13/20 item trong MC-18; Δ phản ánh cả dao động giữa lần chạy.",
+                    "Metric phụ bóc lớp bọc chỉ dùng để quy nguyên nhân; điểm chính vẫn chấm câu trả lời nguyên văn.",
+                    "Hash arm A ghi measurement card trước các cập nhật được thêm sau khi chấm.",
+                    "agreement đo tỉ lệ giữ nguyên đáp án, không đo độ đúng. MiMo giảm 22,39 điểm agreement nhưng tăng 2,13 điểm accuracy.",
+                    "valid_rate chỉ kiểm tra schema; MC-28 ghi Δ validity −2,60 và Δ điểm server −8,90 do lỗi tham số.",
+                ],
+            },
+            {
+                "title": "Cỡ mẫu và độ tin cậy",
+                "items": [
+                    "Bảng speed chỉ so n=24 và workers=4; cost probe H2 có n=40 nên không cùng tập ở MC-25.",
+                    "Sàn nhiễu 65K dựa trên hai lượt lặp, còn 28K dựa trên ba; chênh lệch nhỏ hơn sàn chưa thể đọc rõ.",
+                    "F5, F7, F8 và T65r2/T65r3 chỉ đo legal-MC với n=146; không suy rộng thành kết quả trên 58 môn.",
+                ],
+            },
+            {
+                "title": "Phạm vi nghiên cứu",
+                "items": [
+                    "Calibration MC-44 đo độ tin cậy theo môn, không phải phép so ghép cặp; xem kết quả ở /benchmark.",
+                ],
+            },
         ],
         "sources": {
             "runner": "code_benchmark/run_harness_eval.py (run | compare | speed)",
@@ -1366,13 +1307,34 @@ def render_html(block: dict) -> str:
                           if m["wrapper_cost"] > 0.5 else f'{m["wrapper_cost"]:+.2f}'])
                      for m in block.get("secondary_metrics", [])]
     ins = block.get("insight", {"verdict": "", "claims": []})
-    ins_html = "".join(
-        f'<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px">'
-        f'<b>{e(c["title"])}</b><p class="sub" style="margin:6px 0">{e(c["body"])}</p>'
-        f'<div class="sub">{" · ".join(e(x["label"]) + " <b>" + e(x["value"]) + "</b>" for x in c["evidence"])}</div>'
-        f"</div>"
-        for c in ins["claims"])
-    caveat_rows = "".join(f"<li>{e(c)}</li>" for c in block["caveats"])
+    claim_rows = []
+    for claim in ins["claims"]:
+        points = claim.get("points") or [{"label": "Tóm tắt", "text": claim.get("body", "")}]
+        point_rows = "".join(
+            f'<li><b>{e(point["label"])}:</b> {e(point["text"])}</li>'
+            for point in points
+        )
+        claim_rows.append(
+            f'<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px">'
+            f'<b>{e(claim["title"])}</b><ul>{point_rows}</ul></div>'
+        )
+    ins_html = "".join(claim_rows)
+    if block.get("caveat_sections"):
+        caveat_html = "".join(
+            f'<section><h3>{e(section["title"])}</h3><ul>'
+            + "".join(f"<li>{e(item)}</li>" for item in section["items"])
+            + "</ul></section>"
+            for section in block["caveat_sections"]
+        )
+    else:
+        caveat_html = "<ul>" + "".join(
+            f"<li>{e(item)}</li>" for item in block.get("caveats", [])
+        ) + "</ul>"
+    leak_html = "".join(
+        f'<li><b>{e(label)}:</b> {e(block["leak"][field])}</li>'
+        for label, field in (("Hiện tượng", "what"), ("Bằng chứng", "evidence"),
+                             ("Khắc phục", "fix"), ("Kiểm soát", "guard"))
+    )
     t = block["totals"]
     return f"""<!DOCTYPE html>
 <html lang="vi"><head><meta charset="utf-8">
@@ -1400,15 +1362,11 @@ def render_html(block: dict) -> str:
  harness <b>{e(block["harness"])}</b> · {e(block["condition"])} ·
  card {e(block["measurement_card"])} · hash <code>{e(block["measurement_card_hash"][:16])}…</code></div>
 
-<div class="box"><b>⚠ Đọc MC-15…MC-21 cùng MC-22.</b> {e(block["leak"]["what"])}<br>
-<b>Bằng chứng:</b> {e(block["leak"]["evidence"])}<br>
-<b>Cách chặn:</b> {e(block["leak"]["fix"])} · <b>Guard:</b> {e(block["leak"]["guard"])}</div>
+<div class="box"><b>Rò cấu hình</b><ul>{leak_html}</ul></div>
 
-<h2>Nhận xét — đọc kết quả này thành gì?</h2>
-<p><b>{e(ins["verdict"])}</b></p>
+<h2>Nhận xét chính</h2>
+<ul><li><b>{e(ins["verdict"])}</b></li></ul>
 <div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">{ins_html}</div>
-<p class="sub">Mọi số ở trên nội suy từ artifact của các bảng dưới đây (<code>insight()</code>) —
-không có số nào gõ tay.</p>
 
 <h2>Bảng chính — paired, cùng tập item</h2>
 <table><tr><th>Arm</th><th>Tập</th><th>n</th><th>Metric</th><th>Arm A</th><th>Arm B</th>
@@ -1449,8 +1407,8 @@ bóc vỏ (<code>**</code>, nhãn <code>Đáp án:</code>, block code, dòng h�
 <p class="sub">Arm sạch (H5) cắt vỏ được <b>+0,00</b> ở cả hai tập: câu trả lời của nó vốn đã trần.
 Toàn bộ chi phí vỏ nằm ở arm bị rò cấu hình — cơ chế MC-22, giờ đã có số.</p>
 
-<h2>Giới hạn phải nói khi trích</h2>
-<ul>{caveat_rows}</ul>
+<h2>Giới hạn khi diễn giải</h2>
+{caveat_html}
 <p class="sub">Nguồn: {e(block["sources"]["report"])} · {e(block["sources"]["docs"])} ·
  scorer {e(block["scorer"])}</p>
 </body></html>"""

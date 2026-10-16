@@ -1,0 +1,44 @@
+{
+  "protocol_id": "vmlu-diagnostic-v1",
+  "protocol_version": 1,
+  "schema_version": 1,
+  "rubric_version": "diagnostic-rubric-v1",
+  "status": "offline-preparation",
+  "evaluation_regime": {
+    "capability": "Regime A questions; preserve historical provider/harness conditions exactly",
+    "reasoning_budget": "Future Regime C interventions are defined but not executable in this protocol revision",
+    "edge_deployment": "Out of scope"
+  },
+  "task_modes": ["multiple_choice", "open_book_reading"],
+  "diagnostic_labels": ["knowledge_evidence_gap", "knowledge_error_conflict", "reasoning_gap", "reading_representation_instruction_gap", "retrieval_context_gap", "harness_output_gap", "measurement_reliability_gap", "mixed", "unknown"],
+  "evidence_levels": ["observation", "supported", "unresolved"],
+  "action_labels": ["direct", "reasoning", "retrieval", "retrieval_reasoning", "unknown"],
+  "future_arms": {
+    "B": "Source-declared baseline; no prompt/parser/scorer rewrite",
+    "S": "Reasoning intervention with the same evidence and declared resource cap",
+    "K": "Vietnamese KB retrieval intervention with versioned corpus and evidence trace",
+    "KS": "Retrieval plus reasoning under a declared combined budget",
+    "oracle_evidence": "Human-selected sufficient evidence without answer or solution; diagnostic only",
+    "harness_contrast": "Same model/items with individually declared prompt/tool/persona controls"
+  },
+  "source_registry": "source_registry.json",
+  "taxonomy_file": "taxonomy.json",
+  "review_schema": "review_schema.json",
+  "pilot": {
+    "name": "development-audit",
+    "anchor_source": "qwen-mc72",
+    "seed": 42,
+    "dataset_counts": {"vi-multimodel-v1-legal-mc-146":12,"vi-multimodel-v1-legal-nli-150":12,"vi-multimodel-v1-vi-squad-200":12,"vi-multimodel-v1-vi-drop-200":12,"vi-multimodel-v1-bidlqa-test":12},
+    "correctness_quotas": {"multiple_choice":{"correct":6,"incorrect":6},"reading":{"em":6,"non_em":6}},
+    "reading_f1_disagreement": {"em":0,"token_f1_gte":0.8,"priority_up_to":3},
+    "minimum_per_dataset":12,
+    "stratum_fallback":"within_dataset_other_scored_stratum_with_reason",
+    "second_reviewer_count":15,
+    "second_reviewer_per_dataset":3,
+    "exposure":"development-audit; previously evaluated outputs and datasets; not pristine held-out"
+  },
+  "supported_source_families":["vi-multimodel-v1-main","qwen-mc72"],
+  "metric_contracts":{"multiple_choice":"vi-multimodel-v1 frozen extractor; unparsed completed outputs stay incorrect in denominator","reading":"vi-reading-v2 EM and Vietnamese token-F1 plus recorded V1 legacy scores","withheld_gold":"unscorable at item level"},
+  "readiness_controls":{"verified_endpoint":null,"versioned_vietnamese_corpus":null,"hard_runtime_budget":null,"augmentation_model_and_controls":null,"runtime_verification_policy":null},
+  "privacy":{"excluded_run_fields":["credential_source","authorization","api_key","headers","endpoint_url","probe_error_detail"],"local_artifacts_only":true}
+}

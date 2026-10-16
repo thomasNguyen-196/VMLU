@@ -66,6 +66,45 @@ export interface BenchmarkReports {
   field_labels: Record<string, string>;
   metric_labels: Record<ReportMetric, string>;
   reports: EvaluationReport[];
+  run_summaries: BenchmarkRunSummary[];
+}
+export interface BenchmarkRunSummaryRoute {
+  condition_id: string;
+  route: string;
+  item_count: number;
+}
+export interface BenchmarkRunSummaryDataset {
+  dataset_id: string;
+  dataset: string;
+  gold: "local" | "withheld";
+  request_completed: number;
+  total_items: number;
+  request_errors: number;
+  accuracy: number | null;
+  correct: number | null;
+  ci_low?: number | null;
+  ci_high?: number | null;
+  server_accuracy: number | null;
+  server_grade_source: string | null;
+  server_breakdown: Array<{ category: string; subject: string | null; score: number }>;
+  route_breakdown: BenchmarkRunSummaryRoute[];
+}
+export interface BenchmarkRunSummary {
+  id: string;
+  title: string;
+  model: string;
+  condition: string;
+  status: "complete" | "partial";
+  completed_items: number;
+  total_items: number;
+  request_errors: number;
+  shards: number;
+  workers_per_shard: number;
+  total_workers: number;
+  route_breakdown: BenchmarkRunSummaryRoute[];
+  datasets: BenchmarkRunSummaryDataset[];
+  source: string;
+  notes: string[];
 }
 
 const METRICS = new Set(["accuracy", "server_accuracy", "server_macro", "em", "token_f1", "char_f1", "valid_rate", "agreement", "function_exact"]);
@@ -88,6 +127,67 @@ export function parseBenchmarkReports(value: unknown): BenchmarkReports {
   if (!object(value) || value.schema_version !== 1 || !Array.isArray(value.reports)) throw new Error("Invalid report schema/version");
   text(value.generated_at, "generated_at");
   if (!object(value.field_labels) || !object(value.metric_labels)) throw new Error("Invalid report labels");
+  const runSummaries = value.run_summaries ?? [];
+  if (!Array.isArray(runSummaries)) throw new Error("Invalid run summaries");
+  const runSummaryIds = new Set<string>();
+  for (const summary of runSummaries) {
+    if (!object(summary) || !["complete", "partial"].includes(String(summary.status))) throw new Error("Invalid run summary");
+    for (const key of ["id", "title", "model", "condition", "source"]) text(summary[key], `run_summary.${key}`);
+    if (runSummaryIds.has(String(summary.id))) throw new Error("Duplicate run summary id");
+    runSummaryIds.add(String(summary.id));
+    for (const key of ["completed_items", "total_items", "request_errors", "shards", "workers_per_shard", "total_workers"])
+      number(summary[key], `run_summary.${key}`, 0, Number.MAX_SAFE_INTEGER, true);
+    if (typeof summary.completed_items !== "number" || typeof summary.total_items !== "number" || summary.completed_items > summary.total_items || !Array.isArray(summary.route_breakdown) || !Array.isArray(summary.datasets))
+      throw new Error("Invalid run summary counts");
+    strings(summary.notes, "run_summary.notes");
+    const validateRoutes = (routes: unknown[]) => {
+      for (const route of routes) {
+        if (!object(route)) throw new Error("Invalid run summary route");
+        text(route.condition_id, "run_summary.route.condition_id");
+        text(route.route, "run_summary.route.route");
+        number(route.item_count, "run_summary.route.item_count", 1, Number.MAX_SAFE_INTEGER, true);
+      }
+    };
+    validateRoutes(summary.route_breakdown);
+    for (const dataset of summary.datasets) {
+      if (!object(dataset) || !["local", "withheld"].includes(String(dataset.gold)) || !Array.isArray(dataset.route_breakdown))
+        throw new Error("Invalid run summary dataset");
+      for (const key of ["dataset_id", "dataset"]) text(dataset[key], `run_summary.dataset.${key}`);
+      for (const key of ["request_completed", "total_items", "request_errors"])
+        number(dataset[key], `run_summary.dataset.${key}`, 0, Number.MAX_SAFE_INTEGER, true);
+      number(dataset.accuracy, "run_summary.dataset.accuracy", 0, 100);
+      number(dataset.correct, "run_summary.dataset.correct", 0, Number.MAX_SAFE_INTEGER, true);
+      if (dataset.ci_low !== undefined || dataset.ci_high !== undefined) {
+        number(dataset.ci_low, "run_summary.dataset.ci_low", 0, 100);
+        number(dataset.ci_high, "run_summary.dataset.ci_high", 0, 100);
+        if ((dataset.ci_low === null) !== (dataset.ci_high === null)
+            || (typeof dataset.ci_low === "number" && typeof dataset.ci_high === "number" && dataset.ci_low > dataset.ci_high)
+            || (dataset.gold === "withheld" && (dataset.ci_low !== null || dataset.ci_high !== null)))
+          throw new Error("Invalid run summary confidence interval");
+      }
+      number(dataset.server_accuracy, "run_summary.dataset.server_accuracy", 0, 100);
+      if (dataset.server_grade_source !== null) text(dataset.server_grade_source, "run_summary.dataset.server_grade_source");
+      if (!Array.isArray(dataset.server_breakdown)) throw new Error("Invalid run summary server breakdown");
+      for (const grade of dataset.server_breakdown) {
+        if (!object(grade)) throw new Error("Invalid run summary server grade");
+        text(grade.category, "run_summary.server_grade.category");
+        if (grade.subject !== null) text(grade.subject, "run_summary.server_grade.subject");
+        number(grade.score, "run_summary.server_grade.score", 0, 100);
+      }
+      if (typeof dataset.request_completed !== "number" || typeof dataset.total_items !== "number" || dataset.request_completed > dataset.total_items)
+        throw new Error("Invalid run summary dataset counts");
+      if (dataset.gold === "withheld" && (dataset.accuracy !== null || dataset.correct !== null))
+        throw new Error("Withheld-gold run summary must not contain accuracy or correct count");
+      if ((dataset.accuracy === null) !== (dataset.correct === null) || (typeof dataset.correct === "number" && dataset.correct > dataset.request_completed))
+        throw new Error("Invalid run summary dataset score");
+      if (dataset.gold === "local" && (dataset.server_accuracy !== null || dataset.server_grade_source !== null || dataset.server_breakdown.length))
+        throw new Error("Local-gold run summary cannot carry a server grade");
+      if ((dataset.server_accuracy === null) !== (dataset.server_grade_source === null)
+          || (dataset.server_accuracy === null) !== (dataset.server_breakdown.length === 0))
+        throw new Error("Incomplete server grade metadata");
+      validateRoutes(dataset.route_breakdown);
+    }
+  }
   const reportIds = new Set<string>();
   for (const raw of value.reports) {
     if (!object(raw)) throw new Error("Invalid report entry");
@@ -139,7 +239,7 @@ export function parseBenchmarkReports(value: unknown): BenchmarkReports {
     }
     strings(raw.comments, "comments"); strings(raw.notes, "notes");
   }
-  return value as unknown as BenchmarkReports;
+  return { ...value, run_summaries: runSummaries } as unknown as BenchmarkReports;
 }
 
 export function ranksForScores(report: EvaluationReport): Map<ReportScore, number> {

@@ -1,0 +1,134 @@
+{
+  "version": "diagnostic-review-v4",
+  "immutable_source_columns": [
+    "observation_key",
+    "item_key",
+    "dataset_id",
+    "item_id",
+    "replicate_id",
+    "source_run_id",
+    "source_manifest_sha256",
+    "prompt_sha256",
+    "task_mode",
+    "question",
+    "rendered_input",
+    "raw_response",
+    "prediction",
+    "source_gold",
+    "source_metrics",
+    "finish_reason",
+    "passage_group",
+    "selection_reason",
+    "exposure",
+    "protocol_sha256",
+    "rubric_version",
+    "packet_sha256"
+  ],
+  "judgment_columns": [
+    "annotator_id",
+    "review_scope",
+    "review_assistance_mode",
+    "semantic_correctness",
+    "gold_validity",
+    "input_evidence_sufficiency",
+    "corpus_evidence_availability",
+    "corpus_evidence_reference",
+    "diagnostic_outcome",
+    "observed_issues",
+    "audit_evidence_kind",
+    "evidence_reference",
+    "diagnostic_labels",
+    "diagnostic_support",
+    "rationale",
+    "reviewer_attestation",
+    "blind_review_attestation",
+    "review_status"
+  ],
+  "enums": {
+    "semantic_correctness": [
+      "correct",
+      "incorrect",
+      "uncertain"
+    ],
+    "gold_validity": [
+      "valid",
+      "suspect",
+      "unassessable"
+    ],
+    "reviewer_attestation": [
+      "I attest that these are my independent human judgments.",
+      "I reviewed the AI suggestions and affirm my final human judgments."
+    ],
+    "review_status": [
+      "reviewed",
+      "deferred"
+    ],
+    "diagnostic_outcome": [
+      "no_observed_issue",
+      "issue_observed",
+      "unresolved"
+    ],
+    "review_assistance_mode": [
+      "human_only",
+      "ai_assisted"
+    ],
+    "review_scope": [
+      "primary-60",
+      "independent-15"
+    ],
+    "input_evidence_sufficiency": [
+      "sufficient",
+      "insufficient",
+      "unassessable",
+      "not_applicable"
+    ],
+    "corpus_evidence_availability": [
+      "not_assessed",
+      "present",
+      "absent",
+      "not_applicable"
+    ],
+    "audit_evidence_kind": [
+      "input_span",
+      "source_comparison",
+      "derivation",
+      "raw_output",
+      "parser_replay",
+      "unavailable"
+    ]
+  },
+  "empty_means": "unreviewed_row",
+  "diagnostic_labels_from": "taxonomy.json",
+  "action_labels": "offline intervention evidence only; omitted from reviewer packet",
+  "completion_rules": {
+    "common": [
+      "review_scope",
+      "review_assistance_mode",
+      "semantic_correctness",
+      "gold_validity",
+      "input_evidence_sufficiency",
+      "corpus_evidence_availability",
+      "diagnostic_outcome",
+      "audit_evidence_kind",
+      "evidence_reference",
+      "rationale",
+      "reviewer_attestation",
+      "review_status"
+    ],
+    "no_observed_issue": "correct semantics, valid gold, reviewed; no observed issues, cause labels or support entries; audit evidence must be available",
+    "issue_observed": "at least one observed issue; cause hypotheses may be empty (unknown cause); one support entry per cause label",
+    "unresolved": "deferred, no forced issue/cause; explain missing/conflicting evidence",
+    "independent-15": "exact predetermined subset, human_only, blind self-attestation, different reviewer from primary"
+  },
+  "assistance_policy": {
+    "primary-60": "AI proposals seed blank rows only; no human status or attestation. Old drafts remain backups, no judgment migration across annotation revisions.",
+    "independent-15": "Suggestions are hidden; this scope requires a distinct human who has not seen primary suggestions."
+  },
+  "diagnostic_support_schema": {
+    "label": "controlled hypothesis ID",
+    "status": "hypothesis|contrast_supported",
+    "evidence_reference": "specific evidence for this label",
+    "contrast_id": "empty for hypothesis; registered matching hash-verified contrast for contrast_supported"
+  },
+  "blind_attestation": "I have not seen AI suggestions or other reviewer judgments for this pilot."
+}

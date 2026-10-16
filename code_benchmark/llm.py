@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 import time
+from dataclasses import dataclass
 
 from openai import OpenAI, AuthenticationError, PermissionDeniedError
 
@@ -44,9 +45,81 @@ def extra_headers(var: str = "OPENAI_EXTRA_HEADERS") -> dict[str, str] | None:
     return headers
 
 
-def build_client(base_url: str, api_key: str) -> OpenAI:
+def build_client(
+    base_url: str,
+    api_key: str,
+    *,
+    sdk_max_retries: int = 2,
+    headers_env: str = "OPENAI_EXTRA_HEADERS",
+) -> OpenAI:
     return OpenAI(base_url=base_url, api_key=api_key, timeout=60.0,
-                  default_headers=extra_headers())
+                  default_headers=extra_headers(headers_env), max_retries=sdk_max_retries)
+
+
+@dataclass(frozen=True)
+class ModelCallResult:
+    """Raw response and provider-reported usage for a new measured run."""
+
+    text: str
+    response_model: str
+    system_fingerprint: str
+    service_tier: str
+    finish_reason: str
+    request_id: str
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    total_tokens: int | None
+    reasoning_tokens: int | None
+
+
+def call_model_with_metadata(
+    client: OpenAI,
+    model: str,
+    prompt: str,
+    *,
+    temperature: float | None,
+    seed: int | None,
+    max_tokens: int,
+    extra_body: dict | None = None,
+    token_limit_parameter: str = "max_tokens",
+) -> ModelCallResult:
+    """Make one direct request and return metering/provenance from the response.
+
+    It intentionally performs no retries and does not inherit
+    OPENAI_REASONING_EFFORT. A paid-run caller must record the exact request
+    profile and explicitly decide whether an errored item is retried.
+    """
+    if token_limit_parameter not in {"max_tokens", "max_completion_tokens"}:
+        raise ValueError(f"unsupported token limit parameter: {token_limit_parameter}")
+    kwargs = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        token_limit_parameter: max_tokens,
+    }
+    if temperature is not None:
+        kwargs["temperature"] = temperature
+    if seed is not None:
+        kwargs["seed"] = seed
+    if extra_body is not None:
+        kwargs["extra_body"] = extra_body
+    response = client.chat.completions.create(**kwargs)
+    if not response.choices:
+        raise ValueError("provider returned no completion choices")
+    choice = response.choices[0]
+    usage = getattr(response, "usage", None)
+    completion_details = getattr(usage, "completion_tokens_details", None)
+    return ModelCallResult(
+        text=str(choice.message.content or ""),
+        response_model=str(getattr(response, "model", "") or ""),
+        system_fingerprint=str(getattr(response, "system_fingerprint", "") or ""),
+        service_tier=str(getattr(response, "service_tier", "") or ""),
+        finish_reason=str(getattr(choice, "finish_reason", "") or ""),
+        request_id=str(getattr(response, "id", "") or ""),
+        prompt_tokens=getattr(usage, "prompt_tokens", None),
+        completion_tokens=getattr(usage, "completion_tokens", None),
+        total_tokens=getattr(usage, "total_tokens", None),
+        reasoning_tokens=getattr(completion_details, "reasoning_tokens", None),
+    )
 
 
 def is_fatal_llm_error(err: Exception) -> bool:

@@ -1,0 +1,25 @@
+{
+  "schema_version": "diagnostic-reviewed-contrast-v1",
+  "required": [
+    "contrast_id",
+    "observation_key",
+    "label",
+    "kind",
+    "pilot_content_sha256",
+    "baseline_condition_id",
+    "intervention_condition_id",
+    "other_conditions_controlled",
+    "supports_hypothesis",
+    "evidence_artifact",
+    "evidence_artifact_sha256",
+    "reviewer_id",
+    "rationale",
+    "verified"
+  ],
+  "kinds": [
+    "controlled_model_contrast",
+    "deterministic_replay"
+  ],
+  "rule": "affirmative support + human-reviewed controls + exact observation/label/pilot + verified evidence artifact hash; missing/negative contrasts cannot confer contrast_supported; do not create from score/confidence/signoff alone",
+  "path": "all_res/diagnostic_v1/<snapshot>/contrasts.jsonl"
+}

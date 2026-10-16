@@ -35,6 +35,29 @@ describe("reporting preserves evaluation boundaries", () => {
       expect(() => parseBenchmarkReports(data)).toThrow();
     }
   });
+  test("completed mixed-route VMLU run keeps local counts withheld and records server grade", () => {
+    const summary = parseBenchmarkReports(fixture()).run_summaries.find((entry) => entry.id === "muse12-vmlu-mc74-mc79")!;
+    expect(summary.status).toBe("complete");
+    expect(summary.completed_items).toBe(10880);
+    const valid = summary.datasets.find((entry) => entry.dataset_id === "vi-multimodel-v2-vmlu-valid")!;
+    expect(valid.accuracy).toBe(90.32); expect(valid.correct).toBe(672);
+    const test = summary.datasets.find((entry) => entry.dataset_id === "vi-multimodel-v2-vmlu-test")!;
+    expect(test.gold).toBe("withheld"); expect(test.accuracy).toBeNull(); expect(test.correct).toBeNull();
+    expect(test.server_accuracy).toBe(87.41);
+    expect(test.server_grade_source).toContain("provided by the user");
+    expect(test.server_breakdown).toHaveLength(62);
+    expect(test.server_breakdown.filter((entry) => entry.subject === null).map((entry) => [entry.category, entry.score])).toEqual([
+      ["Humanity", 86.52], ["Social Science", 87.85], ["Other", 82.91], ["STEM", 89.88],
+    ]);
+    expect(test.route_breakdown.map((route) => [route.condition_id, route.item_count])).toEqual([["MC-74", 6457], ["MC-79", 3376]]);
+  });
+  test("withheld-gold run summary rejects accuracy", () => {
+    const data = fixture();
+    const summary = data.run_summaries.find((entry: { id: string }) => entry.id === "muse12-vmlu-mc74-mc79");
+    const test = summary.datasets.find((entry: { dataset_id: string }) => entry.dataset_id === "vi-multimodel-v2-vmlu-test");
+    test.accuracy = 50;
+    expect(() => parseBenchmarkReports(data)).toThrow();
+  });
   test("unknown condition references and missing controls are rejected", () => {
     const data = fixture(); data.reports[0].benchmarks[0].condition_id = "unknown";
     expect(() => parseBenchmarkReports(data)).toThrow();

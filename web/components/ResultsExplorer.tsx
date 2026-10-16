@@ -58,20 +58,20 @@ function OverallLine({ summary }: { summary: Summary }) {
     | undefined;
   if (acc) {
     const o = acc.find((r) => r.level === "overall");
-    if (!o) return <p className="text-sm text-slate-500">Không có overall trong accuracy_rows.</p>;
+    if (!o) return <p className="text-sm text-ink-3">Không có overall trong accuracy_rows.</p>;
     return (
       <div>
         <p className="text-2xl font-bold font-mono">
           {o.correct}/{o.n} = {o.accuracy}%
         </p>
-        <p className="text-xs text-slate-500">overall · n={String(n)}</p>
+        <p className="text-xs text-ink-3">overall · n={String(n)}</p>
         <details className="mt-2">
           <summary className="cursor-pointer text-sm font-semibold text-indigo-700">
             Per-category / per-subject ({acc.length - 1} dòng)
           </summary>
           <table className="mt-2 w-full text-xs font-mono">
             <thead>
-              <tr className="text-left text-slate-500">
+              <tr className="text-left text-ink-3">
                 <th className="pr-2">level</th>
                 <th className="pr-2">name</th>
                 <th className="pr-2">n</th>
@@ -81,7 +81,7 @@ function OverallLine({ summary }: { summary: Summary }) {
             </thead>
             <tbody>
               {acc.map((r, i) => (
-                <tr key={i} className="border-t border-slate-100">
+                <tr key={i} className="border-t border-hair/70">
                   <td className="pr-2">{r.level}</td>
                   <td className="pr-2">{r.name}</td>
                   <td className="pr-2">{r.n}</td>
@@ -102,12 +102,12 @@ function OverallLine({ summary }: { summary: Summary }) {
         <p className="text-2xl font-bold font-mono">
           EM {all.em}% · F1 {all.char_f1}
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-ink-3">
           {all.em_count}/{all.n} exact · n={String(n)}
         </p>
         <table className="mt-2 w-full text-xs font-mono">
           <thead>
-            <tr className="text-left text-slate-500">
+            <tr className="text-left text-ink-3">
               <th className="pr-2">dataset</th>
               <th className="pr-2">n</th>
               <th className="pr-2">em</th>
@@ -116,7 +116,7 @@ function OverallLine({ summary }: { summary: Summary }) {
           </thead>
           <tbody>
             {reading.map((r, i) => (
-              <tr key={i} className="border-t border-slate-100">
+              <tr key={i} className="border-t border-hair/70">
                 <td className="pr-2">{r.dataset}</td>
                 <td className="pr-2">{r.n}</td>
                 <td className="pr-2">{r.em}</td>
@@ -131,10 +131,10 @@ function OverallLine({ summary }: { summary: Summary }) {
   if (server) {
     return (
       <div>
-        <p className="text-sm text-slate-500">server-side scores (vbench.ai) · n={String(n)}</p>
+        <p className="text-sm text-ink-3">server-side scores (vbench.ai) · n={String(n)}</p>
         <table className="mt-2 w-full text-xs font-mono">
           <thead>
-            <tr className="text-left text-slate-500">
+            <tr className="text-left text-ink-3">
               <th className="pr-2">domain</th>
               <th className="pr-2">track</th>
               <th className="pr-2">score</th>
@@ -143,7 +143,7 @@ function OverallLine({ summary }: { summary: Summary }) {
           </thead>
           <tbody>
             {server.map((r, i) => (
-              <tr key={i} className="border-t border-slate-100">
+              <tr key={i} className="border-t border-hair/70">
                 <td className="pr-2">{r.domain}</td>
                 <td className="pr-2">{r.track}</td>
                 <td className="pr-2">{r.score}</td>
@@ -157,7 +157,7 @@ function OverallLine({ summary }: { summary: Summary }) {
       </div>
     );
   }
-  return <p className="text-sm text-slate-500">Run không gold local (test/withheld) · n={String(n)} — chấm server-side.</p>;
+  return <p className="text-sm text-ink-3">Run không gold local (test/withheld) · n={String(n)} — chấm server-side.</p>;
 }
 
 function RunPanel({
@@ -179,11 +179,11 @@ function RunPanel({
   itemError: string | null;
   onLookup: () => void;
 }) {
-  if (!run) return <p className="text-sm text-slate-500">Chưa có run cho lựa chọn này.</p>;
+  if (!run) return <p className="text-sm text-ink-3">Chưa có run cho lựa chọn này.</p>;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
-      <p className="font-mono text-xs text-slate-500">{run._id}</p>
-      <p className="text-sm text-slate-600">
+    <div className="rounded-xl border border-hair bg-card p-4 shadow-2xs">
+      <p className="font-mono text-xs text-ink-3">{run._id}</p>
+      <p className="text-sm text-ink-2">
         card <span className="font-mono font-semibold">{run.card_id}</span> · n={run.n} · hash{" "}
         <span className="font-mono">{run.measurement_card_hash.slice(0, 12)}</span>
       </p>
@@ -196,17 +196,17 @@ function RunPanel({
             <InsightPanel modelId={run.model_id} datasetId={run.dataset_id} summary={summary} />
           </>
         ) : (
-          <p className="text-sm text-slate-500">Đang tải summary…</p>
+          <p className="text-sm text-ink-3">Đang tải summary…</p>
         )}
       </div>
-      <div className="mt-4 border-t border-slate-100 pt-3">
+      <div className="mt-4 border-t border-hair/70 pt-3">
         <p className="text-sm font-semibold">Per-item lookup</p>
         <div className="mt-1 flex gap-2">
           <input
             value={itemId}
             onChange={(e) => setItemId(e.target.value)}
             placeholder="item_id (vd 54-0002, LG-0001, squad:12)"
-            className="w-full rounded-lg border border-slate-200 px-2 py-1 font-mono text-xs"
+            className="w-full rounded-lg border border-hair px-2 py-1 font-mono text-xs"
           />
           <button
             onClick={onLookup}
@@ -219,22 +219,22 @@ function RunPanel({
         {item && (
           <dl className="mt-2 space-y-1 font-mono text-xs">
             <div className="flex gap-2">
-              <dt className="text-slate-500">collection</dt>
+              <dt className="text-ink-3">collection</dt>
               <dd>{item.collection}</dd>
             </div>
             {["item_id", "answer", "gold", "correct", "em", "f1", "prediction", "domain", "track"].map(
               (k) =>
                 item.doc[k] !== undefined && (
                   <div className="flex gap-2" key={k}>
-                    <dt className="text-slate-500">{k}</dt>
+                    <dt className="text-ink-3">{k}</dt>
                     <dd className="break-all">{String(item.doc[k])}</dd>
                   </div>
                 ),
             )}
             {typeof item.doc.raw_response === "string" && item.doc.raw_response && (
               <div>
-                <dt className="text-slate-500">raw_response</dt>
-                <dd className="break-all whitespace-pre-wrap rounded bg-slate-50 p-1">
+                <dt className="text-ink-3">raw_response</dt>
+                <dd className="break-all whitespace-pre-wrap rounded bg-paper p-1">
                   {item.doc.raw_response.slice(0, 1200)}
                 </dd>
               </div>
@@ -392,15 +392,15 @@ export function ResultsExplorer() {
     return (
       <main className="mx-auto max-w-5xl px-6 py-16">
         <h1 className="text-xl font-bold">Không đọc được Mongo qua /api/results</h1>
-        <pre className="mt-3 rounded-lg border bg-white p-4 font-mono text-xs whitespace-pre-wrap">{bootError}</pre>
-        <p className="mt-2 text-sm text-slate-500">Mongo local `vmlu-mongo:27017` + db `vmlu` phải chạy (xem docs/results-backend.md).</p>
+        <pre className="mt-3 rounded-lg border bg-card p-4 font-mono text-xs whitespace-pre-wrap">{bootError}</pre>
+        <p className="mt-2 text-sm text-ink-3">Mongo local `vmlu-mongo:27017` + db `vmlu` phải chạy (xem docs/results-backend.md).</p>
       </main>
     );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-paper text-ink">
       <SiteNav />
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-hair bg-card">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <h1 className="font-bold">Results (DB-backed)</h1>
           <label className="flex items-center gap-1 text-xs">
@@ -408,7 +408,7 @@ export function ResultsExplorer() {
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono"
+              className="rounded-lg border border-hair bg-card px-2 py-1 font-mono"
             >
               {models.map((m) => (
                 <option key={m._id} value={m._id}>
@@ -422,7 +422,7 @@ export function ResultsExplorer() {
             <select
               value={dataset}
               onChange={(e) => setDataset(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono"
+              className="rounded-lg border border-hair bg-card px-2 py-1 font-mono"
             >
               {modelDatasets.map((d) => (
                 <option key={d._id} value={d._id}>
@@ -436,7 +436,7 @@ export function ResultsExplorer() {
             <select
               value={compareModel}
               onChange={(e) => setCompareModel(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono"
+              className="rounded-lg border border-hair bg-card px-2 py-1 font-mono"
             >
               <option value="">— không —</option>
               {models
@@ -449,11 +449,11 @@ export function ResultsExplorer() {
             </select>
           </label>
         </div>
-        <p className="mx-auto max-w-6xl px-4 pb-2 text-xs text-slate-500 sm:px-6">{RESULTS_CUTOVER_NOTE}</p>
+        <p className="mx-auto max-w-6xl px-4 pb-2 text-xs text-ink-3 sm:px-6">{RESULTS_CUTOVER_NOTE}</p>
       </header>
       <main className="mx-auto grid max-w-6xl gap-4 px-4 py-4 sm:px-6 md:grid-cols-2">
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-slate-600">Chính — {model || "…"}</h2>
+          <h2 className="mb-2 text-sm font-semibold text-ink-2">Chính — {model || "…"}</h2>
           <RunPanel
             run={run}
             summary={summary}
@@ -466,7 +466,7 @@ export function ResultsExplorer() {
           />
         </section>
         <section>
-          <h2 className="mb-2 text-sm font-semibold text-slate-600">
+          <h2 className="mb-2 text-sm font-semibold text-ink-2">
             Đối chiếu — {compareModel || "chưa chọn"}
             {dataset && <span className="font-mono"> · {dataset}</span>}
           </h2>
@@ -483,13 +483,13 @@ export function ResultsExplorer() {
                 onLookup={() => void lookup()}
               />
             ) : (
-              <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+              <p className="rounded-xl border border-flag/40 bg-flag-soft p-4 text-sm">
                 Model <span className="font-mono">{compareModel}</span> chưa chạy dataset{" "}
                 <span className="font-mono">{dataset}</span> — không có gì để so.
               </p>
             )
           ) : (
-            <p className="text-sm text-slate-500">Chọn model đối chiếu để render side-by-side cùng dataset_id.</p>
+            <p className="text-sm text-ink-3">Chọn model đối chiếu để render side-by-side cùng dataset_id.</p>
           )}
         </section>
       </main>

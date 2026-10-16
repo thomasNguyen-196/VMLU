@@ -1,0 +1,118 @@
+{
+  "version": "diagnostic-review-v3",
+  "immutable_source_columns": [
+    "observation_key",
+    "item_key",
+    "dataset_id",
+    "item_id",
+    "replicate_id",
+    "source_run_id",
+    "source_manifest_sha256",
+    "prompt_sha256",
+    "task_mode",
+    "question",
+    "rendered_input",
+    "raw_response",
+    "prediction",
+    "source_gold",
+    "source_metrics",
+    "finish_reason",
+    "passage_group",
+    "selection_reason",
+    "exposure",
+    "protocol_sha256",
+    "rubric_version",
+    "packet_sha256"
+  ],
+  "judgment_columns": [
+    "annotator_id",
+    "review_assistance_mode",
+    "semantic_correctness",
+    "gold_validity",
+    "evidence_sufficiency",
+    "diagnostic_outcome",
+    "diagnostic_labels",
+    "evidence_level",
+    "evidence_reference",
+    "rationale",
+    "reviewer_attestation",
+    "review_status"
+  ],
+  "enums": {
+    "semantic_correctness": [
+      "correct",
+      "incorrect",
+      "uncertain"
+    ],
+    "gold_validity": [
+      "valid",
+      "suspect",
+      "unassessable"
+    ],
+    "evidence_sufficiency": [
+      "sufficient",
+      "insufficient",
+      "unassessable"
+    ],
+    "evidence_level": [
+      "observation",
+      "supported",
+      "unresolved"
+    ],
+    "reviewer_attestation": [
+      "I attest that these are my independent human judgments.",
+      "I reviewed the AI suggestions and affirm my final human judgments."
+    ],
+    "review_status": [
+      "reviewed",
+      "deferred"
+    ],
+    "diagnostic_outcome": [
+      "no_observed_issue",
+      "issue_observed",
+      "unresolved"
+    ],
+    "review_assistance_mode": [
+      "human_only",
+      "ai_assisted"
+    ]
+  },
+  "empty_means": "unreviewed_row",
+  "diagnostic_labels_from": "taxonomy.json",
+  "action_labels": "offline intervention evidence only; omitted from reviewer packet",
+  "completion_rules": {
+    "common": [
+      "semantic_correctness",
+      "gold_validity",
+      "evidence_sufficiency",
+      "diagnostic_outcome",
+      "evidence_level",
+      "evidence_reference",
+      "rationale",
+      "reviewer_attestation",
+      "review_status"
+    ],
+    "no_observed_issue": {
+      "diagnostic_labels": [],
+      "semantic_correctness": "correct",
+      "gold_validity": "valid",
+      "evidence_level": [
+        "observation",
+        "supported"
+      ],
+      "review_status": "reviewed"
+    },
+    "issue_observed": {
+      "diagnostic_labels": "nonempty; unknown must be exclusive and cannot use supported attribution"
+    },
+    "unresolved": {
+      "diagnostic_labels": [],
+      "evidence_level": "unresolved",
+      "review_status": "deferred"
+    }
+  },
+  "assistance_policy": {
+    "primary-60": "AI suggestions are shown, copied only into a human review draft, and require human corrections/confirmation before signoff.",
+    "independent-15": "Suggestions are hidden; this scope requires a distinct human who has not seen primary suggestions."
+  }
+}
