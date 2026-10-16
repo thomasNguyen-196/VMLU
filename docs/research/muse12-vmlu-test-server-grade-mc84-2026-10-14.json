@@ -1,0 +1,172 @@
+{
+  "source": "VMLU server grade provided by the user",
+  "recorded_at": "2026-10-14T22:43:38.068873+07:00",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "model_id": "ocg/muse-spark-1.2-contributor",
+  "condition_ids": [
+    "MC-84"
+  ],
+  "item_count": 9833,
+  "submission_path": "all_res/muse12_direct_mc84/vmlu/muse-spark-1-2-contributor-direct-20k/submission_vmlu_test.csv",
+  "submission_sha256": "e8b0d206de5cc44170a3aad1c4f0cf20347440d4b7f83bd83efda41406cf62f5",
+  "run_path": "all_res/muse12_direct_mc84/vmlu/muse-spark-1-2-contributor-direct-20k/run.json",
+  "manifest_sha256": "1d8cc49f2b71ccf243ab039c4b96fd3bfbfbf6aa5439a8fb9dd4b6a98bd05636",
+  "condition_sha256": "89367ffd555eee97310e4f8a55c29d6cf16488fdad7b78cd969ce28b3f6cf759",
+  "server_score_status": "scored_user_provided",
+  "total": 87.49,
+  "categories": {
+    "stem": {
+      "total": 90.22,
+      "subjects": {
+        "applied_informatics": 88.89,
+        "computer_architecture": 93.33,
+        "computer_network": 88.27,
+        "discrete_mathematics": 93.94,
+        "electrical_engineering": 74.43,
+        "elementary_mathematics": 94.44,
+        "elementary_science": 96.11,
+        "high_school_biology": 89.44,
+        "high_school_chemistry": 95,
+        "high_school_mathematics": 89.19,
+        "high_school_physics": 87.22,
+        "introduction_to_chemistry": 94.41,
+        "introduction_to_physics": 92.49,
+        "introduction_to_programming": 80.45,
+        "metrology_engineer": 80.85,
+        "middle_school_biology": 93.53,
+        "middle_school_chemistry": 96.11,
+        "middle_school_mathematics": 91.67,
+        "middle_school_physics": 95.56,
+        "operating_system": 82.22,
+        "statistics_and_probability": 97.13
+      }
+    },
+    "humanity": {
+      "total": 86.38,
+      "subjects": {
+        "administrative_law": 65.56,
+        "business_law": 88.27,
+        "civil_law": 92.78,
+        "criminal_law": 90.18,
+        "economic_law": 82.61,
+        "education_law": 81.93,
+        "elementary_history": 89.83,
+        "high_school_history": 91.67,
+        "high_school_literature": 90,
+        "history_of_world_civilization": 95,
+        "idealogical_and_moral_cultivation": 95,
+        "introduction_to_laws": 88.89,
+        "introduction_to_vietnam_culture": 83.33,
+        "logic": 82.76,
+        "middle_school_history": 91.11,
+        "middle_school_literature": 83.91,
+        "revolutionary_policy_of_the_vietnamese_commununist_part": 83.89,
+        "vietnamese_language_and_literature": 78.16
+      }
+    },
+    "social_science": {
+      "total": 87.47,
+      "subjects": {
+        "business_administration": 71.84,
+        "high_school_civil_education": 95.56,
+        "high_school_geography": 75.93,
+        "ho_chi_minh_ideology": 92.18,
+        "macroeconomics": 83.89,
+        "microeconomics": 95,
+        "middle_school_civil_education": 91.57,
+        "middle_school_geography": 90.48,
+        "principles_of_marxism_and_leninism": 90.56,
+        "sociology": 87.64
+      }
+    },
+    "other": {
+      "total": 83.36,
+      "subjects": {
+        "environmental_engineering": 59.65,
+        "internal_basic_medicine": 83.63,
+        "preschool_pedagogy": 70.59,
+        "tax_accountant": 83.91,
+        "tax_civil_servant": 92.4,
+        "accountant": 83.93,
+        "civil_servant": 88.89,
+        "clinical_pharmacology": 87.78,
+        "driving_license_certificate": 99.42
+      }
+    }
+  },
+  "raw_server_result": {
+    "stem": {
+      "applied_informatics": 88.89,
+      "computer_architecture": 93.33,
+      "computer_network": 88.27,
+      "discrete_mathematics": 93.94,
+      "electrical_engineering": 74.43,
+      "elementary_mathematics": 94.44,
+      "elementary_science": 96.11,
+      "high_school_biology": 89.44,
+      "high_school_chemistry": 95,
+      "high_school_mathematics": 89.19,
+      "high_school_physics": 87.22,
+      "introduction_to_chemistry": 94.41,
+      "introduction_to_physics": 92.49,
+      "introduction_to_programming": 80.45,
+      "metrology_engineer": 80.85,
+      "middle_school_biology": 93.53,
+      "middle_school_chemistry": 96.11,
+      "middle_school_mathematics": 91.67,
+      "middle_school_physics": 95.56,
+      "operating_system": 82.22,
+      "statistics_and_probability": 97.13,
+      "total": 90.22
+    },
+    "humanity": {
+      "total": 86.38,
+      "administrative_law": 65.56,
+      "business_law": 88.27,
+      "civil_law": 92.78,
+      "criminal_law": 90.18,
+      "economic_law": 82.61,
+      "education_law": 81.93,
+      "elementary_history": 89.83,
+      "high_school_history": 91.67,
+      "high_school_literature": 90,
+      "history_of_world_civilization": 95,
+      "idealogical_and_moral_cultivation": 95,
+      "introduction_to_laws": 88.89,
+      "introduction_to_vietnam_culture": 83.33,
+      "logic": 82.76,
+      "middle_school_history": 91.11,
+      "middle_school_literature": 83.91,
+      "revolutionary_policy_of_the_vietnamese_commununist_part": 83.89,
+      "vietnamese_language_and_literature": 78.16
+    },
+    "total": 87.49,
+    "social_science": {
+      "total": 87.47,
+      "business_administration": 71.84,
+      "high_school_civil_education": 95.56,
+      "high_school_geography": 75.93,
+      "ho_chi_minh_ideology": 92.18,
+      "macroeconomics": 83.89,
+      "microeconomics": 95,
+      "middle_school_civil_education": 91.57,
+      "middle_school_geography": 90.48,
+      "principles_of_marxism_and_leninism": 90.56,
+      "sociology": 87.64
+    },
+    "other": {
+      "environmental_engineering": 59.65,
+      "internal_basic_medicine": 83.63,
+      "preschool_pedagogy": 70.59,
+      "tax_accountant": 83.91,
+      "tax_civil_servant": 92.4,
+      "total": 83.36,
+      "accountant": 83.93,
+      "civil_servant": 88.89,
+      "clinical_pharmacology": 87.78,
+      "driving_license_certificate": 99.42
+    }
+  },
+  "correct": null,
+  "ci95": null
+}

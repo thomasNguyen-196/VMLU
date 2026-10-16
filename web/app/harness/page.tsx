@@ -11,7 +11,6 @@ import path from "path";
 import { HARNESS_BLOB_HINT, readHarnessBlock, rowsForDataset, type HarnessBlock } from "@/lib/harness-block.ts";
 import SiteNav from "@/components/SiteNav.tsx";
 import type { HarnessMetricNote } from "@/lib/harness-block.ts";
-import ThemeToggle from "@/components/ThemeToggle.tsx";
 import TocNav, { type TocItem } from "@/components/TocNav.tsx";
 import { fmtDelta, fmtInt, fmtNum, fmtPct } from "@/lib/format.ts";
 
@@ -102,13 +101,14 @@ async function load(): Promise<HarnessBlock> {
  * read as a 22-point quality loss when the real accuracy had gone UP 2.12. */
 function MetricTag({ metric, notes }: { metric: string; notes?: Record<string, HarnessMetricNote> }) {
   const note = notes?.[metric];
+  const label = metric === "server_accuracy" ? "điểm máy chủ" : metric;
   if (!note) {
     return (
       <span
         className="inline-block rounded-full border border-hair px-1.5 py-px font-mono text-[11px] text-ink-2"
-        title="Chưa có chú giải cho metric này — coi như chưa biết nó có phải điểm không"
+        title="Chưa có chú giải cho metric này"
       >
-        {metric} (?)
+        {label} · thiếu chú giải
       </span>
     );
   }
@@ -121,8 +121,8 @@ function MetricTag({ metric, notes }: { metric: string; notes?: Record<string, H
       }
       title={note.what}
     >
-      {metric}
-      {note.not_a_score ? " ✗không phải điểm" : ""}
+      {label}
+      {note.not_a_score ? " · không phải điểm" : ""}
     </span>
   );
 }
@@ -147,6 +147,9 @@ export default async function HarnessPage() {
   }
 
   const t = block.totals;
+  const caveatSections = block.caveat_sections ?? (
+    block.caveats?.length ? [{ title: "Lưu ý", items: block.caveats }] : []
+  );
   // Mục lục: chỉ những section thực sự có dữ liệu mới xuất hiện, theo đúng thứ
   // tự render bên dưới — thêm/xóa section mà quên cập nhật ở đây là một chỗ
   // lệch, nên mọi id đều được khai báo một lần ở đúng thẻ <section> của nó.
@@ -165,7 +168,7 @@ export default async function HarnessPage() {
   if (block.secondary_metrics?.length) toc.push({ id: "metric-phu", label: "Metric phụ" });
   if (block.repeatability?.length) toc.push({ id: "lap-lai", label: "Lặp lại" });
   toc.push({ id: "thuat-ngu", label: "Thuật ngữ" });
-  toc.push({ id: "gioi-han", label: "Giới hạn khi trích" });
+  toc.push({ id: "gioi-han", label: "Giới hạn khi diễn giải" });
   return (
     <>
     <SiteNav />
@@ -188,65 +191,91 @@ export default async function HarnessPage() {
       </details>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="font-disp text-[24px] font-semibold">{block.benchmark_name}</h1>
-        <ThemeToggle />
       </div>
-      <p className="mt-2 text-[13px] text-ink-2">
-        model <b>{block.model_id}</b> @ {block.endpoint} · harness <b>{block.harness}</b> · {block.condition} ·
-        card {block.measurement_card} · hash{" "}
-        <code className="font-mono text-[12px]">{block.measurement_card_hash.slice(0, 16)}…</code>
-      </p>
+      <dl className="mt-3 grid gap-2 rounded-lg border border-hair bg-card p-4 text-[12.5px] sm:grid-cols-2">
+        <div>
+          <dt className="text-ink-2">Mô hình</dt>
+          <dd className="font-medium">{block.model_id}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-2">Harness</dt>
+          <dd className="font-medium">{block.harness}</dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-ink-2">Endpoint</dt>
+          <dd className="mt-0.5 space-y-0.5">
+            {block.endpoint.split(" · ").map((endpoint) => <div key={endpoint}>{endpoint}</div>)}
+          </dd>
+        </div>
+        <div className="sm:col-span-2">
+          <dt className="text-ink-2">Điều kiện</dt>
+          <dd>{block.condition}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-2">Measurement card</dt>
+          <dd>{block.measurement_card}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-2">Hash</dt>
+          <dd className="font-mono">{block.measurement_card_hash.slice(0, 16)}…</dd>
+        </div>
+      </dl>
 
       <div className="mt-6 rounded-lg border border-flag/40 bg-flag-soft/50 p-4 text-[13px] leading-relaxed">
-        <b className="text-flag">⚠ Đọc MC-15…MC-21 cùng MC-22.</b> {block.leak.what}
-        <br />
-        <b>Bằng chứng:</b> {block.leak.evidence}
-        <br />
-        <b>Cách chặn:</b> {block.leak.fix} · <b>Guard:</b> {block.leak.guard}
+        <h2 className="font-semibold text-flag">Rò cấu hình</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li><b>Hiện tượng:</b> {block.leak.what}</li>
+          <li><b>Bằng chứng:</b> {block.leak.evidence}</li>
+          <li><b>Khắc phục:</b> {block.leak.fix}</li>
+          <li><b>Kiểm soát:</b> {block.leak.guard}</li>
+        </ul>
       </div>
 
       <section id="nhan-xet" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card p-5">
-        <h2 className="text-[16px] font-semibold">Nhận xét — đọc kết quả này thành gì?</h2>
-        <p className="mt-2 text-[14px] font-medium leading-relaxed">{block.insight.verdict}</p>
+        <h2 className="text-[16px] font-semibold">Nhận xét chính</h2>
+        <ul className="mt-2 list-disc pl-5 text-[14px] font-medium leading-relaxed">
+          <li>{block.insight.verdict}</li>
+        </ul>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {block.insight.claims.map((c) => (
-            <div key={c.id} className="rounded-lg border border-hair p-4">
-              <h3 className="text-[13.5px] font-semibold leading-snug">{c.title}</h3>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">
-                {c.body.split("**").map((chunk, i) =>
-                  i % 2 === 1 ? (
-                    <b key={i} className="text-ink">
-                      {chunk}
-                    </b>
-                  ) : (
-                    <span key={i}>{chunk}</span>
-                  ),
-                )}
-              </p>
-              <dl className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 border-t border-hair pt-2 text-[12px]">
-                {c.evidence.map((e) => (
-                  <div key={e.label} className="flex gap-1.5">
-                    <dt className="text-ink-2">{e.label}</dt>
-                    <dd className="font-mono font-semibold">{e.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ))}
+          {block.insight.claims.map((c) => {
+            const points = c.points?.length
+              ? c.points
+              : [{ label: "Tóm tắt", text: c.body ?? "" }];
+            return (
+              <div key={c.id} className="rounded-lg border border-hair p-4">
+                <h3 className="text-[13.5px] font-semibold leading-snug">{c.title}</h3>
+                <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[12.5px] leading-relaxed text-ink-2">
+                  {points.map((point, i) => (
+                    <li key={`${point.label}-${i}`}>
+                      {point.label ? <><b className="text-ink">{point.label}:</b> </> : null}
+                      {point.text}
+                    </li>
+                  ))}
+                </ul>
+                {!c.points?.length && c.evidence?.length ? (
+                  <dl className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 border-t border-hair pt-2 text-[12px]">
+                    {c.evidence.map((e) => (
+                      <div key={e.label} className="flex gap-1.5">
+                        <dt className="text-ink-2">{e.label}</dt>
+                        <dd className="font-mono font-semibold">{e.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
-        <p className="mt-3 text-[11.5px] text-ink-2">
-          Mọi con số ở trên được builder nội suy từ artifact của chính các bảng dưới đây
-          (<code>insight()</code> trong <code>build_dashboard_harness.py</code>) — không có số nào gõ tay,
-          nên phần diễn giải không thể lệch với dữ liệu.
-        </p>
       </section>
 
       <section id="so-sanh" className="mt-6 scroll-mt-6 rounded-lg border border-hair bg-card p-5">
         <h2 className="text-[16px] font-semibold">So sánh trực tiếp: không dùng harness ⟷ dùng harness</h2>
-        <p className="mt-1 text-[12.5px] text-ink-2">
-          Cùng một model và cùng một prompt; chỉ khác ở chỗ có đưa câu hỏi qua tiến trình agent của{" "}
-          <code className="font-mono">{block.harness}</code> hay không. Cột bên phải là cấu hình scaffold
-          sạch (trung tính × không công cụ), xếp theo từng model, trong mỗi model xếp theo mức thay đổi.
-        </p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+          <li>Mỗi hàng giữ nguyên model, tập dữ liệu và prompt; chỉ thay đổi đường gọi.</li>
+          <li><code>accuracy</code> và <code>EM</code> dùng gold cục bộ.</li>
+          <li><code>server_accuracy</code> do vbench.ai chấm; không có gold cục bộ để kiểm chứng.</li>
+          <li><code>agreement</code> và <code>valid_rate</code> là tỷ lệ mô tả, không phải điểm chất lượng.</li>
+        </ul>
         {[...new Set(block.insight.comparison.map((c) => c.model))].map((m) => {
           const mrows = block.insight.comparison.filter((c) => c.model === m);
           return (
@@ -279,17 +308,11 @@ export default async function HarnessPage() {
                 </thead>
                 <tbody>
                   {mrows.map((c) => {
-                    const note = block.metric_note?.[c.metric];
                     return (
                     <tr key={`${c.model}/${c.dataset}`} className="border-b border-hair/60 last:border-0">
                       <td className="py-1.5 pr-2">{c.dataset_label}</td>
                       <td className="py-1.5 pr-2">
                         <MetricTag metric={c.metric} notes={block.metric_note} />
-                        {note?.what ? (
-                          <span className="mt-0.5 block max-w-[240px] text-[11px] leading-snug text-ink-2">
-                            {note.what}
-                          </span>
-                        ) : null}
                       </td>
                       <td className="py-1.5 pr-2 text-right font-mono tabular-nums">{fmtInt(c.n)}</td>
                       <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
@@ -297,7 +320,7 @@ export default async function HarnessPage() {
                         {typeof c.a_blanks === "number" && c.a_blanks > 0 ? (
                           <span className="block text-[11px] font-normal text-ink-2">
                             {c.metric === "server_accuracy"
-                              ? `không nộp ${fmtInt(c.a_blanks)} (máy chủ tính sai)`
+                              ? `không nộp ${fmtInt(c.a_blanks)}; máy chủ tính sai`
                               : `trống ${fmtInt(c.a_blanks)}`}
                           </span>
                         ) : null}
@@ -307,7 +330,7 @@ export default async function HarnessPage() {
                         {typeof c.b_blanks === "number" && c.b_blanks > 0 ? (
                           <span className="block text-[11px] font-normal text-ink-2">
                             {c.metric === "server_accuracy"
-                              ? `không nộp ${fmtInt(c.b_blanks)} (máy chủ tính sai)`
+                              ? `không nộp ${fmtInt(c.b_blanks)}; máy chủ tính sai`
                               : `trống ${fmtInt(c.b_blanks)}`}
                           </span>
                         ) : null}
@@ -332,22 +355,13 @@ export default async function HarnessPage() {
             </div>
           );
         })}
-        <p className="mt-2 text-[12.5px] text-ink-2">
-          Mỗi dòng là so trong <strong>một model</strong>: cùng model ở cả hai cột, chỉ khác
-          việc câu hỏi có đi qua tiến trình agent hay không. Dấu của Δ không cố định giữa các
-          model — đó là kết quả của phép so, không phải tiêu chí xếp hạng.{" "}
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+          <li>Mỗi hàng so sánh hai cách gọi trên cùng model và cùng tập dữ liệu.</li>
+          <li>Dấu của Δ có thể khác giữa các model; không dùng để xếp hạng model.</li>
           {block.insight.comparison.some((c) => c.metric === "agreement") && (
-            <>
-              <b className="text-flag">Đọc cột Thước đo trước khi đọc số.</b> Dòng
-              <span className="font-mono"> agreement</span> KHÔNG phải điểm: đó là tỉ lệ câu trả
-              lời mà agent cho <em>giống hệt</em> lời gọi trực tiếp trên cùng câu hỏi, nên nó đo mức
-              agent làm <em>đổi</em> đáp án chứ không đo chất lượng — đổi sang chữ sai vẫn là đổi. Điểm
-              thật của 12 domain nằm ở dòng <span className="font-mono">accuracy</span> ngay cạnh nó
-              (máy chủ vbench.ai chấm, MC-48), và <b>hai dòng có thể ngược dấu</b>: MiMo mất 22,39
-              điểm trùng khớp nhưng <em>tăng</em> 2,13 điểm accuracy thật.
-            </>
+            <li><code>agreement</code> đo câu trả lời có giữ nguyên so với arm A hay không; cột điểm máy chủ đo độ đúng.</li>
           )}
-        </p>
+        </ul>
       </section>
 
       {block.breakdown?.length ? (
@@ -355,21 +369,14 @@ export default async function HarnessPage() {
           <summary className="cursor-pointer text-[16px] font-semibold">
             Chênh lệch theo nhóm — cùng một phép so, cắt theo từng nhóm câu hỏi
           </summary>
-          <p className="mt-1 text-[12.5px] text-ink-2">
-            Mỗi dòng vẫn là so ghép cặp trong <strong>cùng model</strong>, chỉ thu hẹp xuống một
-            nhóm (domain V-Bench, dạng câu reading). Nhóm nhỏ giữ nguyên CI rộng của nó — giữ nguyên
-            khoảng tin cậy rộng, không che đi.
-          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+            <li>Mỗi hàng so sánh cùng model trong một nhóm câu hỏi.</li>
+            <li>Khoảng tin cậy hiển thị nguyên trạng, kể cả khi nhóm nhỏ làm khoảng này rộng.</li>
+          </ul>
           {block.breakdown.some((d) => d.metric === "agreement") && (
-            <p className="mt-2 rounded-lg border border-flag/40 bg-flag-soft/50 p-3 text-[12.5px] leading-relaxed">
-              <b className="text-flag">⚠ Cột Δ ở bảng này KHÔNG phải điểm.</b> Với nhóm là domain
-              V-Bench, thước đo là <span className="font-mono">agreement</span> — tỉ lệ agent trả lời
-              giống hệt lời gọi trực tiếp, tức đo agent có <em>đổi</em> đáp án, không đo đáp án đó tốt
-              hay xấu. Cột <b>Điểm thật (máy chủ)</b> mới là điểm thật của domain đó, và hai cột có
-              thể <b>ngược dấu</b>: ở MiMo, logics mất 40,89 điểm trùng khớp nhưng chỉ mất
-              <em className="font-semibold">4,88</em> điểm thật; ở culture, trùng khớp mất 25,35 nhưng
-              điểm thật <em className="font-semibold">tăng 6,91</em>.
-            </p>
+            <ul className="mt-2 list-disc rounded-lg border border-flag/40 bg-flag-soft/50 p-3 pl-8 text-[12.5px] leading-relaxed">
+              <li>Ở V-Bench MC, Δ agreement có thể khác dấu với Δ accuracy ở cột điểm máy chủ.</li>
+            </ul>
           )}
           {block.breakdown.map((d) => (
             <div key={`${d.arm_slug}/${d.dataset}`} className="mt-4">
@@ -474,13 +481,11 @@ export default async function HarnessPage() {
           <summary className="cursor-pointer text-[16px] font-semibold">
             Điểm từng phần — tham số đúng bao nhiêu, không chỉ gọi được hay không
           </summary>
-          <p className="mt-1 text-[12.5px] text-ink-2">
-            Validity 0/1 gộp hai lỗi khác nhau (không ra được call nào vs ra call nhưng sai tham
-            số). Ở đây chấm từng tham số ở đúng tầng mà cổng pipeline kiểm tra:{" "}
-            <code>required_fill</code> = tham số bắt buộc điền đúng / tham số bắt buộc (trên các
-            câu đã ra được call), <code>precision</code> = tham số hợp lệ / tham số đã đưa ra.
-            Câu không ra call không đóng góp vào tỉ lệ nào và được đếm riêng ở cột cuối.
-          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+            <li><code>required_fill</code> đo tham số bắt buộc được điền đúng trong các câu có call.</li>
+            <li><code>precision</code> đo tỷ lệ tham số hợp lệ trong số tham số đã đưa ra.</li>
+            <li>Câu không tạo được call được đếm riêng, không tính vào hai tỷ lệ trên.</li>
+          </ul>
           <div className="overflow-x-auto">
           <table className="mt-2 w-full border-collapse text-[13px]">
             <thead>
@@ -637,11 +642,13 @@ export default async function HarnessPage() {
           </tbody>
         </table>
         </div>
-        <p className="mt-2 text-[12.5px] text-ink-2">
-          Tổng {fmtInt(t.items_harness)} item harness · {fmtInt(t.failures)} lỗi · {fmtInt(t.tool_use_items)} item dùng tool ·{" "}
-          {fmtInt(t.net_attempt_items)} lần gọi mạng · {fmtInt(t.path_escape_items)} lần thoát sandbox (không lần nào
-          thành công).
-        </p>
+        <ul className="mt-2 grid list-disc gap-x-6 gap-y-1 pl-5 text-[12.5px] text-ink-2 sm:grid-cols-2">
+          <li>{fmtInt(t.items_harness)} item harness</li>
+          <li>{fmtInt(t.failures)} lỗi</li>
+          <li>{fmtInt(t.tool_use_items)} item dùng công cụ</li>
+          <li>{fmtInt(t.net_attempt_items)} lần gọi mạng</li>
+          <li>{fmtInt(t.path_escape_items)} lần thử thoát sandbox; không lần nào thành công</li>
+        </ul>
       </section>
 
       <section id="toc-do" className="mt-10 scroll-mt-6">
@@ -649,10 +656,10 @@ export default async function HarnessPage() {
           Tốc độ &amp; token phát sinh — cặp trực tiếp <span className="font-normal text-ink-2">vs</span>{" "}
           cùng item trong omp
         </h2>
-        <p className="mt-1 text-[12.5px] text-ink-2">
-          Mỗi tập có hai dòng: <b>direct</b> là chính lời gọi HTTP của arm A, <b>omp</b> là cùng item đó
-          đi qua agent. <code>overhead</code> là chênh lệch wall/item của cặp.
-        </p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+          <li><code>direct</code> là lời gọi HTTP của arm A; <code>omp</code> là cùng item qua agent.</li>
+          <li><code>overhead</code> là chênh lệch thời gian trên mỗi item trong cặp.</li>
+        </ul>
         <div className="overflow-x-auto">
         <table className="mt-2 w-full border-collapse text-[13px]">
           <thead>
@@ -703,36 +710,22 @@ export default async function HarnessPage() {
           </tbody>
         </table>
         </div>
-        <p className="mt-2 text-[12.5px] text-ink-2">
-          <b>Không dùng <code>input + cacheRead</code> làm kích thước request</b>: bộ đếm cache của
-          gateway IEC là tích luỹ theo thời gian, làm MC-19 phình ~8×. Số ở đây lấy từ{" "}
-          <code>capture_scaffold.py</code> (proxy localhost ghi đúng byte request) và từ token báo
-          trong ledger. <code>prompt tok</code> của dòng omp <b>đã bao gồm</b> system prompt + tool
-          schemas của scaffold — đó chính là phần phát sinh.
-        </p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+          <li><code>prompt tok</code> của omp đã gồm system prompt và schema công cụ.</li>
+          <li><code>capture_scaffold.py</code> ghi byte request; ledger lưu token gateway báo.</li>
+        </ul>
       </section>
-
-      {block.ladder.some((r) => r.server_score !== undefined) ? (
-        <p className="mt-2 text-[12.5px] text-ink-2">
-          Cột <b>Server</b> là <i>accuracy thật</i> từ vbench.ai — khác hẳn cột Arm B ở tập V-Bench,
-          vốn chỉ là <i>schema validity</i> (call có khớp schema không). Ở function-calling hai thứ
-          lệch nhau <b>gấp 3,4 lần</b> (validity −2,60 điểm nhưng accuracy −8,90 điểm): phần lớn lỗi là{" "}
-          <b>gọi đúng hàm sai tham số</b>, không phải sinh JSON sai. Mẫu số là <b>1.000</b> (26 dòng
-          invalid không nộp được tính sai).
-        </p>
-      ) : null}
 
       {block.secondary_metrics?.length ? (
         <section id="metric-phu" className="mt-10 scroll-mt-6">
           <h2 className="text-[16px] font-semibold">
             Metric phụ — EM nguyên văn vs EM sau khi bóc lớp bọc
           </h2>
-          <p className="mt-1 text-[12.5px] text-ink-2">
-            <b>Không thay số chính.</b> Cùng một câu trả lời, chấm hai lần: nguyên văn (đúng cách
-            arm A được chấm) và sau khi bóc vỏ (<code>**</code>, nhãn <code>Đáp án:</code>, block
-            code, dòng hỏi lại). Chênh lệch = phần <i>đúng nội dung nhưng bị chấm 0</i>. Câu sai
-            vẫn sai.
-          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+            <li>Metric này bổ sung, không thay điểm chính.</li>
+            <li>Cùng câu trả lời được chấm nguyên văn và sau khi bóc lớp bọc định dạng.</li>
+            <li>Chênh lệch đo phần nội dung đúng bị lớp bọc làm chấm sai; câu sai vẫn tính sai.</li>
+          </ul>
           <div className="overflow-x-auto">
           <table className="mt-2 w-full border-collapse text-[13px]">
             <thead>
@@ -769,21 +762,17 @@ export default async function HarnessPage() {
             </tbody>
           </table>
           </div>
-          <p className="mt-2 text-[12.5px] text-ink-2">
-            Arm sạch (H5) bóc lớp bọc được <b>+0,00</b> ở cả hai tập: câu trả lời của nó vốn đã trần, không
-            vỏ. Toàn bộ chi phí vỏ nằm ở arm bị rò cấu hình — cơ chế MC-22, giờ có số.
-          </p>
         </section>
       ) : null}
 
       {block.repeatability?.length ? (
         <section id="lap-lai" className="mt-10 scroll-mt-6">
           <h2 className="text-[16px] font-semibold">Lặp lại — nhiễu chạy-đến-chạy là mức sàn của mọi kết luận</h2>
-          <p className="mt-1 text-[12.5px] text-ink-2">
-            Cùng một điều kiện, chạy lại nhiều lần. <code>spread</code> = độ biến thiên của chính ô đó
-            ở <code>temperature 0</code> — <b>contrast nhỏ hơn số này thì không phải kết quả</b>.
-            Không gộp khác <code>n</code> (100 item và 146 item là hai thí nghiệm khác nhau).
-          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-[12.5px] text-ink-2">
+            <li><code>spread</code> đo dao động của cùng một ô khi chạy lại ở temperature 0.</li>
+            <li>Chênh lệch nhỏ hơn spread chưa thể tách khỏi nhiễu.</li>
+            <li>Không gộp các lượt có n khác nhau; chúng là các mẫu riêng.</li>
+          </ul>
           <div className="overflow-x-auto">
           <table className="mt-2 w-full border-collapse text-[13px]">
             <thead>
@@ -872,21 +861,26 @@ export default async function HarnessPage() {
       </section>
 
       <section id="gioi-han" className="mt-10 scroll-mt-6">
-        <h2 className="text-[16px] font-semibold">Giới hạn phải nói khi trích</h2>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] leading-relaxed text-ink-2">
-          {block.caveats.map((c) => (
-            <li key={c}>{c}</li>
+        <h2 className="text-[16px] font-semibold">Giới hạn khi diễn giải</h2>
+        <div className="mt-3 grid gap-4 md:grid-cols-2">
+          {caveatSections.map((section) => (
+            <section key={section.title} className="rounded-lg border border-hair bg-card p-4">
+              <h3 className="text-[13.5px] font-semibold">{section.title}</h3>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[12.5px] leading-relaxed text-ink-2">
+                {section.items.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
         <p className="mt-4 text-[12.5px] text-ink-2">
-          Nguồn: {block.sources.report} · {block.sources.docs} · scorer {block.scorer}
+          Nguồn: {block.sources.report} · {block.sources.docs} · bộ chấm: {block.scorer}
         </p>
         <p className="mt-3 text-[12.5px] text-ink-2">
           <a className="underline" href="/benchmark">
             /benchmark
           </a>{" "}
-          (bảng điểm chính) · mỗi dataset ở đây cũng có một dòng tương ứng trong tab cùng
-          dataset của /benchmark · bản offline:{" "}
+          là bảng điểm chính. Mỗi tập ở đây cũng có một dòng tương ứng trong tab cùng tập
+          của /benchmark. Bản offline:{" "}
           <code className="font-mono">harness_report.html</code>
         </p>
       </section>

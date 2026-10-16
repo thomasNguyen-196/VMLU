@@ -63,7 +63,7 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from threading import Lock
+from threading import Barrier, Lock
 
 try:  # package run (repo root) or direct run (cwd == code_benchmark)
     from code_benchmark.common import (MANIFEST_DEFAULT, SQUAD_DEFAULT, DROP_DEFAULT,
@@ -888,6 +888,39 @@ def preflight_endpoint(model: str | None = None, base_url: str | None = None,
     logging.info("preflight OK (%.1fs) — %s @ %s", time.time() - started, model, url)
 
 
+def preflight_omp(args, agent_dir: Path, scratch: Path) -> None:
+    """Probe the configured OMP route without adding a row to the dataset ledger."""
+    prompt = "Reply with the single word READY."
+    item = {
+        "dataset": args.dataset,
+        "item_id": "__preflight__",
+        "stratum": "preflight",
+        "kind": "reading",
+        "question": prompt,
+        "prompt": prompt,
+        "prompt_sha256": _sha256_text(prompt),
+        "gold": "READY",
+    }
+    row, _timing = run_item(
+        item,
+        omp_bin=args.omp_bin,
+        model=args.model,
+        tools=args.tools,
+        max_time=args.max_time,
+        thinking=args.thinking,
+        agent_dir=agent_dir,
+        scratch=scratch,
+        arm=args.dataset,
+        system_prompt=resolve_system_prompt(args),
+    )
+    if row["failure"] or not row["raw_response"].strip():
+        raise SystemExit(
+            f"Error: OMP preflight failed ({row['failure'] or 'empty response'}); "
+            "refusing to start dataset workers"
+        )
+    logging.info("OMP preflight succeeded; probe excluded from dataset results")
+
+
 def cmd_run(args) -> None:
     kind = ARM_A[args.dataset]["kind"]
     slug = sanitize_model(args.label)
@@ -909,8 +942,11 @@ def cmd_run(args) -> None:
     scratch = scratch.resolve()
     assert_no_project_instructions(scratch, args.allow_project_instructions)
 
-    preflight_endpoint(model=args.model,
-                       api_key=_agent_dir_token(agent_dir))
+    if args.preflight_mode == "omp":
+        preflight_omp(args, agent_dir, scratch)
+    else:
+        preflight_endpoint(model=args.model,
+                           api_key=_agent_dir_token(agent_dir))
     items = load_items(args.dataset, args.arm_a_slug)
     items_by_id = {it["item_id"]: it for it in items}
     if args.limit:
@@ -922,6 +958,7 @@ def cmd_run(args) -> None:
     logging.info("dataset=%s kind=%s n=%d workers=%d tools=%s max_time=%d thinking=%s",
                  args.dataset, kind, total, args.workers,
                  resolve_tools(args.tools)[1], args.max_time, args.thinking)
+    logging.info("fixed_shards=%s", args.fixed_shards)
     logging.info("agent_dir=%s (isolated: config+providers+caches) scratch=%s",
                  agent_dir, scratch)
 
@@ -974,7 +1011,53 @@ def cmd_run(args) -> None:
                 logging.info("%d/%d done (%.2f items/s, eta %.1f min)", completed, total,
                              rate, (total - completed) / rate / 60 if rate else 0)
 
-    if to_process:
+    if to_process and args.fixed_shards:
+        # Keep ownership tied to the original ordered dataset positions so a
+        # resumed run uses the same four contiguous shards and simply skips
+        # rows already present in its checkpoint.
+        quotient, remainder = divmod(total, args.workers)
+        batches: list[list[tuple[int, dict]]] = []
+        start_index = 0
+        for shard_index in range(args.workers):
+            shard_size = quotient + int(shard_index < remainder)
+            stop_index = start_index + shard_size
+            batch = [
+                (index, items[index])
+                for index in range(start_index, stop_index)
+                if items[index]["item_id"] not in existing
+            ]
+            logging.info(
+                "fixed shard %d/%d positions=%d-%d assigned=%d pending=%d",
+                shard_index + 1,
+                args.workers,
+                start_index + 1 if shard_size else 0,
+                stop_index,
+                shard_size,
+                len(batch),
+            )
+            batches.append(batch)
+            start_index = stop_index
+
+        active_batches = [
+            (shard_index, batch)
+            for shard_index, batch in enumerate(batches)
+            if batch
+        ]
+        shard_barrier = Barrier(len(active_batches))
+
+        def process_shard(shard_index: int, batch: list[tuple[int, dict]]) -> None:
+            logging.info("worker assigned fixed shard %d/%d; waiting for peers",
+                         shard_index + 1, args.workers)
+            shard_barrier.wait()
+            for index, item in batch:
+                process(index, item)
+
+        with ThreadPoolExecutor(max_workers=len(active_batches)) as ex:
+            futs = [ex.submit(process_shard, shard_index, batch)
+                    for shard_index, batch in active_batches]
+            for fut in as_completed(futs):
+                fut.result()
+    elif to_process:
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
             futs = [ex.submit(process, i, it) for i, it in to_process]
             for fut in as_completed(futs):
@@ -1686,6 +1769,12 @@ def parse_args():
     run.add_argument("--max-time", type=int, default=180,
                      help="per-item wall budget for the agent loop (omp --max-time)")
     run.add_argument("--workers", type=int, default=4)
+    run.add_argument("--fixed-shards", action="store_true",
+                     help="assign contiguous, near-equal item batches to workers; each worker "
+                          "processes its batch sequentially with no task stealing")
+    run.add_argument("--preflight-mode", choices=("direct", "omp"), default="direct",
+                     help="probe the direct Chat Completions endpoint (default) or the exact "
+                          "configured OMP route before starting item workers")
     run.add_argument("--limit", type=int, default=None, help="smoke: first N items only")
     run.add_argument("--resume", action="store_true")
     run.add_argument("--checkpoint-every", type=int, default=25)

@@ -2404,3 +2404,157 @@ Bảng đặt cạnh của MC-32 đang đặt chúng cạnh nhau như thể ch�
    ```
 4. **Trích dẫn.** Mỗi báo cáo mở đầu bằng: *"Điều kiện đo: `MC-<n>`, measurement_card.md"*.
 5. **Model đổi thì card đổi.** Không có ngoại lệ.
+
+## MC-73 — Muse Spark 1.2 Contributor / 9ROUTER / main
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-73` |
+| `trạng_thái` | Preregistered 2026-10-11 (+07), before dataset inference |
+| `model / API` | `cmc/meta/muse-spark-1.2-contributor`, OMP provider `router9`, OpenAI Chat Completions through configured `9ROUTER_BASE_URL`; key read from `9ROUTER_API_KEY`, never stored |
+| `sample` | vi-multimodel-v1-vi-squad-200: 200, vi-multimodel-v1-vi-drop-200: 200, vi-multimodel-v1-legal-mc-146: 146, vi-multimodel-v1-legal-nli-150: 150, vi-multimodel-v1-bidlqa-test: 603; total 1299 |
+| `manifest` | Validated frozen parent SHA256 `0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551`; derived SHA256 `bd919605046bde98ad874cbbbb0b56ddd81bf19abf0eacb90a6401d6a1ef6134`; parent prompts/parsers/gold preserved |
+| `harness / prompt` | OMP 18.0.0 JSON, tools none, system prompt `Answer the user's question.`, one isolated process/item; temporary HOME, absolute per-item agent dir, no persisted session |
+| `reasoning / sampling` | reasoning enabled, thinking auto, temperature 1.0 enforced by a loopback sampling relay (OMP may omit it on initial auto requests), seed omitted; requested settings matched to other models, upstream effective temperature/reasoning budget not exposed |
+| `workers / caps / timeout` | 4 workers; MC 4096 tokens, reading/function-call 2048 tokens; 300 seconds/item + 60 process slack; SDK retries 0; non-scored connectivity probe cap 256 |
+| `scoring` | Existing frozen phase scorer; invalid answers remain in denominator. VMLU test and V-Bench have withheld gold: exportable answers and parser/schema diagnostics only, no fabricated accuracy and no upload |
+| `budget` | No 9ROUTER tariff supplied; zero-priced bookkeeping is not a dollar estimate. Fixed item counts/caps/workers/timeouts; no extra model or arm |
+| `launcher / output` | `python -m code_benchmark.run_muse_router_matched --execute`; `all_res/muse_router_matched/main/muse-spark-1-2-contributor/`; preserve historical runs |
+
+## MC-74 — Muse Spark 1.2 Contributor / 9ROUTER / vmlu
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-74` |
+| `trạng_thái` | Preregistered 2026-10-11 (+07), before dataset inference |
+| `model / API` | `cmc/meta/muse-spark-1.2-contributor`, OMP provider `router9`, OpenAI Chat Completions through configured `9ROUTER_BASE_URL`; key read from `9ROUTER_API_KEY`, never stored |
+| `sample` | vi-multimodel-v2-vmlu-valid: 744, vi-multimodel-v2-vmlu-dev: 303, vi-multimodel-v2-vmlu-test: 9833; total 10880 |
+| `manifest` | Validated frozen parent SHA256 `553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a`; derived SHA256 `4046145d633931454c8760f8ffb74ae5d2e267bdb6aa02878adba68f8a472655`; parent prompts/parsers/gold preserved |
+| `harness / prompt` | OMP 18.0.0 JSON, tools none, system prompt `Answer the user's question.`, one isolated process/item; temporary HOME, absolute per-item agent dir, no persisted session |
+| `reasoning / sampling` | reasoning enabled, thinking auto, temperature 1.0 enforced by a loopback sampling relay (OMP may omit it on initial auto requests), seed omitted; requested settings matched to other models, upstream effective temperature/reasoning budget not exposed |
+| `workers / caps / timeout` | 4 workers; MC 4096 tokens, reading/function-call 2048 tokens; 300 seconds/item + 60 process slack; SDK retries 0; non-scored connectivity probe cap 256 |
+| `scoring` | Existing frozen phase scorer; invalid answers remain in denominator. VMLU test and V-Bench have withheld gold: exportable answers and parser/schema diagnostics only, no fabricated accuracy and no upload |
+| `budget` | No 9ROUTER tariff supplied; zero-priced bookkeeping is not a dollar estimate. Fixed item counts/caps/workers/timeouts; no extra model or arm |
+| `launcher / output` | `python -m code_benchmark.run_muse_router_matched --execute`; `all_res/muse_router_matched/vmlu/muse-spark-1-2-contributor/`; preserve historical runs |
+
+## MC-75 — Muse Spark 1.2 Contributor / 9ROUTER / vbench
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-75` |
+| `trạng_thái` | Preregistered 2026-10-11 (+07), before dataset inference |
+| `model / API` | `cmc/meta/muse-spark-1.2-contributor`, OMP provider `router9`, OpenAI Chat Completions through configured `9ROUTER_BASE_URL`; key read from `9ROUTER_API_KEY`, never stored |
+| `sample` | vi-multimodel-v2-vbench-mc: 4141, vi-multimodel-v2-vbench-agentic: 1000; total 5141 |
+| `manifest` | Validated frozen parent SHA256 `e44d5642fe5726f7265917917cbf35e2d4e2e199ccbdcd3e95e81b650f9f0b12`; derived SHA256 `320e30df7db6ef38c62cc6734a05b7c5075f5e91910c3857c1fde10a1be7764f`; parent prompts/parsers/gold preserved |
+| `harness / prompt` | OMP 18.0.0 JSON, tools none, system prompt `Answer the user's question.`, one isolated process/item; temporary HOME, absolute per-item agent dir, no persisted session |
+| `reasoning / sampling` | reasoning enabled, thinking auto, temperature 1.0 enforced by a loopback sampling relay (OMP may omit it on initial auto requests), seed omitted; requested settings matched to other models, upstream effective temperature/reasoning budget not exposed |
+| `workers / caps / timeout` | 4 workers; MC 4096 tokens, reading/function-call 2048 tokens; 300 seconds/item + 60 process slack; SDK retries 0; non-scored connectivity probe cap 256 |
+| `scoring` | Existing frozen phase scorer; invalid answers remain in denominator. VMLU test and V-Bench have withheld gold: exportable answers and parser/schema diagnostics only, no fabricated accuracy and no upload |
+| `budget` | No 9ROUTER tariff supplied; zero-priced bookkeeping is not a dollar estimate. Fixed item counts/caps/workers/timeouts; no extra model or arm |
+| `launcher / output` | `python -m code_benchmark.run_muse_router_matched --execute`; `all_res/muse_router_matched/vbench/muse-spark-1-2-contributor/`; preserve historical runs |
+
+---
+
+## MC-80 — Muse Spark 1.3 Contributor / API trực tiếp / reasoning mặc định
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-80` |
+| `trạng_thái` | Registered 2026-10-13 (+07), before dataset inference |
+| `model / transport` | `ocg/muse-spark-1.3-contributor`; direct 9Router Chat Completions API |
+| `sample` | Frozen main V1: VMLU Valid 744 + Legal MC 146 + Legal NLI 150 + Vi-SQuAD 200 + Vi-DROP 200 + ViBidLQA 603 = 2,043; V-Bench excluded |
+| `sampling / tools` | Temperature sent 1.0; seed and reasoning effort omitted; no tools; effective upstream controls unknown; router override unverified |
+| `workers / caps` | 4 fixed shards × 3 lanes = 12 workers; MC 4,096 / reading 2,048 tokens; 300 seconds/request; SDK retries zero |
+| `protocol / full card` | `muse13-direct-default-mc80-v1`; [MC-80 detailed card](docs/measurement_cards/MC-80-muse13-direct-default.md) |
+| `output` | `all_res/muse13_direct_mc80/main/muse-spark-1-3-contributor-ocg/` |
+
+---
+
+## MC-81 — Muse Spark 1.3 Contributor / API trực tiếp / VMLU còn lại
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-81` |
+| `trạng_thái` | Registered 2026-10-13 (+07), before Dev/Test inference; starts after MC-80 completes |
+| `model / condition` | `ocg/muse-spark-1.3-contributor`; direct 9Router API; temperature sent 1.0; seed/effort omitted; effective reasoning tier unknown; no tools supplied |
+| `sample` | Dev 303 + Test 9,833 = 10,136. Valid 744 reused from MC-80 with verified identity/prompt parity and separate per-row provenance |
+| `workers / caps` | 4 fixed shards × 3 lanes = 12 workers; MC 4,096 tokens; 300 seconds/request; SDK retries zero; bounded technical recovery only |
+| `scoring` | Frozen V2 scorer: Dev local accuracy after complete coverage; Test gold withheld, parser diagnostics and submission answers only |
+| `protocol / full card` | `muse13-direct-default-remaining-vmlu-mc81-v1`; [MC-81 detailed card](docs/measurement_cards/MC-81-muse13-direct-remaining-vmlu.md) |
+| `output` | `all_res/muse13_direct_mc81/vmlu/muse-spark-1-3-contributor-ocg/` |
+
+---
+
+## MC-82 — Muse Spark 1.3 Contributor / API trực tiếp / budget 20,000
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-82` |
+| `trạng_thái` | Registered 2026-10-13 (+07), before larger-budget dataset inference |
+| `model / sampling` | `ocg/muse-spark-1.3-contributor`; temperature 1.0; effort/seed omitted; no tools supplied |
+| `budget / transport` | 20,000 output tokens including reasoning; native Responses stream with explicit terminal-event handling |
+| `scope` | Seven unfinished MC-80 items, then remaining VMLU Dev 303 + Test 9,833; original completed outputs preserved |
+| `workers` | 4 fixed shards × 3 lanes = 12 for VMLU; 300 seconds/request; SDK retries zero |
+| `provenance` | Original-cap and 20k outputs remain separately identifiable; combined artifacts have mixed budget labels |
+| `full card` | [MC-82 detailed card](docs/measurement_cards/MC-82-muse13-direct-20k.md) |
+| `output` | `all_res/muse13_direct_mc82/` |
+
+## MC-83 — Qwen3.5-9B-65K / API Direct / budget 20,000
+
+Registered 2026-10-14 (+07), before benchmark requests, at user request to match the Muse direct setup.
+
+| Field | Value |
+| --- | --- |
+| `model` | Qwen3.5-9B-65K |
+| `transport` | API Direct · native Responses streaming |
+| `temperature` | 1.0 sent; effective upstream value unknown |
+| `reasoning` | effort omitted; provider default; no named tier asserted |
+| `seed` | omitted |
+| `tools` | none supplied |
+| `max_output_tokens` | 20000 for both MC and reading |
+| `workers` | 12 = four fixed shards × three lanes |
+| `scope` | V1 main 2043 + V2 Dev/Test 10136 = 12179; excludes V-Bench |
+| `protocol` | qwen-direct-default-20k-mc83-v1 |
+| `details` | docs/measurement_cards/MC-83-qwen-direct-20k.md |
+
+Historical Qwen runs and Muse outputs remain separate. Muse's original-cap/mixed-budget main data is not relabeled as a uniform 20k condition.
+
+## MC-84 — Muse Spark 1.2 Contributor / API Direct / budget 20,000
+
+Registered 2026-10-14 (+07), before dataset requests, at user request to match the Muse/Qwen direct setup.
+
+| Field | Value |
+| --- | --- |
+| `model` | Muse Spark 1.2 Contributor; exact ocg/muse-spark-1.2-contributor route |
+| `transport` | API Direct · native Responses streaming |
+| `temperature` | 1.0 sent; upstream effective value unknown |
+| `reasoning` | effort omitted; provider default, no named tier asserted |
+| `seed` | omitted |
+| `tools` | none supplied |
+| `max_output_tokens` | 20000 for MC and reading |
+| `workers` | 12 = four fixed shards × three lanes |
+| `scope` | V1 main 2043 + V2 Dev/Test 10136 = 12179; no V-Bench |
+| `protocol` | muse12-direct-default-20k-mc84-v1 |
+| `details` | docs/measurement_cards/MC-84-muse12-direct-20k.md |
+
+Pin one model route throughout the campaign; keep earlier Muse 1.2 OMP/mixed-route outputs separate.
+
+## MC-85 — MiMo V2.6 Flash / API Direct / budget 20,000
+
+Registered 2026-10-15 (+07), before benchmark items, for the user-requested `ocg/mimo-v2.6-flash` route.
+
+| Field | Value |
+| --- | --- |
+| `model` | MiMo V2.6 Flash; exact ocg/mimo-v2.6-flash route |
+| `transport` | API Direct · native Responses streaming |
+| `temperature` | 1.0 sent; upstream effective value unknown |
+| `reasoning` | effort omitted; provider default, no named tier asserted |
+| `seed` | omitted |
+| `tools` | none supplied |
+| `max_output_tokens` | 20000 for MC and reading |
+| `workers` | 12 = four fixed shards × three lanes |
+| `scope` | Main 2043 + Dev/Test 10136 = 12179; no V-Bench |
+| `protocol` | mimo26-direct-default-20k-mc85-v1 |
+| `details` | docs/measurement_cards/MC-85-mimo26-direct-20k.md |
+
+Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking conditions.

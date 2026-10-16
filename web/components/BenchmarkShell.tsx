@@ -41,10 +41,10 @@ export function BenchmarkShell({
         </div>
       )}
       <SiteNav />
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-2 text-xs text-slate-500">
+      <div className="bg-card border-b border-hair">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-2 text-xs text-ink-3">
           <span>
-            Model <span className="font-mono font-semibold text-slate-800">{view.activeModel.id}</span>
+            Model <span className="font-mono font-semibold text-ink">{view.activeModel.id}</span>
             {view.activeModel.quantization && (
               <span className="font-mono"> · {view.activeModel.quantization}</span>
             )}{" "}

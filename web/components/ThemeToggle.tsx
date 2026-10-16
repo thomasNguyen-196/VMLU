@@ -1,6 +1,6 @@
 "use client";
 
-/** Light / dark / follow-the-OS switch for the harness study.
+/** Shared light / dark / follow-the-OS selector for every VMLU surface.
  *
  *  The palette was already token-based (`--paper`, `--card`, `--ink`…), so this
  *  only has to set `data-theme` on <html>; `globals.css` owns the actual colours.
@@ -45,13 +45,13 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
   }
 
   // Before hydration the server knows nothing about the stored preference, so
-  // render a stable placeholder instead of guessing and flipping.
+  // reserve space instead of guessing and shifting the shared nav.
   if (!mounted) {
-    return <div className={`flex items-center gap-1 ${className}`} aria-hidden="true" />;
+    return <div className={`h-7 min-w-[228px] shrink-0 ${className}`} aria-hidden="true" />;
   }
 
   return (
-    <div className={`flex items-center gap-0.5 rounded-full border border-hair bg-card p-0.5 ${className}`}>
+    <div role="group" aria-label="Giao diện" className={`flex min-w-[228px] items-center justify-between gap-0.5 rounded-full border border-hair bg-card p-0.5 ${className}`}>
       <span className="px-1.5 text-[11px] text-ink-3">Giao diện</span>
       {ORDER.map((c) => (
         <button

@@ -1,0 +1,80 @@
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Ha Noi"}}], "id": "syn-001"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Da Nang"}}], "id": "syn-002"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Can Tho"}}], "id": "syn-003"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Hue"}}], "id": "syn-004"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Nha Trang"}}], "id": "syn-005"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Da Lat"}}], "id": "syn-006"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Hai Phong"}}], "id": "syn-007"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Vinh"}}], "id": "syn-008"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Quy Nhon"}}], "id": "syn-009"}
+{"answer": [{"tra_cuu_thoi_tiet": {"thanh_pho": "Bien Hoa"}}], "id": "syn-010"}
+{"answer": [{"tinh_tong": {"a": 10, "b": 5}}], "id": "syn-011"}
+{"answer": [{"tinh_tong": {"a": 21, "b": 9}}], "id": "syn-012"}
+{"answer": [{"tinh_tong": {"a": 100, "b": 25}}], "id": "syn-013"}
+{"answer": [{"tinh_tong": {"a": 7, "b": 8}}], "id": "syn-014"}
+{"answer": [{"tinh_tong": {"a": 32, "b": 11}}], "id": "syn-015"}
+{"answer": [{"tinh_tong": {"a": 999, "b": 1}}], "id": "syn-016"}
+{"answer": [{"tinh_tong": {"a": 43, "b": 57}}], "id": "syn-017"}
+{"answer": [{"tinh_tong": {"a": 1200, "b": 300}}], "id": "syn-018"}
+{"answer": [{"tinh_tong": {"a": 0, "b": 6}}], "id": "syn-019"}
+{"answer": [{"tinh_tong": {"a": 88, "b": 12}}], "id": "syn-020"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-01", "su_kien": "họp nhóm 1"}}], "id": "syn-021"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-02", "su_kien": "họp nhóm 2"}}], "id": "syn-022"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-03", "su_kien": "họp nhóm 3"}}], "id": "syn-023"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-04", "su_kien": "họp nhóm 4"}}], "id": "syn-024"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-05", "su_kien": "họp nhóm 5"}}], "id": "syn-025"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-06", "su_kien": "họp nhóm 6"}}], "id": "syn-026"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-07", "su_kien": "họp nhóm 7"}}], "id": "syn-027"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-08", "su_kien": "họp nhóm 8"}}], "id": "syn-028"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-09", "su_kien": "họp nhóm 9"}}], "id": "syn-029"}
+{"answer": [{"dat_lich": {"gio": "09:30", "ngay": "2026-10-10", "su_kien": "họp nhóm 10"}}], "id": "syn-030"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202600"}}], "id": "syn-031"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202601"}}], "id": "syn-032"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202602"}}], "id": "syn-033"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202603"}}], "id": "syn-034"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202604"}}], "id": "syn-035"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202605"}}], "id": "syn-036"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202606"}}], "id": "syn-037"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202607"}}], "id": "syn-038"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202608"}}], "id": "syn-039"}
+{"answer": [{"tra_cuu_don_hang": {"ma_don": "DH-202609"}}], "id": "syn-040"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Hà Nội", "loai": "xe_buyt"}}], "id": "syn-041"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Đà Nẵng", "loai": "tau_hoa"}}], "id": "syn-042"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Cần Thơ", "loai": "may_bay"}}], "id": "syn-043"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Huế", "loai": "xe_buyt"}}], "id": "syn-044"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Nha Trang", "loai": "tau_hoa"}}], "id": "syn-045"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Đà Lạt", "loai": "may_bay"}}], "id": "syn-046"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Hải Phòng", "loai": "xe_buyt"}}], "id": "syn-047"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Vinh", "loai": "tau_hoa"}}], "id": "syn-048"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Quy Nhơn", "loai": "may_bay"}}], "id": "syn-049"}
+{"answer": [{"tim_phuong_tien": {"diem_den": "Biên Hòa", "loai": "xe_buyt"}}], "id": "syn-050"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan1@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-051"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan2@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-052"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan3@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-053"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan4@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-054"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan5@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-055"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan6@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-056"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan7@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-057"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan8@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-058"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan9@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-059"}
+{"answer": [{"gui_email": {"chu_de": "lịch họp", "nguoi_nhan": "lan10@example.vn", "noi_dung": "xác nhận lịch ngày mai"}}], "id": "syn-060"}
+{"answer": [{"bat_den": {"phong": "khach"}}], "id": "syn-061"}
+{"answer": [{"bat_den": {"do_sang": 70, "phong": "ngu"}}], "id": "syn-062"}
+{"answer": [{"bat_den": {"phong": "bep"}}], "id": "syn-063"}
+{"answer": [{"bat_den": {"do_sang": 70, "phong": "khach"}}], "id": "syn-064"}
+{"answer": [{"bat_den": {"phong": "ngu"}}], "id": "syn-065"}
+{"answer": [{"bat_den": {"do_sang": 70, "phong": "bep"}}], "id": "syn-066"}
+{"answer": [{"bat_den": {"phong": "khach"}}], "id": "syn-067"}
+{"answer": [{"bat_den": {"do_sang": 70, "phong": "ngu"}}], "id": "syn-068"}
+{"answer": [{"bat_den": {"phong": "bep"}}], "id": "syn-069"}
+{"answer": [{"bat_den": {"do_sang": 70, "phong": "khach"}}], "id": "syn-070"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 10.5, "tu_te": "USD"}}], "id": "syn-071"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 21.5, "tu_te": "USD"}}], "id": "syn-072"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 100.5, "tu_te": "USD"}}], "id": "syn-073"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 7.5, "tu_te": "USD"}}], "id": "syn-074"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 32.5, "tu_te": "USD"}}], "id": "syn-075"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 999.5, "tu_te": "USD"}}], "id": "syn-076"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 43.5, "tu_te": "USD"}}], "id": "syn-077"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 1200.5, "tu_te": "USD"}}], "id": "syn-078"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 0.5, "tu_te": "USD"}}], "id": "syn-079"}
+{"answer": [{"doi_tien": {"sang_te": "VND", "so_tien": 88.5, "tu_te": "USD"}}], "id": "syn-080"}

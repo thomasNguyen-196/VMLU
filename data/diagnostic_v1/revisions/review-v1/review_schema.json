@@ -1,0 +1,16 @@
+{
+  "version":"diagnostic-review-v1",
+  "immutable_source_columns":["observation_key","item_key","dataset_id","item_id","replicate_id","source_run_id","source_manifest_sha256","prompt_sha256","task_mode","question","rendered_input","raw_response","prediction","source_gold","source_metrics","finish_reason","passage_group","selection_reason","exposure","protocol_sha256","rubric_version","packet_sha256"],
+  "judgment_columns":["annotator_id","semantic_correctness","gold_validity","evidence_sufficiency","diagnostic_labels","evidence_level","evidence_reference","rationale","reviewer_attestation","review_status"],
+  "enums":{
+    "semantic_correctness":["correct","incorrect","uncertain"],
+    "gold_validity":["valid","suspect","unassessable"],
+    "evidence_sufficiency":["sufficient","insufficient","unassessable"],
+    "evidence_level":["observation","supported","unresolved"],
+    "reviewer_attestation":["I attest that these are my independent human judgments."],
+    "review_status":["reviewed","deferred"]
+  },
+  "empty_means":"unreviewed",
+  "diagnostic_labels_from":"taxonomy.json",
+  "action_labels":"offline intervention evidence only; omitted from reviewer packet"
+}

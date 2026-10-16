@@ -1,0 +1,92 @@
+{
+  "source": "VMLU server grade provided by the user",
+  "recorded_at": "2026-10-12",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "condition_ids": ["MC-74", "MC-79"],
+  "item_count": 9833,
+  "route_counts_by_condition": {
+    "MC-74": 6457,
+    "MC-79": 3376
+  },
+  "total": 87.41,
+  "categories": {
+    "humanity": {
+      "total": 86.52,
+      "subjects": {
+        "high_school_history": 92.22,
+        "high_school_literature": 90,
+        "history_of_world_civilization": 93.89,
+        "idealogical_and_moral_cultivation": 94.44,
+        "introduction_to_laws": 87.3,
+        "introduction_to_vietnam_culture": 83.33,
+        "logic": 82.76,
+        "middle_school_history": 91.11,
+        "middle_school_literature": 82.18,
+        "revolutionary_policy_of_the_vietnamese_commununist_part": 85,
+        "vietnamese_language_and_literature": 79.31,
+        "administrative_law": 67.78,
+        "business_law": 88.83,
+        "civil_law": 92.78,
+        "criminal_law": 92.02,
+        "economic_law": 83.23,
+        "education_law": 82.53,
+        "elementary_history": 88.7
+      }
+    },
+    "social_science": {
+      "total": 87.85,
+      "subjects": {
+        "business_administration": 70.11,
+        "high_school_civil_education": 94.44,
+        "high_school_geography": 77.78,
+        "ho_chi_minh_ideology": 94.41,
+        "macroeconomics": 85,
+        "microeconomics": 96.11,
+        "middle_school_civil_education": 91.57,
+        "middle_school_geography": 92.52,
+        "principles_of_marxism_and_leninism": 90,
+        "sociology": 86.52
+      }
+    },
+    "other": {
+      "total": 82.91,
+      "subjects": {
+        "internal_basic_medicine": 82.46,
+        "preschool_pedagogy": 70.59,
+        "tax_accountant": 82.18,
+        "tax_civil_servant": 91.81,
+        "accountant": 86.31,
+        "civil_servant": 90.06,
+        "clinical_pharmacology": 86.67,
+        "driving_license_certificate": 98.83,
+        "environmental_engineering": 57.31
+      }
+    },
+    "stem": {
+      "total": 89.88,
+      "subjects": {
+        "applied_informatics": 87.78,
+        "computer_architecture": 93.33,
+        "computer_network": 87.71,
+        "discrete_mathematics": 94.55,
+        "electrical_engineering": 75.57,
+        "elementary_mathematics": 95.56,
+        "elementary_science": 96.11,
+        "high_school_biology": 90,
+        "high_school_chemistry": 95,
+        "high_school_mathematics": 89.86,
+        "high_school_physics": 86.67,
+        "introduction_to_chemistry": 91.06,
+        "introduction_to_physics": 93.06,
+        "introduction_to_programming": 83.8,
+        "metrology_engineer": 82.27,
+        "middle_school_biology": 91.76,
+        "middle_school_chemistry": 95.56,
+        "middle_school_mathematics": 87.96,
+        "middle_school_physics": 93.33,
+        "operating_system": 82.22,
+        "statistics_and_probability": 94.25
+      }
+    }
+  }
+}

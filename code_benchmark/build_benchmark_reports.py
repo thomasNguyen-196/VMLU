@@ -634,6 +634,577 @@ def validate(report: dict) -> None:
             raise SystemExit(f"Error: inferred withheld-gold count/CI {key}")
 
 
+def muse12_main_reports(root: Path) -> list[dict]:
+    """Publish MC-73's already-completed Legal/reading run from its own artifacts."""
+    base = "all_res/muse_router_matched/main"
+    run_dir = f"{base}/muse-spark-1-2-contributor"
+    if not (root / f"{run_dir}/run.json").is_file():
+        return []
+    meta = read_json(root, f"{run_dir}/run.json")
+    summary = read_json(root, f"{run_dir}/summary.json")
+    manifest = read_json(root, f"{base}/condition_manifest.json")
+    protocol = read_json(root, f"{base}/condition_protocol.json")
+    profile = read_json(root, f"{base}/condition_profiles.json")["muse-spark-1-2-contributor"]
+    expected = {"vi-multimodel-v1-legal-mc-146": ("Legal MC", 146),
+                "vi-multimodel-v1-legal-nli-150": ("Legal NLI", 150),
+                "vi-multimodel-v1-vi-squad-200": ("Vi-SQuAD", 200),
+                "vi-multimodel-v1-vi-drop-200": ("Vi-DROP", 200),
+                "vi-multimodel-v1-bidlqa-test": ("ViBidLQA Test", 603)}
+    if meta.get("status") != "complete" or meta.get("measurement_card_id") != "MC-73":
+        raise SystemExit("Error: Muse 1.2 MC-73 is not a completed main run")
+    if any(doc.get("manifest_sha256") != manifest["manifest_sha256"] for doc in (meta, summary)):
+        raise SystemExit("Error: MC-73 manifest differs from its scored summary/run")
+    refs = {f"{r['dataset_id']}:{r['item_id']}:{r['replicate_id']}": r for r in manifest["items"]}
+    predictions = [json.loads(line) for line in (root / f"{run_dir}/predictions.jsonl").read_text().splitlines() if line.strip()]
+    if len(predictions) != 1299 or len({r["run_key"] for r in predictions}) != 1299 or set(refs) != {r["run_key"] for r in predictions}:
+        raise SystemExit("Error: MC-73 complete unique coverage differs from its 1,299-item manifest")
+    for prediction in predictions:
+        if (prediction.get("status") != "complete" or prediction.get("tool_calls", 0) != 0
+                or prediction.get("prompt_sha256") != refs[prediction["run_key"]]["prompt_sha256"]):
+            raise SystemExit("Error: MC-73 incomplete prediction, tool use, or prompt drift")
+    condition, _ = modern_condition(root, f"{run_dir}/run.json", profile, protocol, "main")
+    condition["id"] = "muse12-main-mc73"
+    condition["fields"]["temperature"] = "requested 1.0, pinned by sampling relay; metadata 1.0; upstream effective value not exposed"
+    condition["sources"] += [source(f"{base}/condition_manifest.json", "MC-73 frozen input"), source(f"{run_dir}/summary.json", "MC-73 scored summary")]
+    scores = []
+    datasets = {d["dataset_id"]: d for d in summary["datasets"]}
+    if set(datasets) != set(expected):
+        raise SystemExit("Error: MC-73 dataset set drift")
+    for dataset_id, (label, n) in expected.items():
+        dataset = datasets[dataset_id]
+        if dataset.get("status") != "complete" or dataset.get("request_completed_n") != n or dataset.get("expected_n") != n:
+            raise SystemExit(f"Error: MC-73 incomplete dataset {dataset_id}")
+        for metric, ci_key in (("accuracy", "ci95"), ("em", "em_ci95"), ("token_f1", "token_f1_ci95")):
+            if metric not in dataset:
+                continue
+            scores.append(row(condition["id"], dataset_id, label, metric, dataset[metric], n=n,
+                              correct=dataset.get("correct") if metric == "accuracy" else None,
+                              ci=dataset.get(ci_key), truncated=dataset.get("truncated_n"),
+                              source_path=f"{run_dir}/summary.json"))
+    return [{"id": "muse12-main-mc73", "surface": "v1", "title": "Muse 1.2 · Legal và reading · MC-73",
+             "protocol": protocol["protocol_id"], "scope": "MC-73: 1,299 items, CMC route, 4 workers, OMP/no tools/temp 1/auto/seed omitted.",
+             "conditions": [condition], "benchmarks": scores,
+             "comments": ["Local scores come from the stored MC-73 responses; no new inference was performed."],
+             "notes": ["MC-73 timeout is 300 seconds/item; keep it explicit alongside the other models' controls."]}]
+
+
+def muse12_vmlu_run_summaries(root: Path) -> list[dict]:
+    """Expose completed Muse 1.2 coverage without turning withheld test into a score."""
+    artifact_root = "all_res/muse12_ocg_vmlu_mc79"
+    provenance_path = f"{artifact_root}/combined_provenance.json"
+    if not (root / provenance_path).is_file():
+        return []
+
+    provenance = read_json(root, provenance_path)
+    continuation_path = f"{artifact_root}/vmlu/muse-spark-1-2-contributor-ocg"
+    continuation_run = read_json(root, f"{continuation_path}/run.json")
+    continuation_summary = read_json(root, f"{continuation_path}/summary.json")
+    source_path = "all_res/muse_router_matched/vmlu/muse-spark-1-2-contributor"
+    source_run = read_json(root, f"{source_path}/run.json")
+    source_summary = read_json(root, f"{source_path}/summary.json")
+    grade_path = "docs/research/muse12-vmlu-test-server-grade-2026-10-12.json"
+    server_grade = read_json(root, grade_path) if (root / grade_path).is_file() else None
+
+    expected_routes = {
+        "cmc/meta/muse-spark-1.2-contributor": 7504,
+        "ocg/muse-spark-1.2-contributor": 3376,
+    }
+    expected_datasets = {
+        "vi-multimodel-v2-vmlu-valid": ("VMLU Valid", "local", 744),
+        "vi-multimodel-v2-vmlu-dev": ("VMLU Dev", "local", 303),
+        "vi-multimodel-v2-vmlu-test": ("VMLU Test", "withheld", 9833),
+    }
+    if provenance.get("mixed_routes") is not True or provenance.get("homogeneous_model_score_allowed") is not False:
+        raise SystemExit("Error: Muse 1.2 combined artifact is not explicitly marked as mixed-route")
+    if continuation_run.get("status") != "complete" or continuation_run.get("complete_items") != 3376:
+        raise SystemExit("Error: MC-79 continuation is not complete")
+    if continuation_summary.get("request_complete_n") != 3376 or continuation_summary.get("request_error_n") != 0:
+        raise SystemExit("Error: MC-79 summary does not confirm a clean completion")
+    if source_run.get("measurement_card_id") != "MC-74" or source_run.get("complete_items") != 7504:
+        raise SystemExit("Error: MC-74 source run differs from the documented continuation")
+    if source_summary.get("manifest_sha256") != provenance.get("source_manifest_sha256"):
+        raise SystemExit("Error: MC-74 scored summary does not match the combined manifest")
+
+    prediction_path = root / f"{artifact_root}/combined_predictions_mixed_routes.jsonl"
+    rows_by_dataset: dict[str, list[dict]] = defaultdict(list)
+    route_counts: dict[str, int] = defaultdict(int)
+    condition_counts: dict[str, int] = defaultdict(int)
+    pair_counts: dict[tuple[str, str], int] = defaultdict(int)
+    seen: set[tuple[str, str]] = set()
+    for line_no, line in enumerate(prediction_path.read_text(encoding="utf-8").splitlines(), 1):
+        try:
+            item = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"Error: invalid Muse 1.2 combined prediction at line {line_no}") from exc
+        key = (str(item.get("dataset_id", "")), str(item.get("item_id", "")))
+        if not all(key) or key in seen:
+            raise SystemExit(f"Error: blank/duplicate Muse 1.2 combined item at line {line_no}")
+        seen.add(key)
+        dataset_id, item_id = key
+        if dataset_id not in expected_datasets or item.get("status") != "complete":
+            raise SystemExit(f"Error: incomplete or unexpected Muse 1.2 prediction {dataset_id}:{item_id}")
+        route = str(item.get("source_route", ""))
+        condition_id = str(item.get("source_condition_id", ""))
+        if not route or not condition_id:
+            raise SystemExit(f"Error: missing Muse 1.2 route provenance for {dataset_id}:{item_id}")
+        rows_by_dataset[dataset_id].append(item)
+        route_counts[route] += 1
+        condition_counts[condition_id] += 1
+        pair_counts[(condition_id, route)] += 1
+
+    if len(seen) != provenance.get("item_count") or route_counts != provenance.get("counts_by_route"):
+        raise SystemExit("Error: Muse 1.2 predictions differ from route provenance counts")
+    if condition_counts != provenance.get("counts_by_condition"):
+        raise SystemExit("Error: Muse 1.2 predictions differ from condition provenance counts")
+    if route_counts != expected_routes or set(rows_by_dataset) != set(expected_datasets):
+        raise SystemExit("Error: Muse 1.2 VMLU dataset/route coverage drift")
+
+    test_condition_counts = {
+        condition_id: sum(
+            item.get("source_condition_id") == condition_id
+            for item in rows_by_dataset["vi-multimodel-v2-vmlu-test"]
+        )
+        for condition_id in ("MC-74", "MC-79")
+    }
+    server_accuracy = None
+    server_grade_source = None
+    server_breakdown = []
+    if server_grade is not None:
+        if (server_grade.get("dataset_id") != "vi-multimodel-v2-vmlu-test"
+                or server_grade.get("condition_ids") != ["MC-74", "MC-79"]
+                or server_grade.get("item_count") != expected_datasets["vi-multimodel-v2-vmlu-test"][2]
+                or server_grade.get("route_counts_by_condition") != test_condition_counts):
+            raise SystemExit("Error: Muse 1.2 server grade scope differs from the mixed-route Test run")
+        server_grade_source = str(server_grade.get("source", "")).strip()
+        if not server_grade_source:
+            raise SystemExit("Error: Muse 1.2 server grade source is missing")
+        server_accuracy = number(server_grade.get("total"))
+        if server_accuracy is None or not 0 <= server_accuracy <= 100:
+            raise SystemExit("Error: invalid Muse 1.2 overall server grade")
+        categories = server_grade.get("categories")
+        expected_category_counts = {"humanity": 18, "social_science": 10, "other": 9, "stem": 21}
+        category_labels = {"humanity": "Humanity", "social_science": "Social Science", "other": "Other", "stem": "STEM"}
+        if not isinstance(categories, dict) or set(categories) != set(expected_category_counts):
+            raise SystemExit("Error: Muse 1.2 server-grade category set drift")
+        subject_count = 0
+        for category_id, label in category_labels.items():
+            category = categories[category_id]
+            if not isinstance(category, dict) or not isinstance(category.get("subjects"), dict):
+                raise SystemExit(f"Error: malformed Muse 1.2 server-grade category {category_id}")
+            category_score = number(category.get("total"))
+            subjects = category["subjects"]
+            if category_score is None or not 0 <= category_score <= 100 or len(subjects) != expected_category_counts[category_id]:
+                raise SystemExit(f"Error: invalid Muse 1.2 server-grade total/subject count for {category_id}")
+            server_breakdown.append({"category": label, "subject": None, "score": category_score})
+            subject_count += len(subjects)
+            for subject, value in subjects.items():
+                score = number(value)
+                if not subject or score is None or not 0 <= score <= 100:
+                    raise SystemExit(f"Error: invalid Muse 1.2 subject grade {category_id}/{subject}")
+                server_breakdown.append({"category": label, "subject": subject, "score": score})
+        if subject_count != 58:
+            raise SystemExit(f"Error: expected 58 VMLU subject grades, got {subject_count}")
+
+    scored_datasets = {item["dataset_id"]: item for item in source_summary.get("datasets", [])}
+    dataset_results = []
+    for dataset_id, (label, gold, expected_n) in expected_datasets.items():
+        rows = rows_by_dataset[dataset_id]
+        if len(rows) != expected_n or {item.get("gold_status") for item in rows} != {gold}:
+            raise SystemExit(f"Error: Muse 1.2 {label} count/gold status drift")
+        route_breakdown = []
+        for condition_id, route in sorted(pair_counts):
+            route_n = sum(
+                item.get("source_condition_id") == condition_id and item.get("source_route") == route
+                for item in rows
+            )
+            if route_n:
+                route_breakdown.append({"condition_id": condition_id, "route": route, "item_count": route_n})
+        score = scored_datasets.get(dataset_id, {}) if gold == "local" else {}
+        accuracy = score.get("accuracy") if score.get("status") == "complete_local_score" else None
+        correct = score.get("correct") if accuracy is not None else None
+        if gold == "withheld" and (accuracy is not None or correct is not None):
+            raise SystemExit("Error: local accuracy must not be attached to VMLU Test withheld gold")
+        dataset_results.append({
+            "dataset_id": dataset_id,
+            "dataset": label,
+            "gold": gold,
+            "request_completed": len(rows),
+            "total_items": expected_n,
+            "request_errors": 0,
+            "accuracy": accuracy,
+            "correct": correct,
+            "ci_low": score.get("accuracy_ci95_wilson", [None, None])[0] if gold == "local" else None,
+            "ci_high": score.get("accuracy_ci95_wilson", [None, None])[1] if gold == "local" else None,
+            "server_accuracy": server_accuracy if dataset_id == "vi-multimodel-v2-vmlu-test" else None,
+            "server_grade_source": server_grade_source if dataset_id == "vi-multimodel-v2-vmlu-test" else None,
+            "server_breakdown": server_breakdown if dataset_id == "vi-multimodel-v2-vmlu-test" else [],
+            "route_breakdown": route_breakdown,
+        })
+
+    completed = sum(len(rows) for rows in rows_by_dataset.values())
+    total_items = int(provenance["item_count"])
+    route_breakdown = [
+        {"condition_id": condition_id, "route": route, "item_count": item_count}
+        for (condition_id, route), item_count in sorted(pair_counts.items())
+    ]
+    return [{
+        "id": "muse12-vmlu-mc74-mc79",
+        "title": "Muse Spark 1.2 · VMLU · MC-74 + MC-79",
+        "model": "Muse Spark 1.2 Contributor",
+        "condition": "OMP · không tools · Temperature 1,0 · thinking auto · seed không gửi",
+        "status": "complete" if completed == total_items else "partial",
+        "completed_items": completed,
+        "total_items": total_items,
+        "request_errors": 0,
+        "shards": 4,
+        "workers_per_shard": 3,
+        "total_workers": 12,
+        "route_breakdown": route_breakdown,
+        "datasets": dataset_results,
+        "source": provenance_path,
+        "notes": [
+            "VMLU Valid/Dev local accuracy uses only the MC-74 CMC route; VMLU Test predictions combine MC-74 CMC and MC-79 OCG.",
+            (f"VMLU Test server grade is {server_accuracy:.2f}% ({server_grade_source}); correct count and confidence interval were not supplied."
+             if server_accuracy is not None else "VMLU Test gold is withheld. Accuracy and confidence intervals await an official server grade."),
+            "The mixed-route aggregate is a coverage record, not one homogeneous provider-route score.",
+        ],
+    }]
+
+
+def muse13_direct_reports(root: Path) -> list[dict]:
+    """Project completed direct results while preserving per-dataset budget provenance."""
+    base = "all_res/muse13_direct_mc82"
+    phase = f"{base}/vmlu/muse-spark-1-3-contributor-ocg-20k"
+    grade_path = "docs/research/muse13-vmlu-test-server-grade-mc82-2026-10-14.json"
+    if not (root / grade_path).is_file():
+        return []
+    meta = read_json(root, f"{phase}/run.json")
+    summary = read_json(root, f"{phase}/summary.json")
+    grade = read_json(root, grade_path)
+    original_path = "all_res/muse13_direct_mc80/main/muse-spark-1-3-contributor-ocg/condition.json"
+    original = read_json(root, original_path)
+    combined = read_json(root, f"{base}/mc80_combined_summary.json")
+    if (meta.get("status") != "complete" or meta.get("complete_items") != 10136
+            or meta.get("model_id") != "ocg/muse-spark-1.3-contributor"
+            or meta.get("max_tokens_mc") != 20000 or grade.get("condition_ids") != ["MC-82"]
+            or grade.get("item_count") != 9833 or grade.get("model_id") != meta["model_id"]
+            or grade.get("manifest_sha256") != meta["manifest_sha256"]
+            or grade.get("condition_sha256") != meta["condition_sha256"]):
+        raise SystemExit("Error: Muse direct run/server grade provenance mismatch")
+    import hashlib
+    if hashlib.sha256((root / f"{phase}/submission_vmlu_test.csv").read_bytes()).hexdigest() != grade["submission_sha256"]:
+        raise SystemExit("Error: Muse direct server grade submission hash mismatch")
+    conditions = []
+    for cid, card, control, cap, evidence in [
+        ("muse13-direct-mc82", "MC-82", meta, "20.000 tokens cho Dev/Test", f"{phase}/summary.json"),
+        ("muse13-direct-mc80", "MC-80", original, "4.096 tokens cho Valid", f"{base}/mc80_combined_summary.json"),
+        ("muse13-direct-recovery", "MC-80 + MC-82", original,
+         "MC 4.096; reading 2.048; 7 câu recovery dùng 20.000 tokens", f"{base}/mc80_combined_summary.json"),
+    ]:
+        conditions.append({
+            "id": cid, "model": "Muse Spark 1.3 Contributor", "card": card, "comparison_group": None,
+            "fields": {
+                "date": f"{meta['started_at']} → {meta['finished_at']}", "harness": "API Direct · Responses",
+                "provider": "API Direct", "temperature": "1,0 gửi trong request; hiệu lực upstream không công bố",
+                "thinking": "Reasoning mặc định; không gửi effort, không ghim low/medium/high",
+                "seed": "không gửi", "tools": "none", "prompt": "System tối giản; user prompt đóng băng",
+                "context": "MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model",
+                "session": "Mỗi request độc lập; không history", "output_cap": cap,
+                "workers": "12 workers · 4 shards × 3 lanes", "timeout": "300 giây/request",
+                "retry": "SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại",
+                "gold": "Dev/Valid/Legal/reading: gold cục bộ; Test: server grade",
+                "identity": "Muse Spark 1.3 Contributor",
+            },
+            "sources": [source(original_path, "Original controls"), source(f"{phase}/run.json", "Run metadata"),
+                        source(evidence, "Scored summary"), source(grade_path, "Server grade")],
+            "manifest_sha256": control.get("manifest_sha256"), "measurement_card_hash": control.get("measurement_card_hash"),
+            "controls": {"profile_id": "muse-spark-1-3-contributor", "transport": "direct", "harness_version": None,
+                         "tools": "none", "temperature_requested": 1.0, "temperature_effective": None,
+                         "thinking": None, "seed_sent": False, "seed_requested": None,
+                         "output_caps": {"multiple_choice": control["max_tokens_mc"], "reading": control["max_tokens_reading"]},
+                         "workers": 12, "system_prompt": control["system_prompt"], "prompt_version": control["prompt_version"]},
+        })
+    scores = []
+    labels = {"vmlu-valid": "VMLU Valid", "legal-mc-146": "Legal MC", "legal-nli-150": "Legal NLI",
+              "vi-squad-200": "Vi-SQuAD", "vi-drop-200": "Vi-DROP", "bidlqa-test": "ViBidLQA Test"}
+    if len(combined.get("datasets", [])) != 6:
+        raise SystemExit("Error: Muse direct main dataset coverage mismatch")
+    for dataset in combined["datasets"]:
+        dataset_id = dataset["dataset_id"]
+        suffix = dataset_id.removeprefix("vi-multimodel-v1-")
+        if suffix not in labels or dataset["status"] != "complete" or dataset["expected_n"] != dataset["request_completed_n"]:
+            raise SystemExit("Error: Muse direct incomplete main dataset")
+        cid = "muse13-direct-mc80" if suffix == "vmlu-valid" else "muse13-direct-recovery"
+        for metric, ci_key in [("accuracy", "ci95"), ("em", "em_ci95"), ("token_f1", "token_f1_ci95")]:
+            if metric in dataset:
+                scores.append(row(cid, dataset_id, labels[suffix], metric, dataset[metric], n=dataset["expected_n"],
+                                  correct=dataset.get("correct") if metric == "accuracy" else None,
+                                  ci=dataset.get(ci_key), truncated=dataset.get("truncated_n"),
+                                  source_path=f"{base}/mc80_combined_summary.json"))
+    datasets = {d["dataset_id"]: d for d in summary["datasets"]}
+    for split, expected in [("dev", 303), ("test", 9833)]:
+        dataset_id = f"vi-multimodel-v2-vmlu-{split}"
+        d = datasets[dataset_id]
+        if d["expected_n"] != expected or d["request_completed_n"] != expected or d["request_error_n"] or d["missing_n"]:
+            raise SystemExit("Error: Muse direct incomplete Dev/Test")
+        scores.append(row("muse13-direct-mc82", dataset_id, f"VMLU {split.title()}",
+                          "server_accuracy" if split == "test" else "accuracy", grade["total"] if split == "test" else d["accuracy"],
+                          n=expected, correct=None if split == "test" else d["correct"],
+                          ci=None if split == "test" else d.get("accuracy_ci95_wilson"),
+                          gold="withheld" if split == "test" else "local", truncated=d["truncated_n"],
+                          source_path=grade_path if split == "test" else f"{phase}/summary.json"))
+    for category, data in grade["categories"].items():
+        for level, label, score in [("category", category, data["total"]),
+                                    *[("subject", key, value) for key, value in data["subjects"].items()]]:
+            scores.append(row("muse13-direct-mc82", "vi-multimodel-v2-vmlu-test", "VMLU Test", "server_accuracy", score,
+                              level=level, category=label, gold="withheld", source_path=grade_path))
+    return [{"id": "muse13-direct", "surface": "v2", "title": "Muse Spark 1.3 Contributor · API Direct",
+             "protocol": meta["protocol_id"], "scope": "Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo dataset.",
+             "conditions": conditions, "benchmarks": scores,
+             "comments": ["VMLU Test đạt 88,41% theo server grade; Dev đạt 92,41% theo gold cục bộ."],
+             "notes": ["Dev/Test: budget 20.000 tokens; Valid: 4.096; Legal/reading giữ budget gốc và 7 câu recovery 20.000.",
+                       "Reasoning dùng mặc định provider; temperature gửi 1,0, hiệu lực upstream không công bố.",
+                       "Test chỉ có phần trăm server; chưa có correct count hoặc CI95. Các câu không parse được giữ trong mẫu chấm."]}]
+
+
+def qwen_direct_reports(root: Path) -> list[dict]:
+    """Expose MC-83 scores and user-supplied grade without guessing withheld counts."""
+    base = "all_res/qwen_direct_mc83"
+    profile = "qwen3-5-9b-65k-direct-20k"
+    grade_path = "docs/research/qwen-vmlu-test-server-grade-mc83-2026-10-14.json"
+    if not (root / grade_path).is_file():
+        return []
+    grade = read_json(root, grade_path)
+    test_run = read_json(root, f"{base}/vmlu/{profile}/run.json")
+    import hashlib
+    submission = root / f"{base}/vmlu/{profile}/submission_vmlu_test.csv"
+    if (grade.get("condition_ids") != ["MC-83"] or grade.get("model_id") != "Qwen3.5-9B-65K"
+            or grade.get("item_count") != 9833 or grade.get("manifest_sha256") != test_run["manifest_sha256"]
+            or grade.get("condition_sha256") != test_run["condition_sha256"]
+            or grade.get("submission_sha256") != hashlib.sha256(submission.read_bytes()).hexdigest()):
+        raise SystemExit("Error: MC-83 server grade/submission provenance mismatch")
+    conditions, scores = [], []
+    labels = {"vmlu-valid": "VMLU Valid", "vmlu-dev": "VMLU Dev", "vmlu-test": "VMLU Test",
+              "legal-mc-146": "Legal MC", "legal-nli-150": "Legal NLI", "vi-squad-200": "Vi-SQuAD",
+              "vi-drop-200": "Vi-DROP", "bidlqa-test": "ViBidLQA Test"}
+    for phase, expected in [("main", 2043), ("vmlu", 10136)]:
+        folder = f"{base}/{phase}/{profile}"
+        meta = read_json(root, f"{folder}/run.json")
+        summary = read_json(root, f"{folder}/summary.json")
+        if (meta.get("status") != "complete" or meta.get("complete_items") != expected
+                or meta.get("measurement_card_id") != "MC-83" or meta.get("model_id") != grade["model_id"]
+                or meta.get("max_tokens_mc") != 20000 or meta.get("max_tokens_reading") != 20000
+                or summary.get("manifest_sha256") != meta["manifest_sha256"]):
+            raise SystemExit("Error: MC-83 completed coverage/controls mismatch")
+        cid = f"qwen-direct-mc83-{phase}"
+        fields = {key: UNKNOWN for key in FIELD_LABELS}
+        fields.update({"date": f"{meta['started_at']} → {meta['finished_at']}", "harness": "API Direct · Responses",
+                       "provider": "API Direct", "temperature": "1,0 gửi trong request; hiệu lực upstream không công bố",
+                       "thinking": "Reasoning mặc định; không gửi effort, không ghim low/medium/high",
+                       "seed": "không gửi", "tools": "none", "prompt": "System tối giản; user prompt đóng băng",
+                       "context": "MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model",
+                       "session": "Mỗi request độc lập; không history", "output_cap": "20.000 tokens cho cả MC và reading",
+                       "workers": "12 workers · 4 shards × 3 lanes", "timeout": "300 giây/request",
+                       "retry": "SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại",
+                       "gold": "Gold cục bộ; riêng VMLU Test do server chấm",
+                       "identity": "Qwen3.5-9B-65K · weights Qwen3.5-9B-Q4_K_M.gguf"})
+        conditions.append({"id": cid, "model": "Qwen3.5-9B-65K · Q4_K_M", "card": "MC-83", "comparison_group": None,
+                           "fields": fields, "sources": [source(f"{folder}/run.json", "Run metadata"),
+                           source(f"{folder}/summary.json", "Scored summary"), source(grade_path, "Server grade")],
+                           "manifest_sha256": meta["manifest_sha256"], "measurement_card_hash": meta["measurement_card_hash"],
+                           "controls": {"profile_id": profile, "transport": "direct", "harness_version": None,
+                           "tools": "none", "temperature_requested": 1.0, "temperature_effective": None, "thinking": None,
+                           "seed_sent": False, "seed_requested": None, "output_caps": {"multiple_choice": 20000, "reading": 20000},
+                           "workers": 12, "system_prompt": meta["system_prompt"], "prompt_version": meta["prompt_version"]}})
+        for d in summary["datasets"]:
+            if d["request_completed_n"] != d["expected_n"]:
+                raise SystemExit("Error: MC-83 incomplete scored dataset")
+            dataset_id = d["dataset_id"]
+            suffix = dataset_id.split("-", 3)[-1]
+            label = labels[suffix]
+            if suffix == "vmlu-test":
+                scores.append(row(cid, dataset_id, label, "server_accuracy", grade["total"], n=9833, gold="withheld",
+                                  truncated=d["truncated_n"], source_path=grade_path))
+            else:
+                for metric, ci_key in [("accuracy", "ci95" if phase == "main" else "accuracy_ci95_wilson"),
+                                       ("em", "em_ci95"), ("token_f1", "token_f1_ci95")]:
+                    if metric in d:
+                        scores.append(row(cid, dataset_id, label, metric, d[metric], n=d["expected_n"],
+                                          correct=d.get("correct") if metric == "accuracy" else None, ci=d.get(ci_key),
+                                          truncated=d.get("truncated_n"), source_path=f"{folder}/summary.json"))
+    for category, data in grade["categories"].items():
+        for level, label, score in [("category", category, data["total"]),
+                                    *[("subject", key, value) for key, value in data["subjects"].items()]]:
+            scores.append(row("qwen-direct-mc83-vmlu", "vi-multimodel-v2-vmlu-test", "VMLU Test", "server_accuracy", score,
+                              level=level, category=label, gold="withheld", source_path=grade_path))
+    return [{"id": "qwen-direct-mc83", "surface": "v2", "title": "Qwen3.5-9B-65K · API Direct · MC-83",
+             "protocol": test_run["protocol_id"], "scope": "12.179 câu trên VMLU, Legal và reading; không V-Bench.",
+             "conditions": conditions, "benchmarks": scores,
+             "comments": ["VMLU Test đạt 62,94% theo server grade; Dev đạt 69,97% theo gold cục bộ."],
+             "notes": ["Qwen MC-83 dùng budget 20.000 tokens cho mọi dataset; weights Q4_K_M theo response model ID.",
+                       "Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.",
+                       "Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 2 câu không parse được trong mẫu chấm."]}]
+
+
+def muse12_direct_reports(root: Path) -> list[dict]:
+    """Expose MC-84 scores and user-supplied grade without guessing withheld counts."""
+    base = "all_res/muse12_direct_mc84"
+    profile = "muse-spark-1-2-contributor-direct-20k"
+    grade_path = "docs/research/muse12-vmlu-test-server-grade-mc84-2026-10-14.json"
+    if not (root / grade_path).is_file():
+        return []
+    grade = read_json(root, grade_path)
+    test_run = read_json(root, f"{base}/vmlu/{profile}/run.json")
+    import hashlib
+    submission = root / f"{base}/vmlu/{profile}/submission_vmlu_test.csv"
+    if (grade.get("condition_ids") != ["MC-84"] or grade.get("model_id") != "ocg/muse-spark-1.2-contributor"
+            or grade.get("item_count") != 9833 or grade.get("manifest_sha256") != test_run["manifest_sha256"]
+            or grade.get("condition_sha256") != test_run["condition_sha256"]
+            or grade.get("submission_sha256") != hashlib.sha256(submission.read_bytes()).hexdigest()):
+        raise SystemExit("Error: MC-84 server grade/submission provenance mismatch")
+    conditions, scores = [], []
+    labels = {"vmlu-valid": "VMLU Valid", "vmlu-dev": "VMLU Dev", "vmlu-test": "VMLU Test",
+              "legal-mc-146": "Legal MC", "legal-nli-150": "Legal NLI", "vi-squad-200": "Vi-SQuAD",
+              "vi-drop-200": "Vi-DROP", "bidlqa-test": "ViBidLQA Test"}
+    for phase, expected in [("main", 2043), ("vmlu", 10136)]:
+        folder = f"{base}/{phase}/{profile}"
+        meta = read_json(root, f"{folder}/run.json")
+        summary = read_json(root, f"{folder}/summary.json")
+        if (meta.get("status") != "complete" or meta.get("complete_items") != expected
+                or meta.get("measurement_card_id") != "MC-84" or meta.get("model_id") != grade["model_id"]
+                or meta.get("max_tokens_mc") != 20000 or meta.get("max_tokens_reading") != 20000
+                or summary.get("manifest_sha256") != meta["manifest_sha256"]):
+            raise SystemExit("Error: MC-84 completed coverage/controls mismatch")
+        cid = f"muse12-direct-mc84-{phase}"
+        fields = {key: UNKNOWN for key in FIELD_LABELS}
+        fields.update({"date": f"{meta['started_at']} → {meta['finished_at']}", "harness": "API Direct · Responses",
+                       "provider": "API Direct", "temperature": "1,0 gửi trong request; hiệu lực upstream không công bố",
+                       "thinking": "Reasoning mặc định; không gửi effort, không ghim low/medium/high",
+                       "seed": "không gửi", "tools": "none", "prompt": "System tối giản; user prompt đóng băng",
+                       "context": "MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model",
+                       "session": "Mỗi request độc lập; không history", "output_cap": "20.000 tokens cho cả MC và reading",
+                       "workers": "12 workers · 4 shards × 3 lanes", "timeout": "300 giây/request",
+                       "retry": "SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại",
+                       "gold": "Gold cục bộ; riêng VMLU Test do server chấm",
+                       "identity": "Muse Spark 1.2 Contributor; quantization không công bố"})
+        conditions.append({"id": cid, "model": "Muse Spark 1.2 Contributor", "card": "MC-84", "comparison_group": None,
+                           "fields": fields, "sources": [source(f"{folder}/run.json", "Run metadata"),
+                           source(f"{folder}/summary.json", "Scored summary"), source(grade_path, "Server grade")],
+                           "manifest_sha256": meta["manifest_sha256"], "measurement_card_hash": meta["measurement_card_hash"],
+                           "controls": {"profile_id": profile, "transport": "direct", "harness_version": None,
+                           "tools": "none", "temperature_requested": 1.0, "temperature_effective": None, "thinking": None,
+                           "seed_sent": False, "seed_requested": None, "output_caps": {"multiple_choice": 20000, "reading": 20000},
+                           "workers": 12, "system_prompt": meta["system_prompt"], "prompt_version": meta["prompt_version"]}})
+        for d in summary["datasets"]:
+            if d["request_completed_n"] != d["expected_n"]:
+                raise SystemExit("Error: MC-84 incomplete scored dataset")
+            dataset_id = d["dataset_id"]
+            suffix = dataset_id.split("-", 3)[-1]
+            label = labels[suffix]
+            if suffix == "vmlu-test":
+                scores.append(row(cid, dataset_id, label, "server_accuracy", grade["total"], n=9833, gold="withheld",
+                                  truncated=d["truncated_n"], source_path=grade_path))
+            else:
+                for metric, ci_key in [("accuracy", "ci95" if phase == "main" else "accuracy_ci95_wilson"),
+                                       ("em", "em_ci95"), ("token_f1", "token_f1_ci95")]:
+                    if metric in d:
+                        scores.append(row(cid, dataset_id, label, metric, d[metric], n=d["expected_n"],
+                                          correct=d.get("correct") if metric == "accuracy" else None, ci=d.get(ci_key),
+                                          truncated=d.get("truncated_n"), source_path=f"{folder}/summary.json"))
+    for category, data in grade["categories"].items():
+        for level, label, score in [("category", category, data["total"]),
+                                    *[("subject", key, value) for key, value in data["subjects"].items()]]:
+            scores.append(row("muse12-direct-mc84-vmlu", "vi-multimodel-v2-vmlu-test", "VMLU Test", "server_accuracy", score,
+                              level=level, category=label, gold="withheld", source_path=grade_path))
+    return [{"id": "muse12-direct-mc84", "surface": "v2", "title": "Muse Spark 1.2 Contributor · API Direct · MC-84",
+             "protocol": test_run["protocol_id"], "scope": "12.179 câu trên VMLU, Legal và reading; không V-Bench.",
+             "conditions": conditions, "benchmarks": scores,
+             "comments": ["VMLU Test đạt 87,49% theo server grade; Dev đạt 90,76% theo gold cục bộ."],
+             "notes": ["Muse Spark 1.2 MC-84 dùng budget 20.000 tokens cho mọi dataset; cố định một route model.",
+                       "Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.",
+                       "Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 10 câu không parse được trong mẫu chấm."]}]
+
+def mimo26_direct_reports(root: Path) -> list[dict]:
+    """Expose MC-85 scores and user-supplied grade without guessing withheld counts."""
+    base = "all_res/mimo26_direct_mc85"
+    profile = "mimo-v2-6-flash-direct-20k"
+    grade_path = "docs/research/mimo26-vmlu-test-server-grade-mc85-2026-10-15.json"
+    if not (root / grade_path).is_file():
+        return []
+    grade = read_json(root, grade_path)
+    test_run = read_json(root, f"{base}/vmlu/{profile}/run.json")
+    import hashlib
+    submission = root / f"{base}/vmlu/{profile}/submission_vmlu_test.csv"
+    if (grade.get("condition_ids") != ["MC-85"] or grade.get("model_id") != "ocg/mimo-v2.6-flash"
+            or grade.get("item_count") != 9833 or grade.get("manifest_sha256") != test_run["manifest_sha256"]
+            or grade.get("condition_sha256") != test_run["condition_sha256"]
+            or grade.get("submission_sha256") != hashlib.sha256(submission.read_bytes()).hexdigest()):
+        raise SystemExit("Error: MC-85 server grade/submission provenance mismatch")
+    conditions, scores = [], []
+    labels = {"vmlu-valid": "VMLU Valid", "vmlu-dev": "VMLU Dev", "vmlu-test": "VMLU Test",
+              "legal-mc-146": "Legal MC", "legal-nli-150": "Legal NLI", "vi-squad-200": "Vi-SQuAD",
+              "vi-drop-200": "Vi-DROP", "bidlqa-test": "ViBidLQA Test"}
+    for phase, expected in [("main", 2043), ("vmlu", 10136)]:
+        folder = f"{base}/{phase}/{profile}"
+        meta = read_json(root, f"{folder}/run.json")
+        summary = read_json(root, f"{folder}/summary.json")
+        if (meta.get("status") != "complete" or meta.get("complete_items") != expected
+                or meta.get("measurement_card_id") != "MC-85" or meta.get("model_id") != grade["model_id"]
+                or meta.get("max_tokens_mc") != 20000 or meta.get("max_tokens_reading") != 20000
+                or summary.get("manifest_sha256") != meta["manifest_sha256"]):
+            raise SystemExit("Error: MC-85 completed coverage/controls mismatch")
+        cid = f"mimo26-direct-mc85-{phase}"
+        fields = {key: UNKNOWN for key in FIELD_LABELS}
+        fields.update({"date": f"{meta['started_at']} → {meta['finished_at']}", "harness": "API Direct · Responses",
+                       "provider": "API Direct", "temperature": "1,0 gửi trong request; hiệu lực upstream không công bố",
+                       "thinking": "Reasoning mặc định; không gửi effort, không ghim low/medium/high",
+                       "seed": "không gửi", "tools": "none", "prompt": "System tối giản; user prompt đóng băng",
+                       "context": "MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model",
+                       "session": "Mỗi request độc lập; không history", "output_cap": "20.000 tokens cho cả MC và reading",
+                       "workers": "12 workers · 4 shards × 3 lanes; VMLU đổi sang work stealing sau 9.102 câu hoàn tất" if phase == "vmlu" else "12 workers · 4 shards × 3 lanes cố định", "timeout": "300 giây/request",
+                       "retry": "SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại",
+                       "gold": "Gold cục bộ; riêng VMLU Test do server chấm",
+                       "identity": "MiMo V2.6 Flash; quantization không công bố"})
+        conditions.append({"id": cid, "model": "MiMo V2.6 Flash", "card": "MC-85", "comparison_group": None,
+                           "fields": fields, "sources": [source(f"{folder}/run.json", "Run metadata"),
+                           source(f"{folder}/summary.json", "Scored summary"), source(grade_path, "Server grade"),
+                           source("docs/research/mc85-work-stealing-2026-10-15.md", "Scheduler amendment")],
+                           "manifest_sha256": meta["manifest_sha256"], "measurement_card_hash": meta["measurement_card_hash"],
+                           "controls": {"profile_id": profile, "transport": "direct", "harness_version": None,
+                           "tools": "none", "temperature_requested": 1.0, "temperature_effective": None, "thinking": None,
+                           "seed_sent": False, "seed_requested": None, "output_caps": {"multiple_choice": 20000, "reading": 20000},
+                           "workers": 12, "system_prompt": meta["system_prompt"], "prompt_version": meta["prompt_version"]}})
+        for d in summary["datasets"]:
+            if d["request_completed_n"] != d["expected_n"]:
+                raise SystemExit("Error: MC-85 incomplete scored dataset")
+            dataset_id = d["dataset_id"]
+            suffix = dataset_id.split("-", 3)[-1]
+            label = labels[suffix]
+            if suffix == "vmlu-test":
+                scores.append(row(cid, dataset_id, label, "server_accuracy", grade["total"], n=9833, gold="withheld",
+                                  truncated=d["truncated_n"], source_path=grade_path))
+            else:
+                for metric, ci_key in [("accuracy", "ci95" if phase == "main" else "accuracy_ci95_wilson"),
+                                       ("em", "em_ci95"), ("token_f1", "token_f1_ci95")]:
+                    if metric in d:
+                        scores.append(row(cid, dataset_id, label, metric, d[metric], n=d["expected_n"],
+                                          correct=d.get("correct") if metric == "accuracy" else None, ci=d.get(ci_key),
+                                          truncated=d.get("truncated_n"), source_path=f"{folder}/summary.json"))
+    for category, data in grade["categories"].items():
+        for level, label, score in [("category", category, data["total"]),
+                                    *[("subject", key, value) for key, value in data["subjects"].items()]]:
+            scores.append(row("mimo26-direct-mc85-vmlu", "vi-multimodel-v2-vmlu-test", "VMLU Test", "server_accuracy", score,
+                              level=level, category=label, gold="withheld", source_path=grade_path))
+    return [{"id": "mimo26-direct-mc85", "surface": "v2", "title": "MiMo V2.6 Flash · API Direct · MC-85",
+             "protocol": test_run["protocol_id"], "scope": "12.179 câu trên VMLU, Legal và reading; không V-Bench.",
+             "conditions": conditions, "benchmarks": scores,
+             "comments": ["VMLU Test đạt 77,68% theo server grade; Dev đạt 81,85% theo gold cục bộ."],
+             "notes": ["MiMo V2.6 Flash MC-85 dùng budget 20.000 tokens cho mọi dataset; cố định một route model.",
+                       "Lịch chạy gồm fixed lanes rồi lane-work-stealing-v1; xem scheduler amendment, không coi toàn campaign đồng nhất scheduler.",
+                       "Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.",
+                       "Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 156 câu không parse được/blank trong mẫu chấm."]}]
+
+
 def build(root: Path = ROOT) -> dict:
     records = read_csv(root, SCORE_CSV); cards = card_index(root)
     reports = [
@@ -642,6 +1213,11 @@ def build(root: Path = ROOT) -> dict:
         modern_report(root, records, version=2, phase="vmlu", report_id="vmlu-v2", title="VMLU V2 · Dev / Valid / Test server", selectors={"vmlu_v2", "vmlu_v2_server_scored"}, surface="v2"),
         modern_report(root, records, version=2, phase="pilot", report_id="pilot-v2", title="Pilot V2 · VMLU + synthetic agentic", selectors={"pilot_v2"}, surface="v2"),
         full_tools_report(root, cards),
+        *muse12_main_reports(root),
+        *muse13_direct_reports(root),
+        *qwen_direct_reports(root),
+        *muse12_direct_reports(root),
+        *mimo26_direct_reports(root),
         *legacy_direct_reports(root, cards),
         *legacy_harness_reports(root, cards, read_json(root, "web/public/benchmark-data.json")["harness"]),
     ]
@@ -649,7 +1225,7 @@ def build(root: Path = ROOT) -> dict:
         report["notes"] = list(dict.fromkeys(report["notes"]))
         validate(report)
     return {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(), "field_labels": FIELD_LABELS,
-            "metric_labels": METRIC_LABELS, "reports": reports}
+            "metric_labels": METRIC_LABELS, "reports": reports, "run_summaries": muse12_vmlu_run_summaries(root)}
 
 
 def markdown(data: dict) -> str:

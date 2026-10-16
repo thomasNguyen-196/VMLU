@@ -651,6 +651,388 @@ Một model trong condition tools all + OMP system prompt + auto. Các run tools
 - 4 shard cố định 37/37/36/36 chạy đồng thời; timeout/output cap do benchmark đặt.
 - 0 failure, 0 blank, 1 network-attempt audit; chưa có repeat run hoặc paired significance test.
 
+## Muse 1.2 · Legal và reading · MC-73
+
+MC-73: 1,299 items, CMC route, 4 workers, OMP/no tools/temp 1/auto/seed omitted.
+
+### Condition
+
+**Muse Spark 1.2 Contributor · MC-73**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-11T06:33:12.034834+00:00 → 2026-10-11T10:08:32.416237+00:00 |
+| Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
+| Provider / API / route | 9ROUTER / CMC · openai-completions · localhost:20128 |
+| Temperature gửi / hiệu lực | requested 1.0, pinned by sampling relay; metadata 1.0; upstream effective value not exposed |
+| Thinking / reasoning level | auto; reasoning bật; effort không ghim mức low/medium/high |
+| Seed | không gửi; seed sample và seed inference là hai cấu hình riêng |
+| Tools | none |
+| System / user prompt | System: Answer the user's question.; user prompt đóng băng theo manifest |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi + lựa chọn; reading: context trong prompt; gold không gửi cho model |
+| History / session / sandbox | one process per item; no persisted session; stable x-opencode-session per item |
+| Giới hạn output | multiple_choice: 4096 token; reading: 2048 token; cap do benchmark đặt, có thể bao gồm reasoning |
+| Workers / batch | 4 worker; queue chia sẻ |
+| Timeout | 300 giây/item |
+| Retry / recovery | SDK 0; technical attempts resume cùng cấu hình |
+| Gold / cách chấm | V1: MC source gold; reading-400 user-reviewed; ViBidLQA file gold |
+| Model / quantization | router9/cmc/meta/muse-spark-1.2-contributor; quantization không công bố trong metadata |
+
+### Benchmark
+
+| Model / card | Dataset/category | Metric | n | Correct | Score % | CI95 lower | CI95 upper | Δ pp | Δ CI lower | Δ CI upper |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Muse Spark 1.2 Contributor / MC-73 | Legal MC | Accuracy | 146 | 139 | 95.21 | 90.43 | 97.66 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Legal NLI | Accuracy | 150 | 128 | 85.33 | 78.79 | 90.11 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-SQuAD | EM | 200 | — | 43.00 | 36.27 | 50.25 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-SQuAD | Token-F1 | 200 | — | 66.23 | 60.98 | 71.70 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-DROP | EM | 200 | — | 9.00 | 5.15 | 13.20 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-DROP | Token-F1 | 200 | — | 19.45 | 15.22 | 24.02 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | ViBidLQA Test | EM | 603 | — | 14.43 | 11.70 | 17.37 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | ViBidLQA Test | Token-F1 | 603 | — | 55.62 | 52.67 | 58.48 | — | — | — |
+
+### Comment
+
+- Local scores come from the stored MC-73 responses; no new inference was performed.
+
+### Note
+
+- MC-73 timeout is 300 seconds/item; keep it explicit alongside the other models' controls.
+
+## Muse Spark 1.3 Contributor · API Direct
+
+Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo dataset.
+
+### Condition
+
+**Muse Spark 1.3 Contributor · MC-82**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-13T15:29:56.755168+00:00 → 2026-10-14T05:13:28.325344+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 20.000 tokens cho Dev/Test |
+| Workers / batch | 12 workers · 4 shards × 3 lanes |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Dev/Valid/Legal/reading: gold cục bộ; Test: server grade |
+| Model / quantization | Muse Spark 1.3 Contributor |
+
+**Muse Spark 1.3 Contributor · MC-80**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-13T15:29:56.755168+00:00 → 2026-10-14T05:13:28.325344+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 4.096 tokens cho Valid |
+| Workers / batch | 12 workers · 4 shards × 3 lanes |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Dev/Valid/Legal/reading: gold cục bộ; Test: server grade |
+| Model / quantization | Muse Spark 1.3 Contributor |
+
+**Muse Spark 1.3 Contributor · MC-80 + MC-82**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-13T15:29:56.755168+00:00 → 2026-10-14T05:13:28.325344+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | MC 4.096; reading 2.048; 7 câu recovery dùng 20.000 tokens |
+| Workers / batch | 12 workers · 4 shards × 3 lanes |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Dev/Valid/Legal/reading: gold cục bộ; Test: server grade |
+| Model / quantization | Muse Spark 1.3 Contributor |
+
+### Benchmark
+
+| Model / card | Dataset/category | Metric | n | Correct | Score % | CI95 lower | CI95 upper | Δ pp | Δ CI lower | Δ CI upper |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Muse Spark 1.3 Contributor / MC-80 | VMLU Valid | Accuracy | 744 | 680 | 91.40 | 89.16 | 93.21 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-SQuAD | EM | 200 | — | 69.50 | 63.13 | 76.12 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-SQuAD | Token-F1 | 200 | — | 86.11 | 82.25 | 89.99 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-DROP | EM | 200 | — | 61.50 | 54.68 | 68.10 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-DROP | Token-F1 | 200 | — | 76.31 | 71.11 | 81.28 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Legal MC | Accuracy | 146 | 136 | 93.15 | 87.85 | 96.24 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Legal NLI | Accuracy | 150 | 120 | 80.00 | 72.89 | 85.62 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | ViBidLQA Test | EM | 603 | — | 50.75 | 46.66 | 54.76 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | ViBidLQA Test | Token-F1 | 603 | — | 77.17 | 74.41 | 79.88 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-82 | VMLU Dev | Accuracy | 303 | 280 | 92.41 | 88.87 | 94.89 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-82 | VMLU Test | Server accuracy | 9833 | — | 88.41 | — | — | — | — | — |
+| Muse Spark 1.3 Contributor / MC-82 | VMLU Test / social_science | Server accuracy | — | — | 87.85 | — | — | — | — | — |
+| Muse Spark 1.3 Contributor / MC-82 | VMLU Test / stem | Server accuracy | — | — | 91.58 | — | — | — | — | — |
+| Muse Spark 1.3 Contributor / MC-82 | VMLU Test / other | Server accuracy | — | — | 84.29 | — | — | — | — | — |
+| Muse Spark 1.3 Contributor / MC-82 | VMLU Test / humanity | Server accuracy | — | — | 87.08 | — | — | — | — | — |
+
+### Comment
+
+- VMLU Test đạt 88,41% theo server grade; Dev đạt 92,41% theo gold cục bộ.
+
+### Note
+
+- Dev/Test: budget 20.000 tokens; Valid: 4.096; Legal/reading giữ budget gốc và 7 câu recovery 20.000.
+- Reasoning dùng mặc định provider; temperature gửi 1,0, hiệu lực upstream không công bố.
+- Test chỉ có phần trăm server; chưa có correct count hoặc CI95. Các câu không parse được giữ trong mẫu chấm.
+
+## Qwen3.5-9B-65K · API Direct · MC-83
+
+12.179 câu trên VMLU, Legal và reading; không V-Bench.
+
+### Condition
+
+**Qwen3.5-9B-65K · Q4_K_M · MC-83**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-14T08:36:35.768299+00:00 → 2026-10-14T08:52:32.654323+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 20.000 tokens cho cả MC và reading |
+| Workers / batch | 12 workers · 4 shards × 3 lanes |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Gold cục bộ; riêng VMLU Test do server chấm |
+| Model / quantization | Qwen3.5-9B-65K · weights Qwen3.5-9B-Q4_K_M.gguf |
+
+**Qwen3.5-9B-65K · Q4_K_M · MC-83**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-14T08:52:33.755868+00:00 → 2026-10-14T09:51:33.397018+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 20.000 tokens cho cả MC và reading |
+| Workers / batch | 12 workers · 4 shards × 3 lanes |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Gold cục bộ; riêng VMLU Test do server chấm |
+| Model / quantization | Qwen3.5-9B-65K · weights Qwen3.5-9B-Q4_K_M.gguf |
+
+### Benchmark
+
+| Model / card | Dataset/category | Metric | n | Correct | Score % | CI95 lower | CI95 upper | Δ pp | Δ CI lower | Δ CI upper |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Valid | Accuracy | 744 | 510 | 68.55 | 65.12 | 71.78 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-SQuAD | EM | 200 | — | 75.50 | 69.59 | 81.50 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-SQuAD | Token-F1 | 200 | — | 90.00 | 86.80 | 92.86 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-DROP | EM | 200 | — | 48.00 | 41.09 | 55.05 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-DROP | Token-F1 | 200 | — | 54.58 | 48.19 | 61.04 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Legal MC | Accuracy | 146 | 122 | 83.56 | 76.70 | 88.70 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Legal NLI | Accuracy | 150 | 137 | 91.33 | 85.74 | 94.87 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | ViBidLQA Test | EM | 603 | — | 27.86 | 24.05 | 31.58 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | ViBidLQA Test | Token-F1 | 603 | — | 66.01 | 63.14 | 68.89 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Dev | Accuracy | 303 | 212 | 69.97 | 64.58 | 74.85 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test | Server accuracy | 9833 | — | 62.94 | — | — | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test / humanity | Server accuracy | — | — | 63.21 | — | — | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test / social_science | Server accuracy | — | — | 69.54 | — | — | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test / stem | Server accuracy | — | — | 61.23 | — | — | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test / other | Server accuracy | — | — | 59.03 | — | — | — | — | — |
+
+### Comment
+
+- VMLU Test đạt 62,94% theo server grade; Dev đạt 69,97% theo gold cục bộ.
+
+### Note
+
+- Qwen MC-83 dùng budget 20.000 tokens cho mọi dataset; weights Q4_K_M theo response model ID.
+- Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.
+- Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 2 câu không parse được trong mẫu chấm.
+
+## Muse Spark 1.2 Contributor · API Direct · MC-84
+
+12.179 câu trên VMLU, Legal và reading; không V-Bench.
+
+### Condition
+
+**Muse Spark 1.2 Contributor · MC-84**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-14T13:50:36.009122+00:00 → 2026-10-14T14:03:46.779997+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 20.000 tokens cho cả MC và reading |
+| Workers / batch | 12 workers · 4 shards × 3 lanes |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Gold cục bộ; riêng VMLU Test do server chấm |
+| Model / quantization | Muse Spark 1.2 Contributor; quantization không công bố |
+
+**Muse Spark 1.2 Contributor · MC-84**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-14T14:03:47.782861+00:00 → 2026-10-14T15:31:59.144120+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 20.000 tokens cho cả MC và reading |
+| Workers / batch | 12 workers · 4 shards × 3 lanes |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Gold cục bộ; riêng VMLU Test do server chấm |
+| Model / quantization | Muse Spark 1.2 Contributor; quantization không công bố |
+
+### Benchmark
+
+| Model / card | Dataset/category | Metric | n | Correct | Score % | CI95 lower | CI95 upper | Δ pp | Δ CI lower | Δ CI upper |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Muse Spark 1.2 Contributor / MC-84 | VMLU Valid | Accuracy | 744 | 677 | 90.99 | 88.72 | 92.85 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-SQuAD | EM | 200 | — | 44.50 | 37.93 | 51.23 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-SQuAD | Token-F1 | 200 | — | 65.90 | 60.65 | 71.06 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-DROP | EM | 200 | — | 9.00 | 5.35 | 13.00 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-DROP | Token-F1 | 200 | — | 20.24 | 15.99 | 24.68 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Legal MC | Accuracy | 146 | 139 | 95.21 | 90.43 | 97.66 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Legal NLI | Accuracy | 150 | 122 | 81.33 | 74.34 | 86.76 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | ViBidLQA Test | EM | 603 | — | 15.92 | 12.94 | 19.10 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | ViBidLQA Test | Token-F1 | 603 | — | 56.68 | 53.55 | 59.68 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | VMLU Dev | Accuracy | 303 | 275 | 90.76 | 86.97 | 93.53 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | VMLU Test | Server accuracy | 9833 | — | 87.49 | — | — | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | VMLU Test / stem | Server accuracy | — | — | 90.22 | — | — | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | VMLU Test / humanity | Server accuracy | — | — | 86.38 | — | — | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | VMLU Test / social_science | Server accuracy | — | — | 87.47 | — | — | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | VMLU Test / other | Server accuracy | — | — | 83.36 | — | — | — | — | — |
+
+### Comment
+
+- VMLU Test đạt 87,49% theo server grade; Dev đạt 90,76% theo gold cục bộ.
+
+### Note
+
+- Muse Spark 1.2 MC-84 dùng budget 20.000 tokens cho mọi dataset; cố định một route model.
+- Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.
+- Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 10 câu không parse được trong mẫu chấm.
+
+## MiMo V2.6 Flash · API Direct · MC-85
+
+12.179 câu trên VMLU, Legal và reading; không V-Bench.
+
+### Condition
+
+**MiMo V2.6 Flash · MC-85**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-15T02:56:38.999370+00:00 → 2026-10-15T03:50:47.570093+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 20.000 tokens cho cả MC và reading |
+| Workers / batch | 12 workers · 4 shards × 3 lanes cố định |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Gold cục bộ; riêng VMLU Test do server chấm |
+| Model / quantization | MiMo V2.6 Flash; quantization không công bố |
+
+**MiMo V2.6 Flash · MC-85**
+
+| Trường | Giá trị |
+| --- | --- |
+| Thời gian chạy | 2026-10-15T03:50:48.592402+00:00 → 2026-10-15T15:09:03.893596+00:00 |
+| Harness / phiên bản / mode | API Direct · Responses |
+| Provider / API / route | API Direct |
+| Temperature gửi / hiệu lực | 1,0 gửi trong request; hiệu lực upstream không công bố |
+| Thinking / reasoning level | Reasoning mặc định; không gửi effort, không ghim low/medium/high |
+| Seed | không gửi |
+| Tools | none |
+| System / user prompt | System tối giản; user prompt đóng băng |
+| Ngữ cảnh / dữ liệu đầu vào | MC: câu hỏi và lựa chọn; reading: passage trong prompt; gold không gửi cho model |
+| History / session / sandbox | Mỗi request độc lập; không history |
+| Giới hạn output | 20.000 tokens cho cả MC và reading |
+| Workers / batch | 12 workers · 4 shards × 3 lanes; VMLU đổi sang work stealing sau 9.102 câu hoàn tất |
+| Timeout | 300 giây/request |
+| Retry / recovery | SDK 0; technical recovery; câu hoàn tất/truncated không chạy lại |
+| Gold / cách chấm | Gold cục bộ; riêng VMLU Test do server chấm |
+| Model / quantization | MiMo V2.6 Flash; quantization không công bố |
+
+### Benchmark
+
+| Model / card | Dataset/category | Metric | n | Correct | Score % | CI95 lower | CI95 upper | Δ pp | Δ CI lower | Δ CI upper |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| MiMo V2.6 Flash / MC-85 | VMLU Valid | Accuracy | 744 | 594 | 79.84 | 76.81 | 82.56 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-SQuAD | EM | 200 | — | 60.00 | 53.20 | 66.84 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-SQuAD | Token-F1 | 200 | — | 80.15 | 75.66 | 84.42 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-DROP | EM | 200 | — | 31.50 | 25.26 | 38.24 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-DROP | Token-F1 | 200 | — | 48.89 | 42.99 | 54.62 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Legal MC | Accuracy | 146 | 131 | 89.73 | 83.74 | 93.67 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Legal NLI | Accuracy | 150 | 132 | 88.00 | 81.83 | 92.27 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | ViBidLQA Test | EM | 603 | — | 30.51 | 26.60 | 34.58 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | ViBidLQA Test | Token-F1 | 603 | — | 65.65 | 62.58 | 68.51 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | VMLU Dev | Accuracy | 303 | 248 | 81.85 | 77.12 | 85.78 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | VMLU Test | Server accuracy | 9833 | — | 77.68 | — | — | — | — | — |
+| MiMo V2.6 Flash / MC-85 | VMLU Test / other | Server accuracy | — | — | 71.84 | — | — | — | — | — |
+| MiMo V2.6 Flash / MC-85 | VMLU Test / social_science | Server accuracy | — | — | 80.38 | — | — | — | — | — |
+| MiMo V2.6 Flash / MC-85 | VMLU Test / stem | Server accuracy | — | — | 82.39 | — | — | — | — | — |
+| MiMo V2.6 Flash / MC-85 | VMLU Test / humanity | Server accuracy | — | — | 73.62 | — | — | — | — | — |
+
+### Comment
+
+- VMLU Test đạt 77,68% theo server grade; Dev đạt 81,85% theo gold cục bộ.
+
+### Note
+
+- MiMo V2.6 Flash MC-85 dùng budget 20.000 tokens cho mọi dataset; cố định một route model.
+- Lịch chạy gồm fixed lanes rồi lane-work-stealing-v1; xem scheduler amendment, không coi toàn campaign đồng nhất scheduler.
+- Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.
+- Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 156 câu không parse được/blank trong mẫu chấm.
+
 ## Lịch sử · Qwen3.5-9B-28K · API trực tiếp
 
 Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc model khác khi budget/thinking/gold khác.

@@ -23,8 +23,8 @@ function NoteCard({
   deleting: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2">
-      <p className="whitespace-pre-wrap text-xs leading-relaxed text-slate-700">{note.body}</p>
+    <div className="rounded-lg border border-hair bg-card px-2.5 py-2">
+      <p className="whitespace-pre-wrap text-xs leading-relaxed text-ink-2">{note.body}</p>
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <p className="font-mono text-[10px] text-slate-400">
           Tác giả: {note.author} · cập nhật {note.updated_at}
@@ -32,7 +32,7 @@ function NoteCard({
         <button
           onClick={() => void onDelete()}
           disabled={deleting}
-          className="rounded-lg border border-rose-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-rose-700 disabled:opacity-40"
+          className="rounded-lg border border-reject/40 bg-card px-2 py-0.5 text-[11px] font-semibold text-reject disabled:opacity-40"
         >
           {deleting ? "Đang xóa…" : "Xóa"}
         </button>
@@ -135,7 +135,7 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
         <select
           value={compare}
           onChange={(e) => setCompare(e.target.value)}
-          className="rounded-lg border border-slate-200 bg-white px-2 py-1 font-mono text-[11px]"
+          className="rounded-lg border border-hair bg-card px-2 py-1 font-mono text-[11px]"
           title="Rỗng = nhận xét riêng của mô hình; chọn mô hình khác = nhận xét so sánh"
         >
           <option value="">riêng mô hình {modelId}</option>
@@ -148,7 +148,7 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="rounded-lg border border-emerald-200 bg-white px-2 py-1 text-[11px] font-semibold text-emerald-700"
+            className="rounded-lg border border-emerald-200 bg-card px-2 py-1 text-[11px] font-semibold text-emerald-700"
           >
             + Thêm nhận xét
           </button>
@@ -161,26 +161,26 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
       </p>
 
       {loading ? (
-        <p className="text-xs text-slate-500">Đang tải nhận xét…</p>
+        <p className="text-xs text-ink-3">Đang tải nhận xét…</p>
       ) : error ? (
         <p className="text-xs text-red-600">Không tải được nhận xét: {error}</p>
       ) : (
         <div className="space-y-2">
           {adding && (
-            <div className="space-y-2 rounded-lg border border-emerald-200 bg-white p-2.5">
+            <div className="space-y-2 rounded-lg border border-emerald-200 bg-card p-2.5">
               <textarea
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 rows={5}
                 placeholder="Nhận xét…"
-                className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs leading-relaxed"
+                className="w-full rounded-lg border border-hair bg-card px-2 py-1 text-xs leading-relaxed"
               />
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   value={author}
                   onChange={(e) => setAuthor(e.target.value)}
                   placeholder="Tên người ghi (bắt buộc)"
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
+                  className="rounded-lg border border-hair bg-card px-2 py-1 text-xs"
                 />
                 <button
                   onClick={() => void save()}
@@ -194,7 +194,7 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
                     setAdding(false);
                     setBody("");
                   }}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600"
+                  className="rounded-lg border border-hair bg-card px-3 py-1 text-xs text-ink-2"
                 >
                   Hủy
                 </button>
@@ -202,7 +202,7 @@ export function ModelNotePanel({ modelId, datasetId }: { modelId: string; datase
             </div>
           )}
           {scoped.length === 0 && !adding ? (
-            <p className="text-xs text-slate-500">Chưa có nhận xét cho bộ dữ liệu này.</p>
+            <p className="text-xs text-ink-3">Chưa có nhận xét cho bộ dữ liệu này.</p>
           ) : (
             scoped.map((n) => (
               <NoteCard key={n._id} note={n} onDelete={() => remove(n._id)} deleting={deletingId === n._id} />
