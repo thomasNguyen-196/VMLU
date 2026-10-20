@@ -1,0 +1,72 @@
+# Model behavior changelog
+
+> **Mục đích:** ghi lại các quan sát về **hành vi/dị thường của model** theo ngày, kèm bằng chứng artifact.
+> Không thay thế `measurement_card.md` (điều kiện đo) hay `docs/model-insights.md` (phân tích kết quả).
+>
+> **Quy ước mỗi entry:** ngày (UTC) · model · arm/card · điều kiện · quan sát · bằng chứng · phân loại · trạng thái.
+> Phân loại: `[model]` (hành vi model) · `[provider]` (route/stream) · `[harness]` (runner/scaffold) · `[data]` (đề bài/nguồn) · `[ops]` (vận hành).
+> Chỉ ghi điều quan sát được từ artifact; không suy diễn nhân quả. Lỗi đã sửa thì ghi rõ fix ở đâu.
+>
+> **Sau khi sửa file này:** chạy `python code_benchmark/build_model_behavior_changelog.py` để cập nhật
+> `web/data/model-behavior-changelog.json` cho trang `/changelog`.
+
+---
+
+## 2026-10-20 — MiMo V2.6 Flash · MC-89 (OMP full tools, 900s; recovery 1800s)
+
+**Điều kiện:** OMP 18.0.0, full default tool menu, temp 1.0 requested, thinking auto, `maxTokens=20000`/turn, 12 workers, OpenCode Go **Chat Completions**, 12.033 câu MC-85.
+**Bằng chứng:** `all_res/mimo26_omp_mc89/attempts.jsonl`, `recovery_mc89_1800s/attempts.jsonl`, `recovery_mc89_1800s/parse_tracebacks.log`, `logs/mimo26_omp_mc89*.log`.
+
+- `[model]` **Tool-loop chạm trần thời gian:** 295/475 lỗi của pass 1 là câu chạy hết 900s giữa vòng tool. Tập trung ở môn 57 "Civil Servant" (**34/122 lỗi = 27,9%**, 33 câu chạm trần) và môn 56 "Tax Civil Servant" (**17/171 = 9,9%**); các môn khác 0,6–4,5%. MiMo là arm dùng tool nhiều nhất: **8.907 tool call** (read/bash/web_search), web_search thành công 98,8% → loop là hành vi model, không phải tool hỏng.
+- `[model]` **Chạm trần output 20k/turn:** 19 câu sinh **đúng 20.000 completion token trong một assistant turn**, 0 tool call, rồi OMP trả `finish_reason=error` tại đúng ngưỡng (latency 350–791s). Retry ở 1800s tái diễn y hệt. Đây là tương tác model × giới hạn output của condition; muốn cứu phải override cap có ghi chú (ví dụ 32.768) hoặc chấp nhận lỗi.
+- `[harness]` **Bug parser của runner:** 49 dòng ghi `AttributeError` vì `_reasoning_tokens` giả định `event["message"]` là dict, trong khi MiMo thỉnh thoảng emit `message` dạng **string**. Đã vá trong `code_benchmark/retry_mimo26_omp_mc89_1800s.py` (safe wrapper + log traceback); 14/49 câu cứu được ngay, phần còn lại lộ ra nhóm chạm trần 20k ở trên. **Fix này cần được port vào runner gốc ở lần chạy sau.**
+- `[provider]` **Stream error ngắn:** 8 câu lỗi trong 9–46s với đúng 3 completion token (`omp_turn_error`), transient.
+- `[data]` **Câu hỏi tham chiếu hình/bảng:** 18 câu Test hoàn tất nhưng không parse được vì đề nhắc "hình 3.40b", "bảng sau"… không có trong prompt text; MiMo trả lời "không có hình/bảng nên không thể trả lời". Giữ terminal trong denominator.
+- `[ops]` Run bị dừng theo yêu cầu lúc 2026-10-19 17:12 UTC và bị **máy shutdown** lúc ~2026-10-20 09:25 UTC; cả hai lần resume đều lossless nhờ ledger append-only (12.033 dòng, mỗi key 1 dòng).
+- **Trạng thái:** recovery 1800s đang chạy (root cause parser đã xác định + vá); nhóm 20k-cap chờ quyết định override.
+
+---
+
+## 2026-10-19 — Qwen3.5-9B-65K (IEC) · MC-88 (OMP full tools, 900s)
+
+**Điều kiện:** OMP 18.0.0, full tool menu, temp 1.0 requested, `maxTokens=20000`/turn, 12 workers, IEC gateway `openai-completions`.
+**Bằng chứng:** `all_res/qwen_omp_mc88/attempts.jsonl`, `campaign.json`, `preflight.json`.
+
+- `[model]` **Không dùng tool dù menu mở:** chỉ **3 tool call** trong 12.033 câu (2 `read`, 1 `write`); mọi câu trả lời trực tiếp. "Full tools" ở arm này gần như chỉ là ngữ cảnh system prompt.
+- `[model]` **Câu dài nhất 548,8s** — vượt xa nominal 300s của MC-86/87; nếu chạy 300s đã timeout.
+- `[data]/[model]` 3 câu Test không parse được (để trống trong submission); 52 đáp án "E" có 3 câu thuộc đề <5 lựa chọn (chữ E không hợp lệ, sẽ bị chấm sai).
+- **Trạng thái:** 12.033/12.033, 0 lỗi request; đã có server grade 53,43 (xem `docs/research/qwen-omp-vmlu-test-server-grade-mc88-2026-10-19.json`).
+
+---
+
+## 2026-10-17/18 — Muse Spark 1.2 · MC-87 (OMP full tools, 300s + recovery 600/900s)
+
+**Điều kiện:** OMP 18.0.0, full tool menu, temp 1.0 requested, `maxTokens=20000`/turn, 12 workers, OpenCode Go Responses.
+**Bằng chứng:** `all_res/muse12_omp_mc87/attempts.jsonl`, `recovery_mc87_r1.json`, `recovery_mc87_r2/`, `recovery_mc87_r3/`.
+
+- `[model]` **Áp lực timeout ở 300s:** R1 phải retry 76 lượt (74 request error + 2 parse error), R2 retry 30 câu ở 600s, R3 retry 4 câu còn lỗi ở 900s; chung cuộc đủ 12.033.
+- `[model]` Nhiều câu có latency ~301,0–301,4s = chạm trần 300s.
+- `[provider]` 99/99 `web_search` thành công (không có lỗi tool).
+- `[harness]` Một số `omp_turn_error` không retryable (không có HTTP status, response rỗng).
+- **Trạng thái:** complete sau 3 vòng recovery; Test server grade 87,94.
+
+---
+
+## 2026-10-17 — Muse Spark 1.3 · MC-86/R2 (OMP full tools, 300s + 600s recovery)
+
+**Bằng chứng:** `all_res/muse13_omp_mc86/attempts.jsonl`, `recovery_mc86_r1.json`, `recovery_mc86_r2/`.
+
+- `[model]` 10 `omp_turn_error` không retryable ở pass 1; 8 câu Test trả lời trống được retry ở 600s.
+- `[provider]` Có lượt `web_search` thất bại được ghi nhận trong attempt log (khác MC-87).
+- **Trạng thái:** complete 12.033/12.033; Test server grade 87,53.
+
+---
+
+## Lịch sử trước 2026-10-17
+
+Các chẩn đoán cũ đã nằm trong `docs/research/` và không lặp lại ở đây:
+
+- `docs/research/mc80-incomplete-response-diagnosis-2026-10-13.md`
+- `docs/research/mc82-transient-recovery-2026-10-14.md`
+- `docs/research/mc85-work-stealing-2026-10-15.md`
+- `docs/model-insights.md` (phân tích kết quả theo bộ, không phải log hành vi)
