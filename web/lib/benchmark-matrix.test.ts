@@ -8,14 +8,59 @@ const data = () => parseBenchmarkReports(JSON.parse(readFileSync(new URL("../dat
 describe("current matrix eligibility and source selection", () => {
   test("OMP and current API Direct groups are displayed; retired Qwen group is excluded", () => {
     const view = buildBenchmarkMatrix(data());
-    expect(view.groups.map((group) => group.id)).toEqual(["omp-no-tools", "direct-default"]);
+    expect(view.groups.map((group) => group.id)).toEqual(["omp-no-tools", "omp-full-tools", "direct-default"]);
     expect(view.groups[0].models).toHaveLength(5);
     expect(view.groups[0].matrices.map((matrix) => matrix.metric)).toEqual(["accuracy", "em", "token_f1"]);
     const cards = view.groups[0].conditions.map((condition) => condition.card);
     expect(cards).not.toContain("MC-56"); expect(cards).not.toContain("MC-71"); expect(cards).not.toContain("MC-49");
     expect(view.directReason).toBe("");
     expect(selectMatrixGroup(view, "direct-qwen65k")?.id).toBe("omp-no-tools");
-    expect(view.groups[1].models.some((entry) => entry.id === "qwen3-5-9b-65k-direct-20k")).toBe(true);
+    expect(view.groups.find((group) => group.id === "direct-default")!.models.some((entry) => entry.id === "qwen3-5-9b-65k-direct-20k")).toBe(true);
+  });
+  test("full tools retains Muse, Qwen and MiMo arms with recovery provenance without ranking server grades", () => {
+    const reports = data();
+    const group = buildBenchmarkMatrix(reports).groups.find((entry) => entry.id === "omp-full-tools")!;
+    expect(group.models).toHaveLength(4);
+    const accuracy = group.matrices.find((matrix) => matrix.metric === "accuracy")!;
+    const column = accuracy.columns.find((entry) => entry.id === "vmlu-test")!;
+    const muse12 = column.cells["muse-spark-1-2-contributor-omp-full-tools-mc87"];
+    const muse13 = column.cells["muse-spark-1-3-contributor-omp-full-tools-mc86"];
+    const qwen = column.cells["qwen3-5-9b-65k-omp-full-tools-mc88"];
+    const mimo = column.cells["mimo-v2-6-flash-omp-full-tools-mc89"];
+    expect(muse12.score.score).toBe(87.94);
+    expect(muse13.score.score).toBe(87.53);
+    expect(qwen.score.score).toBe(53.43);
+    expect(mimo.score.score).toBe(79.6);
+    for (const cell of [muse12, muse13, qwen, mimo]) {
+      expect(cell.score.metric).toBe("server_accuracy");
+      expect(cell.score.n).toBe(9833);
+      expect(cell.score.correct).toBeNull();
+      expect(cell.score.ci_low).toBeNull();
+      expect(cell.score.ci_high).toBeNull();
+      expect(cell.rankEligible).toBe(false);
+    }
+    expect(muse12.condition.fields.timeout).toContain("900s");
+    expect(muse12.condition.controls!.temperature_requested).toBe(1);
+    expect(muse12.condition.controls!.temperature_effective).toBeNull();
+    expect(muse12.condition.fields.thinking).toContain("effort not pinned");
+    expect(qwen.condition.card).toBe("MC-88");
+    expect(qwen.condition.fields.timeout).toContain("900s");
+    expect(qwen.condition.controls!.temperature_requested).toBe(1);
+    expect(qwen.condition.controls!.temperature_effective).toBeNull();
+    expect(mimo.condition.card).toBe("MC-89");
+    expect(mimo.condition.fields.timeout).toContain("1800s");
+    expect(mimo.condition.controls!.temperature_requested).toBe(1);
+    expect(mimo.condition.controls!.temperature_effective).toBeNull();
+    const usage = reports.run_summaries.find((summary) => summary.id === muse12.condition.id)!.web_search!;
+    expect(usage.failed).toBeGreaterThan(0);
+    expect(usage.total_calls).toBe(usage.succeeded + usage.failed + usage.unrecorded);
+    expect(usage.events).toHaveLength(usage.total_calls);
+    const qwenUsage = reports.run_summaries.find((summary) => summary.id === "qwen-omp-full-tools-mc88")!.web_search!;
+    expect(qwenUsage.total_calls).toBe(0);
+    expect(qwenUsage.events).toHaveLength(0);
+    const mimoUsage = reports.run_summaries.find((summary) => summary.id === "mimo-omp-full-tools-mc89")!.web_search!;
+    expect(mimoUsage.total_calls).toBeGreaterThan(0);
+    expect(mimoUsage.events).toHaveLength(mimoUsage.total_calls);
   });
   test("Muse direct exposes measured scores without inventing effort or Test confidence intervals", () => {
     const view = buildBenchmarkMatrix(data());

@@ -2558,3 +2558,73 @@ Registered 2026-10-15 (+07), before benchmark items, for the user-requested `ocg
 | `details` | docs/measurement_cards/MC-85-mimo26-direct-20k.md |
 
 Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking conditions.
+
+## MC-86 — Muse Spark 1.3 / OMP full tools / remaining MC-85 items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-86` |
+| `status` | Preregistered 2026-10-16 (+07), before benchmark-item requests |
+| `scope` | 12,033 MC-85 items, excluding Legal MC 146 already completed under MC-71; matching IDs and prompt hashes verified |
+| `harness / tools` | OMP 18.0.0 JSON, `--tools all`, default coding-agent system prompt, Bubblewrap item namespace; loopback proxy keeps upstream auth out of the agent environment; no session/title/extensions/skills/rules/LSP |
+| `model / route` | Muse Spark 1.3 Contributor, model ID `muse-spark-1.3-contributor` via OMP ref `zen-go/muse-spark-1.3-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 in isolated OMP profile; thinking `auto`; no seed; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership; worker transitions recorded in the attempt ledger |
+| `details` | `docs/measurement_cards/MC-86-muse13-omp-full-tools-remaining.md` |
+| `outputs` | `all_res/muse13_omp_mc86/`; no upload |
+
+## MC-87 — Muse Spark 1.2 / OMP full tools / MC-86 matched scope
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-87` |
+| `status` | Preregistered 2026-10-17 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2; exclude Legal MC 146 to preserve matched item coverage |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session |
+| `model / route` | Muse Spark 1.2 Contributor, model ID `muse-spark-1.2-contributor` via OMP ref `zen-go/muse-spark-1.2-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, reasoning effort unpinned; seed omitted; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
+| `outputs` | `all_res/muse12_omp_mc87/`; no upload |
+
+## MC-87 — Muse Spark 1.2 / OMP full tools / MC-86 matched scope
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-87` |
+| `status` | Preregistered 2026-10-17 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2; exclude Legal MC 146 to preserve matched item coverage |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session |
+| `model / route` | Muse Spark 1.2 Contributor, model ID `muse-spark-1.2-contributor` via OMP ref `zen-go/muse-spark-1.2-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, reasoning effort unpinned; seed omitted; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
+| `outputs` | `all_res/muse12_omp_mc87/`; no upload |
+
+## MC-88 — Qwen3.5-9B-65K (IEC) / OMP full tools / MC-87 matched scope, 900 s timeout
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-88` |
+| `status` | Preregistered 2026-10-19 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2 and MC-87; Legal MC 146 excluded via the MC-71 ledger |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session; loopback credential relay |
+| `model / route` | Qwen3.5-9B-65K via OMP ref `iec/Qwen3.5-9B-65K`, IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, non-reasoning model entry; seed omitted; `maxTokens=20000` per assistant turn; 900 s/item plus 60 s hard-timeout margin (user override vs MC-86/87's 300 s) |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-88-qwen-omp-full-tools.md` |
+| `outputs` | `all_res/qwen_omp_mc88/`; no upload |
+
+## MC-89 — MiMo V2.6 Flash / OMP full tools / MC-88 matched scope, 900 s timeout
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-89` |
+| `status` | Preregistered 2026-10-19 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2, MC-87 and MC-88; Legal MC 146 excluded via the MC-71 ledger |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, per-item `x-opencode-session` routing header; loopback credential relay |
+| `model / route` | MiMo V2.6 Flash via OMP ref `zen-go/mimo-v2.6-flash`, OpenCode Go Chat Completions (Responses unsupported for this model; probed 2026-10-19) |
+| `sampling / limits` | Temperature 1.0 requested (thinking-mode provider default may apply); thinking auto; reasoning by provider default; seed omitted; `maxTokens=20000` per assistant turn; 900 s/item plus 60 s hard-timeout margin (user choice, continuity with MC-88) |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-89-mimo26-omp-full-tools.md` |
+| `outputs` | `all_res/mimo26_omp_mc89/`; no upload |

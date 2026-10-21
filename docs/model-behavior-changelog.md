@@ -23,7 +23,10 @@
 - `[provider]` **Stream error ngắn:** 8 câu lỗi trong 9–46s với đúng 3 completion token (`omp_turn_error`), transient.
 - `[data]` **Câu hỏi tham chiếu hình/bảng:** 18 câu Test hoàn tất nhưng không parse được vì đề nhắc "hình 3.40b", "bảng sau"… không có trong prompt text; MiMo trả lời "không có hình/bảng nên không thể trả lời". Giữ terminal trong denominator.
 - `[ops]` Run bị dừng theo yêu cầu lúc 2026-10-19 17:12 UTC và bị **máy shutdown** lúc ~2026-10-20 09:25 UTC; cả hai lần resume đều lossless nhờ ledger append-only (12.033 dòng, mỗi key 1 dòng).
-- **Trạng thái:** recovery 1800s đang chạy (root cause parser đã xác định + vá); nhóm 20k-cap chờ quyết định override.
+- `[ops]` **Kết quả cuối (2026-10-21):** 11.987/12.033 complete (99,62%); **46 câu failed** (Valid 1, Test 45). Theo chỉ đạo của user, các câu không hoàn tất trong ngân sách 1.800 s được coi là **trả lời rỗng** và sẽ tính sai khi chấm server; dừng nâng timeout thêm. 7 câu đã hoàn tất nhưng chạy quá 1.800 s vẫn được giữ (ghi rõ trong `final/finalization.json`).
+- `[harness]` Finalizer `code_benchmark/finalize_mimo26_omp_mc89.py` overlay parent + R1/C1 + R2/C1, chấm local và **luôn tạo submission đủ 9.833 dòng**: 45 câu failed + 20 câu complete-nhưng-không-parse-được → **65 dòng rỗng**.
+- `[result]` **VMLU Test server grade: 79,60** (STEM 85,41 · Social Science 81,29 · Humanity 75,09 · Other 73,23), ghi tại `docs/research/mimo-omp-vmlu-test-server-grade-mc89-2026-10-21.json`; Dev local 82,84%.
+- **Trạng thái:** đã finalize và publish hàng MC-89 lên bảng `/table`; submission sha256 `a1b2533a…`.
 
 ---
 

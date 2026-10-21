@@ -16,7 +16,7 @@ export interface MatrixColumn {
 export interface MetricMatrix { metric: MatrixMetric; title: string; columns: MatrixColumn[]; comment: string; ciComment: string }
 export interface MatrixGroup {
   id: string;
-  kind: "omp-no-tools" | "direct";
+  kind: "omp-no-tools" | "omp-full-tools" | "direct";
   label: string;
   detail: string;
   models: MatrixModel[];
@@ -26,7 +26,7 @@ export interface MatrixGroup {
 }
 export interface BenchmarkMatrixView { groups: MatrixGroup[]; generatedAt: string; directReason: string; runSummaries: BenchmarkRunSummary[] }
 
-const MODEL_ORDER = ["muse-spark-1-3-contributor", "muse12-vmlu-mc74-mc79", "mimo-v2-6-flash", "mimo-v2-5", "qwen3-5-9b-65k"];
+const MODEL_ORDER = ["muse-spark-1-3-contributor", "muse-spark-1-3-contributor-omp-full-tools-mc86", "muse12-vmlu-mc74-mc79", "muse-spark-1-2-contributor-omp-full-tools-mc87", "qwen3-5-9b-65k-omp-full-tools-mc88", "mimo-v2-6-flash-omp-full-tools-mc89", "mimo-v2-6-flash", "mimo-v2-5", "qwen3-5-9b-65k"];
 const METRICS: MatrixMetric[] = ["accuracy", "em", "token_f1", "char_f1"];
 const LABELS: Record<MatrixMetric, string> = { accuracy: "Accuracy", em: "EM", token_f1: "F1 · token", char_f1: "F1 · character" };
 const DATASETS: Record<string, { id: string; label: string; order: number }> = {
@@ -135,14 +135,22 @@ function createGroup(id: string, kind: MatrixGroup["kind"], candidates: Candidat
     if (!chosen.length) return [];
     const columns = chosen.map((entries): MatrixColumn => {
       const first = entries[0];
-      return { id: first.canonicalId, label: first.label, n: first.score.n, sourceLabel: first.reportId === "vmlu-v2" ? "VMLU V2" : first.reportId === "main-v1" ? "Main V1" : "API trực tiếp", gold: first.score.gold,
-        cells: Object.fromEntries(entries.map((entry) => [entry.model.id, { score: entry.score, condition: entry.condition, reportId: entry.reportId }])) };
+      return { id: first.canonicalId, label: first.label, n: first.score.n,
+        sourceLabel: first.reportId === "vmlu-v2" ? "VMLU V2" : first.reportId === "main-v1" ? "Main V1" : kind === "omp-full-tools" ? "OMP full tools" : "API trực tiếp",
+        gold: first.score.gold,
+        cells: Object.fromEntries(entries.map((entry) => [entry.model.id, {
+          score: entry.score, condition: entry.condition, reportId: entry.reportId, rankEligible: entry.rankEligible,
+        }])) };
     });
     return [{ metric, title: LABELS[metric], columns, ...matrixComments(metric, columns) }];
   });
   const conditions = [...new Map(used.map((entry) => [entry.condition.id, entry.condition])).values()];
   const controls = conditions[0].controls!;
-  const detail = kind === "omp-no-tools" ? "Temperature 1,0 · thinking auto · seed không gửi" : `Temperature ${controls.temperature_effective ?? controls.temperature_requested} · seed ${controls.seed_sent ? controls.seed_requested : "không gửi"} · ${controls.workers} workers`;
+  const detail = kind === "omp-no-tools"
+    ? "Temperature 1,0 · thinking auto · seed không gửi"
+    : kind === "omp-full-tools"
+      ? "Full tool menu · Temperature 1.0 requested (effective unverified) · thinking auto; reasoning effort not pinned · 12 workers · 20.000 tokens/turn"
+      : `Temperature ${controls.temperature_effective ?? controls.temperature_requested} · seed ${controls.seed_sent ? controls.seed_requested : "không gửi"} · ${controls.workers} workers`;
   const notes = kind === "omp-no-tools" ? [
     "VMLU dùng các run V2 MC-62–64 và MC-70; các bài đọc và Legal dùng MC-53–55 cùng Qwen MC-72. Mỗi cột lấy cùng nhóm cấu hình và cùng mẫu; VMLU Valid ưu tiên lượt V2 mới hơn.",
     "Qwen MC-72 bổ sung đủ 1.299 câu: Legal MC/NLI, Vi-SQuAD, Vi-DROP và ViBidLQA Test; prompt hashes khớp từng run Go. Qwen MC-56 temp 0/thinking off/seed 42 được giữ riêng và không vào bảng này.",
@@ -150,8 +158,16 @@ function createGroup(id: string, kind: MatrixGroup["kind"], candidates: Candidat
     "Output cap do benchmark đặt: 4.096 token cho MC, 2.048 cho reading; có thể gồm reasoning. Truncation đếm phản hồi kết thúc do length.",
     "EM và token-F1 là phép đo khớp văn bản. Gold reading-400 có đáp án kế thừa từ output đã được review; ViBidLQA dùng file-gold upstream. Chưa có semantic/human score cho bảng này.",
     "Accuracy VMLU Test là server grade do người dùng cung cấp; chưa có correct count và CI95 để tự suy ra từ phần trăm đã làm tròn.",
+  ] : kind === "omp-full-tools" ? [
+    "Bảng mô tả Muse 1.3 MC-86/R2, Muse 1.2 MC-87/R3, Qwen3.5-9B-65K MC-88 và MiMo V2.6 Flash MC-89; lịch sử timeout/recovery khác nhau nên kết quả không được dùng làm ranking có kiểm soát.",
+    "Muse 1.3: 8 câu Test được retry ở 600s. Muse 1.2: 30 câu được retry ở 600s, sau đó 4 câu còn lỗi được retry ở 900s. Qwen chạy toàn bộ ở 900s/item. MiMo: parent 900s, R1 1800s, R2 32.768 token cho nhóm chạm trần 20k và 3600s cho nhóm tool-loop; 46 câu failed được ghi đáp án rỗng. Timeout gốc của nhóm là 300s.",
+    "VMLU Test dùng server grade; không có per-item correct count hoặc CI95. Legal MC nằm ngoài cả bốn lượt; MC-71 riêng chỉ có Muse 1.3. MiMo có 65 dòng rỗng trong submission (45 failed + 20 complete-nhưng-không-parse-được), sẽ tính sai khi chấm server.",
   ] : ["Chỉ ghép model khi temperature, thinking, seed, prompt, workers và output budget của cùng dataset đã được xác minh tương đương.", "F1 token và character có bảng riêng; không trộn hai phép đo."];
-  return { id, kind, label: kind === "omp-no-tools" ? "OMP · không tools" : "API trực tiếp", detail, models, matrices, conditions, notes };
+  return {
+    id, kind,
+    label: kind === "omp-no-tools" ? "OMP · không tools" : kind === "omp-full-tools" ? "OMP · full tools" : "API trực tiếp",
+    detail, models, matrices, conditions, notes,
+  };
 }
 
 function attachMuse12Run(group: MatrixGroup, summary: BenchmarkRunSummary | undefined, mainReport?: EvaluationReport): MatrixGroup {
@@ -266,7 +282,7 @@ function attachMuse12Run(group: MatrixGroup, summary: BenchmarkRunSummary | unde
 }
 
 export function buildBenchmarkMatrix(data: BenchmarkReports): BenchmarkMatrixView {
-  const omp: Candidate[] = []; const direct: Candidate[] = []; const museDirect: Candidate[] = [];
+  const omp: Candidate[] = []; const ompFullTools: Candidate[] = []; const direct: Candidate[] = []; const museDirect: Candidate[] = [];
   for (const report of data.reports) {
     const conditions = new Map(report.conditions.map((entry) => [entry.id, entry]));
     for (const score of report.benchmarks) {
@@ -281,6 +297,17 @@ export function buildBenchmarkMatrix(data: BenchmarkReports): BenchmarkMatrixVie
         const cap = c.output_caps[metric === "accuracy" ? "multiple_choice" : "reading"];
         if (cap !== undefined) omp.push({ ...candidate, cohort: JSON.stringify([condition.comparison_group, c.harness_version, c.tools, c.temperature_effective, c.thinking, c.seed_sent ? c.seed_requested : "omitted", cap, c.workers, c.system_prompt, c.prompt_version]) });
       }
+      if (["muse13-omp-full-tools-mc86-r2", "muse12-omp-full-tools-mc87-r3", "qwen-omp-full-tools-mc88", "mimo-omp-full-tools-mc89"].includes(report.id) && condition.controls.transport === "omp" && condition.controls.tools === "all") {
+        const c = condition.controls;
+        const cap = c.output_caps[metric === "accuracy" ? "multiple_choice" : "reading"];
+        if (cap !== undefined) ompFullTools.push({
+          ...candidate,
+          model: { ...candidate.model, provider: `${condition.card} · OMP full tools` },
+          cohort: "omp-full-tools-descriptive-display",
+          priority: 3,
+          rankEligible: false,
+        });
+      }
       const sig = directSignature(condition, metric);
       if (["muse13-direct", "qwen-direct-mc83", "muse12-direct-mc84", "mimo26-direct-mc85"].includes(report.id) && condition.controls.transport === "direct") {
         // Display measured results with default effort; do not invent a matched cohort.
@@ -293,6 +320,16 @@ export function buildBenchmarkMatrix(data: BenchmarkReports): BenchmarkMatrixVie
   const groups: MatrixGroup[] = [];
   const active = createGroup("omp-no-tools", "omp-no-tools", omp);
   if (active) groups.push(attachMuse12Run(active, data.run_summaries.find((summary) => summary.id === "muse12-vmlu-mc74-mc79"), data.reports.find((report) => report.id === "muse12-main-mc73")));
+  const fullTools = createGroup("omp-full-tools", "omp-full-tools", ompFullTools, true);
+  if (fullTools) {
+    for (const matrix of fullTools.matrices) {
+      matrix.comment = "Điểm mô tả của Muse 1.3 MC-86/R2, Muse 1.2 MC-87/R3, Qwen IEC MC-88 và MiMo V2.6 Flash MC-89. Timeout/recovery khác nhau (Qwen 900s; MiMo 900s + recovery 1800/3600s, 46 câu failed tính rỗng); chênh lệch điểm chưa chứng minh ưu thế model hoặc tác động của tools.";
+      matrix.ciComment = matrix.metric === "accuracy"
+        ? "CI95 chỉ hiển thị cho dataset local nếu scorer cung cấp; server grade VMLU Test không có CI95."
+        : "VMLU Test server grade không cung cấp CI95; CI local chỉ hiện nếu scorer cung cấp.";
+    }
+    groups.push(fullTools);
+  }
   const muse = createGroup("direct-default", "direct", museDirect, true);
   if (muse) {
     muse.detail = "Temperature 1,0 · reasoning mặc định · 12 workers";

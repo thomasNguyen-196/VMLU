@@ -1,6 +1,8 @@
 import Link from "next/link";
 import SiteNav from "@/components/SiteNav.tsx";
 import BenchmarkModelObservations from "@/components/BenchmarkModelObservations.tsx";
+import BenchmarkComparisonSection from "@/components/BenchmarkComparisonSection.tsx";
+import { buildBenchmarkComparison } from "@/lib/benchmark-comparison.ts";
 import type { BenchmarkMatrixView, MatrixGroup, MetricMatrix } from "@/lib/benchmark-matrix.ts";
 import { columnMaximum, selectMatrixGroup } from "@/lib/benchmark-matrix.ts";
 import type { BenchmarkRunSummary } from "@/lib/benchmark-reports.ts";
@@ -16,7 +18,7 @@ function MetricTable({ group, matrix, confidence = false }: { group: MatrixGroup
   const id = `${confidence ? "ci-" : ""}${matrix.metric}`;
   const title = confidence ? `CI95 · ${matrix.title}` : matrix.title;
   return <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-5">
-    <div className="mb-3 flex items-end justify-between gap-3"><div><h2 id={`${id}-title`} className="font-disp text-[20px] font-semibold">{title}</h2><p className="mt-0.5 text-[11.5px] text-ink-3">{confidence ? "Khoảng ước lượng 95% · đơn vị %" : "Model theo hàng · dataset theo cột · đơn vị %"}</p></div>{confidence ? null : <span className="text-[11px] text-ink-3">Điểm lớn nhất mỗi dataset được in đậm; đồng hạng cùng được in đậm</span>}</div>
+    <div className="mb-3 flex items-end justify-between gap-3"><div><h2 id={`${id}-title`} className="font-disp text-[20px] font-semibold">{title}</h2><p className="mt-0.5 text-[11.5px] text-ink-3">{confidence ? "Khoảng ước lượng 95% · đơn vị %" : "Model theo hàng · dataset theo cột · đơn vị %"}</p></div>{confidence ? null : <span className="text-[11px] text-ink-3">{group.kind === "omp-full-tools" ? "Điểm mô tả của condition full-tools; không xếp hạng liên điều kiện" : "Điểm lớn nhất mỗi dataset được in đậm; đồng hạng cùng được in đậm"}</span>}</div>
     <div className="overflow-x-auto rounded-xl border border-hair bg-card">
       <table data-metric={id} className="w-full border-collapse text-[12px]" style={{ minWidth: 210 + matrix.columns.length * 140 }}>
         <caption className="sr-only">{title} · {group.label} · các model trên từng dataset</caption>
@@ -24,7 +26,7 @@ function MetricTable({ group, matrix, confidence = false }: { group: MatrixGroup
         <tbody>{group.models.map((model) => <tr key={model.id} className="border-b border-hair/70 last:border-0"><th scope="row" className="sticky left-0 z-10 border-r border-hair bg-card px-4 py-3 text-left font-medium"><span className="block">{model.name}</span><span className="mt-1 block text-[10px] font-normal text-ink-3">{group.kind === "direct" ? directModelDetail(group, model.id) : model.provider}</span></th>{matrix.columns.map((column) => {
           const cell = column.cells[model.id];
           const bounds = cell && cell.score.ci_low !== null && cell.score.ci_high !== null;
-          const maximum = columnMaximum(column);
+          const maximum = group.kind === "omp-full-tools" ? null : columnMaximum(column);
           const missing = !cell || (confidence && !bounds);
           const tooltip = !cell ? "Chưa có kết quả trong condition này" : confidence && !bounds ? "Nguồn chưa công bố CI95" : `${cell.condition.card} · ${column.sourceLabel} · n=${cell.score.n ?? "chưa công bố"}${cell.score.correct !== null ? ` · đúng ${cell.score.correct}` : ""}${group.kind === "direct" ? ` · budget ${cell.condition.fields.output_cap}` : ""}`;
           return <td key={column.id} title={tooltip} data-missing={missing ? "true" : undefined} className={`whitespace-nowrap px-3 py-3 text-right font-mono tabular-nums ${missing ? "text-ink-3" : !confidence && cell.score.score === maximum ? "font-semibold text-ink" : "text-ink-2"}`}>
@@ -70,17 +72,75 @@ function ConditionDetails({ group, runSummaries }: { group: MatrixGroup; runSumm
   </details>;
 }
 
+function WebSearchSection({ summaries }: { summaries: BenchmarkRunSummary[] }) {
+  if (!summaries.length) return null;
+  return <section id="web-search" aria-labelledby="web-search-title" className="mb-7 border-y border-hair py-4">
+    <h3 id="web-search-title" className="font-disp text-[18px] font-semibold">Web search</h3>
+    {summaries.map((summary) => {
+      const usage = summary.web_search;
+      if (!usage) return null;
+      return <article key={summary.id} className="mt-2">
+        <p className="text-[11px] text-ink-3">{summary.title}</p>
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+          <div><dt className="text-[10.5px] text-ink-3">Tổng lượt gọi</dt><dd className="mt-0.5 font-mono text-[16px] font-semibold tabular-nums">{fmtInt(usage.total_calls)}</dd></div>
+          <div><dt className="text-[10.5px] text-ink-3">Thành công</dt><dd className="mt-0.5 font-mono text-[16px] font-semibold tabular-nums text-accept">{fmtInt(usage.succeeded)}</dd></div>
+          <div><dt className="text-[10.5px] text-ink-3">Thất bại</dt><dd className="mt-0.5 font-mono text-[16px] font-semibold tabular-nums text-reject">{fmtInt(usage.failed)}</dd></div>
+          <div><dt className="text-[10.5px] text-ink-3">Chưa ghi trạng thái</dt><dd className="mt-0.5 font-mono text-[16px] font-semibold tabular-nums text-ink-3">{fmtInt(usage.unrecorded)}</dd></div>
+        </dl>
+        <p className="mt-3 text-[10.5px] leading-relaxed text-ink-3">
+          {usage.unrecorded > 0
+            ? "Artifact MC-86 lưu tên tool và số lượt gọi nhưng không giữ kết quả từng web search. Các lượt này được đánh dấu chưa ghi trạng thái."
+            : "Trạng thái được lấy từ sự kiện kết thúc riêng của từng tool call trong OMP."}
+        </p>
+        <details className="mt-3 rounded-lg border border-hair bg-card px-3 py-2 text-[11.5px]">
+          <summary className="cursor-pointer font-medium">Nhật ký từng lượt · {fmtInt(usage.total_calls)}</summary>
+          <div className="mt-2 max-h-[360px] overflow-auto">
+            <table className="w-full min-w-[620px] border-collapse text-[10.5px]">
+              <caption className="sr-only">Nhật ký từng lần gọi web search của {summary.title}</caption>
+              <thead className="sticky top-0 bg-paper"><tr>
+                <th scope="col" className="px-2 py-1.5 text-left">Dataset / câu</th>
+                <th scope="col" className="px-2 py-1.5 text-left">Run</th>
+                <th scope="col" className="px-2 py-1.5 text-right">Attempt / lượt</th>
+                <th scope="col" className="px-2 py-1.5 text-right">Worker</th>
+                <th scope="col" className="px-2 py-1.5 text-left">Trạng thái</th>
+              </tr></thead>
+              <tbody>{usage.events.map((event) => {
+                const status = event.status === "success"
+                  ? ["Thành công", "text-accept"]
+                  : event.status === "failure"
+                    ? ["Thất bại", "text-reject"]
+                    : ["Chưa ghi trạng thái", "text-ink-3"];
+                return <tr key={event.event_id} className="border-t border-hair/70">
+                  <td className="px-2 py-1.5"><span className="block">{event.dataset}</span><span className="text-ink-3">{event.item_id}</span></td>
+                  <td className="px-2 py-1.5">{event.source}</td>
+                  <td className="px-2 py-1.5 text-right font-mono tabular-nums">{event.attempt} / {event.call_index}</td>
+                  <td className="px-2 py-1.5 text-right font-mono tabular-nums">{event.worker_id === null ? "—" : event.worker_id}</td>
+                  <td className={`px-2 py-1.5 font-medium ${status[1]}`}>{status[0]}</td>
+                </tr>;
+              })}</tbody>
+            </table>
+          </div>
+        </details>
+      </article>;
+    })}
+  </section>;
+}
+
 export function BenchmarkMatrixPage({ view, requested }: { view: BenchmarkMatrixView; requested?: string }) {
   const group = selectMatrixGroup(view, requested);
   const observationGroup = group?.kind === "omp-no-tools" ? group : undefined;
+  const webSearchSummaries = group?.kind === "omp-full-tools"
+    ? view.runSummaries.filter((summary) => group.conditions.some((condition) => condition.id === summary.id) && summary.web_search)
+    : [];
   return <><SiteNav /><main className="mx-auto max-w-[1600px] px-4 py-7 sm:px-7"><header className="mb-6 flex flex-wrap items-start justify-between gap-3"><div><p className="font-mono text-[10.5px] text-ink-3">BENCHMARK TIẾNG VIỆT</p><h1 className="mt-1 font-disp text-[27px] font-semibold">So sánh model theo điều kiện đo</h1><p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">Mỗi metric có một bảng riêng. Chọn condition ở panel bên trái để đối chiếu cùng thiết lập.</p></div></header>
     {observationGroup ? <BenchmarkModelObservations group={observationGroup} /> : null}
     <div className="grid items-start gap-7 lg:grid-cols-[225px_minmax(0,1fr)]">
       <aside aria-label="Condition panel" className="rounded-xl border border-hair bg-paper p-3 lg:sticky lg:top-5"><h2 className="px-2 py-1 text-[12px] font-semibold">Điều kiện đo</h2><nav className="mt-2 space-y-2">{view.groups.map((entry) => <Link key={entry.id} href={`/table?condition=${entry.id}`} scroll={false} aria-current={group?.id === entry.id ? "page" : undefined} className={`block rounded-lg border px-3 py-3 ${group?.id === entry.id ? "border-hair bg-card text-ink" : "border-transparent text-ink-2 hover:bg-card"}`}><span className="block text-[12.5px] font-semibold">{entry.label}</span><span className="mt-1 block text-[10.5px] leading-relaxed text-ink-3">{entry.detail}</span></Link>)}</nav>
         {view.directReason ? <div data-direct-skipped className="mt-3 border-t border-hair px-2 pt-3"><p className="text-[12px] font-medium text-ink-2">API trực tiếp · tạm bỏ qua</p><p className="mt-1 text-[10.5px] leading-relaxed text-ink-3">Chưa xác minh được nhóm model có cùng thinking và output budget.</p></div> : null}
-        {group ? <nav aria-label="Các bảng metric" className="mt-4 flex flex-wrap border-t border-hair pt-3 text-[11.5px] lg:block"><p className="mb-1 basis-full px-2 text-[10.5px] text-ink-3">BẢNG TRONG CONDITION</p>{group.matrices.map((matrix) => <a key={matrix.metric} href={`#${matrix.metric}`} className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">{matrix.title}</a>)}<a href="#confidence" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">CI95</a><a href="#notes" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">Note & nguồn</a></nav> : null}
+        <a href="#comparison" className="mt-3 block rounded-lg border border-hair px-3 py-2 text-[11.5px] font-medium text-ink-2 hover:bg-card">Tổng kết 3 chế độ</a>
+        {group ? <nav aria-label="Các bảng metric" className="mt-4 flex flex-wrap border-t border-hair pt-3 text-[11.5px] lg:block"><p className="mb-1 basis-full px-2 text-[10.5px] text-ink-3">BẢNG TRONG CONDITION</p>{group.matrices.map((matrix) => <a key={matrix.metric} href={`#${matrix.metric}`} className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">{matrix.title}</a>)}{webSearchSummaries.length ? <a href="#web-search" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">Web search</a> : null}<a href="#confidence" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">CI95</a><a href="#notes" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">Note & nguồn</a></nav> : null}
       </aside>
-      <div className="min-w-0">{group ? <><section className="mb-7"><div className="flex flex-wrap items-center gap-2"><h2 className="font-disp text-[19px] font-semibold">{group.label}</h2><span className="rounded-full border border-hair bg-card px-2.5 py-1 text-[10.5px] text-ink-2">{group.detail}</span></div><p className="mt-2 text-[12px] leading-relaxed text-ink-3">{group.models.length} model · {group.matrices.length} metric · ô trống là chưa có kết quả trong condition này.</p><ConditionDetails group={group} runSummaries={view.runSummaries} /></section>
+      <div className="min-w-0"><BenchmarkComparisonSection comparison={buildBenchmarkComparison(view.groups)} />{group ? <><section className="mb-7"><div className="flex flex-wrap items-center gap-2"><h2 className="font-disp text-[19px] font-semibold">{group.label}</h2><span className="rounded-full border border-hair bg-card px-2.5 py-1 text-[10.5px] text-ink-2">{group.detail}</span></div><p className="mt-2 text-[12px] leading-relaxed text-ink-3">{group.models.length} model · {group.matrices.length} metric · ô trống là chưa có kết quả trong condition này.</p><ConditionDetails group={group} runSummaries={view.runSummaries} /><WebSearchSection summaries={webSearchSummaries} /></section>
         <div className="space-y-9">{group.matrices.map((matrix) => <MetricTable key={matrix.metric} group={group} matrix={matrix} />)}</div>
         <section id="confidence" className="mt-10 scroll-mt-5 border-t border-hair pt-6"><p className="mb-5 text-[12px] leading-relaxed text-ink-3">CI95 được trình bày riêng cho từng metric. MC dùng Wilson; các bài đọc dùng bootstrap theo passage. CI95 của VMLU Test chưa được server công bố.</p><div className="space-y-9">{group.matrices.map((matrix) => <MetricTable key={matrix.metric} group={group} matrix={matrix} confidence />)}</div></section>
         <section id="notes" className="mt-10 scroll-mt-5 border-t border-hair pt-5"><h2 className="text-[16px] font-semibold">Note</h2><ul className="mt-2 list-disc space-y-2 pl-5 text-[12px] leading-relaxed text-ink-3">{group.notes.map((note) => <li key={note}>{note}</li>)}{view.directReason ? <li>{view.directReason}</li> : null}</ul><p className="mt-4 text-[10.5px] text-ink-3">Cập nhật từ artifact: {new Date(view.generatedAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}. <a href="/benchmark-condition-reports.csv" className="underline">CSV nguồn của toàn bộ run</a>.</p></section>
