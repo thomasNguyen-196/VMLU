@@ -71,9 +71,9 @@ Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile 
 
 ## 12. Semantic review of the MC-90 discordant pairs (AI-assisted, blind; added 2026-10-22)
 
-- [ ] 12.1 Build a reproducible, seeded review packet: every EM-discordant reading item (rescue: the B answer; regression: the S answer) and a stratified sample of the both-wrong items (both answers), as separate blind units without arm, direction or stratum; verify the key file maps every unit back and the packet carries no arm information.
-- [ ] 12.2 Have two independent reviewers label each unit against the gold answer (correct, partial, incorrect) with a one-line reason; adjudicate the disagreements blind; verify the label files cover every unit.
-- [ ] 12.3 Unblind and estimate the semantic rescues, regressions and net effect with a stratified interval; report agreement between reviewers and state that the review is AI-assisted and not a blind human review.
+- [x] 12.1 Build a reproducible, seeded review packet: every EM-discordant reading item (rescue: the B answer; regression: the S answer) and a stratified sample of the both-wrong items (both answers), as separate blind units without arm, direction or stratum; verify the key file maps every unit back and the packet carries no arm information. (`code_benchmark/diagnostic_semantic_review.py build`; 502 units: R 136 and G 98 whole, W_hi squad 16 and drop 18 whole, W_hi bidlqa 70 of 253, W_lo 30 of 167; seed 42.)
+- [x] 12.2 Have two independent reviewers label each unit against the gold answer (correct, partial, incorrect) with a one-line reason; adjudicate the disagreements blind; verify the label files cover every unit. (Reviewers: sonnet and opus subagents, 4 batches each; 18 disagreements adjudicated blind by the lead assistant from the packet text only.)
+- [x] 12.3 Unblind and estimate the semantic rescues, regressions and net effect with a stratified interval; report agreement between reviewers and state that the review is AI-assisted and not a blind human review. (`aggregate`: raw agreement 96.4%, kappa 0.93; `report.json` under the review directory.)
 
 ## 10. Verification and handoff
 
