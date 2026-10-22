@@ -22,6 +22,8 @@
 - [x] 4.2 Add `code_benchmark/test_diagnostic_prospective.py` with a fake transport covering execute, resume refusal on a changed condition, budget pause and each gate; verify `.venv/bin/python -m unittest code_benchmark.test_diagnostic_prospective` passes.
 - [x] 4.3 Run `uvx ruff@0.16.1 check .`, the bandit command from CI and both CI test suites; verify exit code 0 for each (the repo-wide `ruff check .` also reports 9 findings in the untracked scratch file `.codex/probe_muse13_provider.py`, which this change does not touch; the new files are clean).
 
+- [x] 4.4 Add the opt-in operational guards after two endpoint stalls on 2026-10-22 (`--max-in-flight`, `--stop-after-timeouts`, `--note`, `operator_events.jsonl`); verify `.venv/bin/python -m unittest code_benchmark.test_diagnostic_prospective` passes (45 tests) and that the registered path (no options) is unchanged.
+
 ## 5. Prompt development on synthetic prompts
 
 Model Qwen3.5-9B-65K (served as `Qwen3.5-9B-Q4_K_M.gguf` by llama.cpp), endpoint `http://llmapi.iec/v1` over the IEC VPN (profile `member-shared-tcp`), Responses API, streaming, temperature 1.0, output cap 4096.

@@ -11,6 +11,12 @@ pre-registered (registration.json + measurement_card.md) and, for core, diagnost
 reports inference_ready. The engine, condition freeze and resume rules are those of MC-80/82/83;
 completed attempts, including truncated or unparsed ones, are never retried automatically.
 Retrieved-evidence arms (K, KS) appear only once a retrieval artifact exists (task 7.3).
+
+Operational options, off by default so that the registered condition is what runs. Every launch is appended
+to <output>/operator_events.jsonl with the options used and the runner hash:
+  --max-in-flight N        cap simultaneous requests below the registered lane count (a deviation to report)
+  --stop-after-timeouts N  pause the run after N consecutive network failures instead of timing out item by item
+  --note TEXT              why this launch differs from the previous one
 """
 from __future__ import annotations
 
@@ -162,6 +168,31 @@ class BudgetGuard:
                 self.used += tokens
 
 
+NETWORK_ERRORS = frozenset({"APITimeoutError", "ReadTimeout", "ConnectTimeout", "APIConnectionError",
+                            "ConnectError", "RemoteProtocolError"})
+
+
+class OutageGuard:
+    """Opt-in circuit breaker. After `threshold` consecutive network-level failures (any success resets the count)
+    the next request is fatal, so the engine pauses the run and the items stay resumable. 0 disables it."""
+
+    def __init__(self, threshold: int = 0):
+        self.threshold = threshold
+        self.consecutive = 0
+        self._lock = threading.Lock()
+
+    def tripped(self) -> bool:
+        with self._lock:
+            return 0 < self.threshold <= self.consecutive
+
+    def record(self, row: dict[str, Any]) -> None:
+        with self._lock:
+            if row.get("status") == "complete":
+                self.consecutive = 0
+            elif row.get("error_type") in NETWORK_ERRORS:
+                self.consecutive += 1
+
+
 def reported_tokens(row: dict[str, Any]) -> int | None:
     total = row.get("total_tokens")
     if isinstance(total, int):
@@ -185,9 +216,13 @@ def existing_usage(output: Path) -> int:
     return sum(reported_tokens(row) or 0 for row in latest.values() if row.get("status") == "complete")
 
 
-def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: BudgetGuard):
+def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: BudgetGuard, *,
+                 outage: OutageGuard | None = None, max_in_flight: int | None = None):
     transport = protocol["transport"]
     expected_model = protocol["model"]["self_reported_id"]
+    outage = outage or OutageGuard(0)
+    gate = threading.BoundedSemaphore(max_in_flight) if max_in_flight else None
+    halt = threading.Event()  # set by any fatal row; with a cap, lanes queued at the gate then send nothing
 
     def request(client, item, shard: int, lane: int) -> dict[str, Any]:
         cap = transport["max_output_tokens"]
@@ -201,10 +236,13 @@ def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: Budg
             "raw_prompt": item.prompt, "raw_response": "", "temperature_sent": transport["temperature"],
             "reasoning_effort_sent": None, "seed_sent": None, "max_tokens": cap, "started_at": base.now(),
         }
-        if guard.exhausted():
-            row.update({"status": "request_error", "finish_reason": "error", "error_type": "budget_cap",
-                        "fatal": True, "latency_s": 0.0, "finished_at": base.now()})
-            return row
+        for blocked, error_type in ((guard.exhausted(), "budget_cap"), (outage.tripped(), "endpoint_unresponsive"),
+                                    (gate is not None and halt.is_set(), "halted_before_send")):
+            if blocked:
+                row.update({"status": "request_error", "finish_reason": "error", "error_type": error_type,
+                            "fatal": True, "latency_s": 0.0, "finished_at": base.now()})
+                halt.set()
+                return row
         start = time.monotonic()
         stream = None
         try:
@@ -269,9 +307,19 @@ def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: Budg
             guard.add(reported_tokens(row))
         elif not row.get("fatal"):
             row["retry_wait_seconds"] = 60 if row.get("http_status") == 429 else 30 if row.get("http_status") == 503 else 5
+        outage.record(row)
+        if row.get("fatal"):
+            halt.set()
         return row
 
-    return request
+    if gate is None:
+        return request
+
+    def limited(client, item, shard: int, lane: int) -> dict[str, Any]:
+        with gate:  # waiting here is not part of the measured latency: the clock starts inside `request`
+            return request(client, item, shard, lane)
+
+    return limited
 
 
 # ---------------------------------------------------------------- condition, scoring, execution
@@ -343,7 +391,8 @@ def make_score_callback(phase: str, card_id: str):
     return score
 
 
-def configure_engine(protocol: dict[str, Any], phase: str, card_id: str, guard: BudgetGuard) -> None:
+def configure_engine(protocol: dict[str, Any], phase: str, card_id: str, guard: BudgetGuard, *,
+                     outage: OutageGuard | None = None, max_in_flight: int | None = None) -> None:
     transport = protocol["transport"]
     if (base.SHARDS, base.LANES) != (transport["shards"], transport["lanes"]):
         raise SystemExit("Error: engine shard/lane constants differ from the campaign protocol")
@@ -351,7 +400,18 @@ def configure_engine(protocol: dict[str, Any], phase: str, card_id: str, guard: 
     base.PROFILE = protocol["model"]["profile_id"]
     base.PROTOCOL = dp.PROTOCOL_ID
     base.CARD_ID = card_id
-    base.request = make_request(protocol, phase, card_id, guard)
+    base.request = make_request(protocol, phase, card_id, guard, outage=outage, max_in_flight=max_in_flight)
+
+
+def record_launch(output: Path, phase: str, *, resume: bool, max_in_flight: int | None,
+                  stop_after_timeouts: int | None, note: str, lanes: int) -> None:
+    """Append-only operator record of how this launch differs from the registered condition (if it does)."""
+    output.mkdir(parents=True, exist_ok=True)
+    event = {"at": base.now(), "phase": phase, "resume": resume, "runner_sha256": v1.sha256_file(Path(__file__)),
+             "lanes_configured": lanes, "max_in_flight": max_in_flight, "stop_after_timeouts": stop_after_timeouts,
+             "note": note}
+    with (output / "operator_events.jsonl").open("a", encoding="utf-8") as ledger:
+        ledger.write(json.dumps(event, ensure_ascii=False) + "\n")
 
 
 def print_preflight(phase: str, manifest: dict[str, Any], protocol: dict[str, Any], gates: list[Gate]) -> None:
@@ -377,9 +437,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--resume", action="store_true", help="resume only unfinished technical requests")
     parser.add_argument("--tunnel-dns", default=None,
                         help="in-tunnel DNS server used to resolve the endpoint host inside this process only")
+    parser.add_argument("--max-in-flight", type=int, default=None, metavar="N",
+                        help="operational cap on simultaneous requests (default: none, every registered lane sends)")
+    parser.add_argument("--stop-after-timeouts", type=int, default=None, metavar="N",
+                        help="pause the run after N consecutive network failures (default: off)")
+    parser.add_argument("--note", default="", help="free text recorded with this launch in operator_events.jsonl")
     args = parser.parse_args(argv)
     if args.resume and not args.execute:
         parser.error("--resume requires --execute")
+    for flag in ("max_in_flight", "stop_after_timeouts"):
+        if getattr(args, flag) is not None and getattr(args, flag) < 1:
+            parser.error(f"--{flag.replace('_', '-')} must be a positive integer")
     if args.oracle_evidence and args.phase != "core":
         parser.error("--oracle-evidence applies to the core phase only")
 
@@ -412,8 +480,15 @@ def main(argv: list[str] | None = None) -> int:
         output, build_condition(args.phase, protocol, manifest, registration, endpoint, templates["version"],
                                 Path(__file__)), args.resume)
     guard = BudgetGuard(protocol["budget"]["campaign_cap_tokens"], existing_usage(output))
-    configure_engine(protocol, args.phase, card_id, guard)
     transport = protocol["transport"]
+    configure_engine(protocol, args.phase, card_id, guard, outage=OutageGuard(args.stop_after_timeouts or 0),
+                     max_in_flight=args.max_in_flight)
+    record_launch(output, args.phase, resume=args.resume, max_in_flight=args.max_in_flight,
+                  stop_after_timeouts=args.stop_after_timeouts, note=args.note,
+                  lanes=transport["shards"] * transport["lanes"])
+    if args.max_in_flight or args.stop_after_timeouts:
+        print(f"operational options: max_in_flight={args.max_in_flight} stop_after_timeouts={args.stop_after_timeouts} "
+              f"(registered lanes: {transport['shards'] * transport['lanes']})", flush=True)
     with OpenAI(base_url=endpoint, api_key=key, timeout=transport["timeout_seconds"],
                 max_retries=transport["sdk_retries"], default_headers=transport["gateway_header"]) as client:
         base.execute(output, manifest, rebuilt, items, condition, client, args.resume,

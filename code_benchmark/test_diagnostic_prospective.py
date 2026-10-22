@@ -12,7 +12,10 @@ import dataclasses
 import io
 import json
 import tempfile
+import threading
+import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace as N
 from unittest.mock import patch
@@ -103,6 +106,20 @@ class FakeClient:
         return Stream([completed(self.text_for(prompt), self.model, self.usage)])
 
 
+class APITimeoutError(Exception):
+    """Same class name the OpenAI SDK raises: the runner keys on type(exc).__name__."""
+
+
+class TimeoutClient:
+    def __init__(self):
+        self.calls = 0
+        self.responses = N(create=self._create)
+
+    def _create(self, **kwargs):
+        self.calls += 1
+        raise APITimeoutError()
+
+
 def reply_for(prompt: str) -> str:
     stepwise = "Dòng cuối cùng" in prompt
     if dp.RD_QUESTION in prompt or "Năm nào" in prompt:
@@ -111,12 +128,12 @@ def reply_for(prompt: str) -> str:
 
 
 @contextlib.contextmanager
-def engine_configured(phase: str = "wide", card: str = "MC-901", cap: int = 10 ** 9):
+def engine_configured(phase: str = "wide", card: str = "MC-901", cap: int = 10 ** 9, **options):
     guard = runner.BudgetGuard(cap)
     with contextlib.ExitStack() as stack:
         for field in ("MODEL", "PROFILE", "PROTOCOL", "CARD_ID", "request"):
             stack.enter_context(patch.object(runner.base, field, getattr(runner.base, field)))
-        runner.configure_engine(PROTOCOL, phase, card, guard)
+        runner.configure_engine(PROTOCOL, phase, card, guard, **options)
         yield guard
 
 
@@ -447,6 +464,92 @@ class TestRunner(unittest.TestCase):
                 runner.reconcile_resume(output, {**condition, "max_tokens": 2048}, True)
             moved = {**condition, "runner_sha256": "b"}
             self.assertEqual(runner.reconcile_resume(output, moved, True), condition)
+
+    def test_outage_breaker_counts_only_consecutive_network_failures(self):
+        breaker = runner.OutageGuard(3)
+        timeout = {"status": "request_error", "error_type": "APITimeoutError"}
+        breaker.record(timeout)
+        breaker.record(timeout)
+        self.assertFalse(breaker.tripped())
+        breaker.record({"status": "complete"})  # any success resets the count
+        breaker.record(timeout)
+        breaker.record({"status": "request_error", "error_type": "model_identity_drift"})  # not a network failure
+        breaker.record({"status": "request_error", "error_type": "ReadTimeout"})
+        self.assertFalse(breaker.tripped())
+        breaker.record(timeout)
+        self.assertTrue(breaker.tripped())
+        self.assertFalse(runner.OutageGuard(0).tripped())  # disabled unless asked for
+
+    def test_tripped_breaker_makes_the_next_request_fatal_without_sending_it(self):
+        client = TimeoutClient()
+        items = [dataclasses.replace(make_item(item_id=f"T{i}"), replicate_id="B-r1") for i in range(4)]
+        with engine_configured(outage=runner.OutageGuard(2)):
+            rows = [runner.base.request(client, item, 0, 0) for item in items]
+        self.assertEqual([r["error_type"] for r in rows],
+                         ["APITimeoutError", "APITimeoutError", "endpoint_unresponsive", "endpoint_unresponsive"])
+        self.assertEqual([bool(r.get("fatal")) for r in rows], [False, False, True, True])
+        self.assertEqual(client.calls, 2)
+
+    def test_the_registered_path_has_no_breaker_and_no_cap(self):
+        client = TimeoutClient()
+        items = [dataclasses.replace(make_item(item_id=f"T{i}"), replicate_id="B-r1") for i in range(5)]
+        with engine_configured():
+            rows = [runner.base.request(client, item, 0, 0) for item in items]
+        self.assertEqual({r["error_type"] for r in rows}, {"APITimeoutError"})
+        self.assertFalse(any(r.get("fatal") for r in rows))
+        self.assertEqual(client.calls, 5)  # without the options the run never stops on its own
+
+    def test_in_flight_cap_bounds_simultaneous_requests(self):
+        lock, state = threading.Lock(), {"now": 0, "peak": 0}
+
+        class SlowClient(FakeClient):
+            def _create(self, **kwargs):
+                with lock:
+                    state["now"] += 1
+                    state["peak"] = max(state["peak"], state["now"])
+                time.sleep(0.1)
+                with lock:
+                    state["now"] -= 1
+                return super()._create(**kwargs)
+
+        items = [dataclasses.replace(make_item(item_id=f"T{i}"), replicate_id="B-r1") for i in range(12)]
+
+        def peak_with(**options):
+            state.update(now=0, peak=0)
+            client = SlowClient()
+            with engine_configured(**options), ThreadPoolExecutor(12) as pool:
+                rows = list(pool.map(lambda item: runner.base.request(client, item, 0, 0), items))
+            self.assertEqual({r["status"] for r in rows}, {"complete"})
+            return state["peak"]
+
+        self.assertGreater(peak_with(), 3)  # the instrument does see concurrency when nothing limits it
+        self.assertLessEqual(peak_with(max_in_flight=3), 3)
+
+    def test_a_fatal_row_stops_lanes_queued_at_the_cap(self):
+        client = FakeClient(model="some/other-model.gguf")
+        items = [dataclasses.replace(make_item(item_id=f"T{i}"), replicate_id="B-r1") for i in range(3)]
+        with engine_configured(max_in_flight=1):
+            rows = [runner.base.request(client, item, 0, 0) for item in items]
+        self.assertEqual([r["error_type"] for r in rows], ["model_identity_drift", "halted_before_send", "halted_before_send"])
+        self.assertEqual(len(client.calls), 1)
+
+    def test_cli_rejects_non_positive_operational_options(self):
+        for flag in ("--max-in-flight", "--stop-after-timeouts"):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+                runner.main(["--phase", "wide", flag, "0"])
+            self.assertEqual(caught.exception.code, 2)
+
+    def test_launches_are_recorded_append_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "run"
+            runner.record_launch(output, "wide", resume=False, max_in_flight=None, stop_after_timeouts=None, note="", lanes=12)
+            runner.record_launch(output, "wide", resume=True, max_in_flight=4, stop_after_timeouts=4,
+                                 note="cap after two endpoint stalls", lanes=12)
+            events = [json.loads(line) for line in (output / "operator_events.jsonl").read_text().splitlines()]
+        self.assertEqual([e["resume"] for e in events], [False, True])
+        self.assertEqual((events[0]["max_in_flight"], events[1]["max_in_flight"]), (None, 4))
+        self.assertEqual((events[1]["lanes_configured"], events[1]["note"]), (12, "cap after two endpoint stalls"))
+        self.assertEqual(events[1]["runner_sha256"], v1.sha256_file(Path(runner.__file__)))
 
     def test_execute_end_to_end_with_a_fake_transport(self):
         entries = [(make_item("multiple_choice", "T1"), arm, 1) for arm in ("B", "S")] + \

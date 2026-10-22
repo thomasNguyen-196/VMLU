@@ -61,3 +61,22 @@ Each attempt row SHALL record the usage the endpoint reports, and absent fields 
 #### Scenario: Campaign cap pauses the run
 - **WHEN** cumulative reported tokens exceed the campaign cap
 - **THEN** the runner records a budget pause, sends no further request and keeps completed attempts intact
+
+### Requirement: Opt-in operational guards
+The runner SHALL offer two operational options that are off by default so the registered condition is what runs unless an operator asks otherwise: a cap on simultaneous requests below the registered lane count, and a circuit breaker that pauses the run after a configured number of consecutive network-level failures. Every launch SHALL append a record of the options used, the lane count and the runner hash to an operator event file next to the run outputs, and neither option SHALL change the frozen condition or the content of any request.
+
+#### Scenario: Registered path unchanged
+- **WHEN** the runner is launched without the options
+- **THEN** every registered lane sends requests as before and a series of timeouts never stops the run by itself
+
+#### Scenario: Breaker pauses an unresponsive endpoint
+- **WHEN** the configured number of consecutive requests fail with timeouts or connection errors and no request succeeds in between
+- **THEN** the next request is recorded as a fatal endpoint-unresponsive row without being sent, the engine pauses and every incomplete item stays resumable
+
+#### Scenario: Cap bounds simultaneous requests
+- **WHEN** a cap of three is set with twelve lanes active
+- **THEN** no more than three requests are in flight at any time and waiting for a free slot is not counted in the recorded latency
+
+#### Scenario: Launch is recorded
+- **WHEN** a run is launched or resumed with or without the options
+- **THEN** one line is appended to the operator event file and earlier lines are never rewritten
