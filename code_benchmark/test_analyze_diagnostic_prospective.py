@@ -5,6 +5,7 @@ Expected values are worked out by hand in the comments.
 """
 from __future__ import annotations
 
+import dataclasses
 import json
 import tempfile
 import unittest
@@ -233,6 +234,54 @@ class TestParityGate(unittest.TestCase):
         report = an.analyze([mc_row("B", 0, 1, True), mc_row("S", 0, 1, True)], phase="wide")
         self.assertFalse(report["parity_gate"]["all_within"])  # one item at 100% is outside the Legal MC interval
         self.assertEqual(report["parity_gate"]["datasets"][MC]["observed"], 100.0)
+
+
+class TestRealScoringRows(unittest.TestCase):
+    """The analysis must consume exactly the rows the scoring wrapper writes to scores.jsonl."""
+
+    @staticmethod
+    def scored_rows() -> list[dict]:
+        from code_benchmark.test_diagnostic_prospective import make_item, prediction, synthetic_manifest
+
+        def reply(item) -> str:
+            arm, index = dp.arm_of_replicate(item.replicate_id), int(item.item_id[1:])
+            right = arm == "S" or index < 2  # S is always right; B is right on the first two items only
+            if item.task == "multiple_choice":
+                letter = "C" if right else "A"
+                return f"Xét từng đáp án.\nĐáp án: {letter}" if arm == "S" else letter
+            answer = "1998" if right else "1997"
+            return f"Đối chiếu đoạn văn.\nTrả lời: {answer}" if arm == "S" else answer
+
+        entries = []
+        for index in range(4):
+            mc = make_item("multiple_choice", f"M{index}", gold="C")
+            rd = dataclasses.replace(make_item("reading", f"R{index}", gold="1998"), passage_id=f"p{index}")
+            entries += [(item, arm, k) for k in (1, 2, 3) for item in (mc, rd) for arm in ("B", "S")]
+        manifest, rebuilt, items = synthetic_manifest(entries)
+        scored, _ = dp.score_arm_rows(manifest, {i.run_key: prediction(i, reply(i)) for i in items}, rebuilt)
+        return scored
+
+    def test_rows_from_the_scoring_wrapper_flow_through_the_analysis(self):
+        scored = self.scored_rows()
+        report = an.analyze(scored, phase="core")
+        mc, rd = report["families"]["mc"]["arms"]["S"], report["families"]["reading"]["arms"]["S"]
+        # B wrong on items 2-3 in every replicate, S always right: 2 rescues and no regression per family
+        self.assertEqual((mc["n_pairs"], mc["rescues"], mc["regressions"]), (4, 2, 0))
+        self.assertEqual((rd["n_pairs"], rd["rescues"], rd["regressions"]), (4, 2, 0))
+        self.assertEqual(report["item_ties"], 0)
+        self.assertEqual(mc["attempt_level"]["attempt_pairs"], 12)
+        self.assertEqual(report["baseline_noise"]["mc"]["recovery"], 0.0)  # B never flips on its own here
+        self.assertEqual(mc["sensitivity_format_compliant"]["rescues"], 2)  # every S attempt carries the label
+        self.assertAlmostEqual(rd["mean_f1_diff"], 0.5)  # token_f1 exists on real reading rows: (0+0+1+1)/4
+        self.assertEqual(rd["rescues_format_suspect"], 0)  # B shared no token with the gold on the rescued items
+
+    def test_exports_carry_the_fields_the_reviewer_needs(self):
+        scored = self.scored_rows()
+        pairs = an.discordant_pairs(scored, "S")
+        self.assertEqual(len(pairs), 4)
+        self.assertTrue(all(p["gold_answer"] and p["S"][0]["prompt_sha256"] and p["B"][0]["raw_response"] for p in pairs))
+        self.assertEqual({p["direction"] for p in pairs}, {"rescue"})
+        self.assertEqual(an.semantic_audit_candidates(scored, 0.8), [])  # "1997" shares no token with "1998"
 
 
 class TestPlanConsistency(unittest.TestCase):
