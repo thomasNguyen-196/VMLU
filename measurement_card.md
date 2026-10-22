@@ -2642,3 +2642,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | 12 workers (4 shards x 3 lanes); items ordered item-major so B and S of one item run adjacently |
 | `details` | `docs/measurement_cards/MC-90-diagnostic-prospective-wide.md` |
 | `outputs` | `all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-91 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide supplement / second B draw on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-91` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests of this card |
+| `scope` | Supplement `wide-b-r2` of the MC-90 wide phase: arm B only (the frozen main-v1 prompt, byte-identical to MC-90 replicate 1), replicate r2, over the same 1,239 non-anchor items (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); 1,239 attempts. Purpose: a sampling-noise reference for the single-draw B and S results of MC-90, which it leaves unchanged |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition (MC-90 stalled the endpoint twice at 12 simultaneous streams) |
+| `details` | `docs/measurement_cards/MC-91-diagnostic-prospective-wide-b-replicate.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-b-r2/qwen3-5-9b-65k-prospective/`; no upload |

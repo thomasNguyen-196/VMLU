@@ -714,6 +714,23 @@ class TestSupplements(unittest.TestCase):
                 runner.main(["--phase", "wide", "--supplement", "not-registered"])
         execute.assert_not_called()
 
+    @unittest.skipUnless(DATA_OK, "frozen main-v1 sources or the locked pilot packet are not available")
+    def test_committed_supplement_registration_matches_its_frozen_artifacts(self):
+        """Editing the protocol, the templates or the supplement manifest after registration must fail here."""
+        registration = dp.load_registration()
+        supplement = dp.load_supplement(registration, "wide-b-r2")
+        manifest, rebuilt = dp.build_manifest("wide", supplement=supplement)
+        view = runner.supplement_registration_view(registration, supplement, "wide")
+        gates = {g.name: g for g in runner.evaluate_gates("wide", dp.load_protocol(), manifest, view, TestRunner.ENV)}
+        self.assertEqual({name: g.detail for name, g in gates.items() if not g.ok}, {})
+        self.assertEqual(view["card_ids"], {"wide": "MC-91"})
+        saved = json.loads((dp.DATA_DIR / "wide-b-r2_v1.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved, manifest)  # the archived frozen file is the manifest the runner rebuilds
+        self.assertEqual(len(dp.verify_manifest_rows(saved, rebuilt)), 1239)
+        self.assertEqual(supplement["operational"], {"max_in_flight": 4, "stop_after_timeouts": 4})
+        registered_wide = registration["frozen"]["manifest_sha256"]["wide"]  # MC-90 is untouched by the supplement
+        self.assertEqual(dp.build_manifest("wide")[0]["manifest_sha256"], registered_wide)
+
     def test_launch_records_name_the_supplement(self):
         with tempfile.TemporaryDirectory() as tmp:
             runner.record_launch(Path(tmp), "wide", resume=False, max_in_flight=4, stop_after_timeouts=4, note="",

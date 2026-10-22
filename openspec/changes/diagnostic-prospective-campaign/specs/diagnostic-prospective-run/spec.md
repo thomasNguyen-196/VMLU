@@ -80,3 +80,18 @@ The runner SHALL offer two operational options that are off by default so the re
 #### Scenario: Launch is recorded
 - **WHEN** a run is launched or resumed with or without the options
 - **THEN** one line is appended to the operator event file and earlier lines are never rewritten
+
+### Requirement: Registered supplements
+A supplement SHALL re-run arms of an already registered phase under further replicate numbers without changing the campaign protocol, the prompt templates or any registered manifest. It SHALL have its own entry in the registration record (base phase, arms, replicate numbers, card, manifest hash, registered operational limits), its own measurement card and its own output directory; it SHALL add no arm, evidence or item and SHALL NOT reuse a replicate number registered for its base phase. The operational limits it registers SHALL be part of its frozen condition.
+
+#### Scenario: Supplement manifest reuses frozen prompts
+- **WHEN** a supplement re-runs arm B of the wide phase as replicate 2
+- **THEN** every row carries the prompt, input and gold hashes of replicate 1 of that arm under a different replicate id, and the manifest of the registered phase is unchanged
+
+#### Scenario: Colliding replicate numbers are refused
+- **WHEN** a supplement names a replicate number already registered for its base phase
+- **THEN** the manifest cannot be built and the error names the supplement
+
+#### Scenario: Registered limits cannot be loosened
+- **WHEN** a supplement registers a cap of four simultaneous requests and a launch asks for another value, or a resume would change the registered limits
+- **THEN** the launch or the resume is refused

@@ -367,6 +367,14 @@ class TestBReplicateSupplement(unittest.TestCase):
         with self.assertRaises(ValueError):
             an.noise_reference(primary, [mc_row("B", 0, 3, True)])
 
+    def test_report_keys_match_the_registered_analysis(self):
+        registered = dp.load_registration()["supplements"]["wide-b-r2"]["analysis"]
+        report = self.report()
+        self.assertEqual(tuple(registered["top_level"]), an.NOISE_TOP_KEYS)
+        self.assertEqual(tuple(registered["family_metrics"]), an.NOISE_FAMILY_KEYS)
+        self.assertEqual(set(report), set(registered["top_level"]))
+        self.assertEqual(set(report["families"]["mc"]), set(registered["family_metrics"]))
+
     def test_second_draw_is_held_to_the_parity_reference_and_prints(self):
         report = self.report()
         self.assertEqual(report["parity_gate_b2"]["datasets"][MC]["observed"], 40.0)

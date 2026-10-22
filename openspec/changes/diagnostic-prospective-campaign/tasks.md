@@ -60,6 +60,21 @@ Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile 
 - [x] 9.3 Implement the noise-floor oracle ceiling and the two-direction discordant-pair export; verify on synthetic outcomes.
 - [x] 9.4 Add the plan additions agreed on 2026-10-22 (B-versus-B replicate noise reference, compliant-only sensitivity, reading token-F1 difference with a format-suspect rescue flag, wide-only parity gate against MC-83); verify the 23 analysis tests pass, including the test that the protocol names every reported metric.
 
+## 11. Wide noise reference (supplement `wide-b-r2`, card MC-91; added 2026-10-22 after the MC-90 results)
+
+- [x] 11.1 Implement registered supplements in the contract and the runner (own registration entry, manifest, card, output directory and registered operational limits); verify the registered MC-90 manifest and condition are unchanged and that the supplement manifest reuses the B-r1 prompt, input and gold hashes under `B-r2`.
+- [x] 11.2 Implement `noise_reference` (drift, B-versus-B noise, S against a second baseline draw, S against noise given the first draw, stable categories, oracle with a noise floor, Holm over four contrasts); verify the hand-worked example in the tests.
+- [x] 11.3 Register MC-91: root block, detail card, registration entry with the frozen manifest hash and the analysis keys; verify the runner's preflight reports every gate PASS with `endpoint_calls=0` and that the registration-lock tests pass.
+- [ ] 11.4 Run `wide-b-r2` with `--supplement wide-b-r2` over the VPN; verify 1,239 attempts complete, the response model id is constant and `operator_events.jsonl` records the registered limits.
+- [ ] 11.5 Run `noise_reference` on the MC-90 and MC-91 scores; report the parity gate and the drift check first, then the noise rates and the S-versus-noise contrasts.
+- [ ] 11.6 Add the dated run record of MC-91 to its detail card after the run ends.
+
+## 12. Semantic review of the MC-90 discordant pairs (AI-assisted, blind; added 2026-10-22)
+
+- [ ] 12.1 Build a reproducible, seeded review packet: every EM-discordant reading item (rescue: the B answer; regression: the S answer) and a stratified sample of the both-wrong items (both answers), as separate blind units without arm, direction or stratum; verify the key file maps every unit back and the packet carries no arm information.
+- [ ] 12.2 Have two independent reviewers label each unit against the gold answer (correct, partial, incorrect) with a one-line reason; adjudicate the disagreements blind; verify the label files cover every unit.
+- [ ] 12.3 Unblind and estimate the semantic rescues, regressions and net effect with a stratified interval; report agreement between reviewers and state that the review is AI-assisted and not a blind human review.
+
 ## 10. Verification and handoff
 
 - [x] 10.1 Run `openspec validate diagnostic-prospective-campaign --strict`; verify it passes.

@@ -89,3 +89,18 @@ For the wide phase the analysis SHALL compare the B accuracy or exact match per 
 #### Scenario: Core has no gate
 - **WHEN** the core phase is analysed
 - **THEN** the parity gate is reported as not applicable
+
+### Requirement: Noise reference from a baseline supplement
+When a registered supplement provides a second draw of arm B for the items of a single-draw phase, the analysis SHALL report per family: the drift between the two baseline draws (exact McNemar); the B-versus-B recovery and regression rates with Wilson intervals and the agreement rate; the comparison of the other arm with the second baseline draw; the comparison of that arm with the second baseline draw on the items the first baseline draw got wrong and on those it got right, with a Holm correction over the families and conditions; the stable categories; and an oracle ceiling next to the ceiling over the two baseline draws. It SHALL list its result keys in the registration entry, and it SHALL NOT repeat or replace the registered single-draw analysis of the phase.
+
+#### Scenario: Selection on the first draw only
+- **WHEN** S is compared with the second baseline draw on the items the first baseline draw got wrong
+- **THEN** both comparands are fresh draws, so regression to the mean affects them alike and the difference isolates the arm effect
+
+#### Scenario: Drift is not noise
+- **WHEN** the second baseline draw differs systematically from the first (McNemar p below 0.05 in a family, or failed parity)
+- **THEN** the noise estimates of that family are labelled run-to-run drift rather than sampling noise
+
+#### Scenario: Result keys are registered
+- **WHEN** the analysis function returns its report
+- **THEN** its top-level and per-family keys equal the lists in the registration entry

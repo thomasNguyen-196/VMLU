@@ -1,5 +1,5 @@
 {
-  "status": "wide-registered; core unregistered",
+  "status": "wide-registered; supplement wide-b-r2 registered; core unregistered",
   "card_ids": {"core": null, "wide": "MC-90"},
   "card_files": {"core": null, "wide": "docs/measurement_cards/MC-90-diagnostic-prospective-wide.md"},
   "registered_on": {"core": null, "wide": "2026-10-22"},
@@ -12,5 +12,26 @@
     },
     "evidence_sha256": {"core": {}, "wide": {}}
   },
-  "note": "Wide was registered on 2026-10-22 as MC-90. Core is registered after the pilot audit is final and the oracle evidence exists. protocol.json and prompt_templates_v1.json are frozen for this campaign from now on: a change needs a new protocol version and new cards. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
+  "supplements": {
+    "wide-b-r2": {
+      "base_phase": "wide",
+      "arms": ["B"],
+      "first_replicate": 2,
+      "replicates": 1,
+      "purpose": "second draw of arm B over the 1,239 wide items: sampling-noise reference for the single-draw B and S results of MC-90",
+      "card_id": "MC-91",
+      "card_file": "docs/measurement_cards/MC-91-diagnostic-prospective-wide-b-replicate.md",
+      "registered_on": "2026-10-22",
+      "operational": {"max_in_flight": 4, "stop_after_timeouts": 4},
+      "frozen": {"manifest_sha256": "cca8d250a6864294b353f4ca90edf0e826b5f3647e413e4d52b70339215c3986"},
+      "analysis": {
+        "function": "analyze_diagnostic_prospective.noise_reference",
+        "top_level": ["plan_id", "noise_replicate", "items_shared", "items_missing_in_noise_run", "families", "parity_gate_b2"],
+        "family_metrics": ["n_items", "accuracy", "drift", "noise_recovery", "noise_recovery_ci95", "noise_regression_rate",
+                           "noise_regression_ci95", "agreement_rate", "s_vs_b2", "s_vs_noise_given_b1_wrong",
+                           "s_vs_noise_given_b1_right", "stable", "oracle", "mean_f1", "by_dataset_descriptive"]
+      }
+    }
+  },
+  "note": "Wide was registered on 2026-10-22 as MC-90; supplement wide-b-r2 (MC-91, a second B draw of the wide items) was registered the same day under its own manifest and card, reusing the protocol and template hashes below. Core is registered after the pilot audit is final and the oracle evidence exists. protocol.json and prompt_templates_v1.json are frozen for this campaign from now on: a change needs a new protocol version and new cards. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
 }
