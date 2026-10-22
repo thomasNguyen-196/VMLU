@@ -73,9 +73,9 @@ Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile 
 
 - [x] 13.1 Implement `s_noise_reference` (S noise, instability comparison, stable wins, two-draw effect, second S draw against each B draw, oracle with two floors, Holm over four primary tests); verify the hand-worked example in the tests.
 - [x] 13.2 Register MC-92: root block, detail card, registration entry with the frozen manifest hash, the registered limits and the analysis keys; verify the preflight reports every gate PASS with `endpoint_calls=0` and that the registration-lock tests pass.
-- [ ] 13.3 Run `wide-s-r2` with `--supplement wide-s-r2`; verify 1,239 attempts complete, the response model id is constant and the registered limits are recorded.
-- [ ] 13.4 Run `s_noise_reference` on the MC-90, MC-91 and MC-92 scores; report the S drift and the format compliance of the second S draw first, then the instability comparison and the stable wins.
-- [ ] 13.5 Add the dated run record of MC-92 to its detail card after the run ends.
+- [x] 13.3 Run `wide-s-r2` with `--supplement wide-s-r2`; verify 1,239 attempts complete, the response model id is constant and the registered limits are recorded. (2026-10-22 21:38-22:39 +07, one launch, no failed attempt, no endpoint stall.)
+- [x] 13.4 Run `s_noise_reference` on the MC-90, MC-91 and MC-92 scores; report the S drift and the format compliance of the second S draw first, then the instability comparison and the stable wins. (`analysis/s_noise_report.json` under the MC-92 output directory. S drift not significant in either family, 1,235 of 1,239 responses labelled. By the registered rule S is neither more variable than B nor systematically different: reading instability p 0.204 (Holm 0.612) with fewer S-only than B-only changes, stable wins S 62 against B 40 with p 0.037 (Holm 0.148); multiple choice nothing. The two-draw reading effect of +4.0 points (interval +1.6 to +6.6) is an estimate and leaves the registered label unchanged.)
+- [x] 13.5 Add the dated run record of MC-92 to its detail card after the run ends.
 
 ## 12. Semantic review of the MC-90 discordant pairs (AI-assisted, blind; added 2026-10-22)
 
