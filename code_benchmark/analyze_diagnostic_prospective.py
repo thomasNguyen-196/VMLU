@@ -22,10 +22,14 @@ Written and tested before any prospective data exist. The plan is fixed in the c
 * wide supplement MC-91 (a second B draw of every item): `noise_reference` reads that draw against the
   registered first draws of B and S, as drift, B-versus-B noise, S against an independent baseline draw,
   S against the noise on items selected by the first B draw, stable categories and an oracle ceiling with a
-  noise floor. It never replaces the registered S-versus-B analysis of MC-90.
+  noise floor. It never replaces the registered S-versus-B analysis of MC-90;
+* wide supplement MC-92 (a second S draw of every item): `s_noise_reference` adds the sampling noise of S itself,
+  a comparison of how often B and S change their result between two draws, the items one arm wins in both draws,
+  the S-versus-B effect over two draws per arm and the oracle ceiling over each arm's own two draws.
 
 Usage: .venv/bin/python -m code_benchmark.analyze_diagnostic_prospective --scores <scores.jsonl> --phase core
        ... --phase wide --scores <MC-90 scores.jsonl> --noise-scores <MC-91 scores.jsonl> --noise-out <json>
+       ... --s-noise-scores <MC-92 scores.jsonl> --s-noise-out <json>   (needs --noise-scores)
 """
 from __future__ import annotations
 
@@ -512,6 +516,154 @@ def format_noise_report(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+# ---------------------------------------------------------------- S replicate supplement (MC-92)
+
+S_NOISE_FAMILY_KEYS = ("n_items", "accuracy", "s_drift", "s_noise_recovery", "s_noise_recovery_ci95",
+                       "s_noise_regression_rate", "s_noise_regression_ci95", "s_agreement_rate", "flip_comparison",
+                       "stable_wins", "two_draw_effect", "s2_vs_b", "oracle", "mean_f1", "by_dataset_descriptive")
+S_NOISE_TOP_KEYS = ("plan_id", "s_replicate", "items_shared", "items_missing", "families", "s2_format")
+
+
+def _paired_draws(arm_draw: dict[str, bool], base_draw: dict[str, bool], keys: list[str]) -> dict[str, Any]:
+    """Rescues (base wrong, arm right) and regressions (base right, arm wrong) of one draw against another."""
+    rescues = sum((not base_draw[k]) and arm_draw[k] for k in keys)
+    regressions = sum(base_draw[k] and not arm_draw[k] for k in keys)
+    return {"rescues": rescues, "regressions": regressions, "net_gain": (rescues - regressions) / len(keys),
+            "mcnemar_p": mcnemar_exact_p(regressions, rescues)}
+
+
+def s_noise_reference(primary_rows: Iterable[dict[str, Any]], b_noise_rows: Iterable[dict[str, Any]],
+                      s_noise_rows: Iterable[dict[str, Any]], *, protocol: dict[str, Any] | None = None,
+                      s_replicate: int = 2) -> dict[str, Any]:
+    """Supplement MC-92: the second S draw of every wide item read with the first draws of B and S (MC-90) and the
+    second draw of B (MC-91). It never repeats or replaces the registered analyses of MC-90 and MC-91."""
+    protocol = protocol or dp.load_protocol()
+    plan = protocol["analysis"]
+    primary, b_noise = list(primary_rows), list(b_noise_rows)
+    s2_list = [r for r in s_noise_rows if arm_of(r) == "S"]
+    if any(replicate_number(r) != s_replicate for r in s2_list):
+        raise ValueError(f"S noise rows must all be replicate {s_replicate} of arm S")
+
+    def draws(rows: list[dict[str, Any]], arm: str, replicate: int) -> dict[str, dict[str, Any]]:
+        return {item_key_of(r): r for r in rows if arm_of(r) == arm and replicate_number(r) == replicate}
+
+    b1_rows, s1_rows = draws(primary, BASELINE, 1), draws(primary, "S", 1)
+    b2_rows, s2_rows = draws(b_noise, BASELINE, 2), {item_key_of(r): r for r in s2_list}
+    base = set(b1_rows) & set(s1_rows) & set(b2_rows)
+    shared = sorted(base & set(s2_rows))
+    b1, b2, s1, s2 = ({k: attempt_correct(rows[k]) for k in shared} for rows in (b1_rows, b2_rows, s1_rows, s2_rows))
+    cap = protocol["transport"]["max_output_tokens"]
+    report: dict[str, Any] = {
+        "plan_id": plan["plan_id"], "s_replicate": s_replicate, "items_shared": len(shared),
+        "items_missing": len(base - set(s2_rows)), "families": {},
+        "s2_format": {"n": len(s2_list), "format_ok": sum(bool(r.get("format_ok")) for r in s2_list),
+                      "cut_at_cap": sum(r.get("completion_tokens") == cap for r in s2_list)}}
+    for family in FAMILIES:
+        keys = [k for k in shared if family_of(b1_rows[k]) == family]
+        if not keys:
+            continue
+        n = len(keys)
+        s_both = sum(s1[k] and s2[k] for k in keys)
+        s_regress = sum(s1[k] and not s2[k] for k in keys)
+        s_rescue = sum((not s1[k]) and s2[k] for k in keys)
+        s_neither = n - s_both - s_regress - s_rescue
+        s1_wrong, s1_right = s_rescue + s_neither, s_both + s_regress
+        flips_b = {k for k in keys if b1[k] != b2[k]}
+        flips_s = {k for k in keys if s1[k] != s2[k]}
+        b_only, s_only = len(flips_b - flips_s), len(flips_s - flips_b)
+        s_stable = sum(s1[k] and s2[k] and not b1[k] and not b2[k] for k in keys)
+        b_stable = sum(b1[k] and b2[k] and not s1[k] and not s2[k] for k in keys)
+        passage_of = {k: str(b1_rows[k].get("passage_id") or k) for k in keys}
+        diffs = [{"diff": (int(s1[k]) + int(s2[k]) - int(b1[k]) - int(b2[k])) / 2,
+                  "cluster": passage_of[k] if family == "reading" else k} for k in keys]
+
+        observed = sum(b1[k] or s1[k] for k in keys) / n
+        null_b, null_s = sum(b1[k] or b2[k] for k in keys) / n, sum(s1[k] or s2[k] for k in keys) / n
+        block: dict[str, Any] = {
+            "n_items": n,
+            "accuracy": {name: sum(draw[k] for k in keys) / n for name, draw in (("b1", b1), ("b2", b2), ("s1", s1), ("s2", s2))},
+            "s_drift": {"rescues": s_rescue, "regressions": s_regress, "net": (s_rescue - s_regress) / n,
+                        "mcnemar_p": mcnemar_exact_p(s_regress, s_rescue)},
+            "s_noise_recovery": s_rescue / s1_wrong if s1_wrong else None,
+            "s_noise_recovery_ci95": wilson_interval(s_rescue, s1_wrong),
+            "s_noise_regression_rate": s_regress / s1_right if s1_right else None,
+            "s_noise_regression_ci95": wilson_interval(s_regress, s1_right),
+            "s_agreement_rate": (s_both + s_neither) / n,
+            "flip_comparison": {"b_flips": len(flips_b), "s_flips": len(flips_s), "b_flip_rate": len(flips_b) / n,
+                                "s_flip_rate": len(flips_s) / n, "b_only": b_only, "s_only": s_only,
+                                "mcnemar_p": mcnemar_exact_p(b_only, s_only)},
+            "stable_wins": {"s_stable_better": s_stable, "b_stable_better": b_stable,
+                            "sign_test_p": mcnemar_exact_p(b_stable, s_stable)},
+            "two_draw_effect": {
+                "mean_diff": statistics.fmean(d["diff"] for d in diffs),
+                "ci95_pct": clustered_mean_interval(diffs, value_key="diff", cluster_key="cluster",
+                                                    seed=plan["bootstrap_seed"], samples=plan["bootstrap_resamples"])},
+            "s2_vs_b": {"vs_b1": _paired_draws(s2, b1, keys), "vs_b2": _paired_draws(s2, b2, keys)},
+            "oracle": {"b_s_first_draws": observed, "null_b": null_b, "null_s": null_s,
+                       "headroom_over_null_b": observed - null_b, "headroom_over_null_s": observed - null_s},
+            "mean_f1": None,
+        }
+        if family == "reading":
+            f1 = {name: [float(rows[k]["token_f1"]) for k in keys] for name, rows in
+                  (("b1", b1_rows), ("b2", b2_rows), ("s1", s1_rows), ("s2", s2_rows))}
+            block["mean_f1"] = {name: statistics.fmean(values) for name, values in f1.items()}
+            block["mean_f1"]["mean_abs_b1_b2_change"] = statistics.fmean(abs(a - b) for a, b in zip(f1["b1"], f1["b2"], strict=True))
+            block["mean_f1"]["mean_abs_s1_s2_change"] = statistics.fmean(abs(a - b) for a, b in zip(f1["s1"], f1["s2"], strict=True))
+        by_dataset: dict[str, dict[str, Any]] = {}
+        for dataset_id in sorted({k.split(":")[0] for k in keys}):
+            subset = [k for k in keys if k.startswith(dataset_id + ":")]
+            by_dataset[dataset_id] = {
+                "n": len(subset), **{f"accuracy_{name}": sum(draw[k] for k in subset) / len(subset)
+                                     for name, draw in (("b1", b1), ("b2", b2), ("s1", s1), ("s2", s2))},
+                "b_flips": sum(b1[k] != b2[k] for k in subset), "s_flips": sum(s1[k] != s2[k] for k in subset)}
+        block["by_dataset_descriptive"] = by_dataset
+        report["families"][family] = block
+    adjusted = holm_adjust({f"{family}:{name}": block[name][key]  # Holm over the four primary tests of the card
+                            for family, block in report["families"].items()
+                            for name, key in (("flip_comparison", "mcnemar_p"), ("stable_wins", "sign_test_p"))})
+    for family, block in report["families"].items():
+        block["flip_comparison"]["mcnemar_p_holm"] = adjusted[f"{family}:flip_comparison"]
+        block["stable_wins"]["sign_test_p_holm"] = adjusted[f"{family}:stable_wins"]
+    return report
+
+
+def format_s_noise_report(report: dict[str, Any]) -> str:
+    def pct(x):
+        return "-" if x is None else f"{100 * x:.1f}%"
+
+    def span(c):  # Wilson intervals are already in percent
+        return "-" if not c else f"[{c[0]:.1f}, {c[1]:.1f}]"
+
+    fmt = report["s2_format"]
+    ok_pct = 100 * fmt["format_ok"] / fmt["n"] if fmt["n"] else float("nan")
+    lines = [f"S replicate {report['s_replicate']} over {report['items_shared']} items (missing: {report['items_missing']}); "
+             f"final-answer label {fmt['format_ok']}/{fmt['n']} ({ok_pct:.1f}%), cut at the token cap {fmt['cut_at_cap']}"]
+    for family, b in report["families"].items():
+        acc, drift, flips, wins = b["accuracy"], b["s_drift"], b["flip_comparison"], b["stable_wins"]
+        eff, vs1, vs2, orc = b["two_draw_effect"], b["s2_vs_b"]["vs_b1"], b["s2_vs_b"]["vs_b2"], b["oracle"]
+        lines += [
+            f"[{family}] items={b['n_items']}  accuracy B1 {pct(acc['b1'])}  B2 {pct(acc['b2'])}  S1 {pct(acc['s1'])}  S2 {pct(acc['s2'])}",
+            f"  S drift S1->S2: rescues {drift['rescues']} regressions {drift['regressions']} net {pct(drift['net'])} "
+            f"p={drift['mcnemar_p']:.3f} | agreement {pct(b['s_agreement_rate'])}",
+            f"  S-vs-S noise: recovery {pct(b['s_noise_recovery'])} {span(b['s_noise_recovery_ci95'])}  "
+            f"regression {pct(b['s_noise_regression_rate'])} {span(b['s_noise_regression_ci95'])}",
+            f"  instability (items that change between two draws): B {flips['b_flips']} ({pct(flips['b_flip_rate'])}), "
+            f"S {flips['s_flips']} ({pct(flips['s_flip_rate'])}); B only {flips['b_only']}, S only {flips['s_only']}; "
+            f"p={flips['mcnemar_p']:.3f} (Holm {flips['mcnemar_p_holm']:.3f})",
+            f"  stable wins (better in both draws): S {wins['s_stable_better']}, B {wins['b_stable_better']}; "
+            f"p={wins['sign_test_p']:.3f} (Holm {wins['sign_test_p_holm']:.3f})",
+            f"  two-draw effect S - B: {100 * eff['mean_diff']:+.2f} pts CI95 [{eff['ci95_pct'][0]:+.2f}, {eff['ci95_pct'][1]:+.2f}]",
+            f"  S2 vs B1: rescues {vs1['rescues']} regressions {vs1['regressions']} net {pct(vs1['net_gain'])} p={vs1['mcnemar_p']:.3f}; "
+            f"S2 vs B2: rescues {vs2['rescues']} regressions {vs2['regressions']} net {pct(vs2['net_gain'])} p={vs2['mcnemar_p']:.3f}",
+            f"  oracle B1/S1 {pct(orc['b_s_first_draws'])} vs B/B null {pct(orc['null_b'])} (headroom {pct(orc['headroom_over_null_b'])}) "
+            f"and S/S null {pct(orc['null_s'])} (headroom {pct(orc['headroom_over_null_s'])})"]
+        if b["mean_f1"]:
+            f = b["mean_f1"]
+            lines.append(f"  mean token-F1 B1 {100 * f['b1']:.1f} B2 {100 * f['b2']:.1f} S1 {100 * f['s1']:.1f} S2 {100 * f['s2']:.1f}; "
+                         f"mean |B1-B2| {100 * f['mean_abs_b1_b2_change']:.1f} pts, mean |S1-S2| {100 * f['mean_abs_s1_s2_change']:.1f} pts")
+    return "\n".join(lines)
+
+
 def format_report(report: dict[str, Any]) -> str:
     def pct(x):
         return "-" if x is None else f"{100 * x:.1f}%"
@@ -563,9 +715,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--noise-scores", type=Path,
                         help="scores.jsonl of the B-replicate supplement (MC-91): adds the sampling-noise reference")
     parser.add_argument("--noise-out", type=Path, help="write the noise-reference report as JSON")
+    parser.add_argument("--s-noise-scores", type=Path,
+                        help="scores.jsonl of the S-replicate supplement (MC-92); needs --noise-scores (the second B draw)")
+    parser.add_argument("--s-noise-out", type=Path, help="write the S-replicate report as JSON")
     args = parser.parse_args(argv)
     if args.noise_scores and args.phase != "wide":
         parser.error("--noise-scores applies to the wide phase (supplement wide-b-r2)")
+    if args.s_noise_scores and not (args.noise_scores and args.phase == "wide"):
+        parser.error("--s-noise-scores applies to the wide phase and needs --noise-scores")
     rows = [json.loads(line) for line in args.scores.read_text(encoding="utf-8").splitlines() if line.strip()]
     report = analyze(rows, phase=args.phase)
     print(format_report(report))
@@ -575,6 +732,12 @@ def main(argv: list[str] | None = None) -> int:
         print("\n" + format_noise_report(noise))
         if args.noise_out:
             args.noise_out.write_text(json.dumps(noise, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if args.s_noise_scores:
+            s_rows = [json.loads(line) for line in args.s_noise_scores.read_text(encoding="utf-8").splitlines() if line.strip()]
+            s_noise = s_noise_reference(rows, noise_rows, s_rows)
+            print("\n" + format_s_noise_report(s_noise))
+            if args.s_noise_out:
+                args.s_noise_out.write_text(json.dumps(s_noise, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.out:
         args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.discordant_out:
