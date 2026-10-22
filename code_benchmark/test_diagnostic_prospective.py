@@ -607,5 +607,120 @@ class TestRunner(unittest.TestCase):
         self.assertEqual((manifest["item_count"], manifest["arm_counts"]), (1239, {"B": 1239, "S": 1239}))
 
 
+SUPPLEMENT_DESIGN = {"base_phase": "wide", "arms": ["B"], "first_replicate": 2, "replicates": 1}
+
+
+class TestSupplements(unittest.TestCase):
+    """A supplement re-runs registered arms under further replicate numbers, with its own card and manifest."""
+
+    def registered(self, **operational):
+        """The committed registration plus a supplement whose card is the existing MC-90 one (no MC-91 needed)."""
+        manifest, _ = dp.build_manifest("wide", supplement={**SUPPLEMENT_DESIGN, "supplement_id": "wide-b-r2"})
+        entry = {**SUPPLEMENT_DESIGN, "card_id": "MC-90", "card_file": "docs/measurement_cards/MC-90-diagnostic-prospective-wide.md",
+                 "frozen": {"manifest_sha256": manifest["manifest_sha256"]}, "operational": operational}
+        return {**dp.load_registration(), "supplements": {"wide-b-r2": entry}}
+
+    def test_design_is_validated_against_the_registered_phase(self):
+        self.assertEqual(dp.validate_supplement("s", dict(SUPPLEMENT_DESIGN), PROTOCOL)["arms"], ["B"])
+        for why, change in (("unknown base phase", {"base_phase": "nowhere"}), ("no arm", {"arms": []}),
+                            ("arm outside the phase", {"arms": ["O"]}), ("collides with the registered replicate", {"first_replicate": 1}),
+                            ("empty", {"replicates": 0}), ("wrong type", {"first_replicate": "2"}),
+                            ("evidence arm", {"base_phase": "core", "arms": ["O"], "first_replicate": 4})):
+            with self.subTest(why), self.assertRaises(SystemExit):
+                dp.validate_supplement("s", {**SUPPLEMENT_DESIGN, **change}, PROTOCOL)
+        with self.assertRaises(SystemExit):
+            dp.validate_supplement("s", {key: value for key, value in SUPPLEMENT_DESIGN.items() if key != "arms"}, PROTOCOL)
+
+    def test_only_registered_supplements_load(self):
+        registration = {"supplements": {"s": dict(SUPPLEMENT_DESIGN)}}
+        self.assertEqual(dp.load_supplement(registration, "s", PROTOCOL)["supplement_id"], "s")
+        for missing in ({"supplements": {}}, {}):
+            with self.assertRaises(SystemExit):
+                dp.load_supplement(missing, "s", PROTOCOL)
+
+    @unittest.skipUnless(DATA_OK, "frozen main-v1 sources or the locked pilot packet are not available")
+    def test_manifest_reuses_the_baseline_prompts_under_new_replicate_numbers(self):
+        registered, _ = dp.build_manifest("wide")
+        manifest, rebuilt = dp.build_manifest("wide", supplement={**SUPPLEMENT_DESIGN, "supplement_id": "wide-b-r2"})
+        self.assertEqual((manifest["n"], manifest["item_count"], manifest["arm_counts"]), (1239, 1239, {"B": 1239}))
+        self.assertEqual({row["replicate_id"] for row in manifest["items"]}, {"B-r2"})
+        self.assertEqual((manifest["supplement_id"], manifest["supplement_design"]), ("wide-b-r2", SUPPLEMENT_DESIGN))
+        baseline = {(r["dataset_id"], r["item_id"]): r for r in registered["items"] if r["replicate_id"] == "B-r1"}
+        for row in manifest["items"]:  # same prompt, same gold, only the replicate label differs
+            reference = baseline[(row["dataset_id"], row["item_id"])]
+            self.assertEqual([row[k] for k in ("prompt_sha256", "input_sha256", "gold_sha256")],
+                             [reference[k] for k in ("prompt_sha256", "input_sha256", "gold_sha256")])
+        self.assertFalse({dp.run_key(r) for r in manifest["items"]} & {dp.run_key(r) for r in registered["items"]})
+        self.assertNotEqual(manifest["manifest_sha256"], registered["manifest_sha256"])
+        self.assertNotIn("supplement_id", registered)  # the registered MC-90 manifest never carries the new keys
+        self.assertEqual(len(dp.verify_manifest_rows(manifest, rebuilt)), 1239)
+        with self.assertRaises(SystemExit):
+            dp.build_manifest("core", supplement={**SUPPLEMENT_DESIGN, "supplement_id": "wide-b-r2"})
+
+    def test_gates_use_the_supplements_own_card_and_manifest_hash(self):
+        registration = {"status": "x", "card_ids": {"wide": "MC-90"}, "card_files": {"wide": "a.md"},
+                        "frozen": {"protocol_sha256": "p" * 64, "prompt_templates_sha256": "t" * 64,
+                                   "manifest_sha256": {"wide": "w" * 64}}}
+        supplement = {**SUPPLEMENT_DESIGN, "supplement_id": "s", "card_id": "MC-901", "card_file": "measurement_card.md",
+                      "frozen": {"manifest_sha256": "m" * 64}}
+        view = runner.supplement_registration_view(registration, supplement, "wide")
+        self.assertEqual((view["card_ids"], view["frozen"]["manifest_sha256"]), ({"wide": "MC-901"}, {"wide": "m" * 64}))
+        manifest = {"campaign_protocol_sha256": "p" * 64, "prompt_templates_sha256": "t" * 64,
+                    "manifest_sha256": "m" * 64, "evidence_sha256": {}}
+        gates = lambda m: {g.name: g for g in runner.evaluate_gates(  # noqa: E731
+            "wide", PROTOCOL, m, view, TestRunner.ENV, card_text="## MC-901 — test\n")}
+        self.assertTrue(all(g.ok for g in gates(manifest).values()))
+        self.assertFalse(gates({**manifest, "manifest_sha256": "x" * 64})["frozen_hashes"].ok)
+
+    def test_condition_freezes_the_design_and_the_registered_operational_limits(self):
+        manifest = {"manifest_sha256": "m" * 64, "parent_manifest_sha256": "a" * 64, "campaign_protocol_sha256": "p" * 64,
+                    "prompt_templates_sha256": "t" * 64, "evidence_sha256": {}, "pilot_content_sha256": "c" * 64,
+                    "dataset_counts": {}, "arm_counts": {"B": 1}, "supplement_design": SUPPLEMENT_DESIGN}
+        view = {"card_ids": {"wide": "MC-901"}, "card_files": {"wide": "measurement_card.md"}}
+        supplement = {**SUPPLEMENT_DESIGN, "supplement_id": "s", "operational": {"max_in_flight": 4, "stop_after_timeouts": 4}}
+        args = ("wide", PROTOCOL, manifest, view, "http://llmapi.iec/v1", "v1", Path(runner.__file__))
+        plain = runner.build_condition(*args)
+        condition = runner.build_condition(*args, supplement=supplement)
+        self.assertEqual((condition["supplement_id"], condition["operational"]),
+                         ("s", {"max_in_flight": 4, "stop_after_timeouts": 4}))
+        self.assertNotIn("supplement_id", plain)  # the registered MC-90 condition is not touched
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            (output / "condition.json").write_text(json.dumps(condition), encoding="utf-8")
+            self.assertEqual(runner.reconcile_resume(output, condition, True), condition)
+            other = runner.build_condition(*args, supplement={**supplement, "operational": {"max_in_flight": 8}})
+            with self.assertRaises(SystemExit):  # a resume cannot loosen the registered limits
+                runner.reconcile_resume(output, other, True)
+
+    @unittest.skipUnless(DATA_OK, "frozen main-v1 sources or the locked pilot packet are not available")
+    def test_cli_runs_a_registered_supplement_and_refuses_inconsistent_requests(self):
+        registration = self.registered(max_in_flight=4, stop_after_timeouts=4)
+        out = io.StringIO()
+        with patch.object(runner.dp, "load_registration", return_value=registration), \
+                patch.object(runner.base, "execute") as execute:
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(runner.main(["--phase", "wide", "--supplement", "wide-b-r2", "--max-in-flight", "4"]), 0)
+            self.assertIn("supplement=wide-b-r2", out.getvalue())
+            self.assertIn("attempts=1239", out.getvalue())
+            self.assertIn("frozen_hashes=PASS", out.getvalue())
+            self.assertIn("endpoint_calls=0", out.getvalue())
+            for argv in (["--phase", "wide", "--supplement", "wide-b-r2", "--max-in-flight", "2"],   # not the registered 4
+                         ["--phase", "core", "--supplement", "wide-b-r2"],                              # wrong phase
+                         ["--phase", "wide", "--supplement", "wide-b-r2", "--oracle-evidence", "x.jsonl"]):
+                with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+                    runner.main(argv)
+                self.assertEqual(caught.exception.code, 2, argv)
+            with self.assertRaises(SystemExit):
+                runner.main(["--phase", "wide", "--supplement", "not-registered"])
+        execute.assert_not_called()
+
+    def test_launch_records_name_the_supplement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            runner.record_launch(Path(tmp), "wide", resume=False, max_in_flight=4, stop_after_timeouts=4, note="",
+                                 lanes=12, supplement_id="wide-b-r2")
+            event = json.loads((Path(tmp) / "operator_events.jsonl").read_text().splitlines()[0])
+        self.assertEqual(event["supplement_id"], "wide-b-r2")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -284,6 +284,98 @@ class TestRealScoringRows(unittest.TestCase):
         self.assertEqual(an.semantic_audit_candidates(scored, 0.8), [])  # "1997" shares no token with "1998"
 
 
+class TestBReplicateSupplement(unittest.TestCase):
+    """MC-91: a second B draw of every wide item. Hand-worked example with 10 multiple-choice items:
+    B1 right on 0-4, B2 right on 0, 1, 2, 5, S1 right on 0, 1, 3, 5, 6."""
+
+    B1, B2, S1 = {0, 1, 2, 3, 4}, {0, 1, 2, 5}, {0, 1, 3, 5, 6}
+
+    def rows(self):
+        primary = [r for i in range(10) for r in (mc_row("B", i, 1, i in self.B1), mc_row("S", i, 1, i in self.S1))]
+        return primary, [mc_row("B", i, 2, i in self.B2) for i in range(10)]
+
+    def report(self):
+        return an.noise_reference(*self.rows())
+
+    def test_drift_and_noise_counts(self):
+        b = self.report()["families"]["mc"]
+        # items 3 and 4 were right then wrong, item 5 wrong then right, 0-2 stay right and 6-9 stay wrong
+        self.assertEqual((b["n_items"], b["drift"]["rescues"], b["drift"]["regressions"]), (10, 1, 2))
+        self.assertAlmostEqual(b["drift"]["net"], -0.1)
+        self.assertEqual(b["drift"]["mcnemar_p"], 1.0)  # 3 discordant items: min(1, 2 * 4 / 8)
+        self.assertEqual((b["noise_recovery"], b["noise_regression_rate"]), (1 / 5, 2 / 5))  # B1 wrong on 5, right on 5
+        self.assertEqual(b["agreement_rate"], 0.7)
+        self.assertEqual(b["accuracy"], {"b1": 0.5, "b2": 0.4, "s1": 0.5})
+
+    def test_s_against_the_independent_baseline_draw(self):
+        sb2 = self.report()["families"]["mc"]["s_vs_b2"]
+        # B2 wrong on 3, 4, 6-9 and S1 right on 3 and 6; B2 right on 0, 1, 2, 5 and S1 wrong on 2
+        self.assertEqual((sb2["rescues"], sb2["regressions"]), (2, 1))
+        self.assertEqual((sb2["recovery"], sb2["regression_rate"]), (2 / 6, 1 / 4))
+        self.assertAlmostEqual(sb2["net_gain"], 0.1)
+        self.assertEqual(len(sb2["net_gain_ci95_pct"]), 2)
+
+    def test_s_against_the_noise_on_items_selected_by_the_first_baseline_draw(self):
+        b = self.report()["families"]["mc"]
+        wrong, right = b["s_vs_noise_given_b1_wrong"], b["s_vs_noise_given_b1_right"]
+        # B1 wrong on 5-9: S1 right on 5 and 6, the second B draw right on 5 only
+        self.assertEqual([wrong[k] for k in ("n", "s_count", "b2_count", "s_only", "b2_only")], [5, 2, 1, 1, 0])
+        self.assertAlmostEqual(wrong["difference"], 0.2)
+        # B1 right on 0-4: S1 wrong on 2 and 4, B2 wrong on 3 and 4 -> S wrong only on 2, B2 wrong only on 3
+        self.assertEqual([right[k] for k in ("n", "s_count", "b2_count", "s_only", "b2_only")], [5, 2, 2, 1, 1])
+        self.assertEqual(right["difference"], 0.0)
+        self.assertEqual((wrong["mcnemar_p"], wrong["mcnemar_p_holm"], right["mcnemar_p_holm"]), (1.0, 1.0, 1.0))
+
+    def test_holm_runs_over_the_conditional_contrasts_of_both_families(self):
+        # reading: 8 items; B1 wrong on all of them; S1 right on all, B2 right on none -> s_only 8, p = 2/2^8
+        primary = [r for i in range(8) for r in (rd_row("B", i, 1, False), rd_row("S", i, 1, True))]
+        noise = [rd_row("B", i, 2, False) for i in range(8)]
+        mc_primary, mc_noise = self.rows()
+        report = an.noise_reference(primary + mc_primary, noise + mc_noise)
+        wrong = report["families"]["reading"]["s_vs_noise_given_b1_wrong"]
+        self.assertAlmostEqual(wrong["mcnemar_p"], 2 / 2 ** 8)
+        # four tests, the smallest p is multiplied by 4; the others are 1.0 (no B1-right items in reading, so p = 1)
+        self.assertAlmostEqual(wrong["mcnemar_p_holm"], 4 * 2 / 2 ** 8)
+        self.assertEqual(report["families"]["reading"]["s_vs_noise_given_b1_right"]["n"], 0)
+
+    def test_stable_categories_and_oracle_with_a_noise_floor(self):
+        b = self.report()["families"]["mc"]
+        self.assertEqual(b["stable"], {"both_correct": 3, "both_wrong": 4, "unstable": 3,
+                                       "s_correct_on_both_wrong": 1, "s_wrong_on_both_correct": 1})
+        # B or S right on 0-6 (0.7); B1 or B2 right on 0-5 (0.6)
+        self.assertEqual((b["oracle"]["observed"], b["oracle"]["null_from_baseline_replicates"]), (0.7, 0.6))
+        self.assertAlmostEqual(b["oracle"]["headroom_over_null"], 0.1)
+
+    def test_reading_reports_token_f1_and_the_dataset_split(self):
+        primary = [rd_row("B", 0, 1, True), rd_row("S", 0, 1, True), rd_row("B", 1, 1, False, f1=0.5),
+                   rd_row("S", 1, 1, True), rd_row("B", 2, 1, False, f1=0.1), rd_row("S", 2, 1, False, f1=0.3)]
+        noise = [rd_row("B", 0, 2, True), rd_row("B", 1, 2, False, f1=0.7), rd_row("B", 2, 2, True)]
+        block = an.noise_reference(primary, noise)["families"]["reading"]
+        # token_f1 is 1.0 when the exact match holds: B1 = (1, .5, .1), B2 = (1, .7, 1), S1 = (1, 1, .3)
+        f = block["mean_f1"]
+        self.assertAlmostEqual(f["b1"], 1.6 / 3)
+        self.assertAlmostEqual(f["b2"], 2.7 / 3)
+        self.assertAlmostEqual(f["s1"], 2.3 / 3)
+        self.assertAlmostEqual(f["mean_abs_b1_b2_change"], 1.1 / 3)
+        self.assertEqual(set(block["by_dataset_descriptive"]), {RD})
+        self.assertIsNone(self.report()["families"]["mc"]["mean_f1"])
+
+    def test_missing_items_are_reported_and_a_wrong_replicate_is_refused(self):
+        primary, noise = self.rows()
+        partial = an.noise_reference(primary, noise[:7])
+        self.assertEqual((partial["items_shared"], partial["items_missing_in_noise_run"]), (7, 3))
+        with self.assertRaises(ValueError):
+            an.noise_reference(primary, [mc_row("B", 0, 3, True)])
+
+    def test_second_draw_is_held_to_the_parity_reference_and_prints(self):
+        report = self.report()
+        self.assertEqual(report["parity_gate_b2"]["datasets"][MC]["observed"], 40.0)
+        self.assertFalse(report["parity_gate_b2"]["all_within"])
+        text = an.format_noise_report(report)
+        for phrase in ("drift B1->B2", "B-vs-B noise", "given B1 wrong", "oracle B/S"):
+            self.assertIn(phrase, text)
+
+
 class TestPlanConsistency(unittest.TestCase):
     def test_protocol_names_every_metric_the_analysis_reports(self):
         named = set(dp.load_protocol()["analysis"]["metrics"])

@@ -18,9 +18,14 @@ Written and tested before any prospective data exist. The plan is fixed in the c
 * wide only: a parity gate comparing B per dataset with the MC-83 reference interval;
 * oracle-routing ceilings are always reported next to the ceiling over B replicates alone;
 * every discordant item is exported in both directions for human semantic review, and reading items with
-  token-F1 at or above the threshold but exact match zero are listed as audit candidates, never as correct.
+  token-F1 at or above the threshold but exact match zero are listed as audit candidates, never as correct;
+* wide supplement MC-91 (a second B draw of every item): `noise_reference` reads that draw against the
+  registered first draws of B and S, as drift, B-versus-B noise, S against an independent baseline draw,
+  S against the noise on items selected by the first B draw, stable categories and an oracle ceiling with a
+  noise floor. It never replaces the registered S-versus-B analysis of MC-90.
 
 Usage: .venv/bin/python -m code_benchmark.analyze_diagnostic_prospective --scores <scores.jsonl> --phase core
+       ... --phase wide --scores <MC-90 scores.jsonl> --noise-scores <MC-91 scores.jsonl> --noise-out <json>
 """
 from __future__ import annotations
 
@@ -355,6 +360,158 @@ def analyze(rows: Iterable[dict[str, Any]], *, phase: str, protocol: dict[str, A
     return report
 
 
+# ---------------------------------------------------------------- B replicate supplement (MC-91)
+
+NOISE_FAMILY_KEYS = ("n_items", "accuracy", "drift", "noise_recovery", "noise_recovery_ci95", "noise_regression_rate",
+                     "noise_regression_ci95", "agreement_rate", "s_vs_b2", "s_vs_noise_given_b1_wrong",
+                     "s_vs_noise_given_b1_right", "stable", "oracle", "mean_f1", "by_dataset_descriptive")
+NOISE_TOP_KEYS = ("plan_id", "noise_replicate", "items_shared", "items_missing_in_noise_run", "families",
+                  "parity_gate_b2")
+
+
+def _conditional_contrast(items: list[str], s: dict[str, bool], b2: dict[str, bool], *, wrong: bool) -> dict[str, Any]:
+    """Two fresh draws (S and the second B) compared on items selected by the first B draw. The selection acts on
+    the first draw only, so regression to the mean affects both comparands alike and cancels in the difference."""
+    flag = (lambda ok: not ok) if wrong else (lambda ok: ok)
+    only_s = sum(flag(s[k]) and not flag(b2[k]) for k in items)
+    only_b2 = sum(flag(b2[k]) and not flag(s[k]) for k in items)
+    n = len(items)
+    return {"n": n, "s_count": sum(flag(s[k]) for k in items), "b2_count": sum(flag(b2[k]) for k in items),
+            "s_only": only_s, "b2_only": only_b2, "difference": (only_s - only_b2) / n if n else None,
+            "mcnemar_p": mcnemar_exact_p(only_s, only_b2)}
+
+
+def noise_reference(primary_rows: Iterable[dict[str, Any]], noise_rows: Iterable[dict[str, Any]], *,
+                    protocol: dict[str, Any] | None = None, noise_replicate: int = 2) -> dict[str, Any]:
+    """Sampling-noise reference for wide (supplement MC-91): the second B draw of every item read against the
+    registered first draws of B and S. It never replaces the registered S-versus-B analysis."""
+    protocol = protocol or dp.load_protocol()
+    plan = protocol["analysis"]
+    primary = list(primary_rows)
+    noise = [r for r in noise_rows if arm_of(r) == BASELINE]
+    if any(replicate_number(r) != noise_replicate for r in noise):
+        raise ValueError(f"noise rows must all be replicate {noise_replicate} of arm B")
+
+    def first_draws(arm: str) -> dict[str, dict[str, Any]]:
+        return {item_key_of(r): r for r in primary if arm_of(r) == arm and replicate_number(r) == 1}
+
+    b1_rows, s1_rows, b2_rows = first_draws(BASELINE), first_draws("S"), {item_key_of(r): r for r in noise}
+    shared = sorted(set(b1_rows) & set(s1_rows) & set(b2_rows))
+    b1, s1, b2 = ({k: attempt_correct(rows[k]) for k in shared} for rows in (b1_rows, s1_rows, b2_rows))
+    report: dict[str, Any] = {
+        "plan_id": plan["plan_id"], "noise_replicate": noise_replicate, "items_shared": len(shared),
+        "items_missing_in_noise_run": len((set(b1_rows) & set(s1_rows)) - set(b2_rows)), "families": {},
+        "parity_gate_b2": parity_gate(noise, protocol)}
+    for family in FAMILIES:
+        keys = [k for k in shared if family_of(b1_rows[k]) == family]
+        if not keys:
+            continue
+        n = len(keys)
+        both_ok = sum(b1[k] and b2[k] for k in keys)
+        regress = sum(b1[k] and not b2[k] for k in keys)
+        rescue = sum((not b1[k]) and b2[k] for k in keys)
+        both_wrong = n - both_ok - regress - rescue
+        b1_wrong, b1_right = rescue + both_wrong, both_ok + regress
+        passage_of = {k: str(b1_rows[k].get("passage_id") or k) for k in keys}
+        s_rescue = sum((not b2[k]) and s1[k] for k in keys)
+        s_regress = sum(b2[k] and not s1[k] for k in keys)
+        b2_wrong, b2_right = sum(not b2[k] for k in keys), sum(b2[k] for k in keys)
+        diffs = [{"diff": int(s1[k]) - int(b2[k]), "cluster": passage_of[k] if family == "reading" else k} for k in keys]
+        member = set(keys)
+        oracle_rows = [r for r in primary + noise if item_key_of(r) in member]
+        block: dict[str, Any] = {
+            "n_items": n,
+            "accuracy": {"b1": b1_right / n, "b2": b2_right / n, "s1": sum(s1[k] for k in keys) / n},
+            "drift": {"rescues": rescue, "regressions": regress, "net": (rescue - regress) / n,
+                      "mcnemar_p": mcnemar_exact_p(regress, rescue)},
+            "noise_recovery": rescue / b1_wrong if b1_wrong else None,
+            "noise_recovery_ci95": wilson_interval(rescue, b1_wrong),
+            "noise_regression_rate": regress / b1_right if b1_right else None,
+            "noise_regression_ci95": wilson_interval(regress, b1_right),
+            "agreement_rate": (both_ok + both_wrong) / n,
+            "s_vs_b2": {
+                "rescues": s_rescue, "regressions": s_regress,
+                "recovery": s_rescue / b2_wrong if b2_wrong else None,
+                "regression_rate": s_regress / b2_right if b2_right else None,
+                "net_gain": (s_rescue - s_regress) / n, "mcnemar_p": mcnemar_exact_p(s_regress, s_rescue),
+                "net_gain_ci95_pct": clustered_mean_interval(diffs, value_key="diff", cluster_key="cluster",
+                                                             seed=plan["bootstrap_seed"], samples=plan["bootstrap_resamples"])},
+            "s_vs_noise_given_b1_wrong": _conditional_contrast([k for k in keys if not b1[k]], s1, b2, wrong=False),
+            "s_vs_noise_given_b1_right": _conditional_contrast([k for k in keys if b1[k]], s1, b2, wrong=True),
+            "stable": {"both_correct": both_ok, "both_wrong": both_wrong, "unstable": regress + rescue,
+                       "s_correct_on_both_wrong": sum(s1[k] for k in keys if not b1[k] and not b2[k]),
+                       "s_wrong_on_both_correct": sum(not s1[k] for k in keys if b1[k] and b2[k])},
+            "oracle": oracle_ceilings(oracle_rows),
+            "mean_f1": None,
+        }
+        if family == "reading":
+            f1 = {name: [float(rows[k]["token_f1"]) for k in keys] for name, rows in
+                  (("b1", b1_rows), ("b2", b2_rows), ("s1", s1_rows))}
+            block["mean_f1"] = {name: statistics.fmean(values) for name, values in f1.items()}
+            block["mean_f1"]["mean_abs_b1_b2_change"] = statistics.fmean(abs(a - b) for a, b in zip(f1["b1"], f1["b2"], strict=True))
+        by_dataset: dict[str, dict[str, Any]] = {}
+        for dataset_id in sorted({k.split(":")[0] for k in keys}):
+            subset = [k for k in keys if k.startswith(dataset_id + ":")]
+            by_dataset[dataset_id] = {
+                "n": len(subset), "accuracy_b1": sum(b1[k] for k in subset) / len(subset),
+                "accuracy_b2": sum(b2[k] for k in subset) / len(subset),
+                "accuracy_s1": sum(s1[k] for k in subset) / len(subset),
+                "b1_b2_flips": sum(b1[k] != b2[k] for k in subset)}
+        block["by_dataset_descriptive"] = by_dataset
+        report["families"][family] = block
+    conditional = ("s_vs_noise_given_b1_wrong", "s_vs_noise_given_b1_right")
+    adjusted = holm_adjust({f"{family}:{name}": block[name]["mcnemar_p"]
+                            for family, block in report["families"].items() for name in conditional})
+    for family, block in report["families"].items():  # Holm over the conditional contrasts (families x conditions)
+        for name in conditional:
+            block[name]["mcnemar_p_holm"] = adjusted[f"{family}:{name}"]
+    return report
+
+
+def format_noise_report(report: dict[str, Any]) -> str:
+    def pct(x):
+        return "-" if x is None else f"{100 * x:.1f}%"
+
+    def span(c):
+        return "-" if not c else f"[{100 * c[0]:.1f}, {100 * c[1]:.1f}]"
+
+    parity = report["parity_gate_b2"]
+    lines = [f"B replicate {report['noise_replicate']} over {report['items_shared']} items "
+             f"(missing in the noise run: {report['items_missing_in_noise_run']})",
+             f"parity gate of the second B draw vs MC-83: "
+             f"{'PASS' if parity['all_within'] else 'FAIL - the drift check below decides how to read this run'}"]
+    for dataset_id, v in parity["datasets"].items():
+        if v:
+            lines.append(f"  {dataset_id.split('-v1-')[-1]:<14}{v['metric']:<9}{v['observed']:>7.2f}  ref {v['reference']:.2f} "
+                         f"[{v['reference_ci95'][0]:.2f}, {v['reference_ci95'][1]:.2f}] {'ok' if v['within_reference_ci'] else 'OUT'}")
+    for family, b in report["families"].items():
+        acc, drift, sb2 = b["accuracy"], b["drift"], b["s_vs_b2"]
+        lines += [
+            f"[{family}] items={b['n_items']}  accuracy B1 {pct(acc['b1'])}  B2 {pct(acc['b2'])}  S1 {pct(acc['s1'])}",
+            f"  drift B1->B2: rescues {drift['rescues']} regressions {drift['regressions']} net {pct(drift['net'])} "
+            f"p={drift['mcnemar_p']:.3f} | agreement {pct(b['agreement_rate'])}",
+            f"  B-vs-B noise: recovery {pct(b['noise_recovery'])} {span(b['noise_recovery_ci95'])}  "
+            f"regression {pct(b['noise_regression_rate'])} {span(b['noise_regression_ci95'])}",
+            f"  S1 vs B2 (independent baseline draw): rescues {sb2['rescues']} regressions {sb2['regressions']} "
+            f"net {pct(sb2['net_gain'])} CI95 pts [{sb2['net_gain_ci95_pct'][0]:.1f}, {sb2['net_gain_ci95_pct'][1]:.1f}] "
+            f"p={sb2['mcnemar_p']:.3f}"]
+        for label, key in (("B1 wrong", "s_vs_noise_given_b1_wrong"), ("B1 right", "s_vs_noise_given_b1_right")):
+            c = b[key]
+            what = "S correct" if key.endswith("wrong") else "S wrong"
+            lines.append(f"  given {label} (n={c['n']}): {what} {c['s_count']} vs second B draw {c['b2_count']} "
+                         f"diff {pct(c['difference'])} p={c['mcnemar_p']:.3f} (Holm {c['mcnemar_p_holm']:.3f})")
+        st, orc = b["stable"], b["oracle"]
+        lines.append(f"  stable: both correct {st['both_correct']}, both wrong {st['both_wrong']}, unstable {st['unstable']}; "
+                     f"S correct on both-wrong {st['s_correct_on_both_wrong']}, S wrong on both-correct {st['s_wrong_on_both_correct']}")
+        lines.append(f"  oracle B/S {pct(orc['observed'])} vs B/B null {pct(orc['null_from_baseline_replicates'])} "
+                     f"headroom {pct(orc['headroom_over_null'])}")
+        if b["mean_f1"]:
+            f = b["mean_f1"]
+            lines.append(f"  mean token-F1 B1 {100 * f['b1']:.1f} B2 {100 * f['b2']:.1f} S1 {100 * f['s1']:.1f}; "
+                         f"mean |B1-B2| {100 * f['mean_abs_b1_b2_change']:.1f} pts")
+    return "\n".join(lines)
+
+
 def format_report(report: dict[str, Any]) -> str:
     def pct(x):
         return "-" if x is None else f"{100 * x:.1f}%"
@@ -403,10 +560,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase", choices=dp.PHASES, required=True)
     parser.add_argument("--out", type=Path, help="write the full report as JSON")
     parser.add_argument("--discordant-out", type=Path, help="write discordant pairs (both directions) as JSONL")
+    parser.add_argument("--noise-scores", type=Path,
+                        help="scores.jsonl of the B-replicate supplement (MC-91): adds the sampling-noise reference")
+    parser.add_argument("--noise-out", type=Path, help="write the noise-reference report as JSON")
     args = parser.parse_args(argv)
+    if args.noise_scores and args.phase != "wide":
+        parser.error("--noise-scores applies to the wide phase (supplement wide-b-r2)")
     rows = [json.loads(line) for line in args.scores.read_text(encoding="utf-8").splitlines() if line.strip()]
     report = analyze(rows, phase=args.phase)
     print(format_report(report))
+    if args.noise_scores:
+        noise_rows = [json.loads(line) for line in args.noise_scores.read_text(encoding="utf-8").splitlines() if line.strip()]
+        noise = noise_reference(rows, noise_rows)
+        print("\n" + format_noise_report(noise))
+        if args.noise_out:
+            args.noise_out.write_text(json.dumps(noise, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.out:
         args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.discordant_out:

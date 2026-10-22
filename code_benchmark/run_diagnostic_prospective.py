@@ -324,10 +324,32 @@ def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: Budg
 
 # ---------------------------------------------------------------- condition, scoring, execution
 
-def build_condition(phase: str, protocol: dict[str, Any], manifest: dict[str, Any], registration: dict[str, Any],
-                    endpoint: str, templates_version: str, runner_path: Path) -> dict[str, Any]:
-    transport, model = protocol["transport"], protocol["model"]
+def supplement_registration_view(registration: dict[str, Any], supplement: dict[str, Any], phase: str) -> dict[str, Any]:
+    """The registration record as the gates and the condition read it, for one registered supplement: its own card
+    and manifest hash, the protocol and template hashes of the phase it supplements."""
+    frozen = registration["frozen"]
     return {
+        "status": registration.get("status"),
+        "card_ids": {phase: supplement.get("card_id")},
+        "card_files": {phase: supplement.get("card_file")},
+        "frozen": {
+            "protocol_sha256": frozen["protocol_sha256"],
+            "prompt_templates_sha256": frozen["prompt_templates_sha256"],
+            "manifest_sha256": {phase: (supplement.get("frozen") or {}).get("manifest_sha256")},
+            "evidence_sha256": {phase: {}},
+        },
+    }
+
+
+def build_condition(phase: str, protocol: dict[str, Any], manifest: dict[str, Any], registration: dict[str, Any],
+                    endpoint: str, templates_version: str, runner_path: Path, *,
+                    supplement: dict[str, Any] | None = None) -> dict[str, Any]:
+    transport, model = protocol["transport"], protocol["model"]
+    extra = {}
+    if supplement is not None:  # a registered supplement freezes its own operational limits with the condition
+        extra = {"supplement_id": supplement["supplement_id"], "supplement_design": manifest["supplement_design"],
+                 "operational": supplement.get("operational") or {}}
+    return {**extra,
         "protocol_id": dp.PROTOCOL_ID, "protocol_version": 1, "phase": phase,
         "measurement_card_id": registration["card_ids"][phase],
         "measurement_card_hash": v1.sha256_file(MEASUREMENT_CARD),
@@ -370,7 +392,7 @@ def reconcile_resume(output: Path, condition: dict[str, Any], resume: bool) -> d
     return frozen
 
 
-def make_score_callback(phase: str, card_id: str):
+def make_score_callback(phase: str, card_id: str, supplement_id: str | None = None):
     def score(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], rows: dict[str, Any],
               meta: dict[str, Any]) -> None:
         scored, summaries = dp.score_arm_rows(manifest, rows, rebuilt)
@@ -381,7 +403,8 @@ def make_score_callback(phase: str, card_id: str):
                         summary.pop(key, None)
         v1.write_jsonl_atomic(output / "scores.jsonl", scored)
         base.atomic_json(output / "summary.json", {
-            "protocol_id": dp.PROTOCOL_ID, "phase": phase, "measurement_card_id": card_id, "model_id": base.MODEL,
+            "protocol_id": dp.PROTOCOL_ID, "phase": phase, "supplement_id": supplement_id,
+            "measurement_card_id": card_id, "model_id": base.MODEL,
             "transport": "direct-api", "manifest_sha256": manifest["manifest_sha256"],
             "condition_sha256": meta["condition_sha256"], "generated_at": base.now(),
             "expected_n": len(manifest["items"]),
@@ -404,10 +427,11 @@ def configure_engine(protocol: dict[str, Any], phase: str, card_id: str, guard: 
 
 
 def record_launch(output: Path, phase: str, *, resume: bool, max_in_flight: int | None,
-                  stop_after_timeouts: int | None, note: str, lanes: int) -> None:
+                  stop_after_timeouts: int | None, note: str, lanes: int, supplement_id: str | None = None) -> None:
     """Append-only operator record of how this launch differs from the registered condition (if it does)."""
     output.mkdir(parents=True, exist_ok=True)
-    event = {"at": base.now(), "phase": phase, "resume": resume, "runner_sha256": v1.sha256_file(Path(__file__)),
+    event = {"at": base.now(), "phase": phase, "supplement_id": supplement_id, "resume": resume,
+             "runner_sha256": v1.sha256_file(Path(__file__)),
              "lanes_configured": lanes, "max_in_flight": max_in_flight, "stop_after_timeouts": stop_after_timeouts,
              "note": note}
     with (output / "operator_events.jsonl").open("a", encoding="utf-8") as ledger:
@@ -418,6 +442,8 @@ def print_preflight(phase: str, manifest: dict[str, Any], protocol: dict[str, An
     transport = protocol["transport"]
     print(f"phase={phase} protocol={dp.PROTOCOL_ID} items={manifest['item_count']} attempts={manifest['n']} "
           f"arms={manifest['arm_counts']}")
+    if "supplement_id" in manifest:
+        print(f"supplement={manifest['supplement_id']} design={manifest['supplement_design']}")
     print(f"manifest_sha256={manifest['manifest_sha256']}")
     print(f"prompt_templates_sha256={manifest['prompt_templates_sha256']} "
           f"campaign_protocol_sha256={manifest['campaign_protocol_sha256']}")
@@ -442,9 +468,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stop-after-timeouts", type=int, default=None, metavar="N",
                         help="pause the run after N consecutive network failures (default: off)")
     parser.add_argument("--note", default="", help="free text recorded with this launch in operator_events.jsonl")
+    parser.add_argument("--supplement", default=None, metavar="ID",
+                        help="a supplement of --phase registered in registration.json (for example a further "
+                             "replicate of one arm), with its own card, manifest hash and operational limits")
     args = parser.parse_args(argv)
     if args.resume and not args.execute:
         parser.error("--resume requires --execute")
+    if args.supplement and args.oracle_evidence:
+        parser.error("--oracle-evidence cannot be combined with --supplement")
     for flag in ("max_in_flight", "stop_after_timeouts"):
         if getattr(args, flag) is not None and getattr(args, flag) < 1:
             parser.error(f"--{flag.replace('_', '-')} must be a positive integer")
@@ -454,14 +485,27 @@ def main(argv: list[str] | None = None) -> int:
     protocol = dp.load_protocol()
     templates = dp.load_templates()
     registration = dp.load_registration()
+    supplement = dp.load_supplement(registration, args.supplement, protocol) if args.supplement else None
+    if supplement and supplement["base_phase"] != args.phase:
+        parser.error(f"supplement {args.supplement} belongs to phase {supplement['base_phase']}, not {args.phase}")
+    registered = supplement_registration_view(registration, supplement, args.phase) if supplement else registration
+    operational = (supplement or {}).get("operational") or {}
+    for flag in ("max_in_flight", "stop_after_timeouts"):  # registered limits are part of the supplement's condition
+        value = getattr(args, flag)
+        if value is not None and operational.get(flag) not in (None, value):
+            parser.error(f"--{flag.replace('_', '-')} {value} differs from the {operational[flag]} registered "
+                         f"for supplement {args.supplement}")
+        if value is None:
+            setattr(args, flag, operational.get(flag))
     evidence_by_arm: dict[str, dict[str, list[dict[str, Any]]]] = {}
     main_items = v1.rebuild_items(protocol["parent"]["manifest_phase"])
     if args.oracle_evidence:
         evidence_by_arm["O"] = dp.load_oracle_evidence(args.oracle_evidence, protocol, main_items)
-    manifest, rebuilt = dp.build_manifest(args.phase, evidence_by_arm=evidence_by_arm, main_items=main_items)
+    manifest, rebuilt = dp.build_manifest(args.phase, evidence_by_arm=evidence_by_arm, main_items=main_items,
+                                          supplement=supplement)
     items = dp.verify_manifest_rows(manifest, rebuilt)
     env = dotenv_values(ROOT / ".env")
-    gates = evaluate_gates(args.phase, protocol, manifest, registration, env)
+    gates = evaluate_gates(args.phase, protocol, manifest, registered, env)
     print_preflight(args.phase, manifest, protocol, gates)
     if not args.execute:
         return 0
@@ -473,26 +517,31 @@ def main(argv: list[str] | None = None) -> int:
     if args.tunnel_dns:
         address = install_resolver_shim(urlsplit(endpoint).hostname or "", args.tunnel_dns)
         print(f"resolver shim (this process only): {urlsplit(endpoint).hostname} -> {address} via {args.tunnel_dns}")
-    card_id = str(registration["card_ids"][args.phase])
-    output = OUTPUT_ROOT / args.phase / protocol["model"]["profile_id"]
+    card_id = str(registered["card_ids"][args.phase])
+    profile = protocol["model"]["profile_id"]
+    output = (OUTPUT_ROOT / f"{args.phase}-supplements" / supplement["supplement_id"] / profile if supplement
+              else OUTPUT_ROOT / args.phase / profile)
     output.parent.mkdir(parents=True, exist_ok=True)
     condition = reconcile_resume(
-        output, build_condition(args.phase, protocol, manifest, registration, endpoint, templates["version"],
-                                Path(__file__)), args.resume)
+        output, build_condition(args.phase, protocol, manifest, registered, endpoint, templates["version"],
+                                Path(__file__), supplement=supplement), args.resume)
     guard = BudgetGuard(protocol["budget"]["campaign_cap_tokens"], existing_usage(output))
     transport = protocol["transport"]
     configure_engine(protocol, args.phase, card_id, guard, outage=OutageGuard(args.stop_after_timeouts or 0),
                      max_in_flight=args.max_in_flight)
     record_launch(output, args.phase, resume=args.resume, max_in_flight=args.max_in_flight,
                   stop_after_timeouts=args.stop_after_timeouts, note=args.note,
-                  lanes=transport["shards"] * transport["lanes"])
+                  lanes=transport["shards"] * transport["lanes"],
+                  supplement_id=supplement["supplement_id"] if supplement else None)
     if args.max_in_flight or args.stop_after_timeouts:
         print(f"operational options: max_in_flight={args.max_in_flight} stop_after_timeouts={args.stop_after_timeouts} "
               f"(registered lanes: {transport['shards'] * transport['lanes']})", flush=True)
     with OpenAI(base_url=endpoint, api_key=key, timeout=transport["timeout_seconds"],
                 max_retries=transport["sdk_retries"], default_headers=transport["gateway_header"]) as client:
         base.execute(output, manifest, rebuilt, items, condition, client, args.resume,
-                     score_callback=make_score_callback(args.phase, card_id), runner_path=Path(__file__))
+                     score_callback=make_score_callback(args.phase, card_id,
+                                                        supplement["supplement_id"] if supplement else None),
+                     runner_path=Path(__file__))
     return 0
 
 

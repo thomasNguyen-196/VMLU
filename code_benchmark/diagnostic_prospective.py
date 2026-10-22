@@ -136,6 +136,37 @@ def load_registration(path: Path = REGISTRATION_PATH) -> dict[str, Any]:
     return registration
 
 
+def validate_supplement(supplement_id: str, supplement: dict[str, Any], protocol: dict[str, Any]) -> dict[str, Any]:
+    """A supplement re-runs arms of a registered phase under further replicate numbers. It adds no arm, no
+    evidence and no item, and its replicate numbers never collide with those the phase registered."""
+    missing = [key for key in ("base_phase", "arms", "first_replicate", "replicates") if key not in supplement]
+    if missing:
+        raise _fail(f"supplement {supplement_id!r} lacks {missing}")
+    phase = supplement["base_phase"]
+    if phase not in protocol["phases"]:
+        raise _fail(f"supplement {supplement_id!r} names an unknown base phase {phase!r}")
+    config = protocol["phases"][phase]
+    arms = supplement["arms"]
+    if not isinstance(arms, list) or not arms or not set(arms) <= set(config["arms"]):
+        raise _fail(f"supplement {supplement_id!r} arms must be a non-empty subset of the arms of phase {phase}")
+    if set(arms) & EVIDENCE_ARMS:
+        raise _fail(f"supplement {supplement_id!r} cannot carry evidence arms")
+    first, count = supplement["first_replicate"], supplement["replicates"]
+    if not (isinstance(first, int) and isinstance(count, int) and count >= 1 and first > config["replicates"]):
+        raise _fail(f"supplement {supplement_id!r} replicate numbers must start after the {config['replicates']} "
+                    f"replicate(s) registered for phase {phase}")
+    return supplement
+
+
+def load_supplement(registration: dict[str, Any], supplement_id: str,
+                    protocol: dict[str, Any] | None = None) -> dict[str, Any]:
+    supplements = registration.get("supplements") or {}
+    if supplement_id not in supplements:
+        raise _fail(f"unknown supplement {supplement_id!r}; registered: {sorted(supplements)}")
+    supplement = validate_supplement(supplement_id, supplements[supplement_id], protocol or load_protocol())
+    return {**supplement, "supplement_id": supplement_id}
+
+
 # ---------------------------------------------------------------- frozen prompt surgery
 
 @dataclasses.dataclass(frozen=True)
@@ -280,14 +311,18 @@ def phase_base_items(phase: str, protocol: dict[str, Any], main_items: dict[str,
 
 
 def expand_arms(base_items: list[v1.EvalItem], phase: str, protocol: dict[str, Any], templates: dict[str, str],
-                evidence_by_arm: dict[str, dict[str, list[dict[str, Any]]]]) -> list[v1.EvalItem]:
-    """Item-major expansion: item, then replicate, then arm, so one item's attempts sit together."""
+                evidence_by_arm: dict[str, dict[str, list[dict[str, Any]]]], *, arms: list[str] | None = None,
+                first_replicate: int = 1, replicates: int | None = None) -> list[v1.EvalItem]:
+    """Item-major expansion: item, then replicate, then arm, so one item's attempts sit together.
+    The keyword options select a supplement; without them the registered phase design is expanded."""
     config = protocol["phases"][phase]
+    arm_list = config["arms"] if arms is None else arms
+    count = config["replicates"] if replicates is None else replicates
     expanded: list[v1.EvalItem] = []
     for item in base_items:
         key = item_key(item.dataset_id, item.item_id)
-        for replicate in range(1, config["replicates"] + 1):
-            for arm in config["arms"]:
+        for replicate in range(first_replicate, first_replicate + count):
+            for arm in arm_list:
                 provisions = None
                 if arm in EVIDENCE_ARMS:
                     provisions = evidence_by_arm.get("O" if arm == "O" else "K", {}).get(key)
@@ -300,11 +335,19 @@ def expand_arms(base_items: list[v1.EvalItem], phase: str, protocol: dict[str, A
 
 def build_manifest(phase: str, *, evidence_by_arm: dict[str, dict[str, list[dict[str, Any]]]] | None = None,
                    pilot_dir: Path | None = None, main_items: dict[str, v1.EvalItem] | None = None,
-                   protocol_path: Path = PROTOCOL_PATH,
-                   templates_path: Path = TEMPLATES_PATH) -> tuple[dict[str, Any], dict[str, v1.EvalItem]]:
-    """Return (manifest, rebuilt run-key map). The manifest is self-hashed like the main-v1 one."""
+                   protocol_path: Path = PROTOCOL_PATH, templates_path: Path = TEMPLATES_PATH,
+                   supplement: dict[str, Any] | None = None) -> tuple[dict[str, Any], dict[str, v1.EvalItem]]:
+    """Return (manifest, rebuilt run-key map). The manifest is self-hashed like the main-v1 one.
+    With `supplement` (from load_supplement) the items are the phase's items under the supplement's arms and
+    replicate numbers; the manifest then also records the supplement, and without it no key is added."""
     protocol = load_protocol(protocol_path)
     templates = load_templates(templates_path)
+    if supplement is not None:
+        validate_supplement(str(supplement.get("supplement_id")), supplement, protocol)
+        if supplement["base_phase"] != phase:
+            raise _fail(f"supplement {supplement['supplement_id']!r} belongs to phase {supplement['base_phase']}, not {phase}")
+        if evidence_by_arm:
+            raise _fail("a supplement takes no evidence")
     evidence_by_arm = {arm: dict(mapping) for arm, mapping in (evidence_by_arm or {}).items() if mapping}
     parent = v1.load_manifest(protocol["parent"]["manifest_phase"])
     main_items = main_items or v1.rebuild_items(protocol["parent"]["manifest_phase"])
@@ -317,7 +360,11 @@ def build_manifest(phase: str, *, evidence_by_arm: dict[str, dict[str, list[dict
         stray = sorted(set(mapping) - base_keys)
         if stray:
             raise _fail(f"evidence for items outside phase {phase}: {stray[:3]}")
-    items = expand_arms(base_items, phase, protocol, templates, evidence_by_arm)
+    if supplement is None:
+        items = expand_arms(base_items, phase, protocol, templates, evidence_by_arm)
+    else:
+        items = expand_arms(base_items, phase, protocol, templates, {}, arms=list(supplement["arms"]),
+                            first_replicate=supplement["first_replicate"], replicates=supplement["replicates"])
     rebuilt = {item.run_key: item for item in items}
     if len(rebuilt) != len(items):
         raise _fail("duplicate arm run keys")
@@ -337,6 +384,10 @@ def build_manifest(phase: str, *, evidence_by_arm: dict[str, dict[str, list[dict
         "arm_counts": dict(sorted(Counter(arm_of_replicate(item.replicate_id) for item in items).items())),
         "items": [v1.manifest_item(item) for item in items],
     }
+    if supplement is not None:
+        manifest["supplement_id"] = supplement["supplement_id"]
+        manifest["supplement_design"] = {key: supplement[key] for key in
+                                         ("base_phase", "arms", "first_replicate", "replicates")}
     manifest["manifest_sha256"] = v1.sha256_bytes(v1.canonical_json(manifest))
     return manifest, rebuilt
 
@@ -350,8 +401,9 @@ def verify_manifest_rows(manifest: dict[str, Any], rebuilt: dict[str, v1.EvalIte
     return [v1.item_from_manifest_row(row, rebuilt) for row in manifest["items"]]
 
 
-def save_manifest(phase: str, manifest: dict[str, Any], *, overwrite: bool = False) -> Path:
-    path = DATA_DIR / f"{phase}_v1.json"
+def save_manifest(name: str, manifest: dict[str, Any], *, overwrite: bool = False) -> Path:
+    """Freeze a manifest as data/diagnostic_prospective_v1/<name>_v1.json (name = a phase or a supplement id)."""
+    path = DATA_DIR / f"{name}_v1.json"
     if path.exists() and not overwrite:
         raise _fail(f"{path} already exists; refusing to replace a frozen manifest")
     DATA_DIR.mkdir(parents=True, exist_ok=True)
