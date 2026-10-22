@@ -65,9 +65,9 @@ Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile 
 - [x] 11.1 Implement registered supplements in the contract and the runner (own registration entry, manifest, card, output directory and registered operational limits); verify the registered MC-90 manifest and condition are unchanged and that the supplement manifest reuses the B-r1 prompt, input and gold hashes under `B-r2`.
 - [x] 11.2 Implement `noise_reference` (drift, B-versus-B noise, S against a second baseline draw, S against noise given the first draw, stable categories, oracle with a noise floor, Holm over four contrasts); verify the hand-worked example in the tests.
 - [x] 11.3 Register MC-91: root block, detail card, registration entry with the frozen manifest hash and the analysis keys; verify the runner's preflight reports every gate PASS with `endpoint_calls=0` and that the registration-lock tests pass.
-- [ ] 11.4 Run `wide-b-r2` with `--supplement wide-b-r2` over the VPN; verify 1,239 attempts complete, the response model id is constant and `operator_events.jsonl` records the registered limits.
-- [ ] 11.5 Run `noise_reference` on the MC-90 and MC-91 scores; report the parity gate and the drift check first, then the noise rates and the S-versus-noise contrasts.
-- [ ] 11.6 Add the dated run record of MC-91 to its detail card after the run ends.
+- [x] 11.4 Run `wide-b-r2` with `--supplement wide-b-r2` over the VPN; verify 1,239 attempts complete, the response model id is constant and `operator_events.jsonl` records the registered limits. (2026-10-22 18:55-19:04 +07, one launch, no failed attempt.)
+- [x] 11.5 Run `noise_reference` on the MC-90 and MC-91 scores; report the parity gate and the drift check first, then the noise rates and the S-versus-noise contrasts. (`analysis/noise_report.json` under the MC-91 output directory.)
+- [x] 11.6 Add the dated run record of MC-91 to its detail card after the run ends.
 
 ## 12. Semantic review of the MC-90 discordant pairs (AI-assisted, blind; added 2026-10-22)
 
