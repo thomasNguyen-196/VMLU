@@ -1,0 +1,12 @@
+{
+  "status": "unregistered",
+  "card_ids": {"core": null, "wide": null},
+  "card_files": {"core": null, "wide": null},
+  "frozen": {
+    "protocol_sha256": null,
+    "prompt_templates_sha256": null,
+    "manifest_sha256": {"core": null, "wide": null},
+    "evidence_sha256": {"core": {}, "wide": {}}
+  },
+  "note": "Filled at registration, after the audit report is final. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
+}

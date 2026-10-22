@@ -1,0 +1,108 @@
+{
+  "protocol_id": "vmlu-diagnostic-prospective-v1",
+  "protocol_version": 1,
+  "change": "openspec/changes/diagnostic-prospective-campaign",
+  "parent": {
+    "protocol_id": "vi-multimodel-v1",
+    "manifest_phase": "main",
+    "pilot_dir": "all_res/diagnostic_v1/pilot-review-v4"
+  },
+  "datasets": [
+    "vi-multimodel-v1-legal-mc-146",
+    "vi-multimodel-v1-legal-nli-150",
+    "vi-multimodel-v1-vi-squad-200",
+    "vi-multimodel-v1-vi-drop-200",
+    "vi-multimodel-v1-bidlqa-test"
+  ],
+  "model": {
+    "requested_id": "Qwen3.5-9B-65K",
+    "profile_id": "qwen3-5-9b-65k-prospective",
+    "provider": "IEC internal endpoint",
+    "endpoint_host": "llmapi.iec",
+    "endpoint_path": "/v1",
+    "self_reported_id": "/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf",
+    "self_reported_on": "2026-10-22"
+  },
+  "transport": {
+    "api_protocol": "openai-responses",
+    "stream": true,
+    "temperature": 1.0,
+    "seed": null,
+    "reasoning_effort": null,
+    "system_prompt": "Answer the user's question.",
+    "gateway_header": {"x-9router-token-saver": "off"},
+    "sdk_retries": 0,
+    "timeout_seconds": 300,
+    "shards": 4,
+    "lanes": 3,
+    "max_output_tokens": 4096
+  },
+  "arms": {
+    "B": {"prompt": "frozen", "evidence": null, "scoring": "frozen"},
+    "S": {"prompt": "stepwise", "evidence": null, "scoring": "final-segment"},
+    "O": {"prompt": "frozen", "evidence": "oracle", "scoring": "frozen"},
+    "K": {"prompt": "frozen", "evidence": "retrieved", "scoring": "frozen"},
+    "KS": {"prompt": "stepwise", "evidence": "retrieved", "scoring": "final-segment"}
+  },
+  "phases": {
+    "core": {
+      "item_source": "pilot-anchors",
+      "arms": ["B", "S", "O", "K", "KS"],
+      "replicates": 3,
+      "requires_inference_ready": true
+    },
+    "wide": {
+      "item_source": "main-non-anchors",
+      "arms": ["B", "S"],
+      "replicates": 1,
+      "requires_inference_ready": false
+    }
+  },
+  "evidence": {
+    "eligible_datasets": ["vi-multimodel-v1-legal-mc-146"],
+    "required_input_evidence_sufficiency": "insufficient"
+  },
+  "scoring": {
+    "final_segment_rule_id": "diagnostic-final-segment-v1",
+    "reading_correct_metric": "em",
+    "semantic_audit_candidate_token_f1": 0.8
+  },
+  "budget": {
+    "item_cap_output_tokens": 4096,
+    "campaign_cap_tokens": 5000000,
+    "usage_policy": "unknown_not_zero",
+    "currency": null
+  },
+  "analysis": {
+    "plan_id": "diagnostic-prospective-analysis-v1",
+    "item_outcome": "replicate-majority-core-single-attempt-wide",
+    "paired_test": "exact-mcnemar-two-sided",
+    "multiplicity": "holm",
+    "proportion_interval": "wilson",
+    "reading_delta_interval": "passage-cluster-bootstrap",
+    "bootstrap_resamples": 2000,
+    "bootstrap_seed": 42,
+    "metrics": [
+      "n_pairs", "both_correct", "both_incorrect", "baseline_correct", "baseline_incorrect",
+      "rescues", "regressions", "recovery", "regression_rate", "net_gain",
+      "mcnemar_p", "mcnemar_p_holm", "recovery_ci95", "regression_ci95", "net_gain_ci95_pct",
+      "by_dataset_descriptive", "item_ties", "semantic_audit_candidates_n",
+      "attempt_level", "baseline_noise", "sensitivity_format_compliant",
+      "mean_f1_diff", "mean_f1_diff_ci95_pts", "rescues_format_suspect", "parity_gate",
+      "oracle_routing.observed", "oracle_routing.null_from_baseline_replicates", "oracle_routing.headroom_over_null"
+    ],
+    "primary_metrics": ["recovery", "regression_rate", "net_gain", "mcnemar_p_holm"],
+    "secondary_metrics": ["attempt_level", "baseline_noise", "sensitivity_format_compliant", "mean_f1_diff",
+                          "mean_f1_diff_ci95_pts", "rescues_format_suspect"],
+    "parity_reference": {
+      "source": "docs/research/benchmark-condition-reports.md, Qwen3.5-9B-65K Q4_K_M, MC-83 (direct API, same frozen prompts, 20k budget)",
+      "datasets": {
+        "vi-multimodel-v1-legal-mc-146": {"metric": "accuracy", "value": 83.56, "ci95": [76.70, 88.70]},
+        "vi-multimodel-v1-legal-nli-150": {"metric": "accuracy", "value": 91.33, "ci95": [85.74, 94.87]},
+        "vi-multimodel-v1-vi-squad-200": {"metric": "em", "value": 75.50, "ci95": [69.59, 81.50]},
+        "vi-multimodel-v1-vi-drop-200": {"metric": "em", "value": 48.00, "ci95": [41.09, 55.05]},
+        "vi-multimodel-v1-bidlqa-test": {"metric": "em", "value": 27.86, "ci95": [24.05, 31.58]}
+      }
+    }
+  }
+}
