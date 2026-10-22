@@ -104,3 +104,14 @@ When a registered supplement provides a second draw of arm B for the items of a 
 #### Scenario: Result keys are registered
 - **WHEN** the analysis function returns its report
 - **THEN** its top-level and per-family keys equal the lists in the registration entry
+
+### Requirement: Noise reference from a reasoning-arm supplement
+When a registered supplement provides a second draw of a reasoning arm for the items of a single-draw phase, and a baseline supplement already provides a second draw of arm B, the analysis SHALL report per family: the drift and the sampling noise of the reasoning arm itself (recovery and regression rates with Wilson intervals, agreement rate); a comparison of how often each arm changes its result between two draws, tested with an exact McNemar test on the items where only one arm changes; the items one arm gets right in both draws while the other gets them wrong in both, tested with an exact sign test; the effect of the reasoning arm over the baseline averaged over the two draws of each arm, with a cluster-bootstrap interval; the second reasoning draw against each baseline draw; and oracle ceilings over each arm's own two draws. The four primary tests (two families x two tests) SHALL be corrected with Holm, and the result keys SHALL be listed in the registration entry.
+
+#### Scenario: A more variable arm
+- **WHEN** the reasoning arm changes its result between two draws on more items than the baseline does and the corrected instability test is below 0.05
+- **THEN** the report states that the arm is more variable than the baseline and does not read its excess changes as a systematic effect
+
+#### Scenario: Systematic effect
+- **WHEN** the reasoning arm is right in both draws and the baseline wrong in both on significantly more items than the reverse, after correction
+- **THEN** the report states a systematic effect for that family; otherwise it states that the result is not distinguishable from noise

@@ -731,6 +731,26 @@ class TestSupplements(unittest.TestCase):
         registered_wide = registration["frozen"]["manifest_sha256"]["wide"]  # MC-90 is untouched by the supplement
         self.assertEqual(dp.build_manifest("wide")[0]["manifest_sha256"], registered_wide)
 
+    @unittest.skipUnless(DATA_OK, "frozen main-v1 sources or the locked pilot packet are not available")
+    def test_committed_s_supplement_registration_matches_its_frozen_artifacts(self):
+        """The second S draw (MC-92): editing the templates, the protocol or the manifest after registration fails here."""
+        registration = dp.load_registration()
+        supplement = dp.load_supplement(registration, "wide-s-r2")
+        manifest, rebuilt = dp.build_manifest("wide", supplement=supplement)
+        view = runner.supplement_registration_view(registration, supplement, "wide")
+        gates = {g.name: g for g in runner.evaluate_gates("wide", dp.load_protocol(), manifest, view, TestRunner.ENV)}
+        self.assertEqual({name: g.detail for name, g in gates.items() if not g.ok}, {})
+        self.assertEqual((view["card_ids"], supplement["arms"], supplement["operational"]),
+                         ({"wide": "MC-92"}, ["S"], {"max_in_flight": 4, "stop_after_timeouts": 4}))
+        saved = json.loads((dp.DATA_DIR / "wide-s-r2_v1.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved, manifest)
+        self.assertEqual((len(dp.verify_manifest_rows(saved, rebuilt)), manifest["arm_counts"]), (1239, {"S": 1239}))
+        first = {(r["dataset_id"], r["item_id"]): r for r in dp.build_manifest("wide")[0]["items"] if r["replicate_id"] == "S-r1"}
+        for row in manifest["items"]:  # the stepwise prompt of replicate 1, item by item
+            reference = first[(row["dataset_id"], row["item_id"])]
+            self.assertEqual([row[k] for k in ("prompt_sha256", "input_sha256", "gold_sha256")],
+                             [reference[k] for k in ("prompt_sha256", "input_sha256", "gold_sha256")])
+
     def test_launch_records_name_the_supplement(self):
         with tempfile.TemporaryDirectory() as tmp:
             runner.record_launch(Path(tmp), "wide", resume=False, max_in_flight=4, stop_after_timeouts=4, note="",

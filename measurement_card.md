@@ -2656,3 +2656,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition (MC-90 stalled the endpoint twice at 12 simultaneous streams) |
 | `details` | `docs/measurement_cards/MC-91-diagnostic-prospective-wide-b-replicate.md` |
 | `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-b-r2/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-92 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide supplement / second S draw on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-92` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests of this card |
+| `scope` | Supplement `wide-s-r2` of the MC-90 wide phase: arm S only (the stepwise prompt of `prompt_templates_v1.json`, byte-identical to MC-90 replicate 1), replicate r2, over the same 1,239 non-anchor items (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); 1,239 attempts. Purpose: the sampling noise of S itself and a two-draw design for both arms (B in MC-90 and MC-91, S in MC-90 and this card); MC-90 and MC-91 stay unchanged |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 1.25 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition |
+| `details` | `docs/measurement_cards/MC-92-diagnostic-prospective-wide-s-replicate.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-s-r2/qwen3-5-9b-65k-prospective/`; no upload |

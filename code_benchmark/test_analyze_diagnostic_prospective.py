@@ -471,6 +471,15 @@ class TestSReplicateSupplement(unittest.TestCase):
         with self.assertRaises(ValueError):
             an.s_noise_reference(primary, b_noise, [mc_row("S", 0, 3, True)])
 
+    def test_report_keys_match_the_registered_analysis(self):
+        registered = dp.load_registration()["supplements"]["wide-s-r2"]["analysis"]
+        report = self.report()
+        self.assertEqual(tuple(registered["top_level"]), an.S_NOISE_TOP_KEYS)
+        self.assertEqual(tuple(registered["family_metrics"]), an.S_NOISE_FAMILY_KEYS)
+        self.assertEqual(set(report), set(registered["top_level"]))
+        self.assertEqual(set(report["families"]["mc"]), set(registered["family_metrics"]))
+        self.assertEqual(registered["primary_tests"], ["flip_comparison.mcnemar_p", "stable_wins.sign_test_p"])
+
     def test_the_report_prints_percentages_not_percentages_times_a_hundred(self):
         text = an.format_s_noise_report(self.report())
         for phrase in ("S drift S1->S2", "S-vs-S noise", "instability", "stable wins", "two-draw effect", "oracle B1/S1"):

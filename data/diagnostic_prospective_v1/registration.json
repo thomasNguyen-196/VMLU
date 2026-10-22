@@ -1,5 +1,5 @@
 {
-  "status": "wide-registered; supplement wide-b-r2 registered; core unregistered",
+  "status": "wide-registered; supplements wide-b-r2 and wide-s-r2 registered; core unregistered",
   "card_ids": {"core": null, "wide": "MC-90"},
   "card_files": {"core": null, "wide": "docs/measurement_cards/MC-90-diagnostic-prospective-wide.md"},
   "registered_on": {"core": null, "wide": "2026-10-22"},
@@ -31,7 +31,27 @@
                            "noise_regression_ci95", "agreement_rate", "s_vs_b2", "s_vs_noise_given_b1_wrong",
                            "s_vs_noise_given_b1_right", "stable", "oracle", "mean_f1", "by_dataset_descriptive"]
       }
+    },
+    "wide-s-r2": {
+      "base_phase": "wide",
+      "arms": ["S"],
+      "first_replicate": 2,
+      "replicates": 1,
+      "purpose": "second draw of arm S over the 1,239 wide items: sampling noise of S itself, how often S and B change their result between two draws, and the S-versus-B effect over two draws per arm",
+      "card_id": "MC-92",
+      "card_file": "docs/measurement_cards/MC-92-diagnostic-prospective-wide-s-replicate.md",
+      "registered_on": "2026-10-22",
+      "operational": {"max_in_flight": 4, "stop_after_timeouts": 4},
+      "frozen": {"manifest_sha256": "015dc198842e896648b82994916800e7611cbe6eecfc2f30a1eda664100bb8fa"},
+      "analysis": {
+        "function": "analyze_diagnostic_prospective.s_noise_reference",
+        "top_level": ["plan_id", "s_replicate", "items_shared", "items_missing", "families", "s2_format"],
+        "family_metrics": ["n_items", "accuracy", "s_drift", "s_noise_recovery", "s_noise_recovery_ci95",
+                           "s_noise_regression_rate", "s_noise_regression_ci95", "s_agreement_rate", "flip_comparison",
+                           "stable_wins", "two_draw_effect", "s2_vs_b", "oracle", "mean_f1", "by_dataset_descriptive"],
+        "primary_tests": ["flip_comparison.mcnemar_p", "stable_wins.sign_test_p"]
+      }
     }
   },
-  "note": "Wide was registered on 2026-10-22 as MC-90; supplement wide-b-r2 (MC-91, a second B draw of the wide items) was registered the same day under its own manifest and card, reusing the protocol and template hashes below. Core is registered after the pilot audit is final and the oracle evidence exists. protocol.json and prompt_templates_v1.json are frozen for this campaign from now on: a change needs a new protocol version and new cards. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
+  "note": "Wide was registered on 2026-10-22 as MC-90; supplements wide-b-r2 (MC-91, a second B draw of the wide items) and wide-s-r2 (MC-92, a second S draw) were registered the same day, each under its own manifest and card, reusing the protocol and template hashes below. Core is registered after the pilot audit is final and the oracle evidence exists. protocol.json and prompt_templates_v1.json are frozen for this campaign from now on: a change needs a new protocol version and new cards. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
 }

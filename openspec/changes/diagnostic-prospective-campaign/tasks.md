@@ -69,6 +69,14 @@ Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile 
 - [x] 11.5 Run `noise_reference` on the MC-90 and MC-91 scores; report the parity gate and the drift check first, then the noise rates and the S-versus-noise contrasts. (`analysis/noise_report.json` under the MC-91 output directory.)
 - [x] 11.6 Add the dated run record of MC-91 to its detail card after the run ends.
 
+## 13. S noise reference (supplement `wide-s-r2`, card MC-92; added 2026-10-22 after the MC-91 results)
+
+- [x] 13.1 Implement `s_noise_reference` (S noise, instability comparison, stable wins, two-draw effect, second S draw against each B draw, oracle with two floors, Holm over four primary tests); verify the hand-worked example in the tests.
+- [x] 13.2 Register MC-92: root block, detail card, registration entry with the frozen manifest hash, the registered limits and the analysis keys; verify the preflight reports every gate PASS with `endpoint_calls=0` and that the registration-lock tests pass.
+- [ ] 13.3 Run `wide-s-r2` with `--supplement wide-s-r2`; verify 1,239 attempts complete, the response model id is constant and the registered limits are recorded.
+- [ ] 13.4 Run `s_noise_reference` on the MC-90, MC-91 and MC-92 scores; report the S drift and the format compliance of the second S draw first, then the instability comparison and the stable wins.
+- [ ] 13.5 Add the dated run record of MC-92 to its detail card after the run ends.
+
 ## 12. Semantic review of the MC-90 discordant pairs (AI-assisted, blind; added 2026-10-22)
 
 - [x] 12.1 Build a reproducible, seeded review packet: every EM-discordant reading item (rescue: the B answer; regression: the S answer) and a stratified sample of the both-wrong items (both answers), as separate blind units without arm, direction or stratum; verify the key file maps every unit back and the packet carries no arm information. (`code_benchmark/diagnostic_semantic_review.py build`; 502 units: R 136 and G 98 whole, W_hi squad 16 and drop 18 whole, W_hi bidlqa 70 of 253, W_lo 30 of 167; seed 42.)
