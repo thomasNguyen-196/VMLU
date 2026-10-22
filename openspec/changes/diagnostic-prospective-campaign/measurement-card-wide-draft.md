@@ -1,6 +1,6 @@
 # Draft measurement card: diagnostic prospective wide (B / S on 1,239 non-anchor items)
 
-DRAFT, not registered. At registration (task 6.4) assign the next free card id, fill the dates and hashes, copy the first block into `measurement_card.md` as a new `## MC-NN` section and the second block into `docs/measurement_cards/MC-NN-diagnostic-prospective-wide.md`, and commit with the title `pre-register MC-NN`. This card does not require `inference_ready`: it touches no audit anchor, so it may run as soon as it is registered and its prompts are frozen.
+SUPERSEDED: registered on 2026-10-22 as MC-90 (`measurement_card.md` and `docs/measurement_cards/MC-90-diagnostic-prospective-wide.md` are authoritative; where they differ from this draft, they win). Original draft note follows. DRAFT, not registered. At registration (task 6.4) assign the next free card id, fill the dates and hashes, copy the first block into `measurement_card.md` as a new `## MC-NN` section and the second block into `docs/measurement_cards/MC-NN-diagnostic-prospective-wide.md`, and commit with the title `pre-register MC-NN`. This card does not require `inference_ready`: it touches no audit anchor, so it may run as soon as it is registered and its prompts are frozen.
 
 ## Root block (for measurement_card.md)
 

@@ -8,7 +8,8 @@
 
 - [x] 2.1 Build the `core` manifest from the locked pilot selection (60 anchors, `<ARM>-r<k>` ids, item-major order); verify 360 B/S attempts, plus 36 oracle attempts when 12 oracle records are supplied (K and KS add 72 once retrieval evidence exists), and unique run keys.
 - [x] 2.2 Build the `wide` manifest (1,239 non-anchor items, arms B and S, replicate r1); verify 2,478 attempts, per-dataset item counts 134/138/188/188/591 and disjointness from core.
-- [ ] 2.3 (prompt freeze condition 5.2 is met; blocked until the open decisions in `preregistration-draft.json` are confirmed, and the core manifest also needs the oracle evidence of task 7.1) Freeze both manifests under `data/diagnostic_prospective_v1/` with an overwrite guard; verify that reloading checks every hash.
+- [x] 2.3 Freeze the wide manifest as `data/diagnostic_prospective_v1/wide_v1.json` with an overwrite guard (2026-10-22, manifest SHA-256 `d5f022d6…c5e432e5c297`); verify that the committed file equals the manifest the runner rebuilds and that the registration hashes match (`test_committed_wide_registration_matches_its_frozen_artifacts`).
+- [ ] 2.4 (blocked until the oracle evidence of task 7.1 exists) Freeze the core manifest the same way; verify the same equality.
 
 ## 3. Scoring and parity (offline)
 
@@ -33,7 +34,8 @@ Model Qwen3.5-9B-65K (served as `Qwen3.5-9B-Q4_K_M.gguf` by llama.cpp), endpoint
 - [x] 6.1 Draft the core and wide measurement cards and `preregistration-draft.json` in this change folder; verify every field of `data/diagnostic_v1/experiment_preregistration_template.json` is mapped or explicitly marked not applicable.
 - [x] 6.2 Write the analysis-plan section (tests, corrections, intervals, seeds, router-rule placeholder); verify it names every metric the analysis code computes.
 - [ ] 6.3 (blocked until `audit-report.json` is final) Copy the confirmed controls into `data/diagnostic_v1/protocol.json`; verify `diagnostic.py` readiness lists no unresolved control and rebuild the pilot only if the demo page is still needed.
-- [ ] 6.4 (blocked until 6.3) Register the cards in `measurement_card.md` and `docs/measurement_cards/` and commit with title `pre-register MC-NN`; verify the runner's card gate passes.
+- [x] 6.4 Register the wide card as MC-90 in `measurement_card.md` and `docs/measurement_cards/` and commit with a title containing `pre-register MC-90` (the wide card needs neither 6.3 nor the completed audit: it touches no anchor); verify the runner's preflight reports every gate PASS with `endpoint_calls=0`.
+- [ ] 6.5 (blocked until 6.3) Register the core card in the same way and fill the core entries of `registration.json`.
 
 ## 7. Evidence and corpus (blocked until the 12 Legal MC anchors are audited)
 
@@ -41,12 +43,12 @@ Model Qwen3.5-9B-65K (served as `Qwen3.5-9B-Q4_K_M.gguf` by llama.cpp), endpoint
 - [ ] 7.2 Build corpus v0 (full texts of the cited documents plus distractors, chunked by article, hashed, provenance recorded); verify that no benchmark answer, model output or gold text is present.
 - [ ] 7.3 Implement lexical retrieval with a hashed configuration and a retrieval trace; verify the reviewer-cited article appears in the top k for the 12 anchors or that the misses are listed.
 
-## 8. Execution (blocked until 6.4)
+## 8. Execution (wide: registered as MC-90; core: blocked until 6.5)
 
 Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile `member-shared-tcp`), self-reported `Qwen3.5-9B-Q4_K_M.gguf`, resolver shim via `172.16.30.1`.
 
 - [ ] 8.1 Run `wide` with `--execute`; verify 2,478 attempts complete, the response model id is constant and per-arm summaries are written.
-- [ ] 8.2 Run `core` after `inference_ready`; verify 396 attempts complete (B 180, S 180, O 36; 468 only if K and KS are later registered for the same anchors) and `condition.json` matches the card.
+- [ ] 8.2 Run `core` after 6.5 and `inference_ready`; verify 396 attempts complete (B 180, S 180, O 36; 468 only if K and KS are later registered for the same anchors) and `condition.json` matches the card.
 - [ ] 8.3 Register both outputs as diagnostic ledger sources; verify the coverage and score-parity reports pass.
 
 ## 9. Analysis code (offline, before data)

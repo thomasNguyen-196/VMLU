@@ -478,8 +478,11 @@ class TestRunner(unittest.TestCase):
 
     @unittest.skipUnless(DATA_OK, "frozen main-v1 sources or the locked pilot packet are not available")
     def test_preflight_sends_nothing_and_execute_fails_closed_when_unregistered(self):
+        unregistered = {**dp.load_registration(), "card_ids": {"core": None, "wide": None},
+                        "card_files": {"core": None, "wide": None}}  # independent of the committed registration
         out = io.StringIO()
-        with contextlib.redirect_stdout(out), patch.object(runner.base, "execute") as execute:
+        with contextlib.redirect_stdout(out), patch.object(runner.base, "execute") as execute, \
+                patch.object(runner.dp, "load_registration", return_value=unregistered):
             self.assertEqual(runner.main(["--phase", "wide"]), 0)
             self.assertIn("endpoint_calls=0", out.getvalue())
             self.assertIn("attempts=2478", out.getvalue())
@@ -487,6 +490,18 @@ class TestRunner(unittest.TestCase):
                 runner.main(["--phase", "wide", "--execute"])
         self.assertIn("card_registered", str(caught.exception))
         execute.assert_not_called()
+
+    @unittest.skipUnless(DATA_OK, "frozen main-v1 sources or the locked pilot packet are not available")
+    def test_committed_wide_registration_matches_its_frozen_artifacts(self):
+        """Editing protocol.json, the templates or the manifest after registration must fail here, not at the endpoint."""
+        protocol, registration = dp.load_protocol(), dp.load_registration()
+        manifest, rebuilt = dp.build_manifest("wide")
+        gates = {g.name: g for g in runner.evaluate_gates("wide", protocol, manifest, registration, self.ENV)}
+        self.assertEqual({name: g.detail for name, g in gates.items() if not g.ok}, {})
+        saved = json.loads((dp.DATA_DIR / "wide_v1.json").read_text(encoding="utf-8"))
+        self.assertEqual(saved, manifest)  # the archived frozen file is the manifest the runner rebuilds
+        self.assertEqual(len(dp.verify_manifest_rows(saved, rebuilt)), 2478)
+        self.assertEqual((manifest["item_count"], manifest["arm_counts"]), (1239, {"B": 1239, "S": 1239}))
 
 
 if __name__ == "__main__":

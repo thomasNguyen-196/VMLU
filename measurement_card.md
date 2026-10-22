@@ -2628,3 +2628,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
 | `details` | `docs/measurement_cards/MC-89-mimo26-omp-full-tools.md` |
 | `outputs` | `all_res/mimo26_omp_mc89/`; no upload |
+
+## MC-90 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide / B and S on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-90` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests |
+| `scope` | The 1,239 items of the five non-VMLU datasets of the MC-72 scope that are not audit anchors (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); arms B (frozen prompt) and S (stepwise wording); 1 replicate; 2,478 attempts. VMLU, V-Bench and the 60 audit anchors are excluded |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096` for both arms; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run |
+| `workers / scheduler` | 12 workers (4 shards x 3 lanes); items ordered item-major so B and S of one item run adjacently |
+| `details` | `docs/measurement_cards/MC-90-diagnostic-prospective-wide.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective/`; no upload |

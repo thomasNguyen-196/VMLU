@@ -110,7 +110,7 @@
     "reporting": "AI-assisted primary versus blind human agreement must not be described as two blind human raters"
   },
   "registration_record": {
-    "card_ids": {"core": "MC-NN (next free ids at drafting time: MC-90 and MC-91)", "wide": "MC-NN"},
+    "card_ids": {"core": "MC-NN (next free id at core registration; MC-91 at drafting time)", "wide": "MC-90 (REGISTERED 2026-10-22, see docs/measurement_cards/MC-90-diagnostic-prospective-wide.md)"},
     "card_files": {"core": "docs/measurement_cards/MC-NN-diagnostic-prospective-core.md", "wide": "docs/measurement_cards/MC-NN-diagnostic-prospective-wide.md"},
     "registered_on": "<set at registration>",
     "commit_title": "pre-register MC-NN"

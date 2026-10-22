@@ -1,12 +1,16 @@
 {
-  "status": "unregistered",
-  "card_ids": {"core": null, "wide": null},
-  "card_files": {"core": null, "wide": null},
+  "status": "wide-registered; core unregistered",
+  "card_ids": {"core": null, "wide": "MC-90"},
+  "card_files": {"core": null, "wide": "docs/measurement_cards/MC-90-diagnostic-prospective-wide.md"},
+  "registered_on": {"core": null, "wide": "2026-10-22"},
   "frozen": {
-    "protocol_sha256": null,
-    "prompt_templates_sha256": null,
-    "manifest_sha256": {"core": null, "wide": null},
+    "protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+    "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
+    "manifest_sha256": {
+      "core": null,
+      "wide": "d5f022d63d641ceb635882537f914c6e7e9df17a1695649f0dd6b67432e5c297"
+    },
     "evidence_sha256": {"core": {}, "wide": {}}
   },
-  "note": "Filled at registration, after the audit report is final. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
+  "note": "Wide was registered on 2026-10-22 as MC-90. Core is registered after the pilot audit is final and the oracle evidence exists. protocol.json and prompt_templates_v1.json are frozen for this campaign from now on: a change needs a new protocol version and new cards. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
 }
