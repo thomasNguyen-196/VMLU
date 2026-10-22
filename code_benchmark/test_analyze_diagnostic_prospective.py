@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -382,6 +383,9 @@ class TestBReplicateSupplement(unittest.TestCase):
         text = an.format_noise_report(report)
         for phrase in ("drift B1->B2", "B-vs-B noise", "given B1 wrong", "oracle B/S"):
             self.assertIn(phrase, text)
+        line = next(line for line in text.splitlines() if "B-vs-B noise" in line)
+        shown = [float(x) for x in re.findall(r"\d+\.\d", line)]
+        self.assertTrue(shown and all(0 <= x <= 100 for x in shown), line)  # percentages, not percentages x 100
 
 
 class TestPlanConsistency(unittest.TestCase):

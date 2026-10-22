@@ -472,8 +472,8 @@ def format_noise_report(report: dict[str, Any]) -> str:
     def pct(x):
         return "-" if x is None else f"{100 * x:.1f}%"
 
-    def span(c):
-        return "-" if not c else f"[{100 * c[0]:.1f}, {100 * c[1]:.1f}]"
+    def span(c):  # Wilson intervals are already in percent, as in the primary report
+        return "-" if not c else f"[{c[0]:.1f}, {c[1]:.1f}]"
 
     parity = report["parity_gate_b2"]
     lines = [f"B replicate {report['noise_replicate']} over {report['items_shared']} items "
