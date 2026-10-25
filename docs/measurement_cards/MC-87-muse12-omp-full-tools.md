@@ -1,0 +1,19 @@
+# MC-87 — Muse Spark 1.2 Contributor, OMP full tools, MC-86 matched scope
+
+Registered 2026-10-17 (+07) before benchmark-item requests, following the request to test Muse Spark 1.2 with the MC-86/R2 full-tools controls.
+
+| Field | Condition |
+| --- | --- |
+| Model / route | Muse Spark 1.2 Contributor; exact provider model ID `muse-spark-1.2-contributor`, OMP model ref `zen-go/muse-spark-1.2-contributor`; OpenCode Go Responses. Keep earlier CMC/9Router Muse 1.2 results separate. |
+| Harness | OMP 18.0.0, JSON mode; OMP full default tool menu; default coding-agent system prompt; auto-approve; no session, title, extensions, skills, rules, or LSP. |
+| Credential boundary | Resolve OpenCode Go authentication in the parent process and forward model requests through a loopback streaming proxy. OMP and its tools receive only an ephemeral local relay key; the upstream key is not present in the agent environment or scratch directory. |
+| Item isolation | Run OMP in a Bubblewrap user/PID/mount namespace. Bind only the item scratch, isolated OMP profile, fake HOME, and read-only runtime files; keep network available for the model relay and full tools. The host home, repo, datasets, and gold files are not mounted. |
+| Scope | The same 12,033 MC-85 items as MC-86/R2: VMLU Valid 744, Legal NLI 150, Vi-SQuAD 200, Vi-DROP 200, ViBidLQA Test 603, VMLU Dev 303, and VMLU Test 9,833. Exclude Legal MC 146 to preserve exact MC-86/R2 item coverage; verify IDs and prompt hashes against MC-85 and the MC-71 exclusion ledger. No V-Bench or pilot items. |
+| Inputs and prompts | Freeze the MC-85 manifests and item order; preserve every frozen user prompt byte-for-byte; send no gold. Each OMP process gets an isolated scratch directory with only its item prompt. Local gold is retained only for local scoring. |
+| Sampling | Temperature 1.0 set in the isolated OMP profile; provider effective temperature not independently observable. Thinking `auto`; reasoning effort not pinned; seed omitted. |
+| Token and time limits | Model `maxTokens=20000` per assistant turn; `--max-time 300` seconds/item plus a 60-second subprocess timeout margin. OMP can make multiple assistant calls per item, so cumulative output across an item can exceed 20,000 tokens; retain all reported usage. |
+| Workers and scheduling | 12 worker threads/processes pull from one global queue ordered by the frozen manifests. A worker takes the next pending item when its current item ends, including items from another dataset. No fixed worker-to-dataset assignment. Record worker ID, dataset, active peak, and item timing. |
+| Retries | No SDK retries. Retry only failed technical attempts identified as transient, up to three total attempts; completed responses, truncations, and unparsed answers are terminal. Never retry for correctness. Stop on authentication, permission, billing, or model-configuration errors. |
+| Scoring | Frozen V1 scorer for Main local-gold datasets and frozen V2 scorer for Dev/Test. Keep unparsed model responses in local-gold denominators. Test gold remains withheld; no local Test accuracy is claimed. Create a local `id,answer` Test submission only after complete Test coverage; do not upload it. |
+| Provenance and outputs | Record MC-85 parent manifests, prompt hashes, MC-71 exclusion ledger hash, condition/card/runner/scorer hashes, per-attempt usage and tool audit, and all output files under `all_res/muse12_omp_mc87/`. OMP preflight is a non-benchmark request and is excluded from the 12,033 items. |
+| Comparison limits | The intended change from MC-86/R2 is model identity/version. Both use the OpenCode Go Responses endpoint and the same nominal OMP controls; provider effective temperature and reasoning tier remain unknown. Earlier Muse 1.2 CMC/9Router results are a different route and condition. OpenCode Go availability is region-limited; the OMP preflight must return usable content before workers start. |

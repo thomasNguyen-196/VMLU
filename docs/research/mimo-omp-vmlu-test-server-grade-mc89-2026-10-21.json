@@ -1,0 +1,108 @@
+{
+  "source": "VMLU server grade provided by the user",
+  "recorded_at": "2026-10-21T14:21:41.133779+07:00",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "model_id": "zen-go/mimo-v2.6-flash",
+  "condition_ids": [
+    "MC-89",
+    "MC-89-R1",
+    "MC-89-R1-C1",
+    "MC-89-R2",
+    "MC-89-R2-C1"
+  ],
+  "item_count": 9833,
+  "answered_item_count": 9788,
+  "empty_answer_rows": 65,
+  "failed_test_rows": 45,
+  "submission_path": "submissions/mimo-v2-6-flash-omp-full-tools-mc89/submission.csv",
+  "submission_sha256": "a1b2533a1b010e16f4fea77f1ff451e5aeb1ab70c27720003ecd7986198d5379",
+  "run_path": "all_res/mimo26_omp_mc89/final/vmlu/mimo-v2-6-flash-omp-full-tools-mc89/run.json",
+  "manifest_sha256": "f7e628dcd5eab7508590829bebabe68309d228c714f670c04d0be8de25c64a2b",
+  "condition_sha256": "88291edb3e6d581b631ed59d0c78c28371e35096210fe8a24f87feafac2b3be4",
+  "recovery_condition_sha256": {
+    "r1_1800s": "3092416bade7f63e736c2dc8e544a7860b8834aac4c013dd109838f4d163086a",
+    "r2_overrides": "b3e28d26e124cecf0b8a956281fda4be9a2c24c2f0cc9590c87af4a064d7017e"
+  },
+  "server_score_status": "scored_user_provided",
+  "total": 79.6,
+  "categories": {
+    "social_science": {
+      "total": 81.29,
+      "subjects": {
+        "business_administration": 63.79,
+        "high_school_civil_education": 87.22,
+        "high_school_geography": 70.37,
+        "ho_chi_minh_ideology": 78.21,
+        "macroeconomics": 80,
+        "microeconomics": 91.67,
+        "middle_school_civil_education": 90.45,
+        "middle_school_geography": 82.99,
+        "principles_of_marxism_and_leninism": 83.33,
+        "sociology": 84.83
+      }
+    },
+    "stem": {
+      "total": 85.41,
+      "subjects": {
+        "metrology_engineer": 71.63,
+        "middle_school_biology": 84.71,
+        "middle_school_chemistry": 91.67,
+        "middle_school_mathematics": 86.11,
+        "middle_school_physics": 91.11,
+        "operating_system": 78.89,
+        "statistics_and_probability": 93.68,
+        "applied_informatics": 83.89,
+        "computer_architecture": 86.11,
+        "computer_network": 83.8,
+        "discrete_mathematics": 91.52,
+        "electrical_engineering": 74.43,
+        "elementary_mathematics": 91.11,
+        "elementary_science": 91.67,
+        "high_school_biology": 77.78,
+        "high_school_chemistry": 81.11,
+        "high_school_mathematics": 89.86,
+        "high_school_physics": 82.78,
+        "introduction_to_chemistry": 88.27,
+        "introduction_to_physics": 90.17,
+        "introduction_to_programming": 83.24
+      }
+    },
+    "humanity": {
+      "total": 75.09,
+      "subjects": {
+        "history_of_world_civilization": 85,
+        "idealogical_and_moral_cultivation": 87.22,
+        "introduction_to_laws": 84.92,
+        "introduction_to_vietnam_culture": 72.78,
+        "logic": 67.82,
+        "middle_school_history": 82.22,
+        "middle_school_literature": 72.99,
+        "revolutionary_policy_of_the_vietnamese_commununist_part": 65,
+        "vietnamese_language_and_literature": 62.07,
+        "administrative_law": 51.11,
+        "business_law": 84.36,
+        "civil_law": 80,
+        "criminal_law": 80.37,
+        "economic_law": 78.26,
+        "education_law": 71.69,
+        "elementary_history": 79.1,
+        "high_school_history": 71.11,
+        "high_school_literature": 75.56
+      }
+    },
+    "other": {
+      "total": 73.23,
+      "subjects": {
+        "tax_civil_servant": 74.27,
+        "accountant": 79.17,
+        "civil_servant": 76.02,
+        "clinical_pharmacology": 80.56,
+        "driving_license_certificate": 86.55,
+        "environmental_engineering": 62.57,
+        "internal_basic_medicine": 75.44,
+        "preschool_pedagogy": 64.71,
+        "tax_accountant": 59.77
+      }
+    }
+  }
+}

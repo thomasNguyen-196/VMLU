@@ -2558,3 +2558,115 @@ Registered 2026-10-15 (+07), before benchmark items, for the user-requested `ocg
 | `details` | docs/measurement_cards/MC-85-mimo26-direct-20k.md |
 
 Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking conditions.
+
+## MC-86 — Muse Spark 1.3 / OMP full tools / remaining MC-85 items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-86` |
+| `status` | Preregistered 2026-10-16 (+07), before benchmark-item requests |
+| `scope` | 12,033 MC-85 items, excluding Legal MC 146 already completed under MC-71; matching IDs and prompt hashes verified |
+| `harness / tools` | OMP 18.0.0 JSON, `--tools all`, default coding-agent system prompt, Bubblewrap item namespace; loopback proxy keeps upstream auth out of the agent environment; no session/title/extensions/skills/rules/LSP |
+| `model / route` | Muse Spark 1.3 Contributor, model ID `muse-spark-1.3-contributor` via OMP ref `zen-go/muse-spark-1.3-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 in isolated OMP profile; thinking `auto`; no seed; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership; worker transitions recorded in the attempt ledger |
+| `details` | `docs/measurement_cards/MC-86-muse13-omp-full-tools-remaining.md` |
+| `outputs` | `all_res/muse13_omp_mc86/`; no upload |
+
+## MC-87 — Muse Spark 1.2 / OMP full tools / MC-86 matched scope
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-87` |
+| `status` | Preregistered 2026-10-17 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2; exclude Legal MC 146 to preserve matched item coverage |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session |
+| `model / route` | Muse Spark 1.2 Contributor, model ID `muse-spark-1.2-contributor` via OMP ref `zen-go/muse-spark-1.2-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, reasoning effort unpinned; seed omitted; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
+| `outputs` | `all_res/muse12_omp_mc87/`; no upload |
+
+## MC-87 — Muse Spark 1.2 / OMP full tools / MC-86 matched scope
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-87` |
+| `status` | Preregistered 2026-10-17 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2; exclude Legal MC 146 to preserve matched item coverage |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session |
+| `model / route` | Muse Spark 1.2 Contributor, model ID `muse-spark-1.2-contributor` via OMP ref `zen-go/muse-spark-1.2-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, reasoning effort unpinned; seed omitted; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
+| `outputs` | `all_res/muse12_omp_mc87/`; no upload |
+
+## MC-88 — Qwen3.5-9B-65K (IEC) / OMP full tools / MC-87 matched scope, 900 s timeout
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-88` |
+| `status` | Preregistered 2026-10-19 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2 and MC-87; Legal MC 146 excluded via the MC-71 ledger |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session; loopback credential relay |
+| `model / route` | Qwen3.5-9B-65K via OMP ref `iec/Qwen3.5-9B-65K`, IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, non-reasoning model entry; seed omitted; `maxTokens=20000` per assistant turn; 900 s/item plus 60 s hard-timeout margin (user override vs MC-86/87's 300 s) |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-88-qwen-omp-full-tools.md` |
+| `outputs` | `all_res/qwen_omp_mc88/`; no upload |
+
+## MC-89 — MiMo V2.6 Flash / OMP full tools / MC-88 matched scope, 900 s timeout
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-89` |
+| `status` | Preregistered 2026-10-19 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2, MC-87 and MC-88; Legal MC 146 excluded via the MC-71 ledger |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, per-item `x-opencode-session` routing header; loopback credential relay |
+| `model / route` | MiMo V2.6 Flash via OMP ref `zen-go/mimo-v2.6-flash`, OpenCode Go Chat Completions (Responses unsupported for this model; probed 2026-10-19) |
+| `sampling / limits` | Temperature 1.0 requested (thinking-mode provider default may apply); thinking auto; reasoning by provider default; seed omitted; `maxTokens=20000` per assistant turn; 900 s/item plus 60 s hard-timeout margin (user choice, continuity with MC-88) |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-89-mimo26-omp-full-tools.md` |
+| `outputs` | `all_res/mimo26_omp_mc89/`; no upload |
+
+## MC-90 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide / B and S on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-90` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests |
+| `scope` | The 1,239 items of the five non-VMLU datasets of the MC-72 scope that are not audit anchors (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); arms B (frozen prompt) and S (stepwise wording); 1 replicate; 2,478 attempts. VMLU, V-Bench and the 60 audit anchors are excluded |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096` for both arms; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run |
+| `workers / scheduler` | 12 workers (4 shards x 3 lanes); items ordered item-major so B and S of one item run adjacently |
+| `details` | `docs/measurement_cards/MC-90-diagnostic-prospective-wide.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-91 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide supplement / second B draw on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-91` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests of this card |
+| `scope` | Supplement `wide-b-r2` of the MC-90 wide phase: arm B only (the frozen main-v1 prompt, byte-identical to MC-90 replicate 1), replicate r2, over the same 1,239 non-anchor items (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); 1,239 attempts. Purpose: a sampling-noise reference for the single-draw B and S results of MC-90, which it leaves unchanged |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition (MC-90 stalled the endpoint twice at 12 simultaneous streams) |
+| `details` | `docs/measurement_cards/MC-91-diagnostic-prospective-wide-b-replicate.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-b-r2/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-92 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide supplement / second S draw on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-92` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests of this card |
+| `scope` | Supplement `wide-s-r2` of the MC-90 wide phase: arm S only (the stepwise prompt of `prompt_templates_v1.json`, byte-identical to MC-90 replicate 1), replicate r2, over the same 1,239 non-anchor items (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); 1,239 attempts. Purpose: the sampling noise of S itself and a two-draw design for both arms (B in MC-90 and MC-91, S in MC-90 and this card); MC-90 and MC-91 stay unchanged |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 1.25 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition |
+| `details` | `docs/measurement_cards/MC-92-diagnostic-prospective-wide-s-replicate.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-s-r2/qwen3-5-9b-65k-prospective/`; no upload |

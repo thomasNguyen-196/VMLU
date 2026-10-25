@@ -89,6 +89,30 @@ export interface BenchmarkRunSummaryDataset {
   server_breakdown: Array<{ category: string; subject: string | null; score: number }>;
   route_breakdown: BenchmarkRunSummaryRoute[];
 }
+export type WebSearchStatus = "success" | "failure" | "unrecorded";
+export interface WebSearchEvent {
+  event_id: string;
+  source: string;
+  dataset_id: string;
+  dataset: string;
+  item_id: string;
+  phase: string;
+  attempt: number;
+  worker_id: number | null;
+  call_index: number;
+  tool_call_id: string;
+  status: WebSearchStatus;
+  status_source: string;
+  started_at: string;
+  finished_at: string;
+}
+export interface WebSearchUsage {
+  total_calls: number;
+  succeeded: number;
+  failed: number;
+  unrecorded: number;
+  events: WebSearchEvent[];
+}
 export interface BenchmarkRunSummary {
   id: string;
   title: string;
@@ -105,6 +129,7 @@ export interface BenchmarkRunSummary {
   datasets: BenchmarkRunSummaryDataset[];
   source: string;
   notes: string[];
+  web_search?: WebSearchUsage;
 }
 
 const METRICS = new Set(["accuracy", "server_accuracy", "server_macro", "em", "token_f1", "char_f1", "valid_rate", "agreement", "function_exact"]);
@@ -140,6 +165,36 @@ export function parseBenchmarkReports(value: unknown): BenchmarkReports {
     if (typeof summary.completed_items !== "number" || typeof summary.total_items !== "number" || summary.completed_items > summary.total_items || !Array.isArray(summary.route_breakdown) || !Array.isArray(summary.datasets))
       throw new Error("Invalid run summary counts");
     strings(summary.notes, "run_summary.notes");
+    if (summary.web_search !== undefined) {
+      const usage = summary.web_search;
+      if (!object(usage) || !Array.isArray(usage.events)) throw new Error("Invalid run summary web search log");
+      for (const key of ["total_calls", "succeeded", "failed", "unrecorded"])
+        number(usage[key], `run_summary.web_search.${key}`, 0, Number.MAX_SAFE_INTEGER, true);
+      const totalCalls = usage.total_calls as number;
+      const succeeded = usage.succeeded as number;
+      const failed = usage.failed as number;
+      const unrecorded = usage.unrecorded as number;
+      const eventIds = new Set<string>();
+      for (const event of usage.events) {
+        if (!object(event) || !["success", "failure", "unrecorded"].includes(String(event.status)))
+          throw new Error("Invalid run summary web search event");
+        for (const key of ["event_id", "source", "dataset_id", "dataset", "item_id", "phase", "status_source"])
+          text(event[key], `run_summary.web_search.event.${key}`);
+        for (const key of ["attempt", "call_index"])
+          number(event[key], `run_summary.web_search.event.${key}`, 1, Number.MAX_SAFE_INTEGER, true);
+        if (event.worker_id !== null) number(event.worker_id, "run_summary.web_search.event.worker_id", 1, Number.MAX_SAFE_INTEGER, true);
+        if (typeof event.tool_call_id !== "string" || typeof event.started_at !== "string" || typeof event.finished_at !== "string")
+          throw new Error("Invalid run summary web search event text fields");
+        if (eventIds.has(String(event.event_id))) throw new Error("Duplicate run summary web search event");
+        eventIds.add(String(event.event_id));
+      }
+      if (usage.events.length !== totalCalls
+          || succeeded + failed + unrecorded !== totalCalls
+          || usage.events.filter((event) => event.status === "success").length !== succeeded
+          || usage.events.filter((event) => event.status === "failure").length !== failed
+          || usage.events.filter((event) => event.status === "unrecorded").length !== unrecorded)
+        throw new Error("Invalid run summary web search counts");
+    }
     const validateRoutes = (routes: unknown[]) => {
       for (const route of routes) {
         if (!object(route)) throw new Error("Invalid run summary route");

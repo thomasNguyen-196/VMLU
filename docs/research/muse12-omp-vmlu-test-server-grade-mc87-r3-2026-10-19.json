@@ -1,0 +1,103 @@
+{
+  "source": "VMLU server grade provided by the user",
+  "recorded_at": "2026-10-19T00:20:08.435520+07:00",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "model_id": "zen-go/muse-spark-1.2-contributor",
+  "condition_ids": [
+    "MC-87",
+    "MC-87-R1",
+    "MC-87-R2",
+    "MC-87-R3"
+  ],
+  "item_count": 9833,
+  "submission_path": "submissions/muse-spark-1-2-contributor-omp-full-tools-mc87/submission.csv",
+  "submission_sha256": "a47bb7c09118c993235d5d186470c4fd239c008a288866a8db8a68f60df75eff",
+  "run_path": "all_res/muse12_omp_mc87/recovery_mc87_r3/vmlu/muse-spark-1-2-contributor-omp-full-tools-mc87/run.json",
+  "manifest_sha256": "d5569318cef70d75046064282a531df6fb4912575f2f7115c14b40ec9bebc0af",
+  "condition_sha256": "33951ca2e22ed2626a6c4d0c7ada8fb57b1bc15154b55c5de902ec6d78e5e641",
+  "parent_condition_sha256": "72022755223697b5b253ea089e1e67863824622e785f962bfea69af8394bc488",
+  "server_score_status": "scored_user_provided",
+  "total": 87.94,
+  "categories": {
+    "social_science": {
+      "total": 87.6,
+      "subjects": {
+        "middle_school_civil_education": 91.57,
+        "middle_school_geography": 91.16,
+        "principles_of_marxism_and_leninism": 90,
+        "sociology": 85.39,
+        "business_administration": 71.26,
+        "high_school_civil_education": 94.44,
+        "high_school_geography": 77.78,
+        "ho_chi_minh_ideology": 94.41,
+        "macroeconomics": 83.33,
+        "microeconomics": 96.67
+      }
+    },
+    "stem": {
+      "total": 90.66,
+      "subjects": {
+        "applied_informatics": 88.89,
+        "computer_architecture": 95,
+        "computer_network": 88.83,
+        "discrete_mathematics": 94.55,
+        "electrical_engineering": 81.82,
+        "elementary_mathematics": 96.11,
+        "elementary_science": 95,
+        "high_school_biology": 87.22,
+        "high_school_chemistry": 96.11,
+        "high_school_mathematics": 89.86,
+        "high_school_physics": 88.89,
+        "introduction_to_chemistry": 92.74,
+        "introduction_to_physics": 93.06,
+        "introduction_to_programming": 81.56,
+        "metrology_engineer": 80.85,
+        "middle_school_biology": 92.94,
+        "middle_school_chemistry": 97.78,
+        "middle_school_mathematics": 91.67,
+        "middle_school_physics": 93.89,
+        "operating_system": 82.22,
+        "statistics_and_probability": 94.83
+      }
+    },
+    "other": {
+      "total": 83.92,
+      "subjects": {
+        "accountant": 85.12,
+        "civil_servant": 94.15,
+        "clinical_pharmacology": 87.78,
+        "driving_license_certificate": 99.42,
+        "environmental_engineering": 58.48,
+        "internal_basic_medicine": 83.04,
+        "preschool_pedagogy": 71.57,
+        "tax_accountant": 83.33,
+        "tax_civil_servant": 92.4
+      }
+    },
+    "humanity": {
+      "total": 86.98,
+      "subjects": {
+        "civil_law": 92.78,
+        "criminal_law": 92.64,
+        "economic_law": 84.47,
+        "education_law": 81.93,
+        "elementary_history": 88.14,
+        "high_school_history": 91.67,
+        "high_school_literature": 91.11,
+        "history_of_world_civilization": 93.33,
+        "idealogical_and_moral_cultivation": 94.44,
+        "introduction_to_laws": 88.1,
+        "introduction_to_vietnam_culture": 85,
+        "logic": 82.76,
+        "middle_school_history": 92.22,
+        "middle_school_literature": 85.06,
+        "revolutionary_policy_of_the_vietnamese_commununist_part": 85.56,
+        "vietnamese_language_and_literature": 78.74,
+        "administrative_law": 67.78,
+        "business_law": 89.94
+      }
+    }
+  },
+  "correct": null,
+  "ci95": null
+}

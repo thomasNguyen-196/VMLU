@@ -1,0 +1,145 @@
+{
+  "version": "diagnostic-experiment-preregistration-v1",
+  "status": "DRAFT - not registered; every value below is a proposal awaiting confirmation (see open_decisions)",
+  "research_scope": "Vietnamese tasks",
+  "applies_to": {
+    "change": "openspec/changes/diagnostic-prospective-campaign",
+    "campaign_protocol": "data/diagnostic_prospective_v1/protocol.json"
+  },
+  "copy_target": {
+    "readiness_controls": "data/diagnostic_v1/protocol.json -> readiness_controls (5 keys)",
+    "future_experiment_contract": "data/diagnostic_v1/protocol.json -> future_experiment_contract (status becomes `preregistered` only at registration)",
+    "order": "only after audit-report.json is final: editing protocol.json changes its SHA-256, which binds the review page, review import, adjudication and the reviewer's draft keys"
+  },
+  "readiness_controls": {
+    "verified_endpoint": {
+      "base_url": "http://llmapi.iec/v1",
+      "requested_model": "Qwen3.5-9B-65K",
+      "self_reported_model_id": "/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf",
+      "weights": "Q4_K_M quantization served by llama.cpp; Regime B-style weights, recorded as a threat to validity",
+      "verified_on": "2026-10-22",
+      "evidence": "one ping, 24 timing probes and 144 synthetic prompt-development requests; every response carried the same model id (synthetic-dev-results.md)",
+      "reasoning_tokens_reported": false,
+      "access": "IEC VPN via OpenVPN 3 profile member-shared-tcp; llmapi.iec resolved inside the runner process through the tunnel DNS 172.16.30.1 (172.16.50.172); no system resolver or hosts change",
+      "reverify": "ping and model-id check immediately before each execute; the runner pauses on a model-id change"
+    },
+    "versioned_vietnamese_corpus": {
+      "decision": "none in this registration",
+      "reason": "arms K and KS need a frozen corpus and a retriever and are registered later under a separate card; arm O uses reviewer-cited provisions whose hash is recorded as evidence_sha256",
+      "k_ks_status": "excluded from the first registration"
+    },
+    "hard_runtime_budget": {
+      "item_cap_output_tokens": 4096,
+      "campaign_cap_tokens": 5000000,
+      "basis": "2026-10-22 probes: about 244 output tokens and 5 s per attempt (B 2-8 tokens, S up to 1,551); expected total about 2 M tokens for core plus wide; the cap is a guard, not an estimate",
+      "enforced_by": "runner budget guard: pauses without further requests once cumulative reported tokens reach the cap"
+    },
+    "augmentation_model_and_controls": {
+      "model": "Qwen3.5-9B-65K via the endpoint above, one model for every arm",
+      "controls": "identical sampling, output cap and system prompt for every arm; S changes only the instruction and adds no information; O prepends one frozen evidence block to the B prompt; item-major scheduling keeps the arms of one item adjacent in time",
+      "prompt_templates_sha256": "<set at registration>"
+    },
+    "runtime_verification_policy": {
+      "enabled": false,
+      "scope": "none",
+      "reason": "runtime verifier is future work; no verifier in the core campaign"
+    }
+  },
+  "future_experiment_contract": {
+    "status": "preregistered",
+    "campaign_controls": {
+      "protocol": "data/diagnostic_prospective_v1/protocol.json",
+      "protocol_sha256": "<set at registration>",
+      "arms": {"B": "frozen main-v1 prompt", "S": "stepwise decomposition wording, same input", "O": "frozen evidence block plus the B prompt (Legal MC anchors with reviewer-cited provisions)"},
+      "phases": {"core": "60 audit anchors, 3 replicates, arms B, S, O", "wide": "1,239 non-anchor items, 1 replicate, arms B and S"},
+      "transport": "direct OpenAI Responses API, streaming, temperature 1.0, no seed, no reasoning field, 300 s timeout, no SDK retries, 12 workers",
+      "scorers": "frozen V1 scorers for B and O; final-segment rule diagnostic-final-segment-v1 for S"
+    },
+    "split_manifest": {
+      "development": "the 60 audit anchors (core), all analysis and the rule-based router are tuned here",
+      "held_out": "the 1,239 non-anchor items of the same five datasets (wide), router evaluated once",
+      "grouping": "reading items grouped by passage_id; all arms and replicates of an item stay in one split",
+      "manifest_sha256": {"core": "<set at registration>", "wide": "<set at registration>"},
+      "caveat": "all items were evaluated by earlier runs: held-out with respect to rule design only, not pristine"
+    },
+    "corpus_version": "none (arms K and KS are not part of this registration)",
+    "budget_policy": {
+      "item_cap": 4096,
+      "campaign_cap": 5000000,
+      "currency_or_token_accounting": "tokens as reported by the endpoint (input_tokens, output_tokens, total_tokens); no currency because the IEC tariff is not declared",
+      "missing_usage_policy": "unknown_not_zero"
+    },
+    "replicate_pairing_and_stability": {
+      "replicates": {"core": 3, "wide": 1},
+      "pairing_rule": "paired by item within a phase; an arm's item outcome is the strict majority of its replicates (core) or its single attempt (wide); a tie counts as incorrect and is reported",
+      "stable_recovery_threshold": "rescue under the majority rule: B majority incorrect (at most 1 of 3 correct) and the arm majority correct (at least 2 of 3)"
+    },
+    "verification_policy": {
+      "scope": "none",
+      "enabled": false,
+      "ablation": "not applicable",
+      "false_accept_reject_metrics": "not applicable",
+      "abstention_coverage_risk": "not applicable"
+    },
+    "action_policy": {
+      "quality_threshold": "multiple choice: exact letter; reading: exact match; token-F1 at least 0.8 with exact match 0 is listed as a semantic-audit candidate and never counted as success",
+      "ties": "among successful arms prefer lower mean total tokens, then lower mean latency",
+      "all_arm_failure": "unresolved_or_abstain"
+    },
+    "comparisons": [
+      "matched prospective B, S and O attempts inside one core campaign",
+      "B versus S on the held-out wide set",
+      "oracle evidence versus baseline on the Legal MC anchors"
+    ],
+    "deployment_comparisons": {
+      "fresh-B": "included",
+      "always-S": "included",
+      "always-K": "deferred (no K registration)",
+      "always-KS": "deferred (no K registration)",
+      "best-fixed-from-dev": "included: chosen on core, evaluated once on wide",
+      "rule-router": "included: rule written before outcomes are unblinded, tuned on core, evaluated once on wide",
+      "learned-router": "future work"
+    },
+    "diagnostic_contrasts": {
+      "content_vs_length_position": "not run in v1",
+      "prompt_vs_tools_vs_resources": "not run in v1",
+      "retriever_vs_assembly_vs_generator": "not run in v1 (arm O only; K deferred)"
+    },
+    "runtime_goal": "predict quality and cost and choose an arm under remaining budget; causal diagnosis is a separate offline analysis",
+    "request_accounting": "core: 396 top-level attempts (B 180 + S 180 + O 36 when 12 oracle records exist); wide: 2,478; each attempt is one model request and technical retries are visible in the attempt ledger",
+    "reporting": "AI-assisted primary versus blind human agreement must not be described as two blind human raters"
+  },
+  "registration_record": {
+    "card_ids": {"core": "MC-NN (next free id at core registration; MC-91 at drafting time)", "wide": "MC-90 (REGISTERED 2026-10-22, see docs/measurement_cards/MC-90-diagnostic-prospective-wide.md)"},
+    "card_files": {"core": "docs/measurement_cards/MC-NN-diagnostic-prospective-core.md", "wide": "docs/measurement_cards/MC-NN-diagnostic-prospective-wide.md"},
+    "registered_on": "<set at registration>",
+    "commit_title": "pre-register MC-NN"
+  },
+  "analysis_plan": {
+    "fixed_in": ["design.md Decision 8", "data/diagnostic_prospective_v1/protocol.json -> analysis (metric names are checked against the analysis code by a test)"],
+    "router": {
+      "rule": null,
+      "must_be_written_before": "outcomes are unblinded",
+      "runtime_features_allowed": ["dataset family", "prompt length", "question cue words"],
+      "forbidden_features": ["gold answers", "diagnostic labels", "outcomes of other arms"],
+      "design_split": "core",
+      "evaluation_split": "wide, evaluated once"
+    },
+    "oracle_routing": "reported only with the ceiling over B replicates alone; on wide (one draw per arm) no noise floor exists and the ceiling is not read as headroom",
+    "primary_metrics": ["recovery", "regression_rate", "net_gain", "mcnemar_p_holm"],
+    "secondary_metrics": ["attempt_level", "baseline_noise", "sensitivity_format_compliant", "mean_f1_diff", "mean_f1_diff_ci95_pts", "rescues_format_suspect"],
+    "noise_reference": "core: attempt-level rescue and regression between B replicates, shown next to each arm's attempt-level rates; wide: unavailable (one draw)",
+    "parity_gate": "wide only: B per dataset must lie inside the MC-83 interval (Legal MC 76.70-88.70, Legal NLI 85.74-94.87, Vi-SQuAD EM 69.59-81.50, Vi-DROP EM 41.09-55.05, ViBidLQA EM 24.05-31.58) before any effect is interpreted",
+    "power_note": "the multiple-choice family has only about thirty B-incorrect items on wide: a null result there is reported as insufficient power, not as no effect"
+  },
+  "open_decisions": [
+    "DECIDED 2026-10-22 by the project owner: core replicates = 3; the defaults of the remaining items were accepted ('OK') unless a later message says otherwise",
+    "campaign cap of 5,000,000 tokens and output cap of 4,096 for every arm and dataset",
+    "stable-recovery rule: strict majority of replicates",
+    "tie-break among successful arms: fewer mean total tokens, then lower mean latency",
+    "reading correctness: exact match, with token-F1 >= 0.8 listed for audit but not counted",
+    "arms K and KS excluded from the first registration and registered later under a separate card",
+    "wide may run as soon as its own card is registered, without waiting for audit_complete",
+    "the rule-based router text, to be written by the project owner before outcomes are unblinded"
+  ]
+}

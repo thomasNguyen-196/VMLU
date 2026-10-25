@@ -24,6 +24,7 @@ const ITEMS = [
   { href: "/diagnostic", label: "Diagnostic", hint: "review pilot lỗi từng câu" },
   { href: "/multimodel", label: "Ma trận live", hint: "số lấy từ Mongo" },
   { href: "/harness", label: "Harness", hint: "đường truy xuất có agent" },
+  { href: "/changelog", label: "Changelog", hint: "hành vi model theo ngày" },
 ] as const;
 
 export default function SiteNav() {

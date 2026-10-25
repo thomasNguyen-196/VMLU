@@ -103,3 +103,4 @@ Mongo only for `/benchmark` (`/harness` needs nothing): `docker run -d --name vm
 
 - Project skills are exposed through `.agents/skills/`, with each skill linked to its source under `.claude/skills/`. Invoke one directly with `$skill-name`, or let Codex select it from its description.
 - Some source skills name Claude or OpenCode tools and slash commands. Treat those names as workflow intent and use the equivalent Codex capabilities; do not assume tools such as `webfetch`, `Task`, `AskUserQuestion`, or `/opsx:*` exist in Codex.
+- **Todo lists:** For work of 3+ steps, track progress in the harness's todo tool — `todowrite` in OpenCode ≥ v2.1.0 (behind `experimental.todo`). One item per verifiable step; mark an item done only when that step's completion criterion holds.
