@@ -15,6 +15,14 @@ services:
       VMLU_MONGO_URI: mongodb://mongo:27017/
     ports:
       - "${VMLU_WEB_BIND:-127.0.0.1}:3000:3000"
+    volumes:
+      # /diagnostic reads ../all_res and ../data relative to WORKDIR /app. Only the
+      # three-file independent-review packet that tools/push_data_to_pc.py ships is
+      # mounted, file by file, so the AI suggestions can never be served from here.
+      - ./all_res/diagnostic_v1/pilot-review-v4/selection.json:/all_res/diagnostic_v1/pilot-review-v4/selection.json:ro
+      - ./all_res/diagnostic_v1/pilot-review-v4/pilot.jsonl:/all_res/diagnostic_v1/pilot-review-v4/pilot.jsonl:ro
+      - ./all_res/diagnostic_v1/pilot-review-v4/contrasts.jsonl:/all_res/diagnostic_v1/pilot-review-v4/contrasts.jsonl:ro
+      - ./data/diagnostic_v1:/data/diagnostic_v1:ro
     depends_on:
       - mongo
 
