@@ -2587,20 +2587,6 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
 | `outputs` | `all_res/muse12_omp_mc87/`; no upload |
 
-## MC-87 — Muse Spark 1.2 / OMP full tools / MC-86 matched scope
-
-| Field | Condition |
-| --- | --- |
-| `card_id` | `MC-87` |
-| `status` | Preregistered 2026-10-17 (+07), before benchmark-item requests |
-| `scope` | Same 12,033 MC-85 items as MC-86/R2; exclude Legal MC 146 to preserve matched item coverage |
-| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session |
-| `model / route` | Muse Spark 1.2 Contributor, model ID `muse-spark-1.2-contributor` via OMP ref `zen-go/muse-spark-1.2-contributor`, OpenCode Go Responses |
-| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, reasoning effort unpinned; seed omitted; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
-| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
-| `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
-| `outputs` | `all_res/muse12_omp_mc87/`; no upload |
-
 ## MC-88 — Qwen3.5-9B-65K (IEC) / OMP full tools / MC-87 matched scope, 900 s timeout
 
 | Field | Condition |
