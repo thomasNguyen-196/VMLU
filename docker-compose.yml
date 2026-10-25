@@ -1,0 +1,40 @@
+# WHY: production stack for the lab PC (Windows 11 + Docker Desktop).
+#   web    — Next.js 16 review/results app (built from web/Dockerfile)
+#   mongo  — results DB for /benchmark (seed via migrate_results_to_mongo.py)
+#   ngrok  — public HTTPS entrypoint (profile "public", needs NGROK_* in .env)
+# Env comes from .env next to this file (see .env.example). Default binds keep
+# everything loopback-only on the host; public exposure goes through ngrok.
+
+name: vmlu
+
+services:
+  web:
+    build: ./web
+    restart: unless-stopped
+    environment:
+      VMLU_MONGO_URI: mongodb://mongo:27017/
+    ports:
+      - "${VMLU_WEB_BIND:-127.0.0.1}:3000:3000"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - vmlu-mongo-data:/data/db
+    ports:
+      - "${VMLU_MONGO_BIND:-127.0.0.1}:27017:27017"
+
+  ngrok:
+    image: ngrok/ngrok:3
+    restart: unless-stopped
+    profiles: ["public"]
+    command: ["http", "web:3000", "--domain=${NGROK_DOMAIN}", "--log=stdout"]
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTH_TOKEN}
+    depends_on:
+      - web
+
+volumes:
+  vmlu-mongo-data:
