@@ -23,8 +23,8 @@ services:
     restart: unless-stopped
     volumes:
       - vmlu-mongo-data:/data/db
-    ports:
-      - "${VMLU_MONGO_BIND:-127.0.0.1}:27017:27017"
+    # No host port published — DB reachable only inside the compose network
+    # (seed/migrate via a container attached to the same network).
 
   ngrok:
     image: ngrok/ngrok:3
