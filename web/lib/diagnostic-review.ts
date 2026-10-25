@@ -54,6 +54,45 @@ export const REVIEWER_ATTESTATION = "I attest that these are my independent huma
 export const AI_ASSISTED_ATTESTATION = "I reviewed the AI suggestions and affirm my final human judgments.";
 export const BLIND_ATTESTATION = "I have not seen AI suggestions or other reviewer judgments for this pilot.";
 export function normalizeDiagnosticDisplayText(value: string): string { return value.normalize("NFC"); }
+const ASSISTANT_META_SENTENCE = [
+  /^gợi ý ai(?=\s|$|[,.;:!?])/iu,
+  /^reviewer(?=\s|$|[,.;:!?])/iu,
+  /^cần reviewer(?=\s|$|[,.;:!?])/iu,
+  /^chỉ giữ nhãn(?=\s|$|[,.;:!?])/iu,
+  /^đây là quan sát sơ bộ(?=\s|$|[,.;:!?])/iu,
+  /^đây không phải(?=\s|$|[,.;:!?])/iu,
+  /^một output đơn lẻ(?=\s|$|[,.;:!?])/iu,
+  /^gợi ý lỗi(?=\s|$|[,.;:!?])/iu,
+  /^không có oracle\/controlled contrast(?=\s|$|[,.;:!?])/iu,
+  /^lexical EM có thể bất đồng(?=\s|$|[,.;:!?])/iu,
+  /^output có vẻ lệch(?=\s|$|[,.;:!?])/iu,
+];
+/** Remove the reviewer-facing tail AI adds after a concrete observation. */
+function trimAssistantMetaTail(sentence: string): string {
+  const trimmed = sentence
+    .replace(/\s*;\s*(?:reviewer|cần reviewer|lexical EM=0 cần human|đây không phải)(?=\s|$|[,.;:!?]).*$/iu, "")
+    .replace(/\s+nếu reviewer\b.*$/iu, "")
+    .replace(/\breviewer nên xem\s+/giu, "")
+    .trim();
+  return trimmed && !/[.!?]$/u.test(trimmed) ? `${trimmed}.` : trimmed;
+}
+/** AI suggestions pre-fill the rationale with boilerplate such as "Gợi ý AI tạm hoãn"
+ * or "reviewer hãy kiểm tra". Section 6 is the reviewer's own conclusion, so keep the
+ * item-specific observation and drop the meta instructions. */
+export function stripAssistantRationaleMeta(rationale: string): string {
+  const kept: string[] = [];
+  for (const sentence of rationale.trim().split(/(?<=[.!?])\s+/u)) {
+    const text = sentence.trim();
+    if (!text) continue;
+    const prefix = text.match(/^gợi ý ai[^:]*:\s*/iu);
+    const candidate = prefix ? text.slice(prefix[0].length).trim() : text;
+    if (!candidate || ASSISTANT_META_SENTENCE.some((pattern) => pattern.test(candidate))) continue;
+    const trimmed = trimAssistantMetaTail(candidate);
+    if (trimmed) kept.push(trimmed);
+  }
+  const result = kept.join(" ").replace(/\s+/gu, " ").trim();
+  return result ? result.charAt(0).toLocaleUpperCase("vi") + result.slice(1) : "";
+}
 export function diagnosticDraftKey(pilotSha: string, protocolSha: string, reviewer: string, scope: "primary-60" | "independent-15", revision: 1 | 2 | 3 | 4 = 4): string {
   return `vmlu.diagnostic.v${revision}:${pilotSha}:${protocolSha}:${scope}:${encodeURIComponent(reviewer.trim().toLocaleLowerCase())}`;
 }
@@ -70,6 +109,17 @@ export function previousDiagnosticDraftBackup(raw: string | null, expected: {
 }
 export function emptyDiagnosticJudgment(): DiagnosticJudgment {
   return { review_scope: "", review_assistance_mode: "", semantic_correctness: "", gold_validity: "", input_evidence_sufficiency: "", corpus_evidence_availability: "", corpus_evidence_reference: "", diagnostic_outcome: "", observed_issues: [], audit_evidence_kind: "", evidence_reference: "", diagnostic_labels: [], diagnostic_support: [], rationale: "", reviewer_attestation: false, blind_review_attestation: false, review_status: "" };
+}
+/** The simplified revision-4 form no longer asks for two things the schema derives:
+ * review_status (implied by the outcome on every completion rule) and corpus evidence
+ * (the protocol has no versioned corpus). Drafts written before that change can hold an
+ * empty status, or a corpus citation copied from the prompt passage. Both would either
+ * mark a finished row as unfinished or claim evidence that does not exist, so normalize
+ * on load and on every edit. */
+export function normalizeDiagnosticJudgment(row: DiagnosticJudgment): DiagnosticJudgment {
+  const reviewStatus: DiagnosticJudgment["review_status"] = row.diagnostic_outcome === "" ? "" : row.diagnostic_outcome === "unresolved" ? "deferred" : "reviewed";
+  if (row.review_status === reviewStatus && row.corpus_evidence_availability === "not_assessed" && row.corpus_evidence_reference === "") return row;
+  return { ...row, review_status: reviewStatus, corpus_evidence_availability: "not_assessed", corpus_evidence_reference: "" };
 }
 export function diagnosticReviewErrors(row: DiagnosticJudgment, contrasts: VerifiedContrast[] = [], observationKey?: string): string[] {
   const errors: string[] = [];
