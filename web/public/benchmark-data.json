@@ -3894,15 +3894,15 @@
     "caveat": "Public release lệch paper (12.488 dòng/file, không rõ partition; private 2k không có) + không license (research-use, trích dẫn paper + HF). 1.377/12.488 dòng ≠ 4 lựa chọn (1.240 Đúng/Sai, 15 câu 1 lựa chọn, 34 dòng placeholder optionE/F/G); ~6% trùng lặp giữ nguyên (không dedupe). Model 9B vượt giới hạn ≤4B của suite — ghi rõ khi công bố. Chỉ đối chiếu hướng với V-Bench medicine, không trừ phần trăm (khác dạng câu)."
   },
   "harness": {
-    "benchmark_name": "Harness arm — mỗi model so với chính nó (omp vs gọi API trực tiếp)",
+    "benchmark_name": "Harness arm — mỗi model so với chính nó",
     "date": "2026-09-26 → 2026-10-05",
     "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
-    "endpoint": "https://llmapi.iec-uit.com/v1 (Qwen 28K, lúc còn sống) · https://opencode.ai/zen/go/v1 (MiMo, qua OpenCode Zen Go) · http://llmapi.iec/v1 (Qwen 65K, nội bộ qua VPN)",
-    "harness": "omp (Oh My Pi) v18.2.7",
-    "condition": "prompt byte-identical với arm A của ĐÚNG model đó, seed 42, scorer đóng băng; khác nhau chỉ ở đường elicitation. Arm A gọi thẳng ở temperature 0. MiMo và Qwen-65K: temperature 0 (+ reasoning tắt cho MiMo) được GHIM BẰNG PROXY trong suốt vì omp không gửi được các field đó; sandbox đặt ngoài repo nên không có AGENTS.md nạp vào (MC-29/MC-30).",
-    "measurement_card": "MC-15…MC-47",
-    "measurement_card_hash": "6a583830d96c7c2e7bcc7635ea48632f713e3c5fe0653b49420db4c666501841",
-    "scorer": "extract_answer (MC) + score_reading_eval.py (EM/char-F1) — không viết lại",
+    "endpoint": "Qwen 28K: https://llmapi.iec-uit.com/v1, đã dừng · MiMo: https://opencode.ai/zen/go/v1 · Qwen 65K: http://llmapi.iec/v1, nội bộ qua VPN",
+    "harness": "omp, Oh My Pi, v18.2.7",
+    "condition": "Prompt giữ nguyên so với arm A của cùng model; seed 42; bộ chấm cố định. Arm A gọi trực tiếp ở temperature 0. Proxy ghim temperature 0 cho MiMo và Qwen-65K, đồng thời tắt reasoning cho MiMo. Sandbox đặt ngoài repo nên AGENTS.md không được nạp. Tham khảo MC-29 và MC-30.",
+    "measurement_card": "MC-15…MC-48",
+    "measurement_card_hash": "18016b425fca1ef0c148e141402dfecb539992ae50e07d2f1e938afdbc5308a8",
+    "scorer": "extract_answer cho trắc nghiệm; score_reading_eval.py cho EM và char-F1; bộ chấm giữ nguyên",
     "ladder": [
       {
         "arm": "A",
@@ -4007,7 +4007,7 @@
         "card": null,
         "model": "Qwen3.5-9B-28K",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "metric": "valid_rate",
         "n": 1000,
         "arm_b": 100.0,
@@ -4370,7 +4370,7 @@
         "card": "MC-26",
         "model": "Qwen3.5-9B-28K",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "metric": "valid_rate",
         "n": 1000,
         "arm_b": 97.4,
@@ -4493,7 +4493,7 @@
         "card": null,
         "model": "MiMo V2.5",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "metric": "valid_rate",
         "n": 1000,
         "arm_b": 99.4,
@@ -4517,7 +4517,7 @@
         "card": null,
         "model": "MiMo V2.5",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "metric": "agreement",
         "n": 4141,
         "arm_b": 100.0,
@@ -4554,7 +4554,7 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "model": "MiMo V2.5",
         "dataset": "reading400",
@@ -4578,7 +4578,7 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "model": "MiMo V2.5",
         "dataset": "legal_mc",
@@ -4602,7 +4602,7 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "model": "MiMo V2.5",
         "dataset": "legal_nli",
@@ -4626,7 +4626,7 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "model": "MiMo V2.5",
         "dataset": "bidlqa_val",
@@ -4650,11 +4650,11 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "model": "MiMo V2.5",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "metric": "valid_rate",
         "n": 1000,
         "arm_b": 99.9,
@@ -4674,11 +4674,11 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "model": "MiMo V2.5",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "metric": "agreement",
         "n": 4141,
         "arm_b": 77.61,
@@ -4718,7 +4718,7 @@
       {
         "arm": "M6L",
         "arm_slug": "ompM6inrepo_mimo-v2_5",
-        "label": "MiMo V2.5: đúng arm M6 nhưng sandbox đặt TRONG repo, nên `AGENTS.md` của chính repo này bị nạp vào mọi item (ablation của MC-29)",
+        "label": "MiMo V2.5: cùng arm M6 nhưng sandbox trong repo, nên AGENTS.md được nạp vào mọi item; ablation MC-29",
         "card": "MC-30",
         "model": "MiMo V2.5",
         "dataset": "legal_mc",
@@ -4842,7 +4842,7 @@
         "card": null,
         "model": "Qwen3.5-9B-65K",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "metric": "valid_rate",
         "n": 1000,
         "arm_b": 98.6,
@@ -4866,7 +4866,7 @@
         "card": null,
         "model": "Qwen3.5-9B-65K",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "metric": "agreement",
         "n": 4141,
         "arm_b": 100.0,
@@ -5003,7 +5003,7 @@
         "card": "MC-31/32",
         "model": "Qwen3.5-9B-65K",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "metric": "valid_rate",
         "n": 1000,
         "arm_b": 48.5,
@@ -5027,7 +5027,7 @@
         "card": "MC-31/32",
         "model": "Qwen3.5-9B-65K",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "metric": "agreement",
         "n": 4141,
         "arm_b": 63.37,
@@ -5067,7 +5067,7 @@
       {
         "arm": "F5",
         "arm_slug": "ompF5clean_Qwen3_5-9B-65K",
-        "label": "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+        "label": "65K: omp sạch, không công cụ, prompt trung tính — scaffold tối giản",
         "card": "MC-46/47",
         "model": "Qwen3.5-9B-65K",
         "dataset": "legal_mc",
@@ -5091,7 +5091,7 @@
       {
         "arm": "F7",
         "arm_slug": "ompF7clean_Qwen3_5-9B-65K",
-        "label": "65K: omp sạch, KHÔNG tool, system prompt gốc của omp",
+        "label": "65K: omp sạch, không công cụ, prompt gốc của omp",
         "card": "MC-46/47",
         "model": "Qwen3.5-9B-65K",
         "dataset": "legal_mc",
@@ -5228,7 +5228,7 @@
       },
       {
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "dataset": "reading400",
         "dataset_label": "reading-400 (EM)",
         "n": 400,
@@ -5238,7 +5238,7 @@
       },
       {
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "dataset": "bidlqa_val",
         "dataset_label": "ViBidLQA val (EM)",
         "n": 482,
@@ -5272,7 +5272,7 @@
         "cell": "ompF5clean",
         "repeat": 1,
         "arm": "F5",
-        "label": "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+        "label": "65K: omp sạch, không công cụ, prompt trung tính — scaffold tối giản",
         "card": "MC-46/47",
         "dataset": "legal_mc",
         "dataset_label": "legal-MC (accuracy)",
@@ -5288,7 +5288,7 @@
         "cell": "ompF7clean",
         "repeat": 1,
         "arm": "F7",
-        "label": "65K: omp sạch, KHÔNG tool, system prompt gốc của omp",
+        "label": "65K: omp sạch, không công cụ, prompt gốc của omp",
         "card": "MC-46/47",
         "dataset": "legal_mc",
         "dataset_label": "legal-MC (accuracy)",
@@ -5717,7 +5717,7 @@
         "cell": "ompM6clean_mimo-v2_5",
         "repeat": 1,
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "dataset": "legal_mc",
         "dataset_label": "legal-MC (accuracy)",
@@ -5733,7 +5733,7 @@
         "cell": "ompM6clean_mimo-v2_5",
         "repeat": 1,
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "dataset": "legal_nli",
         "dataset_label": "legal-NLI (accuracy)",
@@ -5749,7 +5749,7 @@
         "cell": "ompM6clean_mimo-v2_5",
         "repeat": 1,
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "dataset": "reading400",
         "dataset_label": "reading-400 (EM)",
@@ -5765,7 +5765,7 @@
         "cell": "ompM6clean_mimo-v2_5",
         "repeat": 1,
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "dataset": "bidlqa_val",
         "dataset_label": "ViBidLQA val (EM)",
@@ -5781,10 +5781,10 @@
         "cell": "ompM6clean_mimo-v2_5",
         "repeat": 1,
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "n": 1000,
         "arm_a": 99.4,
         "arm_b": 99.9,
@@ -5797,10 +5797,10 @@
         "cell": "ompM6clean_mimo-v2_5",
         "repeat": 1,
         "arm": "M6",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "card": "MC-30",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "n": 4141,
         "arm_a": 100.0,
         "arm_b": 77.61,
@@ -5813,7 +5813,7 @@
         "cell": "ompM6inrepo_mimo-v2_5",
         "repeat": 1,
         "arm": "M6L",
-        "label": "MiMo V2.5: đúng arm M6 nhưng sandbox đặt TRONG repo, nên `AGENTS.md` của chính repo này bị nạp vào mọi item (ablation của MC-29)",
+        "label": "MiMo V2.5: cùng arm M6 nhưng sandbox trong repo, nên AGENTS.md được nạp vào mọi item; ablation MC-29",
         "card": "MC-30",
         "dataset": "legal_mc",
         "dataset_label": "legal-MC (accuracy)",
@@ -5938,7 +5938,7 @@
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
         "card": "MC-31/32",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "n": 1000,
         "arm_a": 98.6,
         "arm_b": 48.5,
@@ -5954,7 +5954,7 @@
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
         "card": "MC-31/32",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "n": 4141,
         "arm_a": 100.0,
         "arm_b": 63.37,
@@ -5970,7 +5970,7 @@
         "label": "omp sạch + tool menu đầy đủ, trên V-Bench function-calling (nơi scaffold *có thể* thắng)",
         "card": "MC-26",
         "dataset": "vbench_agentic",
-        "dataset_label": "V-Bench agentic (schema validity — KHÔNG có gold)",
+        "dataset_label": "V-Bench agentic — schema validity, không có gold cục bộ",
         "n": 1000,
         "arm_a": 100.0,
         "arm_b": 97.4,
@@ -6228,7 +6228,7 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "model": "MiMo V2.5",
         "dataset": "reading400",
         "dataset_label": "reading-400 (EM)",
@@ -6350,10 +6350,10 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "model": "MiMo V2.5",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "metric": "agreement",
         "metric_raw": "agreement_with_arm_A",
         "groups": [
@@ -6643,7 +6643,7 @@
         "label": "Qwen3.5-9B-65K: omp sạch + tool menu đầy đủ, temperature 0 ghim bằng proxy",
         "model": "Qwen3.5-9B-65K",
         "dataset": "vbench_mc",
-        "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+        "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
         "metric": "agreement",
         "metric_raw": "agreement_with_arm_A",
         "groups": [
@@ -6855,7 +6855,7 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "model": "MiMo V2.5",
         "n_items": 1000,
         "n_attempted": 1000,
@@ -6902,233 +6902,182 @@
       "accuracy": {
         "unit": "điểm",
         "not_a_score": false,
-        "what": "số câu đúng / tổng số câu — có vàng cục bộ nên đây là điểm thật."
+        "what": "Tỷ lệ câu đúng trên bộ gold cục bộ."
       },
       "EM": {
         "unit": "điểm",
         "not_a_score": false,
-        "what": "exact match trên gold đã hiệu đính — có vàng cục bộ nên đây là điểm thật."
+        "what": "Tỷ lệ khớp chính xác trên gold đã hiệu đính."
       },
       "server_accuracy": {
         "unit": "điểm",
         "not_a_score": false,
-        "what": "điểm do máy chủ vbench.ai chấm. KHÔNG có vàng cục bộ nên không kiểm chứng lại được offline; câu không nộp/không trích được vẫn nằm trong mẫu số và bị tính sai."
+        "what": "Điểm do vbench.ai chấm; không có gold cục bộ để kiểm chứng offline."
       },
       "valid_rate": {
         "unit": "tỉ lệ",
         "not_a_score": true,
-        "what": "tỉ lệ lời gọi hàm khớp schema của chính câu hỏi đó. Đây KHÔNG phải điểm: hợp lệ về cấu trúc không bảo đảm gọi đúng hàm (MC-28 đo chênh 3,4×)."
+        "what": "Tỷ lệ lời gọi khớp schema; không cho biết hàm và tham số có đúng không."
       },
       "agreement": {
         "unit": "tỉ lệ",
         "not_a_score": true,
-        "what": "tỉ lệ câu mà agent trả lời GIỐNG HỆT lời gọi trực tiếp trên cùng câu hỏi. Đây KHÔNG phải điểm: nó đo agent có đổi đáp án hay không, chứ không đo đáp án đó tốt hơn hay xấu hơi — đổi sang chữ sai vẫn là đổi. Điểm thật của 12 domain do máy chủ vbench.ai chấm, xem cột `Điểm server`."
+        "what": "Tỷ lệ câu agent giữ nguyên đáp án so với arm A; không đo độ đúng."
       },
       "agreement_with_arm_A": {
         "unit": "tỉ lệ",
         "not_a_score": true,
-        "what": "tỉ lệ câu mà agent trả lời GIỐNG HỆT lời gọi trực tiếp trên cùng câu hỏi. Đây KHÔNG phải điểm: nó đo agent có đổi đáp án hay không, chứ không đo đáp án đó tốt hơn hay xấu hơi — đổi sang chữ sai vẫn là đổi. Điểm thật của 12 domain do máy chủ vbench.ai chấm, xem cột `Điểm server`."
+        "what": "Tỷ lệ câu agent giữ nguyên đáp án so với arm A; không đo độ đúng."
       }
     },
     "insight": {
-      "verdict": "Scaffold không có một giá riêng. Giữ nguyên model, prompt byte-identical và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời, kết quả đảo dấu giữa các model: MiMo V2.5 +0.00…+7.00 điểm; Qwen3.5-9B-28K -22.25…-5.60 điểm; Qwen3.5-9B-65K -15.75…-1.37 điểm. Phạm vi này chỉ gồm 4 tập có điểm thật (bidlqa_val, legal_mc, legal_nli, reading400) và KHÔNG gồm V-Bench MC (trùng khớp, không phải điểm) và V-Bench agentic (validity) — dải Δ ở đây không nói gì về V-Bench. Vì vậy cái các lần đo trước đo được là ngân sách tuân thủ của một model nhỏ, chứ không phải chi phí của việc đi qua một tiến trình agent — và trên 1/3 model, scaffold còn tăng điểm. Hai điều phải tách trước khi lập luận về chi phí của agent: văn bản ép dài (tốn token, MC-25) và vòng lặp agent (tốn điểm, nhưng chỉ với model không đủ ngân sách tuân thủ). Ngoài ra, phần lớn thiệt hại ở các lần đo ban đầu hoá ra đến từ cấu hình trả lời của chính máy bị lọt vào scaffold, không phải từ bản thân omp.",
+      "verdict": "Tác động của scaffold khác theo model. Dải Δ gồm 4 tập có gold cục bộ; không dùng để xếp hạng.",
       "claims": [
         {
           "id": "penalty:MiMo V2.5",
-          "title": "MiMo V2.5: đi qua tiến trình agent KHÔNG làm giảm điểm",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch có Δ từ +0.00 đến +7.00 điểm trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400), tức không tìm thấy khoản phạt nào ở đây. Trong 4 phép so sánh đó, 1 phép có khoảng tin cậy 95% loại trừ 0; 3 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi. Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`).",
-          "evidence": [
+          "title": "MiMo V2.5: kết quả khi dùng scaffold sạch",
+          "points": [
             {
-              "label": "Δ nhỏ nhất",
-              "value": "+0.00"
+              "label": "Kết quả",
+              "text": "Δ từ +0,00 đến +7,00 điểm trên 4 tập; chưa thấy mức giảm nhất quán."
             },
             {
-              "label": "Δ lớn nhất",
-              "value": "+7.00"
+              "label": "Độ tin cậy",
+              "text": "CI 95% không chứa 0 ở 1/4 phép so."
             },
             {
-              "label": "CI 95% loại trừ 0",
-              "value": "1/4"
-            },
-            {
-              "label": "tập nhỏ nhất",
-              "value": "n=146"
+              "label": "Cỡ mẫu",
+              "text": "n nhỏ nhất là 146."
             }
           ]
         },
         {
           "id": "penalty:Qwen3.5-9B-28K",
-          "title": "Qwen3.5-9B-28K: chi phí của việc đưa một prompt qua tiến trình agent",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 7 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0. Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`).",
-          "evidence": [
+          "title": "Qwen3.5-9B-28K: kết quả khi dùng scaffold sạch",
+          "points": [
             {
-              "label": "Δ nhỏ nhất",
-              "value": "-22.25"
+              "label": "Kết quả",
+              "text": "Δ từ -22,25 đến -5,60 điểm trên 4 tập; mọi phép so đều giảm điểm."
             },
             {
-              "label": "Δ lớn nhất",
-              "value": "-5.60"
+              "label": "Độ tin cậy",
+              "text": "CI 95% không chứa 0 ở 7/7 phép so."
             },
             {
-              "label": "CI 95% loại trừ 0",
-              "value": "7/7"
-            },
-            {
-              "label": "tập nhỏ nhất",
-              "value": "n=100"
+              "label": "Cỡ mẫu",
+              "text": "n nhỏ nhất là 100."
             }
           ]
         },
         {
           "id": "penalty:Qwen3.5-9B-65K",
-          "title": "Qwen3.5-9B-65K: chi phí của việc đưa một prompt qua tiến trình agent",
-          "body": "Giữ nguyên model, prompt (byte-identical) và bộ chấm đóng băng, chỉ thay đổi đường truy xuất câu trả lời: các cấu hình scaffold sạch thua trên 4 tập (ViBidLQA val, legal-MC, legal-NLI, reading-400). Trong 9 phép so sánh đó, 7 phép có khoảng tin cậy 95% loại trừ 0; 2 phép còn lại rơi vào tập nhỏ, nơi độ rộng khoảng tin cậy còn ngang bằng bản thân khoản thay đổi. Phạm vi này KHÔNG gồm V-Bench MC (thước đo `agreement` — tỉ lệ agent đổi đáp án, không phải điểm) và V-Bench agentic (`valid_rate`).",
-          "evidence": [
+          "title": "Qwen3.5-9B-65K: kết quả khi dùng scaffold sạch",
+          "points": [
             {
-              "label": "Δ nhỏ nhất",
-              "value": "-15.75"
+              "label": "Kết quả",
+              "text": "Δ từ -15,75 đến -1,37 điểm trên 4 tập; mọi phép so đều giảm điểm."
             },
             {
-              "label": "Δ lớn nhất",
-              "value": "-1.37"
+              "label": "Độ tin cậy",
+              "text": "CI 95% không chứa 0 ở 7/9 phép so."
             },
             {
-              "label": "CI 95% loại trừ 0",
-              "value": "7/9"
-            },
-            {
-              "label": "tập nhỏ nhất",
-              "value": "n=146"
-            }
-          ]
-        },
-        {
-          "id": "model_dependent",
-          "title": "Scaffold không có một giá riêng: dấu của hiệu ứng đổi theo model",
-          "body": "Cùng một scaffold, cùng prompt byte-identical, cùng bộ chấm đóng băng, cùng một đường truy xuất là khác biệt duy nhất — và kết quả đảo dấu giữa các model: MiMo V2.5 dao động +0.00…+7.00 điểm; Qwen3.5-9B-28K dao động -22.25…-5.60 điểm; Qwen3.5-9B-65K dao động -15.75…-1.37 điểm. Nghĩa là cái bị đo ở một model nhỏ là **ngân sách tuân thủ** của model đó, không phải chi phí của việc đi qua một tiến trình agent. Trên 1/3 model, scaffold thậm chí còn tăng điểm. Các model còn khác nhau ở chỗ có suy luận hay không, nên đây là so các condition chứ không phải so thứ hạng model.",
-          "evidence": [
-            {
-              "label": "MiMo V2.5: Δ cao nhất",
-              "value": "+7.00đ"
-            },
-            {
-              "label": "Qwen3.5-9B-28K: Δ cao nhất",
-              "value": "-5.60đ"
-            },
-            {
-              "label": "Qwen3.5-9B-65K: Δ cao nhất",
-              "value": "-1.37đ"
-            },
-            {
-              "label": "MiMo V2.5: Δ thấp nhất",
-              "value": "+0.00đ"
-            },
-            {
-              "label": "Qwen3.5-9B-28K: Δ thấp nhất",
-              "value": "-22.25đ"
-            },
-            {
-              "label": "Qwen3.5-9B-65K: Δ thấp nhất",
-              "value": "-15.75đ"
+              "label": "Cỡ mẫu",
+              "text": "n nhỏ nhất là 146."
             }
           ]
         },
         {
           "id": "configuration:Qwen3.5-9B-65K:legal-MC",
-          "title": "Qwen3.5-9B-65K / legal-MC: cấu hình nào tốn điểm thì tùy — scaffold tối giảu gần như miễn phí, thêm công cụ và persona thì tốn",
-          "body": "Trên cùng một tập và cùng arm A, các arm scaffold sạch của Qwen3.5-9B-65K trải Δ từ -1.37 (arm F5, CI [-5.48, +2.74] — **không khác 0** thống kê) tới -15.75 (arm F8, CI [-22.60, -8.90]). Nghĩa là **chính cái scaffold không phải là nơi mất điểm**: ô tối giảu (không công cụ, system prompt trung tính) gần như ngang với gọi thẳng, và điểm chỉ rơi khi bật menu công cụ và/hoặc system prompt gốc của omp. Đọc một dải Δ của riêng model này mà không ghi cấu hình sẽ gán nhầm chi phí cho agent thay vì cho những gì ta thêm vào nó. Sàn nhiễu của chính các ô lặp ở model này là 1.37 điểm, nên những chênh lệch dưới mức đó không đọc được.",
-          "evidence": [
+          "title": "Qwen3.5-9B-65K trên legal-MC: hiệu ứng thay đổi theo cấu hình",
+          "points": [
             {
-              "label": "arm F5",
-              "value": "-1.37đ"
+              "label": "Arm F5",
+              "text": "Δ -1,37 điểm; CI 95% từ -5,48 đến +2,74, còn chứa 0."
             },
             {
-              "label": "arm F8",
-              "value": "-15.75đ"
+              "label": "Arm F8",
+              "text": "Δ -15,75 điểm; CI 95% từ -22,60 đến -8,90, không chứa 0."
             },
             {
-              "label": "arm T65",
-              "value": "-15.07đ"
+              "label": "Cách đọc",
+              "text": "Hai arm khác cấu hình; đối chiếu nhãn của từng arm trong bảng."
             },
             {
-              "label": "sàn nhiễu (lặp)",
-              "value": "1.37đ"
+              "label": "Sàn nhiễu",
+              "text": "1,37 điểm; chênh lệch nhỏ hơn mức này chưa thể đọc rõ."
             }
           ]
         },
         {
           "id": "vbench:Qwen3.5-9B-28K",
-          "title": "Qwen3.5-9B-28K: trên bài function-calling — nơi scaffold duy nhất được lợi thế — vẫn chỉ thua, và thua nhiều hơn thống kê cục bộ gợi ý",
-          "body": "Trên 1000 câu lệnh gọi hàm: tính schema validity tại chỗ cho 100.00% → 97.40% (-2.60 điểm), nhưng điểm chấm thật từ máy chủ là 39.70% → 30.80% (-8.90 điểm) — lớn hơn 3.4 lần. Phần lớn lỗi vì vậy không phải do phát sinh JSON sai cấu trúc, mà do chọn đúng hàm nhưng điền sai tham số: một lỗi mà bộ kiểm tra schema về cấu trúc không thể phát hiện.",
-          "evidence": [
+          "title": "Qwen3.5-9B-28K: điểm máy chủ giảm nhiều hơn schema validity",
+          "points": [
             {
-              "label": "Δ schema validity",
-              "value": "-2.60đ"
+              "label": "Schema validity",
+              "text": "100,00% → 97,40%; Δ -2,60 điểm."
             },
             {
-              "label": "Δ điểm máy chủ",
-              "value": "-8.90đ"
+              "label": "Điểm máy chủ",
+              "text": "39,70% → 30,80%; Δ -8,90 điểm."
             },
             {
-              "label": "hệ số chênh lệch",
-              "value": "3.4×"
+              "label": "Cách đọc",
+              "text": "Mức giảm điểm máy chủ lớn gấp 3,4 lần validity; lời gọi hợp lệ vẫn có thể chọn sai hàm hoặc tham số."
             },
             {
-              "label": "cỡ mẫu",
-              "value": "1000"
+              "label": "Cỡ mẫu",
+              "text": "1.000 câu gọi hàm."
             }
           ]
         },
         {
           "id": "noise",
-          "title": "Khoản phạt là thật; còn tương tác giữa persona và menu công cụ thì không tách được khỏi nhiễu",
-          "body": "Lặp lại cùng một điều kiện từ hai đến ba lần trên legal-MC: ngay trong một ô, điểm dao động 0.68…5.48 điểm ngay cả khi `temperature` bằng 0. Khoản phạt của scaffold trên chính tập đó là 11.00…18.49 điểm, tức gấp 2.0–3.4 lần mức dao động này, nên kết luận là vững. Trái lại, hiệu ứng của việc đổi persona và bật menu công cụ chỉ +3.53 điểm, nhỏ hơn cả dao động nội tại của một ô — nên không kết luận được, và nguyên nhân không phải là thiếu mẫu.",
-          "evidence": [
+          "title": "Mức giảm scaffold vượt nhiễu; tương tác chưa tách được",
+          "points": [
             {
-              "label": "dao động trong một ô",
-              "value": "0.68…5.48"
+              "label": "Dao động khi lặp",
+              "text": "0,68–5,48 điểm qua 2–3 lượt trên legal-MC ở temperature 0."
             },
             {
-              "label": "hiệu ứng persona × tool",
-              "value": "+3.53đ"
+              "label": "Mức giảm scaffold",
+              "text": "11,00–18,49 điểm, lớn hơn mức nhiễu 2,0–3,4 lần."
             },
             {
-              "label": "Δ scaffold trên legal-MC",
-              "value": "11.00…18.49đ"
+              "label": "Persona và công cụ",
+              "text": "Δ +3,53 điểm, nhỏ hơn dao động trong một ô; chưa thể kết luận về tương tác."
             }
           ]
         },
         {
           "id": "wrapper",
-          "title": "Phần lớn “harness tax” ở các lần đo ban đầu đến từ cấu hình trả lời của máy bị lọt vào, không phải từ bản thân omp",
-          "body": "Chấm lại chính các câu trả lời đó sau khi bỏ lớp vỏ markdown (ViBidLQA val (EM), n=482 câu): điểm của cấu hình bị lọt tăng thêm +16.18 điểm, còn của cấu hình sạch là +0.00 điểm. Nghĩa là lớp vỏ là hệ quả của cấu hình, trong khi câu trả lời của cấu hình sạch vốn đã trần. Nguyên nhân đã được xác định: `PI_CODING_AGENT_DIR` không cô lập được scaffold, vì omp vẫn đọc `~/.omp/agent/APPEND_SYSTEM.md` từ agent dir mặc định.",
-          "evidence": [
+          "title": "Rò cấu hình giải thích phần lớn chi phí lớp bọc",
+          "points": [
             {
-              "label": "bị lọt (ViBidLQA val (EM))",
-              "value": "+16.18đ"
+              "label": "Sau khi bóc lớp bọc",
+              "text": "ViBidLQA val, n=482: cấu hình bị rò tăng +16,18 điểm; cấu hình sạch tăng +0,00 điểm."
             },
             {
-              "label": "sạch (ViBidLQA val (EM))",
-              "value": "+0.00đ"
+              "label": "Nguyên nhân",
+              "text": "PI_CODING_AGENT_DIR không cô lập được cấu hình; omp vẫn nạp ~/.omp/agent/APPEND_SYSTEM.md."
             }
           ]
         },
         {
           "id": "cost",
-          "title": "Hai cơ chế phát sinh chi phí là hai loại tiền khác nhau — không nên gộp chung",
-          "body": "Cấu hình bị lọt: +140 prompt token, gần như không tốn token đầu vào, nhưng cộng thêm +4.00 giây mỗi câu và làm số completion token tăng 118 lần (2 → 235). Menu công cụ: ngược lại, +4737 prompt token (chủ yếu là phần định nghĩa công cụ) mà gần như không cộng thời gian (-0.05 giây) và không cộng thêm điểm. Hàm quyết định thiết kế: muốn giảm độ trễ thì cắt văn bản ép câu trả lời dài, đừng cắt bộ công cụ.",
-          "evidence": [
+          "title": "Rò cấu hình và menu công cụ tạo hai loại chi phí",
+          "points": [
             {
-              "label": "rò cấu hình: token / giây",
-              "value": "+140 / +4.00s"
+              "label": "Rò cấu hình",
+              "text": "+140 prompt token và +4,00 giây mỗi câu; completion token tăng từ 2 lên 235 gần 118 lần."
             },
             {
-              "label": "menu công cụ: token / giây",
-              "value": "+4737 / -0.05s"
+              "label": "Menu công cụ",
+              "text": "+4.737 prompt token và -0,05 giây mỗi câu."
             },
             {
-              "label": "completion token",
-              "value": "×118"
+              "label": "Hàm ý",
+              "text": "Muốn giảm độ trễ, rút gọn hướng dẫn tạo câu trả lời dài trước khi bỏ công cụ."
             }
           ]
         }
@@ -7149,7 +7098,7 @@
         {
           "model": "MiMo V2.5",
           "dataset": "vbench_mc_accuracy",
-          "dataset_label": "V-Bench MC 12 domain — điểm máy chủ (KHÔNG phải trùng khớp)",
+          "dataset_label": "V-Bench MC 12 domain — điểm máy chủ",
           "metric": "server_accuracy",
           "n": 4141,
           "no_harness": 51.15,
@@ -7197,7 +7146,7 @@
         {
           "model": "MiMo V2.5",
           "dataset": "vbench_mc",
-          "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+          "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
           "metric": "agreement",
           "n": 4141,
           "no_harness": 100.0,
@@ -7293,7 +7242,7 @@
         {
           "model": "Qwen3.5-9B-65K",
           "dataset": "vbench_mc_accuracy",
-          "dataset_label": "V-Bench MC 12 domain — điểm máy chủ (KHÔNG phải trùng khớp)",
+          "dataset_label": "V-Bench MC 12 domain — điểm máy chủ",
           "metric": "server_accuracy",
           "n": 4141,
           "no_harness": 46.53,
@@ -7329,7 +7278,7 @@
         {
           "model": "Qwen3.5-9B-65K",
           "dataset": "vbench_mc",
-          "dataset_label": "V-Bench MC 12 domain (mức trùng khớp với arm A — KHÔNG có gold)",
+          "dataset_label": "V-Bench MC 12 domain — trùng khớp arm A, không có gold cục bộ",
           "metric": "agreement",
           "n": 4141,
           "no_harness": 100.0,
@@ -7497,7 +7446,7 @@
       {
         "arm": "M6",
         "arm_slug": "ompM6clean_mimo-v2_5",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim",
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning",
         "model": "MiMo V2.5",
         "n": 6319,
         "datasets": 7,
@@ -7514,7 +7463,7 @@
       {
         "arm": "M6L",
         "arm_slug": "ompM6inrepo_mimo-v2_5",
-        "label": "MiMo V2.5: đúng arm M6 nhưng sandbox đặt TRONG repo, nên `AGENTS.md` của chính repo này bị nạp vào mọi item (ablation của MC-29)",
+        "label": "MiMo V2.5: cùng arm M6 nhưng sandbox trong repo, nên AGENTS.md được nạp vào mọi item; ablation MC-29",
         "model": "MiMo V2.5",
         "n": 146,
         "datasets": 1,
@@ -7548,7 +7497,7 @@
       {
         "arm": "F5",
         "arm_slug": "ompF5clean_Qwen3_5-9B-65K",
-        "label": "65K: omp sạch, KHÔNG tool, system prompt trung tính — scaffold tối giảu",
+        "label": "65K: omp sạch, không công cụ, prompt trung tính — scaffold tối giản",
         "model": "Qwen3.5-9B-65K",
         "n": 146,
         "datasets": 1,
@@ -7565,7 +7514,7 @@
       {
         "arm": "F7",
         "arm_slug": "ompF7clean_Qwen3_5-9B-65K",
-        "label": "65K: omp sạch, KHÔNG tool, system prompt gốc của omp",
+        "label": "65K: omp sạch, không công cụ, prompt gốc của omp",
         "model": "Qwen3.5-9B-65K",
         "n": 146,
         "datasets": 1,
@@ -7934,7 +7883,7 @@
         "overhead_s_per_item": "0.00",
         "note": "max_tokens=4",
         "side": "direct",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim"
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning"
       },
       {
         "arm": "M6",
@@ -7950,7 +7899,7 @@
         "overhead_s_per_item": "1.59",
         "note": "system prompt + tool schemas included in prompt_tokens",
         "side": "omp",
-        "label": "MiMo V2.5: `omp sạch` — không tool, system prompt trung tính, sandbox NGOÀI repo, temperature 0 + reasoning tắt do proxy ghim"
+        "label": "MiMo V2.5: omp sạch, không công cụ, prompt trung tính, sandbox ngoài repo; proxy ghim temperature 0 và tắt reasoning"
       }
     ],
     "totals": {
@@ -7961,28 +7910,48 @@
       "path_escape_items": 4
     },
     "leak": {
-      "what": "~/.omp/agent/APPEND_SYSTEM.md lọt vào mọi arm dù đã đặt PI_CODING_AGENT_DIR; đó là luật trả lời 'verdict → why → the test → the rule' của máy",
-      "evidence": "bắt bằng code_benchmark/capture_scaffold.py; system prompt thật bắt đầu bằng \"Answer the user's question.\\n# Global reply style (all projects)…\"",
-      "fix": "chỉ ghi đè HOME mới chặn được (file rỗng trong agent dir riêng không che được)",
-      "guard": "run_harness_eval.py in cảnh báo SCAFFOLD LEAK ở mỗi lần chạy"
+      "what": "Tệp ~/.omp/agent/APPEND_SYSTEM.md được nạp vào mọi arm dù đã đặt PI_CODING_AGENT_DIR.",
+      "evidence": "capture_scaffold.py xác nhận tệp này xuất hiện trong system prompt.",
+      "fix": "Ghi đè HOME bằng thư mục riêng; chỉ tạo agent dir rỗng là chưa đủ.",
+      "guard": "Runner hiển thị cảnh báo rò cấu hình trước mỗi lần chạy."
     },
-    "caveats": [
-      "Đọc MC-15…MC-21 cùng MC-22: các arm H* đo 'omp + luật trả lời cá nhân bị rò', không phải omp trần.",
-      "cacheRead của gateway IEC là bộ đếm cache tích luỹ → ledger thổi phồng token ~8×; đừng dùng tỉ lệ token (MC-19) mà soi request thật bằng capture_scaffold.py.",
-      "Arm không tất định ở temperature 0 (MC-18: 13/20 item đổi đáp án) → Δ là hiệu ứng tổng.",
-      "Persona × tools không tách được ở n=100 khi có rò; xem MC-23 cho bản scaffold sạch.",
-      "Bảng speed: chỉ các ô n=24, workers=4 mới so sánh được với nhau. Ô H2 của cost probe là n=40 (khác subset) nên không dùng để suy ra tương tác persona×tool (MC-25).",
-      "Bảng metric phụ (EM sau khi cắt vỏ) là để quy kết, KHÔNG thay số chính: nó bỏ vỏ markdown rồi chấm lại bằng đúng scorer đóng băng. Câu sai vẫn sai.",
-      "Số arm A mang hash measurement card cũ; các card mới thêm sau khi chấm.",
-      "MC-29: sandbox từng mặc định nằm TRONG repo, nên omp nạp toàn bộ AGENTS.md của chính repo này (27.501 ký tự, ~7k token) vào system prompt của MỌI item tới MC-28. Nhãn \"scaffold sạch\" của các arm cũ nghĩa là sạch persona/tool, không có nghĩa là sạch chỉ dẫn dự án. Ablation trên MiMo (cùng arm, khác vị trí sandbox): +7.003 token/câu, Δ +0,68 điểm — tốn tiền, không tốn điểm.",
-      "omp KHÔNG gửi temperature và reasoning_effort (bắt bằng proxy; `options:` trong models.yml bị bỏ qua im lặng). Các card ghi \"temperature 0\" là đúng cho arm A nhưng SAI cho mọi arm B cũ; arm MiMo ghim hai field này bằng proxy trong suốt và mọi pin được ghi vào file capture.",
-      "Dòng `agreement` (V-Bench MC) KHÔNG phải điểm: đó là tỉ lệ agent cho giống hệt arm A trên cùng câu hỏi — nó đo agent có ĐỔI đáp án, không đo đáp án đó tốt hơn hay xấu hơi. Điểm thật của 12 domain do máy chủ vbench.ai chấm (MC-48) và nằm ở cột `Điểm server`; hai số này có thể VÁNG DẤU: MiMo giảm 22,39 điểm trùng khớp nhưng TĂNG 2,13 điểm accuracy thật. Đừng đọc Δ của dòng agreement như Δ điểm.",
-      "`valid_rate` (V-Bench agentic) cũng không phải điểm, và nhỏ hơn nhiều so với thiệt hại thật: MC-28 đo validity −2,60 trong khi điểm máy chủ là −8,90 (chênh 3,4×), vì phần lớn lỗi là gọi đúng hàm sai tham số — thứ validator schema không bắt được.",
-      "Arm 65K đổi đường truyền giữa chừng (MC-31): 1.275 item V-Bench MC đầu qua https công cộng, 2.866 item sau qua http nội bộ — cùng model/backend/params, chỉ sửa đường truyền sau khi cổng ngoài sập cert.",
-      "Các arm F5/F7/F8 và T65r2/T65r3 chỉ chạy legal_mc (146 câu, một miền). Đọc dải Δ của chúng như một kết luận về 58 môn VMLU là không có cơ sở.",
-      "Arm T65 GỐC không được gộp với hai lặp của nó, dù cùng nhãn điều kiện: proxy log của lần chạy gốc ghi system prompt dài 690 ký tự, còn hai lặp dài 745 (MC-47). Shape thật của T65 gốc chưa xác định, nên nó không xuất hiện trong bảng sàn nhiễu.",
-      "Sàn nhiễu tính trên arm 65K chỉ có 2 lặp, yếu hơn sàn ở 28K (3 lặp); một chênh lệch 65K nhỏ hơn sàn đó thì chưa đọc được (MC-47).",
-      "Calibration (MC-44) CỐ Ý không nằm trong block này: nó đo độ tin cậy của điểm theo môn, không phải một contrast ghép đôi giữa các arm, nên thuộc /benchmark chứ không phải /harness."
+    "caveat_sections": [
+      {
+        "title": "Điều kiện chạy",
+        "items": [
+          "Các arm H* ở MC-15–MC-21 gồm cả luật trả lời cá nhân bị rò; đọc kèm MC-22, không xem như omp trần.",
+          "Ở n=100, persona và công cụ chưa tách được khi còn rò; xem scaffold sạch ở MC-23.",
+          "Đến MC-28, sandbox trong repo làm omp nạp AGENTS.md gồm 27.501 ký tự. Ablation MiMo thêm 7.003 token mỗi câu; Δ điểm là +0,68.",
+          "Các lần chạy cũ không ghim được temperature và reasoning_effort cho arm B; MiMo được ghim qua proxy.",
+          "Arm 65K đổi endpoint sau 1.275 câu đầu vì lỗi chứng chỉ; 2.866 câu còn lại dùng endpoint nội bộ.",
+          "T65 gốc có prompt 690 ký tự, hai lần lặp có 745; không gộp vì cấu hình gốc chưa xác định."
+        ]
+      },
+      {
+        "title": "Dữ liệu và metric",
+        "items": [
+          "cacheRead của gateway IEC tích lũy theo thời gian và làm ledger phình token khoảng 8 lần; dùng capture_scaffold.py để kiểm tra request.",
+          "temperature 0 vẫn đổi đáp án ở 13/20 item trong MC-18; Δ phản ánh cả dao động giữa lần chạy.",
+          "Metric phụ bóc lớp bọc chỉ dùng để quy nguyên nhân; điểm chính vẫn chấm câu trả lời nguyên văn.",
+          "Hash arm A ghi measurement card trước các cập nhật được thêm sau khi chấm.",
+          "agreement đo tỉ lệ giữ nguyên đáp án, không đo độ đúng. MiMo giảm 22,39 điểm agreement nhưng tăng 2,13 điểm accuracy.",
+          "valid_rate chỉ kiểm tra schema; MC-28 ghi Δ validity −2,60 và Δ điểm server −8,90 do lỗi tham số."
+        ]
+      },
+      {
+        "title": "Cỡ mẫu và độ tin cậy",
+        "items": [
+          "Bảng speed chỉ so n=24 và workers=4; cost probe H2 có n=40 nên không cùng tập ở MC-25.",
+          "Sàn nhiễu 65K dựa trên hai lượt lặp, còn 28K dựa trên ba; chênh lệch nhỏ hơn sàn chưa thể đọc rõ.",
+          "F5, F7, F8 và T65r2/T65r3 chỉ đo legal-MC với n=146; không suy rộng thành kết quả trên 58 môn."
+        ]
+      },
+      {
+        "title": "Phạm vi nghiên cứu",
+        "items": [
+          "Calibration MC-44 đo độ tin cậy theo môn, không phải phép so ghép cặp; xem kết quả ở /benchmark."
+        ]
+      }
     ],
     "sources": {
       "runner": "code_benchmark/run_harness_eval.py (run | compare | speed)",

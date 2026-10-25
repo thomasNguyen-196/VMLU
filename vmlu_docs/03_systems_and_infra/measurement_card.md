@@ -2404,3 +2404,269 @@ Bảng đặt cạnh của MC-32 đang đặt chúng cạnh nhau như thể ch�
    ```
 4. **Trích dẫn.** Mỗi báo cáo mở đầu bằng: *"Điều kiện đo: `MC-<n>`, measurement_card.md"*.
 5. **Model đổi thì card đổi.** Không có ngoại lệ.
+
+## MC-73 — Muse Spark 1.2 Contributor / 9ROUTER / main
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-73` |
+| `trạng_thái` | Preregistered 2026-10-11 (+07), before dataset inference |
+| `model / API` | `cmc/meta/muse-spark-1.2-contributor`, OMP provider `router9`, OpenAI Chat Completions through configured `9ROUTER_BASE_URL`; key read from `9ROUTER_API_KEY`, never stored |
+| `sample` | vi-multimodel-v1-vi-squad-200: 200, vi-multimodel-v1-vi-drop-200: 200, vi-multimodel-v1-legal-mc-146: 146, vi-multimodel-v1-legal-nli-150: 150, vi-multimodel-v1-bidlqa-test: 603; total 1299 |
+| `manifest` | Validated frozen parent SHA256 `0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551`; derived SHA256 `bd919605046bde98ad874cbbbb0b56ddd81bf19abf0eacb90a6401d6a1ef6134`; parent prompts/parsers/gold preserved |
+| `harness / prompt` | OMP 18.0.0 JSON, tools none, system prompt `Answer the user's question.`, one isolated process/item; temporary HOME, absolute per-item agent dir, no persisted session |
+| `reasoning / sampling` | reasoning enabled, thinking auto, temperature 1.0 enforced by a loopback sampling relay (OMP may omit it on initial auto requests), seed omitted; requested settings matched to other models, upstream effective temperature/reasoning budget not exposed |
+| `workers / caps / timeout` | 4 workers; MC 4096 tokens, reading/function-call 2048 tokens; 300 seconds/item + 60 process slack; SDK retries 0; non-scored connectivity probe cap 256 |
+| `scoring` | Existing frozen phase scorer; invalid answers remain in denominator. VMLU test and V-Bench have withheld gold: exportable answers and parser/schema diagnostics only, no fabricated accuracy and no upload |
+| `budget` | No 9ROUTER tariff supplied; zero-priced bookkeeping is not a dollar estimate. Fixed item counts/caps/workers/timeouts; no extra model or arm |
+| `launcher / output` | `python -m code_benchmark.run_muse_router_matched --execute`; `all_res/muse_router_matched/main/muse-spark-1-2-contributor/`; preserve historical runs |
+
+## MC-74 — Muse Spark 1.2 Contributor / 9ROUTER / vmlu
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-74` |
+| `trạng_thái` | Preregistered 2026-10-11 (+07), before dataset inference |
+| `model / API` | `cmc/meta/muse-spark-1.2-contributor`, OMP provider `router9`, OpenAI Chat Completions through configured `9ROUTER_BASE_URL`; key read from `9ROUTER_API_KEY`, never stored |
+| `sample` | vi-multimodel-v2-vmlu-valid: 744, vi-multimodel-v2-vmlu-dev: 303, vi-multimodel-v2-vmlu-test: 9833; total 10880 |
+| `manifest` | Validated frozen parent SHA256 `553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a`; derived SHA256 `4046145d633931454c8760f8ffb74ae5d2e267bdb6aa02878adba68f8a472655`; parent prompts/parsers/gold preserved |
+| `harness / prompt` | OMP 18.0.0 JSON, tools none, system prompt `Answer the user's question.`, one isolated process/item; temporary HOME, absolute per-item agent dir, no persisted session |
+| `reasoning / sampling` | reasoning enabled, thinking auto, temperature 1.0 enforced by a loopback sampling relay (OMP may omit it on initial auto requests), seed omitted; requested settings matched to other models, upstream effective temperature/reasoning budget not exposed |
+| `workers / caps / timeout` | 4 workers; MC 4096 tokens, reading/function-call 2048 tokens; 300 seconds/item + 60 process slack; SDK retries 0; non-scored connectivity probe cap 256 |
+| `scoring` | Existing frozen phase scorer; invalid answers remain in denominator. VMLU test and V-Bench have withheld gold: exportable answers and parser/schema diagnostics only, no fabricated accuracy and no upload |
+| `budget` | No 9ROUTER tariff supplied; zero-priced bookkeeping is not a dollar estimate. Fixed item counts/caps/workers/timeouts; no extra model or arm |
+| `launcher / output` | `python -m code_benchmark.run_muse_router_matched --execute`; `all_res/muse_router_matched/vmlu/muse-spark-1-2-contributor/`; preserve historical runs |
+
+## MC-75 — Muse Spark 1.2 Contributor / 9ROUTER / vbench
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-75` |
+| `trạng_thái` | Preregistered 2026-10-11 (+07), before dataset inference |
+| `model / API` | `cmc/meta/muse-spark-1.2-contributor`, OMP provider `router9`, OpenAI Chat Completions through configured `9ROUTER_BASE_URL`; key read from `9ROUTER_API_KEY`, never stored |
+| `sample` | vi-multimodel-v2-vbench-mc: 4141, vi-multimodel-v2-vbench-agentic: 1000; total 5141 |
+| `manifest` | Validated frozen parent SHA256 `e44d5642fe5726f7265917917cbf35e2d4e2e199ccbdcd3e95e81b650f9f0b12`; derived SHA256 `320e30df7db6ef38c62cc6734a05b7c5075f5e91910c3857c1fde10a1be7764f`; parent prompts/parsers/gold preserved |
+| `harness / prompt` | OMP 18.0.0 JSON, tools none, system prompt `Answer the user's question.`, one isolated process/item; temporary HOME, absolute per-item agent dir, no persisted session |
+| `reasoning / sampling` | reasoning enabled, thinking auto, temperature 1.0 enforced by a loopback sampling relay (OMP may omit it on initial auto requests), seed omitted; requested settings matched to other models, upstream effective temperature/reasoning budget not exposed |
+| `workers / caps / timeout` | 4 workers; MC 4096 tokens, reading/function-call 2048 tokens; 300 seconds/item + 60 process slack; SDK retries 0; non-scored connectivity probe cap 256 |
+| `scoring` | Existing frozen phase scorer; invalid answers remain in denominator. VMLU test and V-Bench have withheld gold: exportable answers and parser/schema diagnostics only, no fabricated accuracy and no upload |
+| `budget` | No 9ROUTER tariff supplied; zero-priced bookkeeping is not a dollar estimate. Fixed item counts/caps/workers/timeouts; no extra model or arm |
+| `launcher / output` | `python -m code_benchmark.run_muse_router_matched --execute`; `all_res/muse_router_matched/vbench/muse-spark-1-2-contributor/`; preserve historical runs |
+
+---
+
+## MC-80 — Muse Spark 1.3 Contributor / API trực tiếp / reasoning mặc định
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-80` |
+| `trạng_thái` | Registered 2026-10-13 (+07), before dataset inference |
+| `model / transport` | `ocg/muse-spark-1.3-contributor`; direct 9Router Chat Completions API |
+| `sample` | Frozen main V1: VMLU Valid 744 + Legal MC 146 + Legal NLI 150 + Vi-SQuAD 200 + Vi-DROP 200 + ViBidLQA 603 = 2,043; V-Bench excluded |
+| `sampling / tools` | Temperature sent 1.0; seed and reasoning effort omitted; no tools; effective upstream controls unknown; router override unverified |
+| `workers / caps` | 4 fixed shards × 3 lanes = 12 workers; MC 4,096 / reading 2,048 tokens; 300 seconds/request; SDK retries zero |
+| `protocol / full card` | `muse13-direct-default-mc80-v1`; [MC-80 detailed card](docs/measurement_cards/MC-80-muse13-direct-default.md) |
+| `output` | `all_res/muse13_direct_mc80/main/muse-spark-1-3-contributor-ocg/` |
+
+---
+
+## MC-81 — Muse Spark 1.3 Contributor / API trực tiếp / VMLU còn lại
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-81` |
+| `trạng_thái` | Registered 2026-10-13 (+07), before Dev/Test inference; starts after MC-80 completes |
+| `model / condition` | `ocg/muse-spark-1.3-contributor`; direct 9Router API; temperature sent 1.0; seed/effort omitted; effective reasoning tier unknown; no tools supplied |
+| `sample` | Dev 303 + Test 9,833 = 10,136. Valid 744 reused from MC-80 with verified identity/prompt parity and separate per-row provenance |
+| `workers / caps` | 4 fixed shards × 3 lanes = 12 workers; MC 4,096 tokens; 300 seconds/request; SDK retries zero; bounded technical recovery only |
+| `scoring` | Frozen V2 scorer: Dev local accuracy after complete coverage; Test gold withheld, parser diagnostics and submission answers only |
+| `protocol / full card` | `muse13-direct-default-remaining-vmlu-mc81-v1`; [MC-81 detailed card](docs/measurement_cards/MC-81-muse13-direct-remaining-vmlu.md) |
+| `output` | `all_res/muse13_direct_mc81/vmlu/muse-spark-1-3-contributor-ocg/` |
+
+---
+
+## MC-82 — Muse Spark 1.3 Contributor / API trực tiếp / budget 20,000
+
+| Trường | Giá trị |
+| --- | --- |
+| `card_id` | `MC-82` |
+| `trạng_thái` | Registered 2026-10-13 (+07), before larger-budget dataset inference |
+| `model / sampling` | `ocg/muse-spark-1.3-contributor`; temperature 1.0; effort/seed omitted; no tools supplied |
+| `budget / transport` | 20,000 output tokens including reasoning; native Responses stream with explicit terminal-event handling |
+| `scope` | Seven unfinished MC-80 items, then remaining VMLU Dev 303 + Test 9,833; original completed outputs preserved |
+| `workers` | 4 fixed shards × 3 lanes = 12 for VMLU; 300 seconds/request; SDK retries zero |
+| `provenance` | Original-cap and 20k outputs remain separately identifiable; combined artifacts have mixed budget labels |
+| `full card` | [MC-82 detailed card](docs/measurement_cards/MC-82-muse13-direct-20k.md) |
+| `output` | `all_res/muse13_direct_mc82/` |
+
+## MC-83 — Qwen3.5-9B-65K / API Direct / budget 20,000
+
+Registered 2026-10-14 (+07), before benchmark requests, at user request to match the Muse direct setup.
+
+| Field | Value |
+| --- | --- |
+| `model` | Qwen3.5-9B-65K |
+| `transport` | API Direct · native Responses streaming |
+| `temperature` | 1.0 sent; effective upstream value unknown |
+| `reasoning` | effort omitted; provider default; no named tier asserted |
+| `seed` | omitted |
+| `tools` | none supplied |
+| `max_output_tokens` | 20000 for both MC and reading |
+| `workers` | 12 = four fixed shards × three lanes |
+| `scope` | V1 main 2043 + V2 Dev/Test 10136 = 12179; excludes V-Bench |
+| `protocol` | qwen-direct-default-20k-mc83-v1 |
+| `details` | docs/measurement_cards/MC-83-qwen-direct-20k.md |
+
+Historical Qwen runs and Muse outputs remain separate. Muse's original-cap/mixed-budget main data is not relabeled as a uniform 20k condition.
+
+## MC-84 — Muse Spark 1.2 Contributor / API Direct / budget 20,000
+
+Registered 2026-10-14 (+07), before dataset requests, at user request to match the Muse/Qwen direct setup.
+
+| Field | Value |
+| --- | --- |
+| `model` | Muse Spark 1.2 Contributor; exact ocg/muse-spark-1.2-contributor route |
+| `transport` | API Direct · native Responses streaming |
+| `temperature` | 1.0 sent; upstream effective value unknown |
+| `reasoning` | effort omitted; provider default, no named tier asserted |
+| `seed` | omitted |
+| `tools` | none supplied |
+| `max_output_tokens` | 20000 for MC and reading |
+| `workers` | 12 = four fixed shards × three lanes |
+| `scope` | V1 main 2043 + V2 Dev/Test 10136 = 12179; no V-Bench |
+| `protocol` | muse12-direct-default-20k-mc84-v1 |
+| `details` | docs/measurement_cards/MC-84-muse12-direct-20k.md |
+
+Pin one model route throughout the campaign; keep earlier Muse 1.2 OMP/mixed-route outputs separate.
+
+## MC-85 — MiMo V2.6 Flash / API Direct / budget 20,000
+
+Registered 2026-10-15 (+07), before benchmark items, for the user-requested `ocg/mimo-v2.6-flash` route.
+
+| Field | Value |
+| --- | --- |
+| `model` | MiMo V2.6 Flash; exact ocg/mimo-v2.6-flash route |
+| `transport` | API Direct · native Responses streaming |
+| `temperature` | 1.0 sent; upstream effective value unknown |
+| `reasoning` | effort omitted; provider default, no named tier asserted |
+| `seed` | omitted |
+| `tools` | none supplied |
+| `max_output_tokens` | 20000 for MC and reading |
+| `workers` | 12 = four fixed shards × three lanes |
+| `scope` | Main 2043 + Dev/Test 10136 = 12179; no V-Bench |
+| `protocol` | mimo26-direct-default-20k-mc85-v1 |
+| `details` | docs/measurement_cards/MC-85-mimo26-direct-20k.md |
+
+Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking conditions.
+
+## MC-86 — Muse Spark 1.3 / OMP full tools / remaining MC-85 items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-86` |
+| `status` | Preregistered 2026-10-16 (+07), before benchmark-item requests |
+| `scope` | 12,033 MC-85 items, excluding Legal MC 146 already completed under MC-71; matching IDs and prompt hashes verified |
+| `harness / tools` | OMP 18.0.0 JSON, `--tools all`, default coding-agent system prompt, Bubblewrap item namespace; loopback proxy keeps upstream auth out of the agent environment; no session/title/extensions/skills/rules/LSP |
+| `model / route` | Muse Spark 1.3 Contributor, model ID `muse-spark-1.3-contributor` via OMP ref `zen-go/muse-spark-1.3-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 in isolated OMP profile; thinking `auto`; no seed; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership; worker transitions recorded in the attempt ledger |
+| `details` | `docs/measurement_cards/MC-86-muse13-omp-full-tools-remaining.md` |
+| `outputs` | `all_res/muse13_omp_mc86/`; no upload |
+
+## MC-87 — Muse Spark 1.2 / OMP full tools / MC-86 matched scope
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-87` |
+| `status` | Preregistered 2026-10-17 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2; exclude Legal MC 146 to preserve matched item coverage |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session |
+| `model / route` | Muse Spark 1.2 Contributor, model ID `muse-spark-1.2-contributor` via OMP ref `zen-go/muse-spark-1.2-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, reasoning effort unpinned; seed omitted; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
+| `outputs` | `all_res/muse12_omp_mc87/`; no upload |
+
+## MC-87 — Muse Spark 1.2 / OMP full tools / MC-86 matched scope
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-87` |
+| `status` | Preregistered 2026-10-17 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2; exclude Legal MC 146 to preserve matched item coverage |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session |
+| `model / route` | Muse Spark 1.2 Contributor, model ID `muse-spark-1.2-contributor` via OMP ref `zen-go/muse-spark-1.2-contributor`, OpenCode Go Responses |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, reasoning effort unpinned; seed omitted; `maxTokens=20000` per assistant turn; 300 s/item plus 60 s hard-timeout margin |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-87-muse12-omp-full-tools.md` |
+| `outputs` | `all_res/muse12_omp_mc87/`; no upload |
+
+## MC-88 — Qwen3.5-9B-65K (IEC) / OMP full tools / MC-87 matched scope, 900 s timeout
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-88` |
+| `status` | Preregistered 2026-10-19 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2 and MC-87; Legal MC 146 excluded via the MC-71 ledger |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, no persistent session; loopback credential relay |
+| `model / route` | Qwen3.5-9B-65K via OMP ref `iec/Qwen3.5-9B-65K`, IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel |
+| `sampling / limits` | Temperature 1.0 requested; effective provider value unverified; thinking auto, non-reasoning model entry; seed omitted; `maxTokens=20000` per assistant turn; 900 s/item plus 60 s hard-timeout margin (user override vs MC-86/87's 300 s) |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-88-qwen-omp-full-tools.md` |
+| `outputs` | `all_res/qwen_omp_mc88/`; no upload |
+
+## MC-89 — MiMo V2.6 Flash / OMP full tools / MC-88 matched scope, 900 s timeout
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-89` |
+| `status` | Preregistered 2026-10-19 (+07), before benchmark-item requests |
+| `scope` | Same 12,033 MC-85 items as MC-86/R2, MC-87 and MC-88; Legal MC 146 excluded via the MC-71 ledger |
+| `harness / tools` | OMP 18.0.0 JSON, full default tool menu, default coding-agent system prompt, Bubblewrap item namespace, per-item `x-opencode-session` routing header; loopback credential relay |
+| `model / route` | MiMo V2.6 Flash via OMP ref `zen-go/mimo-v2.6-flash`, OpenCode Go Chat Completions (Responses unsupported for this model; probed 2026-10-19) |
+| `sampling / limits` | Temperature 1.0 requested (thinking-mode provider default may apply); thinking auto; reasoning by provider default; seed omitted; `maxTokens=20000` per assistant turn; 900 s/item plus 60 s hard-timeout margin (user choice, continuity with MC-88) |
+| `workers / scheduler` | 12 workers use one global queue across datasets; no fixed dataset ownership |
+| `details` | `docs/measurement_cards/MC-89-mimo26-omp-full-tools.md` |
+| `outputs` | `all_res/mimo26_omp_mc89/`; no upload |
+
+## MC-90 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide / B and S on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-90` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests |
+| `scope` | The 1,239 items of the five non-VMLU datasets of the MC-72 scope that are not audit anchors (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); arms B (frozen prompt) and S (stepwise wording); 1 replicate; 2,478 attempts. VMLU, V-Bench and the 60 audit anchors are excluded |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096` for both arms; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run |
+| `workers / scheduler` | 12 workers (4 shards x 3 lanes); items ordered item-major so B and S of one item run adjacently |
+| `details` | `docs/measurement_cards/MC-90-diagnostic-prospective-wide.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-91 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide supplement / second B draw on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-91` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests of this card |
+| `scope` | Supplement `wide-b-r2` of the MC-90 wide phase: arm B only (the frozen main-v1 prompt, byte-identical to MC-90 replicate 1), replicate r2, over the same 1,239 non-anchor items (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); 1,239 attempts. Purpose: a sampling-noise reference for the single-draw B and S results of MC-90, which it leaves unchanged |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition (MC-90 stalled the endpoint twice at 12 simultaneous streams) |
+| `details` | `docs/measurement_cards/MC-91-diagnostic-prospective-wide-b-replicate.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-b-r2/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-92 — Qwen3.5-9B-65K (IEC) / diagnostic prospective wide supplement / second S draw on the 1,239 non-anchor items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-92` |
+| `status` | Preregistered 2026-10-22 (+07), before benchmark-item requests of this card |
+| `scope` | Supplement `wide-s-r2` of the MC-90 wide phase: arm S only (the stepwise prompt of `prompt_templates_v1.json`, byte-identical to MC-90 replicate 1), replicate r2, over the same 1,239 non-anchor items (134 Legal MC, 138 Legal NLI, 188 Vi-SQuAD, 188 Vi-DROP, 591 ViBidLQA); 1,239 attempts. Purpose: the sampling noise of S itself and a two-draw design for both arms (B in MC-90 and MC-91, S in MC-90 and this card); MC-90 and MC-91 stay unchanged |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway `http://llmapi.iec/v1` through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 1.25 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition |
+| `details` | `docs/measurement_cards/MC-92-diagnostic-prospective-wide-s-replicate.md` |
+| `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-s-r2/qwen3-5-9b-65k-prospective/`; no upload |

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import re
 import unicodedata
 from pathlib import Path
@@ -101,6 +102,37 @@ MODELS = [
 ]
 
 
+def multimodel_profile_docs() -> list[dict]:
+    """Public model registry rows for the versioned direct-API experiment."""
+    path = Path("data/vi_multimodel_profiles.json")
+    try:
+        profiles = json.loads(path.read_text(encoding="utf-8"))["profiles"]
+    except (OSError, KeyError, json.JSONDecodeError) as e:
+        raise SystemExit(f"Error: cannot read multi-model profiles {path}: {e}") from e
+    existing_ids = {model["_id"] for model in MODELS}
+    docs = []
+    for profile in profiles:
+        model_id = profile["profile_id"]
+        if model_id in existing_ids:
+            continue
+        display = profile["display_name"]
+        if canonical_model_id(display) != model_id:
+            raise SystemExit(f"Error: profile {display!r} does not normalize to {model_id!r}")
+        base_url = profile.get("base_url") or f"configured via {profile['base_url_env']}"
+        docs.append({
+            "_id": model_id,
+            "display_name": display,
+            "dir_slugs": [profile["profile_id"]],
+            "endpoint_ids": [canonical_model_id(profile["provider"])],
+            "params": "",
+            "quantization": "",
+            "endpoint": base_url,
+            "notes": (f"vi-multimodel-v1; tier={profile.get('provider_tier', '')}; "
+                      "exact model/profile provenance lives in each run config."),
+        })
+    return docs
+
+
 def dataset_docs() -> list[dict]:
     """Fixed vocabulary (design D2); sha256 computed from the tracked sources."""
     specs = [
@@ -111,6 +143,18 @@ def dataset_docs() -> list[dict]:
         ("vmlu-mqa-test", "VMLU-MQA", "test", 9833, "vmlu_mqa_v1.5/test.jsonl", "withheld", None),
         ("vbench-public-test", "V-Bench", "public-test", 9141, "v_bench/public-test.jsonl", "withheld", None),
         ("reading-400", "reading", "eval-400", 400, "data/eval_set_manifest.csv", "reviewed", "data/eval_set_manifest.csv"),
+        ("vi-multimodel-v1-vi-squad-200", "Vi-SQuAD", "vmlu-multimodel-v1", 200,
+         "data/eval_set_manifest.csv", "reviewed", "data/vi_multimodel_v1/main_v1.json"),
+        ("vi-multimodel-v1-vi-drop-200", "Vi-DROP", "vmlu-multimodel-v1", 200,
+         "data/eval_set_manifest.csv", "reviewed", "data/vi_multimodel_v1/main_v1.json"),
+        ("vi-multimodel-v1-vmlu-valid", "VMLU-MQA", "multimodel-valid", 744,
+         "vmlu_mqa_v1.5/valid.jsonl", "file", "data/vi_multimodel_v1/main_v1.json"),
+        ("vi-multimodel-v1-legal-mc-146", "VLSP2025-LegalSLM", "multimodel-multichoice", 146,
+         "v_legal_slsp/legal_slm/multichoice.jsonl", "file", "data/vi_multimodel_v1/main_v1.json"),
+        ("vi-multimodel-v1-legal-nli-150", "VLSP2025-LegalSLM", "multimodel-nli", 150,
+         "v_legal_slsp/legal_slm/nli.jsonl", "file", "data/vi_multimodel_v1/main_v1.json"),
+        ("vi-multimodel-v1-bidlqa-test", "ViBidLQA", "multimodel-test", 603,
+         "v_legal_slsp/bidlqa/ViBidLQA_test.jsonl", "file", "data/vi_multimodel_v1/main_v1.json"),
         ("legal-mc-146", "VLSP2025-LegalSLM", "multichoice", 146, "v_legal_slsp/legal_slm/multichoice.jsonl", "file",
          "data/legal_slm_multichoice_manifest.json"),
         ("legal-nli-150", "VLSP2025-LegalSLM", "nli", 150, "v_legal_slsp/legal_slm/nli.jsonl", "file",
@@ -143,7 +187,8 @@ def dataset_docs() -> list[dict]:
 def seed(db) -> dict[str, int]:
     """Upsert both registries. Returns {'models': N, 'datasets': N}."""
     n_models = 0
-    for doc in MODELS:
+    model_docs = [*MODELS, *multimodel_profile_docs()]
+    for doc in model_docs:
         got = canonical_model_id(doc["display_name"])
         for slug in doc["dir_slugs"]:
             if canonical_model_id(slug) != doc["_id"]:

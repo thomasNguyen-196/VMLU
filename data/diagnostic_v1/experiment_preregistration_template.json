@@ -1,0 +1,45 @@
+{
+  "version": "diagnostic-experiment-preregistration-v1",
+  "status": "draft_not_executable",
+  "research_scope": "Vietnamese tasks",
+  "campaign_controls": null,
+  "split_manifest": null,
+  "corpus_version": null,
+  "budget_policy": {
+    "item_cap": null,
+    "campaign_cap": null,
+    "currency_or_token_accounting": null,
+    "missing_usage_policy": "unknown_not_zero"
+  },
+  "replicate_pairing_and_stability": {
+    "replicates": null,
+    "pairing_rule": null,
+    "stable_recovery_threshold": null
+  },
+  "action_policy": {
+    "quality_threshold": null,
+    "ties": null,
+    "all_arm_failure": "unresolved_or_abstain"
+  },
+  "verification_policy": {
+    "scope": null,
+    "enabled": null,
+    "ablation": null,
+    "false_accept_reject_metrics": null,
+    "abstention_coverage_risk": null
+  },
+  "diagnostic_contrasts": [
+    "content_vs_length_position",
+    "prompt_vs_tools_vs_resources",
+    "retriever_vs_assembly_vs_generator"
+  ],
+  "deployment_comparisons": [
+    "fresh-B",
+    "always-S",
+    "always-K",
+    "always-KS",
+    "best-fixed-from-dev",
+    "rule-router",
+    "learned-router"
+  ]
+}

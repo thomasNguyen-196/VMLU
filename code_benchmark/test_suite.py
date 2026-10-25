@@ -2335,12 +2335,15 @@ class TestHarnessDashboard(unittest.TestCase):
             row("M2", "M6", "reading400", "reading-400 (EM)", "EM", -22.25, -25.0, -19.0),
         ]
         ins = dash.insight(ladder, [], [], [])
-        blob = ins["verdict"] + " " + " ".join(c["body"] for c in ins["claims"])
+        blob = ins["verdict"] + " " + " ".join(
+            point["text"] for claim in ins["claims"] for point in claim["points"]
+        )
         self.assertNotIn("22.39", blob)
+        self.assertNotIn("22,39", blob)
         penalty = next(c for c in ins["claims"] if c["id"] == "penalty:M1")
-        ev = {e["label"]: e["value"] for e in penalty["evidence"]}
-        self.assertEqual(ev["Δ nhỏ nhất"], "+7.00")
-        self.assertIn("trên 1 tập", penalty["body"])
+        points = {point["label"]: point["text"] for point in penalty["points"]}
+        self.assertIn("Δ từ +7,00 đến +7,00", points["Kết quả"])
+        self.assertIn("trên 1 tập", points["Kết quả"])
 
     def test_comparison_carries_blanks_per_side(self):
         # 1.1: số câu trống/unparseable của mỗi phía đi theo dòng so sánh để
@@ -2541,8 +2544,10 @@ class TestHarnessDashboard(unittest.TestCase):
         self.assertNotIn("<script>", out)
         self.assertIn("&lt;script&gt;", out)
         self.assertIn("&lt;i&gt;caveat&lt;/i&gt;", out)
-        self.assertIn("Guard:", out)            # the leak banner renders every field
-        self.assertIn("Đọc MC-15", out)
+        for label, value in (("Hiện tượng", "w"), ("Bằng chứng", "e"),
+                             ("Khắc phục", "f"), ("Kiểm soát", "g")):
+            self.assertIn(f"<b>{label}:</b> {value}", out)
+        self.assertIn("card MC-22", out)
         self.assertIn("-16.00", out)
 
 

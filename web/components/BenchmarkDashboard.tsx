@@ -283,21 +283,21 @@ function DatasetStrip({
 }) {
   if (!meta) return null;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-1.5">
-      <p className="text-xs text-slate-700 leading-relaxed">
-        <span className="font-bold text-slate-900">Dataset: </span>
+    <div className="rounded-xl border border-hair bg-card p-4 shadow-2xs space-y-1.5">
+      <p className="text-xs text-ink-2 leading-relaxed">
+        <span className="font-bold text-ink">Dataset: </span>
         {meta.about}
       </p>
-      <p className="text-xs text-slate-600 leading-relaxed">
-        <span className="font-semibold text-slate-800">Dạng câu: </span>
+      <p className="text-xs text-ink-2 leading-relaxed">
+        <span className="font-semibold text-ink">Dạng câu: </span>
         {meta.shape}
       </p>
-      <p className="text-xs text-slate-600 leading-relaxed">
-        <span className="font-semibold text-slate-800">Thang điểm hero: </span>
+      <p className="text-xs text-ink-2 leading-relaxed">
+        <span className="font-semibold text-ink">Thang điểm hero: </span>
         <span className="font-mono font-bold text-indigo-700">{headline}</span>
-        <span className="text-slate-500"> — {meta.metric}</span>
+        <span className="text-ink-3"> — {meta.metric}</span>
       </p>
-      <p className="text-[11px] text-amber-800 leading-relaxed bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+      <p className="text-[11px] text-flag leading-relaxed bg-flag-soft border border-flag/40 rounded-lg px-2.5 py-1.5">
         ⚠️ {meta.metricNote}
       </p>
       <HarnessContrast contrast={contrast ?? null} datasetName={datasetName ?? meta.metric} />
@@ -387,21 +387,21 @@ function ReadingTabView({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {block.sources.map((src) => (
-          <div key={src.label} className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-            <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div key={src.label} className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+            <div className="p-5 border-b border-hair bg-paper flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-slate-900">{src.label}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <h3 className="font-bold text-ink">{src.label}</h3>
+                <p className="text-xs text-ink-3 mt-0.5">
                   n = {fmtInt(src.n)} · {fmtInt(src.em_count)} câu exact
                 </p>
               </div>
               <div className="text-right">
                 <div className="text-xl font-black font-mono text-emerald-600">{fmtPct(src.em)}</div>
-                <div className="text-[11px] text-slate-500 font-mono">EM · F1 {fmtPct(src.char_f1)}</div>
+                <div className="text-[11px] text-ink-3 font-mono">EM · F1 {fmtPct(src.char_f1)}</div>
               </div>
             </div>
             <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-slate-100 text-slate-700 font-semibold">
+              <thead className="bg-paper text-ink-2 font-semibold">
                 <tr>
                   <th className="py-2 px-4">Dạng câu hỏi</th>
                   <th className="py-2 px-3 text-right">n</th>
@@ -409,7 +409,7 @@ function ReadingTabView({
                   <th className="py-2 px-3 text-right">char-F1 (%)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody className="divide-y divide-hair/70 text-ink-2">
                 {[...src.strata]
                   .sort((a, b) => a.em - b.em)
                   .map((st) => (
@@ -418,12 +418,12 @@ function ReadingTabView({
                       <td className="py-2 px-3 text-right font-mono">{fmtInt(st.n)}</td>
                       <td
                         className={`py-2 px-3 text-right font-mono font-bold ${
-                          st.em < 60 ? "text-rose-600" : st.em < 80 ? "text-amber-600" : "text-emerald-600"
+                          st.em < 60 ? "text-reject" : st.em < 80 ? "text-flag" : "text-emerald-600"
                         }`}
                       >
                         {fmtNum(st.em)}
                       </td>
-                      <td className="py-2 px-3 text-right font-mono text-slate-600">
+                      <td className="py-2 px-3 text-right font-mono text-ink-2">
                         {fmtNum(st.char_f1)}
                       </td>
                     </tr>
@@ -434,13 +434,13 @@ function ReadingTabView({
         ))}
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+      <div className="bg-flag-soft border border-flag/40 rounded-xl p-5 space-y-2">
         <div className="flex items-center gap-2">
           <span className="text-lg">⚠️</span>
-          <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+          <h3 className="font-bold text-flag text-sm">Đọc con số này thế nào</h3>
         </div>
-        <p className="text-xs text-amber-900/90 leading-relaxed">{block.caveat}</p>
-        <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+        <p className="text-xs text-flag/90 leading-relaxed">{block.caveat}</p>
+        <p className="text-[11px] text-flag/70 font-mono pt-1 border-t border-flag/40">
           scorer: {block.scorer} · card {block.measurement_card_hash.slice(0, 12)}…
         </p>
       </div>
@@ -481,7 +481,7 @@ export function BenchmarkDashboard({
       id: "overview" as const,
       label: "📊 Tổng hợp nhận xét",
       badge: "AI · snapshot",
-      badgeClass: "bg-amber-100 text-amber-800",
+      badgeClass: "bg-flag-soft text-flag",
     },
     data.vmlu.overall.n > 0 && {
       id: "vmlu" as const,
@@ -493,7 +493,7 @@ export function BenchmarkDashboard({
       id: "vbench" as const,
       label: "🚀 V-Bench",
       badge: fmtNum(data.vbench.macro_score),
-      badgeClass: "bg-slate-100 text-slate-700",
+      badgeClass: "bg-paper text-ink-2",
     },
     data.reading.overall.n > 0 && {
       id: "reading" as const,
@@ -582,9 +582,9 @@ export function BenchmarkDashboard({
   }, [questions, qCat, qSearch]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-paper text-ink font-sans">
       {/* TOP HEADER — brand + review link left, model switch lives in sidebar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+      <header className="bg-card border-b border-hair sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -593,14 +593,14 @@ export function BenchmarkDashboard({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="font-bold text-lg text-slate-900 leading-tight">
+                  <h1 className="font-bold text-lg text-ink leading-tight">
                     Benchmark Research Hub
                   </h1>
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
                     dữ liệu theo mô hình
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-ink-3">
                   Các thẻ bộ dữ liệu dùng số trực tiếp từ Mongo; tab Tổng hợp nhận xét là snapshot tĩnh.
                 </p>
               </div>
@@ -609,7 +609,7 @@ export function BenchmarkDashboard({
             <div className="flex items-center gap-3">
               <Link
                 href="/"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hair bg-card text-xs font-semibold text-ink-2 hover:bg-paper transition-colors shadow-2xs"
               >
                 <span>📝 Trình Review 400 câu</span>
               </Link>
@@ -700,9 +700,9 @@ export function BenchmarkDashboard({
             {/* Highlighting Weakest vs Strongest */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Weakest */}
-              <div className="bg-white rounded-xl p-5 border border-rose-200 shadow-2xs">
+              <div className="bg-card rounded-xl p-5 border border-reject/40 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">
+                  <h3 className="font-bold text-ink flex items-center gap-2 text-sm">
                     <span className="w-2 h-2 rounded-full bg-rose-500"></span>
                     Top 6 môn thấp nhất
                   </h3>
@@ -711,13 +711,13 @@ export function BenchmarkDashboard({
                   {data.vmlu.weakest_subjects.slice(0, 6).map((s) => (
                     <div
                       key={s.code}
-                      className="flex items-center justify-between p-2 rounded-lg bg-rose-50/70 border border-rose-100 text-xs"
+                      className="flex items-center justify-between p-2 rounded-lg bg-reject-soft/70 border border-reject/30 text-xs"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-rose-800 font-bold">{s.code}</span>
-                        <span className="font-medium text-slate-800">{s.name}</span>
+                        <span className="font-mono text-reject font-bold">{s.code}</span>
+                        <span className="font-medium text-ink">{s.name}</span>
                       </div>
-                      <span className="font-mono font-bold text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200">
+                      <span className="font-mono font-bold text-reject bg-card px-2 py-0.5 rounded border border-reject/40">
                         {fmtPct(s.accuracy)}
                       </span>
                     </div>
@@ -726,9 +726,9 @@ export function BenchmarkDashboard({
               </div>
 
               {/* Strongest */}
-              <div className="bg-white rounded-xl p-5 border border-emerald-200 shadow-2xs">
+              <div className="bg-card rounded-xl p-5 border border-emerald-200 shadow-2xs">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm">
+                  <h3 className="font-bold text-ink flex items-center gap-2 text-sm">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     Top 6 môn cao nhất
                   </h3>
@@ -741,9 +741,9 @@ export function BenchmarkDashboard({
                     >
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-emerald-800 font-bold">{s.code}</span>
-                        <span className="font-medium text-slate-800">{s.name}</span>
+                        <span className="font-medium text-ink">{s.name}</span>
                       </div>
-                      <span className="font-mono font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                      <span className="font-mono font-bold text-emerald-700 bg-card px-2 py-0.5 rounded border border-emerald-200">
                         {fmtPct(s.accuracy)}
                       </span>
                     </div>
@@ -753,16 +753,16 @@ export function BenchmarkDashboard({
             </div>
 
             {/* 58 SUBJECTS TABLE */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-hair bg-paper/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">Bảng xếp hạng 58 môn học VMLU</h3>
-                  <p className="text-xs text-slate-500">
+                  <h3 className="font-bold text-ink text-base">Bảng xếp hạng 58 môn học VMLU</h3>
+                  <p className="text-xs text-ink-3">
                     Tra cứu chi tiết tỷ lệ đúng, số lượng mẫu và nhóm ngành
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center bg-white p-1 rounded-lg border border-slate-200 text-xs shadow-2xs">
+                  <div className="flex items-center bg-card p-1 rounded-lg border border-hair text-xs shadow-2xs">
                     {["ALL", "STEM", "Social Science", "Humanity", "Other"].map((cat) => (
                       <button
                         key={cat}
@@ -770,7 +770,7 @@ export function BenchmarkDashboard({
                         className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
                           vmluCat === cat
                             ? "text-indigo-700 bg-indigo-50"
-                            : "text-slate-600 hover:text-slate-900"
+                            : "text-ink-2 hover:text-ink"
                         }`}
                       >
                         {cat === "ALL" ? "Tất cả (58)" : cat}
@@ -783,20 +783,20 @@ export function BenchmarkDashboard({
                     value={vmluSearch}
                     onChange={(e) => setVmluSearch(e.target.value)}
                     placeholder="Tìm tên môn hoặc mã..."
-                    className="text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 w-44 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="text-xs bg-card border border-hair rounded-lg px-3 py-1.5 w-44 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="overflow-x-auto max-h-[480px]">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-100 text-slate-600 font-semibold sticky top-0 border-b border-slate-200 z-10">
+                  <thead className="bg-paper text-ink-2 font-semibold sticky top-0 border-b border-hair z-10">
                     <tr>
                       <th className="py-2.5 px-4 w-16">Mã</th>
                       <th className="py-2.5 px-4">Tên môn học</th>
                       <th className="py-2.5 px-4 w-32">Nhóm ngành</th>
                       <th
-                        className="py-2.5 px-4 w-28 text-right cursor-pointer hover:bg-slate-200"
+                        className="py-2.5 px-4 w-28 text-right cursor-pointer hover:bg-hair"
                         onClick={() => setVmluSortAsc(!vmluSortAsc)}
                       >
                         Độ chính xác {vmluSortAsc ? "▲" : "▼"}
@@ -805,29 +805,29 @@ export function BenchmarkDashboard({
                       <th className="py-2.5 px-4 w-40">Phân bố tỷ lệ</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-hair/70">
                     {filteredSubjects.map((s) => {
                       let barColor = "bg-emerald-500";
                       let badgeColor = "text-emerald-700 bg-emerald-50 border-emerald-200";
                       if (s.accuracy < 40) {
                         barColor = "bg-rose-500";
-                        badgeColor = "text-rose-700 bg-rose-50 border-rose-200";
+                        badgeColor = "text-reject bg-reject-soft border-reject/40";
                       } else if (s.accuracy < 60) {
                         barColor = "bg-amber-500";
-                        badgeColor = "text-amber-700 bg-amber-50 border-amber-200";
+                        badgeColor = "text-flag bg-flag-soft border-flag/40";
                       } else if (s.accuracy < 80) {
                         barColor = "bg-blue-500";
                         badgeColor = "text-blue-700 bg-blue-50 border-blue-200";
                       }
 
                       return (
-                        <tr key={s.code} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-2.5 px-4 font-mono font-bold text-slate-500">
+                        <tr key={s.code} className="hover:bg-paper/80 transition-colors">
+                          <td className="py-2.5 px-4 font-mono font-bold text-ink-3">
                             {s.code}
                           </td>
-                          <td className="py-2.5 px-4 font-medium text-slate-900">{s.name}</td>
+                          <td className="py-2.5 px-4 font-medium text-ink">{s.name}</td>
                           <td className="py-2.5 px-4">
-                            <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                            <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-paper text-ink-2">
                               {s.category}
                             </span>
                           </td>
@@ -836,11 +836,11 @@ export function BenchmarkDashboard({
                               {fmtPct(s.accuracy)}
                             </span>
                           </td>
-                          <td className="py-2.5 px-4 text-right font-mono text-slate-600">
+                          <td className="py-2.5 px-4 text-right font-mono text-ink-2">
                             {fmtInt(s.correct)} / {fmtInt(s.n)}
                           </td>
                           <td className="py-2.5 px-4">
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                            <div className="w-full bg-paper h-2 rounded-full overflow-hidden border border-hair">
                               <div
                                 className={`${barColor} h-full rounded-full`}
                                 style={{ width: `${Math.min(100, s.accuracy)}%` }}
@@ -856,16 +856,16 @@ export function BenchmarkDashboard({
             </div>
 
             {/* WRONG-ANSWER EXPLORER (DB: first 50 correct=0 of this run) */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs p-5 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="bg-card rounded-xl border border-hair shadow-2xs p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-hair/70 pb-3">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                  <h3 className="font-bold text-ink text-base flex items-center gap-2">
                     <span>🔍 Câu trả lời sai (Wrong-answer explorer)</span>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-rose-100 text-rose-800">
+                    <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-reject-soft text-reject">
                       {fmtInt(filteredQuestions.length)} câu
                     </span>
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-ink-3">
                     50 câu sai đầu tiên của run này (sort theo item_id) — bấm để soi prompt, raw response, gold
                   </p>
                 </div>
@@ -874,7 +874,7 @@ export function BenchmarkDashboard({
                   <select
                     value={qCat}
                     onChange={(e) => setQCat(e.target.value)}
-                    className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 font-medium"
+                    className="text-xs border border-hair rounded-lg px-2.5 py-1.5 bg-paper font-medium"
                   >
                     <option value="ALL">Mọi nhóm ngành</option>
                     <option value="STEM">STEM</option>
@@ -888,7 +888,7 @@ export function BenchmarkDashboard({
                     value={qSearch}
                     onChange={(e) => setQSearch(e.target.value)}
                     placeholder="Tìm từ khóa trong đề bài..."
-                    className="text-xs border border-slate-200 rounded-lg px-3 py-1.5 w-48 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="text-xs border border-hair rounded-lg px-3 py-1.5 w-48 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
               </div>
@@ -899,22 +899,22 @@ export function BenchmarkDashboard({
                     key={q.id}
                     type="button"
                     onClick={() => setSelectedQuestion(q)}
-                    className="w-full text-left p-4 rounded-xl border transition-all cursor-pointer border-rose-200 bg-rose-50/20 hover:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="w-full text-left p-4 rounded-xl border transition-all cursor-pointer border-reject/40 bg-reject-soft/20 hover:border-reject/70 focus:outline-none focus:ring-2 focus:ring-rose-500"
                   >
                     <div className="flex items-center justify-between text-xs mb-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-rose-700">
+                        <span className="font-mono font-bold text-reject">
                           {q.id}
                         </span>
-                        <span className="px-2 py-0.5 rounded text-[10.5px] bg-slate-100 text-slate-600">
+                        <span className="px-2 py-0.5 rounded text-[10.5px] bg-paper text-ink-2">
                           {q.category}
                         </span>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-reject-soft text-reject">
                         {`❌ Sai (Chọn ${q.answer} / Đúng: ${q.gold_answer})`}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-900 font-medium line-clamp-2">
+                    <div className="text-xs text-ink font-medium line-clamp-2">
                       {q.question}
                     </div>
                   </button>
@@ -1014,24 +1014,24 @@ export function BenchmarkDashboard({
             <TabInsight datasetId="vbench-public-test" modelId={activeModelId} block={data.vbench} />
 
             {/* 13 Domains Leaderboard */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
+            <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-hair bg-paper/70 flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">
+                  <h3 className="font-bold text-ink text-base">
                     Bảng xếp hạng 13 miền tri thức (Domains)
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-ink-3">
                     Phân hóa mạnh mẽ giữa tri thức ngữ nghĩa và năng lực suy luận toán logic
                   </p>
                 </div>
-                <span className="text-xs font-mono px-2.5 py-1 bg-slate-200 text-slate-700 rounded-md font-semibold">
+                <span className="text-xs font-mono px-2.5 py-1 bg-hair text-ink-2 rounded-md font-semibold">
                   13 Domains Rated
                 </span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-100 text-slate-600 font-semibold border-b border-slate-200">
+                  <thead className="bg-paper text-ink-2 font-semibold border-b border-hair">
                     <tr>
                       <th className="py-2.5 px-4 w-12 text-center">#</th>
                       <th className="py-2.5 px-4">Miền tri thức (Domain)</th>
@@ -1041,7 +1041,7 @@ export function BenchmarkDashboard({
                       <th className="py-2.5 px-4 w-48">Thanh hiệu suất</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-hair/70">
                     {data.vbench.domains.map((d, i) => {
                       const barColor =
                         d.score >= 60
@@ -1050,11 +1050,11 @@ export function BenchmarkDashboard({
                           ? "bg-blue-500"
                           : "bg-rose-500";
                       return (
-                        <tr key={d.domain} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={d.domain} className="hover:bg-paper/80 transition-colors">
                           <td className="py-3 px-4 text-center font-mono font-bold text-slate-400">
                             {i + 1}
                           </td>
-                          <td className="py-3 px-4 font-semibold text-slate-900 flex items-center gap-2">
+                          <td className="py-3 px-4 font-semibold text-ink flex items-center gap-2">
                             <span>{d.icon || "📄"}</span>
                             <span>{d.name}</span>
                           </td>
@@ -1063,20 +1063,20 @@ export function BenchmarkDashboard({
                               className={`px-2 py-0.5 rounded text-[11px] font-mono ${
                                 d.track === "function-calling"
                                     ? "bg-purple-100 text-purple-800"
-                                  : "bg-slate-100 text-slate-700"
+                                  : "bg-paper text-ink-2"
                               }`}
                             >
                               {d.track}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-right font-mono font-bold text-sm text-slate-900">
+                          <td className="py-3 px-4 text-right font-mono font-bold text-sm text-ink">
                             {fmtPct(d.score)}
                           </td>
-                          <td className="py-3 px-4 text-right font-mono text-slate-600">
+                          <td className="py-3 px-4 text-right font-mono text-ink-2">
                             {fmtInt(d.correct)} / {fmtInt(d.total)}
                           </td>
                           <td className="py-3 px-4">
-                            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200">
+                            <div className="w-full bg-paper h-2.5 rounded-full overflow-hidden border border-hair">
                               <div
                                 className={`${barColor} h-full rounded-full`}
                                 style={{ width: `${d.score}%` }}
@@ -1162,14 +1162,14 @@ export function BenchmarkDashboard({
             />
             <TabInsight datasetId="legal-mc-146" modelId={activeModelId} block={data.legal} />
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-slate-200 bg-slate-50">
-                <h3 className="font-bold text-slate-900 text-sm">
+            <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-hair bg-paper">
+                <h3 className="font-bold text-ink text-sm">
                   Accuracy theo đáp án đúng
                 </h3>
               </div>
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-100 text-slate-700 font-semibold">
+                <thead className="bg-paper text-ink-2 font-semibold">
                   <tr>
                     <th className="py-2 px-4">Đáp án đúng</th>
                     <th className="py-2 px-3 text-right">n</th>
@@ -1177,7 +1177,7 @@ export function BenchmarkDashboard({
                     <th className="py-2 px-3 text-right">Accuracy (%)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-hair/70 text-ink-2">
                   {data.legal.by_gold.map((g) => (
                     <tr key={g.gold}>
                       <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
@@ -1192,13 +1192,13 @@ export function BenchmarkDashboard({
               </table>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+            <div className="bg-flag-soft border border-flag/40 rounded-xl p-5 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-lg">⚠️</span>
-                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+                <h3 className="font-bold text-flag text-sm">Đọc con số này thế nào</h3>
               </div>
-              <p className="text-xs text-amber-900/90 leading-relaxed">{data.legal.caveat}</p>
-              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+              <p className="text-xs text-flag/90 leading-relaxed">{data.legal.caveat}</p>
+              <p className="text-[11px] text-flag/70 font-mono pt-1 border-t border-flag/40">
                 card {data.legal.measurement_card_hash.slice(0, 12)}… · {data.legal.blank_ids.length} câu blank
               </p>
             </div>
@@ -1259,14 +1259,14 @@ export function BenchmarkDashboard({
             />
             <TabInsight datasetId="legal-nli-150" modelId={activeModelId} block={data.legal_nli} />
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-slate-200 bg-slate-50">
-                <h3 className="font-bold text-slate-900 text-sm">
+            <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-hair bg-paper">
+                <h3 className="font-bold text-ink text-sm">
                   Accuracy theo đáp án đúng (Có=A / Không=B)
                 </h3>
               </div>
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-100 text-slate-700 font-semibold">
+                <thead className="bg-paper text-ink-2 font-semibold">
                   <tr>
                     <th className="py-2 px-4">Đáp án đúng</th>
                     <th className="py-2 px-3 text-right">n</th>
@@ -1274,7 +1274,7 @@ export function BenchmarkDashboard({
                     <th className="py-2 px-3 text-right">Accuracy (%)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-hair/70 text-ink-2">
                   {data.legal_nli.by_gold.map((g) => (
                     <tr key={g.gold}>
                       <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
@@ -1289,13 +1289,13 @@ export function BenchmarkDashboard({
               </table>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+            <div className="bg-flag-soft border border-flag/40 rounded-xl p-5 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-lg">⚠️</span>
-                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+                <h3 className="font-bold text-flag text-sm">Đọc con số này thế nào</h3>
               </div>
-              <p className="text-xs text-amber-900/90 leading-relaxed">{data.legal_nli.caveat}</p>
-              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+              <p className="text-xs text-flag/90 leading-relaxed">{data.legal_nli.caveat}</p>
+              <p className="text-[11px] text-flag/70 font-mono pt-1 border-t border-flag/40">
                 card {data.legal_nli.measurement_card_hash.slice(0, 12)}… · {data.legal_nli.blank_ids.length} câu blank
               </p>
             </div>
@@ -1370,17 +1370,17 @@ export function BenchmarkDashboard({
             />
             <TabInsight datasetId="vm14k-public-12488" modelId={activeModelId} block={data.vm14k} />
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-slate-200 bg-slate-50">
-                <h3 className="font-bold text-slate-900 text-sm">
+            <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-hair bg-paper">
+                <h3 className="font-bold text-ink text-sm">
                   Accuracy theo nhóm chuyên khoa (9 nhóm + unknown)
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-ink-3 mt-0.5">
                   Nhóm = tag đầu tiên của medical_topic (taxonomy tiền đăng ký); Nội khoa chiếm một nửa bộ
                 </p>
               </div>
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-100 text-slate-700 font-semibold">
+                <thead className="bg-paper text-ink-2 font-semibold">
                   <tr>
                     <th className="py-2 px-4">Nhóm chuyên khoa</th>
                     <th className="py-2 px-3 text-right">n</th>
@@ -1388,7 +1388,7 @@ export function BenchmarkDashboard({
                     <th className="py-2 px-3 text-right">Accuracy (%)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-hair/70 text-ink-2">
                   {data.vm14k.by_category.map((d) => (
                     <tr key={d.category}>
                       <td className="py-2 px-4 font-semibold">{d.category}</td>
@@ -1404,17 +1404,17 @@ export function BenchmarkDashboard({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-                <div className="p-5 border-b border-slate-200 bg-slate-50">
-                  <h3 className="font-bold text-slate-900 text-sm">
+              <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+                <div className="p-5 border-b border-hair bg-paper">
+                  <h3 className="font-bold text-ink text-sm">
                     Accuracy theo độ khó tự khai báo
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-ink-3 mt-0.5">
                     Thang độ khó của bộ có tín hiệu (giảm đơn điệu)
                   </p>
                 </div>
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-100 text-slate-700 font-semibold">
+                  <thead className="bg-paper text-ink-2 font-semibold">
                     <tr>
                       <th className="py-2 px-4">Độ khó</th>
                       <th className="py-2 px-3 text-right">n</th>
@@ -1422,7 +1422,7 @@ export function BenchmarkDashboard({
                       <th className="py-2 px-3 text-right">Accuracy (%)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                  <tbody className="divide-y divide-hair/70 text-ink-2">
                     {data.vm14k.by_difficulty.map((d) => (
                       <tr key={d.difficulty}>
                         <td className="py-2 px-4 font-semibold">{d.difficulty}</td>
@@ -1437,17 +1437,17 @@ export function BenchmarkDashboard({
                 </table>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-                <div className="p-5 border-b border-slate-200 bg-slate-50">
-                  <h3 className="font-bold text-slate-900 text-sm">
+              <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+                <div className="p-5 border-b border-hair bg-paper">
+                  <h3 className="font-bold text-ink text-sm">
                     Accuracy theo số lựa chọn
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-ink-3 mt-0.5">
                     Câu Đúng/Sai (2 lựa chọn) kéo điểm tổng lên — báo 4-lựa-chọn làm số chính
                   </p>
                 </div>
                 <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-100 text-slate-700 font-semibold">
+                  <thead className="bg-paper text-ink-2 font-semibold">
                     <tr>
                       <th className="py-2 px-4">Số lựa chọn</th>
                       <th className="py-2 px-3 text-right">n</th>
@@ -1455,7 +1455,7 @@ export function BenchmarkDashboard({
                       <th className="py-2 px-3 text-right">Accuracy (%)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                  <tbody className="divide-y divide-hair/70 text-ink-2">
                     {data.vm14k.by_n_choices.map((d) => (
                       <tr key={d.n_choices}>
                         <td className="py-2 px-4 font-mono font-bold">{d.n_choices}</td>
@@ -1471,14 +1471,14 @@ export function BenchmarkDashboard({
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-              <div className="p-5 border-b border-slate-200 bg-slate-50">
-                <h3 className="font-bold text-slate-900 text-sm">
+            <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+              <div className="p-5 border-b border-hair bg-paper">
+                <h3 className="font-bold text-ink text-sm">
                   Accuracy theo đáp án đúng
                 </h3>
               </div>
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-100 text-slate-700 font-semibold">
+                <thead className="bg-paper text-ink-2 font-semibold">
                   <tr>
                     <th className="py-2 px-4">Đáp án đúng</th>
                     <th className="py-2 px-3 text-right">n</th>
@@ -1486,7 +1486,7 @@ export function BenchmarkDashboard({
                     <th className="py-2 px-3 text-right">Accuracy (%)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-hair/70 text-ink-2">
                   {data.vm14k.by_gold.map((g) => (
                     <tr key={g.gold}>
                       <td className="py-2 px-4 font-mono font-bold">{g.gold}</td>
@@ -1501,13 +1501,13 @@ export function BenchmarkDashboard({
               </table>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
+            <div className="bg-flag-soft border border-flag/40 rounded-xl p-5 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-lg">⚠️</span>
-                <h3 className="font-bold text-amber-900 text-sm">Đọc con số này thế nào</h3>
+                <h3 className="font-bold text-flag text-sm">Đọc con số này thế nào</h3>
               </div>
-              <p className="text-xs text-amber-900/90 leading-relaxed">{data.vm14k.caveat}</p>
-              <p className="text-[11px] text-amber-800/70 font-mono pt-1 border-t border-amber-200">
+              <p className="text-xs text-flag/90 leading-relaxed">{data.vm14k.caveat}</p>
+              <p className="text-[11px] text-flag/70 font-mono pt-1 border-t border-flag/40">
                 card {data.vm14k.measurement_card_hash.slice(0, 12)}… · {data.vm14k.blank_ids.length} câu blank
               </p>
             </div>
@@ -1524,16 +1524,16 @@ export function BenchmarkDashboard({
           aria-labelledby="modal-question-id"
           className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
         >
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+          <div className="bg-card rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-hair bg-paper flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span
                   id="modal-question-id"
-                  className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-200 text-slate-800 rounded"
+                  className="font-mono text-xs font-bold px-2 py-0.5 bg-hair text-ink rounded"
                 >
                   {selectedQuestion.id}
                 </span>
-                <span className="text-xs font-semibold text-slate-600">
+                <span className="text-xs font-semibold text-ink-2">
                   {selectedQuestion.category}
                 </span>
               </div>
@@ -1541,7 +1541,7 @@ export function BenchmarkDashboard({
                 type="button"
                 onClick={() => setSelectedQuestion(null)}
                 aria-label="Đóng"
-                className="w-7 h-7 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center font-bold text-lg"
+                className="w-7 h-7 rounded-lg hover:bg-hair text-ink-3 hover:text-ink flex items-center justify-center font-bold text-lg"
               >
                 &times;
               </button>
@@ -1552,19 +1552,19 @@ export function BenchmarkDashboard({
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Nội dung câu hỏi:
                 </div>
-                <div className="text-sm font-medium text-slate-900 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="text-sm font-medium text-ink leading-relaxed bg-paper p-3 rounded-lg border border-hair">
                   {selectedQuestion.question}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <div className="p-3 rounded-lg border border-hair bg-paper">
+                  <div className="text-[11px] font-bold text-ink-3 uppercase tracking-wider">
                     Mô hình chọn:
                   </div>
                   <div
                     className={`text-xl font-mono font-black mt-1 ${
-                      selectedQuestion.correct ? "text-emerald-600" : "text-rose-600"
+                      selectedQuestion.correct ? "text-emerald-600" : "text-reject"
                     }`}
                   >
                     {selectedQuestion.answer || "N/A"}
@@ -1593,13 +1593,13 @@ export function BenchmarkDashboard({
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Đề bài & Các lựa chọn A/B/C/D (Prompt):
                 </div>
-                <pre className="bg-slate-100 text-slate-800 p-3.5 rounded-lg text-[11.5px] overflow-x-auto whitespace-pre-wrap max-h-48 border border-slate-200">
+                <pre className="bg-paper text-ink p-3.5 rounded-lg text-[11.5px] overflow-x-auto whitespace-pre-wrap max-h-48 border border-hair">
                   {selectedQuestion.prompt || "(Trống)"}
                 </pre>
               </div>
             </div>
 
-            <div className="p-3 border-t border-slate-200 bg-slate-50 flex justify-end">
+            <div className="p-3 border-t border-hair bg-paper flex justify-end">
               <button
                 type="button"
                 onClick={() => setSelectedQuestion(null)}
@@ -1615,7 +1615,7 @@ export function BenchmarkDashboard({
       {/* RIGHT RAIL — sticky model + dataset switcher */}
 
       <aside className="hidden lg:block w-72 shrink-0 sticky top-24 space-y-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+        <div className="rounded-2xl border border-hair bg-card p-4 shadow-2xs space-y-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Model</p>
             <div className="mt-1.5 space-y-1.5" role="radiogroup" aria-label="Chọn model">
@@ -1632,12 +1632,12 @@ export function BenchmarkDashboard({
                     className={`w-full text-left px-3 py-2 rounded-xl border text-xs transition-colors ${
                       active
                         ? "border-indigo-600 bg-indigo-50 text-indigo-900 font-bold"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50"
+                        : "border-hair bg-card text-ink-2 hover:border-indigo-300 hover:bg-indigo-50/50"
                     }`}
                   >
                     <span className="flex items-center gap-2">
                       <span
-                        className={`w-2 h-2 rounded-full shrink-0 ${active ? "bg-indigo-600" : "bg-slate-300"}`}
+                        className={`w-2 h-2 rounded-full shrink-0 ${active ? "bg-indigo-600" : "bg-hair"}`}
                       ></span>
                       <span className="font-mono truncate">{m.display_name}</span>
                     </span>
@@ -1650,7 +1650,7 @@ export function BenchmarkDashboard({
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-3">
+          <div className="border-t border-hair/70 pt-3">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Dataset</p>
             <div className="mt-1.5 space-y-1.5">
               {tabs.map((t) => {
@@ -1662,7 +1662,7 @@ export function BenchmarkDashboard({
                     className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-xs transition-colors ${
                       active
                         ? "border-indigo-600 bg-indigo-600 text-white font-bold shadow-sm"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50"
+                        : "border-hair bg-card text-ink-2 hover:border-indigo-300 hover:bg-indigo-50/50"
                     }`}
                   >
                     <span className="truncate">{t.label}</span>
@@ -1682,7 +1682,7 @@ export function BenchmarkDashboard({
 
       {/* MOBILE model + dataset switcher (rail is lg+) */}
       <div className="lg:hidden max-w-7xl mx-auto px-4 sm:px-6 pb-6 space-y-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs space-y-2">
+        <div className="rounded-2xl border border-hair bg-card p-3 shadow-2xs space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Chọn mô hình</p>
           <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Chọn mô hình">
             {models.map((m) => {
@@ -1698,7 +1698,7 @@ export function BenchmarkDashboard({
                   className={`px-3 py-1.5 text-xs font-mono font-medium rounded-xl border whitespace-nowrap transition-colors ${
                     active
                       ? "border-indigo-600 bg-indigo-50 text-indigo-900 font-bold"
-                      : "border-slate-200 bg-white text-slate-700"
+                      : "border-hair bg-card text-ink-2"
                   }`}
                 >
                   {m.display_name}
@@ -1708,7 +1708,7 @@ export function BenchmarkDashboard({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-2xs space-y-2">
+        <div className="rounded-2xl border border-hair bg-card p-3 shadow-2xs space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bộ dữ liệu</p>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {tabs.map((t) => (
@@ -1718,7 +1718,7 @@ export function BenchmarkDashboard({
                 className={`px-3 py-2 text-xs font-semibold rounded-xl border whitespace-nowrap transition-colors ${
                   tab === t.id
                     ? "border-indigo-600 bg-indigo-600 text-white"
-                    : "border-slate-200 bg-white text-slate-600"
+                    : "border-hair bg-card text-ink-2"
                 }`}
               >
                 {t.label} · {t.badge}

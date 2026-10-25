@@ -1,0 +1,504 @@
+{
+  "cells": [
+    {
+      "accuracy": 91.12,
+      "accuracy_ci95": [
+        89.2405,
+        92.6938
+      ],
+      "card_id": "MC-62",
+      "completed_n": 1047,
+      "correct": 954,
+      "dataset_id": "vmlu_local",
+      "expected_n": 1047,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": 1043,
+      "parse_valid_pct": 99.62,
+      "profile_id": "muse-spark-1-3-contributor",
+      "request_error_n": 0,
+      "status": "scored",
+      "truncated_n": 3
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-62",
+      "completed_n": 9833,
+      "dataset_id": "vmlu_test",
+      "expected_n": 9833,
+      "latency_s_p50": 8.2549,
+      "latency_s_p90": 15.573,
+      "parse_valid_n": 9701,
+      "parse_valid_pct": 98.66,
+      "profile_id": "muse-spark-1-3-contributor",
+      "request_error_n": 0,
+      "status": "awaiting_server_grade",
+      "truncated_n": 123
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-66",
+      "completed_n": 0,
+      "dataset_id": "vbench_mc",
+      "expected_n": 4141,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "muse-spark-1-3-contributor",
+      "request_error_n": 0,
+      "status": "queued",
+      "truncated_n": null
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-66",
+      "completed_n": 0,
+      "dataset_id": "vbench_agentic",
+      "expected_n": 1000,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "muse-spark-1-3-contributor",
+      "request_error_n": 0,
+      "status": "queued",
+      "truncated_n": null
+    },
+    {
+      "accuracy": 81.09,
+      "accuracy_ci95": [
+        78.6048,
+        83.3456
+      ],
+      "card_id": "MC-63",
+      "completed_n": 1047,
+      "correct": 849,
+      "dataset_id": "vmlu_local",
+      "expected_n": 1047,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": 997,
+      "parse_valid_pct": 95.22,
+      "profile_id": "mimo-v2-6-flash",
+      "request_error_n": 0,
+      "status": "scored",
+      "truncated_n": 41
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-63",
+      "completed_n": 9833,
+      "dataset_id": "vmlu_test",
+      "expected_n": 9833,
+      "latency_s_p50": 12.4927,
+      "latency_s_p90": 43.7038,
+      "parse_valid_n": 9191,
+      "parse_valid_pct": 93.47,
+      "profile_id": "mimo-v2-6-flash",
+      "request_error_n": 0,
+      "status": "awaiting_server_grade",
+      "truncated_n": 497
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-67",
+      "completed_n": 0,
+      "dataset_id": "vbench_mc",
+      "expected_n": 4141,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "mimo-v2-6-flash",
+      "request_error_n": 0,
+      "status": "queued",
+      "truncated_n": null
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-67",
+      "completed_n": 0,
+      "dataset_id": "vbench_agentic",
+      "expected_n": 1000,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "mimo-v2-6-flash",
+      "request_error_n": 0,
+      "status": "queued",
+      "truncated_n": null
+    },
+    {
+      "accuracy": 79.37,
+      "accuracy_ci95": [
+        76.8133,
+        81.7112
+      ],
+      "card_id": "MC-64",
+      "completed_n": 1047,
+      "correct": 831,
+      "dataset_id": "vmlu_local",
+      "expected_n": 1047,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": 1003,
+      "parse_valid_pct": 95.8,
+      "profile_id": "mimo-v2-5",
+      "request_error_n": 0,
+      "status": "scored",
+      "truncated_n": 35
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-64",
+      "completed_n": 9833,
+      "dataset_id": "vmlu_test",
+      "expected_n": 9833,
+      "latency_s_p50": 10.397,
+      "latency_s_p90": 36.1105,
+      "parse_valid_n": 9346,
+      "parse_valid_pct": 95.05,
+      "profile_id": "mimo-v2-5",
+      "request_error_n": 0,
+      "status": "awaiting_server_grade",
+      "truncated_n": 406
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-68",
+      "completed_n": 0,
+      "dataset_id": "vbench_mc",
+      "expected_n": 4141,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "mimo-v2-5",
+      "request_error_n": 0,
+      "status": "queued",
+      "truncated_n": null
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-68",
+      "completed_n": 0,
+      "dataset_id": "vbench_agentic",
+      "expected_n": 1000,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "mimo-v2-5",
+      "request_error_n": 0,
+      "status": "queued",
+      "truncated_n": null
+    },
+    {
+      "accuracy": 70.11,
+      "accuracy_ci95": [
+        67.2627,
+        72.8005
+      ],
+      "card_id": "MC-70",
+      "completed_n": 1047,
+      "correct": 734,
+      "dataset_id": "vmlu_local",
+      "expected_n": 1047,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": 1047,
+      "parse_valid_pct": 100.0,
+      "profile_id": "qwen3-5-9b-65k",
+      "request_error_n": 0,
+      "status": "scored",
+      "truncated_n": 0
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-70",
+      "completed_n": 9833,
+      "dataset_id": "vmlu_test",
+      "expected_n": 9833,
+      "latency_s_p50": 2.2098,
+      "latency_s_p90": 2.5991,
+      "parse_valid_n": 9832,
+      "parse_valid_pct": 99.99,
+      "profile_id": "qwen3-5-9b-65k",
+      "request_error_n": 0,
+      "status": "awaiting_server_grade",
+      "truncated_n": 0
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-69",
+      "completed_n": 0,
+      "dataset_id": "vbench_mc",
+      "expected_n": 4141,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "qwen3-5-9b-65k",
+      "request_error_n": 0,
+      "status": "awaiting_user_review",
+      "truncated_n": null
+    },
+    {
+      "accuracy": null,
+      "accuracy_ci95": null,
+      "card_id": "MC-69",
+      "completed_n": 0,
+      "dataset_id": "vbench_agentic",
+      "expected_n": 1000,
+      "latency_s_p50": null,
+      "latency_s_p90": null,
+      "parse_valid_n": null,
+      "parse_valid_pct": null,
+      "profile_id": "qwen3-5-9b-65k",
+      "request_error_n": 0,
+      "status": "awaiting_user_review",
+      "truncated_n": null
+    }
+  ],
+  "conditions": {
+    "completion_token_caps": {
+      "vbench_function_call": 2048,
+      "vbench_multiple_choice": 4096,
+      "vmlu_multiple_choice": 4096
+    },
+    "execution_transport": "omp",
+    "gold_policy": {
+      "synthetic_pilot": "local exact function+argument gold",
+      "vbench_agentic": "withheld; local schema validity is not correctness",
+      "vbench_mc": "withheld; server score only",
+      "vmlu_dev": "local",
+      "vmlu_test": "withheld; server score only",
+      "vmlu_valid": "local"
+    },
+    "max_parallel_opencode_profiles": 2,
+    "max_technical_recovery_attempts": 3,
+    "max_time_seconds": 300,
+    "mode": "json",
+    "muse_data_handling_note": "OpenCode documents Muse Spark Contributor prompts and completions as eligible for Meta model training; benchmark source items are public.",
+    "muse_data_handling_source": "https://opencode.ai/docs/go/",
+    "omp_version_required": "omp/18.0.0",
+    "qwen_policy": "MC-70 VMLU-only run complete at 10,880 requests with temperature 1.0 and thinking auto; VMLU Test awaits user-submitted server grade; V-Bench remains deferred.",
+    "reasoning_policy": "provider-native profile setting; final answer only; model effort is not assumed equivalent across providers",
+    "safety_policy": "the local v2026.03.28 scorable release omits 4,000 safety/open rows; do not infer safety performance",
+    "sdk_retries": 0,
+    "session_policy": "one isolated process per item; no persisted session; stable request session ID",
+    "submission_policy": "artifacts are prepared locally; no portal upload has been made",
+    "system_prompt": "Answer the user's question.",
+    "tools": "none",
+    "workers_per_profile": 4
+  },
+  "datasets": [
+    {
+      "gold": "local",
+      "id": "vmlu_local",
+      "label": "VMLU valid + dev",
+      "metric": "accuracy",
+      "n": 1047,
+      "short_label": "kiến thức"
+    },
+    {
+      "gold": "withheld",
+      "id": "vmlu_test",
+      "label": "VMLU test",
+      "metric": "server_accuracy",
+      "n": 9833,
+      "short_label": "server grade"
+    },
+    {
+      "gold": "server",
+      "id": "vbench_mc",
+      "label": "V-Bench MC",
+      "metric": "server_accuracy",
+      "n": 4141,
+      "short_label": "server grade"
+    },
+    {
+      "gold": "server",
+      "id": "vbench_agentic",
+      "label": "V-Bench agentic",
+      "metric": "server_function_accuracy",
+      "n": 1000,
+      "short_label": "function call · server grade"
+    }
+  ],
+  "generated_at": "2026-10-09T07:55:38.243482+00:00",
+  "manifest_hashes": {
+    "vbench": "e44d5642fe5726f7265917917cbf35e2d4e2e199ccbdcd3e95e81b650f9f0b12",
+    "vmlu": "553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a"
+  },
+  "phases": {
+    "vbench:mimo-v2-5": {
+      "card_id": null,
+      "complete_n": 0,
+      "expected_n": 5141,
+      "manifest_sha256": null,
+      "request_error_n": 0,
+      "status": "queued"
+    },
+    "vbench:mimo-v2-6-flash": {
+      "card_id": null,
+      "complete_n": 0,
+      "expected_n": 5141,
+      "manifest_sha256": null,
+      "request_error_n": 0,
+      "status": "queued"
+    },
+    "vbench:muse-spark-1-3-contributor": {
+      "card_id": null,
+      "complete_n": 0,
+      "expected_n": 5141,
+      "manifest_sha256": null,
+      "request_error_n": 0,
+      "status": "queued"
+    },
+    "vbench:qwen3-5-9b-65k": {
+      "card_id": null,
+      "complete_n": 0,
+      "expected_n": 5141,
+      "manifest_sha256": null,
+      "request_error_n": 0,
+      "status": "queued"
+    },
+    "vmlu:mimo-v2-5": {
+      "card_id": "MC-64",
+      "complete_n": 10880,
+      "expected_n": 10880,
+      "manifest_sha256": "553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a",
+      "request_error_n": 0,
+      "status": "complete"
+    },
+    "vmlu:mimo-v2-6-flash": {
+      "card_id": "MC-63",
+      "complete_n": 10880,
+      "expected_n": 10880,
+      "manifest_sha256": "553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a",
+      "request_error_n": 0,
+      "status": "complete"
+    },
+    "vmlu:muse-spark-1-3-contributor": {
+      "card_id": "MC-62",
+      "complete_n": 10880,
+      "expected_n": 10880,
+      "manifest_sha256": "553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a",
+      "request_error_n": 0,
+      "status": "complete"
+    },
+    "vmlu:qwen3-5-9b-65k": {
+      "card_id": "MC-70",
+      "complete_n": 10880,
+      "expected_n": 10880,
+      "manifest_sha256": "553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a",
+      "request_error_n": 0,
+      "status": "complete"
+    }
+  },
+  "pilot": [
+    {
+      "profile_id": "muse-spark-1-3-contributor",
+      "status": "complete",
+      "synthetic_agentic_accuracy": 87.5,
+      "synthetic_agentic_n": 80,
+      "synthetic_agentic_parse_valid_pct": 100.0,
+      "synthetic_agentic_repeat_agreement_pct": 100.0,
+      "vmlu_dev_accuracy": 93.0,
+      "vmlu_dev_n": 100,
+      "vmlu_dev_parse_valid_pct": 100.0,
+      "vmlu_dev_repeat_agreement_pct": 100.0
+    },
+    {
+      "profile_id": "mimo-v2-6-flash",
+      "status": "complete",
+      "synthetic_agentic_accuracy": 77.5,
+      "synthetic_agentic_n": 80,
+      "synthetic_agentic_parse_valid_pct": 100.0,
+      "synthetic_agentic_repeat_agreement_pct": 90.0,
+      "vmlu_dev_accuracy": 90.0,
+      "vmlu_dev_n": 100,
+      "vmlu_dev_parse_valid_pct": 98.0,
+      "vmlu_dev_repeat_agreement_pct": 80.0
+    },
+    {
+      "profile_id": "mimo-v2-5",
+      "status": "complete",
+      "synthetic_agentic_accuracy": 75.0,
+      "synthetic_agentic_n": 80,
+      "synthetic_agentic_parse_valid_pct": 91.25,
+      "synthetic_agentic_repeat_agreement_pct": 100.0,
+      "vmlu_dev_accuracy": 87.0,
+      "vmlu_dev_n": 100,
+      "vmlu_dev_parse_valid_pct": 99.0,
+      "vmlu_dev_repeat_agreement_pct": 80.0
+    },
+    {
+      "profile_id": "qwen3-5-9b-65k",
+      "status": "awaiting_user_review",
+      "synthetic_agentic_accuracy": null,
+      "synthetic_agentic_n": null,
+      "synthetic_agentic_parse_valid_pct": null,
+      "synthetic_agentic_repeat_agreement_pct": null,
+      "vmlu_dev_accuracy": null,
+      "vmlu_dev_n": null,
+      "vmlu_dev_parse_valid_pct": null,
+      "vmlu_dev_repeat_agreement_pct": null
+    }
+  ],
+  "profiles": [
+    {
+      "api_protocol": "openai-responses",
+      "billing_mode": "opencode-go-subscription",
+      "display_name": "Muse Spark 1.3 Contributor",
+      "id": "muse-spark-1-3-contributor",
+      "provider": "OpenCode Go",
+      "reasoning": "auto",
+      "status": "queued"
+    },
+    {
+      "api_protocol": "openai-completions",
+      "billing_mode": "opencode-go-subscription",
+      "display_name": "MiMo V2.6 Flash",
+      "id": "mimo-v2-6-flash",
+      "provider": "OpenCode Go",
+      "reasoning": "auto",
+      "status": "queued"
+    },
+    {
+      "api_protocol": "openai-completions",
+      "billing_mode": "opencode-go-subscription",
+      "display_name": "MiMo V2.5",
+      "id": "mimo-v2-5",
+      "provider": "OpenCode Go",
+      "reasoning": "auto",
+      "status": "queued"
+    },
+    {
+      "api_protocol": "openai-completions",
+      "billing_mode": "internal-shared",
+      "display_name": "Qwen3.5-9B-65K",
+      "id": "qwen3-5-9b-65k",
+      "provider": "IEC internal endpoint",
+      "reasoning": "auto",
+      "status": "awaiting_server_grade"
+    }
+  ],
+  "protocol_id": "vi-multimodel-expansion-v2",
+  "protocol_version": 2,
+  "status": "awaiting_server_grade"
+}

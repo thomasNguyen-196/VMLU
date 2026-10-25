@@ -91,5 +91,8 @@ web/.contract-test.ts
 .omp-qwen65k-real/
 .omp-qwen65k-pinned/
 
+# Muse Spark full-tools arm (MC-86, MC-87): agent dir with provider config + token
+.omp-muse-spark-full/
+
 # tools/seed_db.ps1 scratch on the deploy PC (committed bytes of the measurement card)
 /.seed/

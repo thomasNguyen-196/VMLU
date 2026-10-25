@@ -1,0 +1,102 @@
+{
+  "source": "VMLU server grade provided by the user",
+  "recorded_at": "2026-10-15T22:27:01.051124+07:00",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "model_id": "ocg/mimo-v2.6-flash",
+  "condition_ids": [
+    "MC-85"
+  ],
+  "item_count": 9833,
+  "submission_path": "all_res/mimo26_direct_mc85/vmlu/mimo-v2-6-flash-direct-20k/submission_vmlu_test.csv",
+  "submission_sha256": "37dc363bdc150b99233d3514aa6cf6b2ac702ffb6c6f13cc7448f5de48e3ea46",
+  "run_path": "all_res/mimo26_direct_mc85/vmlu/mimo-v2-6-flash-direct-20k/run.json",
+  "manifest_sha256": "a90d4d92156b96eab7590d76e51407e2603babe5bffacbd01681c706394221fc",
+  "condition_sha256": "e23d225fc7de3ed1ab38f82e68837d98fa576ac9392e29a1da9e4c0797a3fce5",
+  "server_score_status": "scored_user_provided",
+  "total": 77.68,
+  "categories": {
+    "other": {
+      "total": 71.84,
+      "subjects": {
+        "accountant": 82.14,
+        "civil_servant": 64.91,
+        "clinical_pharmacology": 82.22,
+        "driving_license_certificate": 87.72,
+        "environmental_engineering": 59.06,
+        "internal_basic_medicine": 73.1,
+        "preschool_pedagogy": 62.75,
+        "tax_accountant": 58.05,
+        "tax_civil_servant": 76.61
+      }
+    },
+    "social_science": {
+      "total": 80.38,
+      "subjects": {
+        "microeconomics": 91.11,
+        "middle_school_civil_education": 89.33,
+        "middle_school_geography": 84.35,
+        "principles_of_marxism_and_leninism": 80.56,
+        "sociology": 80.9,
+        "business_administration": 71.26,
+        "high_school_civil_education": 87.78,
+        "high_school_geography": 70.37,
+        "ho_chi_minh_ideology": 69.27,
+        "macroeconomics": 78.89
+      }
+    },
+    "stem": {
+      "total": 82.39,
+      "subjects": {
+        "high_school_physics": 77.78,
+        "introduction_to_chemistry": 83.24,
+        "introduction_to_physics": 89.02,
+        "introduction_to_programming": 81.01,
+        "metrology_engineer": 76.6,
+        "middle_school_biology": 82.94,
+        "middle_school_chemistry": 88.33,
+        "middle_school_mathematics": 76.85,
+        "middle_school_physics": 91.11,
+        "operating_system": 75.56,
+        "statistics_and_probability": 85.06,
+        "applied_informatics": 86.67,
+        "computer_architecture": 82.22,
+        "computer_network": 83.24,
+        "discrete_mathematics": 87.88,
+        "electrical_engineering": 71.59,
+        "elementary_mathematics": 86.67,
+        "elementary_science": 95.56,
+        "high_school_biology": 67.78,
+        "high_school_chemistry": 77.22,
+        "high_school_mathematics": 83.78
+      }
+    },
+    "humanity": {
+      "total": 73.62,
+      "subjects": {
+        "vietnamese_language_and_literature": 62.64,
+        "administrative_law": 50,
+        "business_law": 83.24,
+        "civil_law": 82.78,
+        "criminal_law": 78.53,
+        "economic_law": 67.7,
+        "education_law": 65.66,
+        "elementary_history": 78.53,
+        "high_school_history": 75,
+        "high_school_literature": 73.33,
+        "history_of_world_civilization": 87.22,
+        "idealogical_and_moral_cultivation": 87.78,
+        "introduction_to_laws": 80.95,
+        "introduction_to_vietnam_culture": 70,
+        "logic": 62.64,
+        "middle_school_history": 76.11,
+        "middle_school_literature": 75.29,
+        "revolutionary_policy_of_the_vietnamese_commununist_part": 67.78
+      }
+    }
+  },
+  "execution_scheduler": "fixed-lanes-v1 then lane-work-stealing-v1",
+  "scheduler_amendment": "docs/research/mc85-work-stealing-2026-10-15.md",
+  "unparsed_submission_n": 156,
+  "correct": null,
+  "ci95": null
+}

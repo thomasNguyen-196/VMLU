@@ -1,0 +1,9 @@
+{
+  "version": "diagnostic-prospective-prompts-v1",
+  "s_mc_head": "Trả lời câu hỏi trắc nghiệm sau. Hãy phân rã bài toán thành các bước nhỏ, kiểm tra từng bước dựa trên thông tin đã cho trong đề, rồi kết luận. Dòng cuối cùng của câu trả lời phải đúng một dòng có dạng `Đáp án: X` (X là một chữ cái A, B, C, D hoặc E), không thêm ký tự hay định dạng nào khác.\n",
+  "s_reading_head": "Đọc đoạn văn dưới đây và trả lời câu hỏi. Hãy phân rã câu hỏi thành các bước nhỏ, đối chiếu từng bước với đoạn văn, rồi kết luận. Dòng cuối cùng phải đúng một dòng có dạng `Trả lời: <cụm từ hoặc số ngắn gọn, lấy nguyên văn trong đoạn văn khi có thể>`, không dùng định dạng markdown và không viết thêm gì sau dòng đó.\n\n",
+  "evidence_header": "Căn cứ tham khảo (có thể chưa đầy đủ):\n",
+  "evidence_item": "[{index}] {doc_title} — {locator}\n{text}",
+  "evidence_separator": "\n\n",
+  "evidence_trailer": "\n\n"
+}

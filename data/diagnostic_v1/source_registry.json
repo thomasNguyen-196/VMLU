@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "root": ".",
+  "sources": [
+    {
+      "source_run_id": "qwen-mc72",
+      "family": "qwen-mc72",
+      "model_identity": "Qwen3.5-9B-65K",
+      "run_dir": "all_res/qwen_matched_mc72/main/qwen3-5-9b-65k",
+      "manifest_path": "all_res/qwen_matched_mc72/condition_manifest.jsonl",
+      "parent_manifest_path": "data/vi_multimodel_v1/main_v1.json",
+      "expected_manifest_sha256": "c364a66e5862bab3ea81eb93e87421aa5bac2ac15203b1a258adebbd8907dcc8",
+      "expected_parent_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+      "expected_n": 1299,
+      "measurement_card_id": "MC-72",
+      "adapter": "v1-main-subset-v1",
+      "datasets": [
+        "vi-multimodel-v1-legal-mc-146",
+        "vi-multimodel-v1-legal-nli-150",
+        "vi-multimodel-v1-vi-squad-200",
+        "vi-multimodel-v1-vi-drop-200",
+        "vi-multimodel-v1-bidlqa-test"
+      ]
+    },
+    {
+      "source_run_id": "mimo-v2-6-flash-v1-main",
+      "family": "vi-multimodel-v1-main",
+      "model_identity": "mimo-v2.6-flash",
+      "display_name": "MiMo V2.6 Flash",
+      "run_dir": "all_res/vi_multimodel_v1/main/mimo-v2-6-flash",
+      "manifest_path": "data/vi_multimodel_v1/main_v1.json",
+      "expected_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+      "expected_n": 2043,
+      "measurement_card_id": "MC-54",
+      "adapter": "v1-main-v1",
+      "datasets": [
+        "vi-multimodel-v1-vmlu-valid",
+        "vi-multimodel-v1-legal-mc-146",
+        "vi-multimodel-v1-legal-nli-150",
+        "vi-multimodel-v1-vi-squad-200",
+        "vi-multimodel-v1-vi-drop-200",
+        "vi-multimodel-v1-bidlqa-test"
+      ]
+    }
+  ]
+}

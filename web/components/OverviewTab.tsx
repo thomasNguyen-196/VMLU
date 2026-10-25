@@ -15,11 +15,11 @@
 
 function GlossaryRow({ term, plain, example, pitfall }: { term: string; plain: string; example: string; pitfall: string }) {
   return (
-    <tr className="border-t border-slate-100">
-      <td className="py-2 px-3 font-bold text-slate-900 align-top">{term}</td>
-      <td className="py-2 px-3 text-slate-700 align-top">{plain}</td>
-      <td className="py-2 px-3 font-mono text-[11px] text-slate-600 align-top">{example}</td>
-      <td className="py-2 px-3 text-rose-700 align-top">{pitfall}</td>
+    <tr className="border-t border-hair/70">
+      <td className="py-2 px-3 font-bold text-ink align-top">{term}</td>
+      <td className="py-2 px-3 text-ink-2 align-top">{plain}</td>
+      <td className="py-2 px-3 font-mono text-[11px] text-ink-2 align-top">{example}</td>
+      <td className="py-2 px-3 text-reject align-top">{pitfall}</td>
     </tr>
   );
 }
@@ -66,8 +66,8 @@ export function OverviewTab({ modelId }: { modelId: string }) {
       <div
         className={
           isReferenceModel
-            ? "rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900"
-            : "rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs leading-relaxed text-rose-900"
+            ? "rounded-xl border border-flag/40 bg-flag-soft px-4 py-3 text-xs leading-relaxed text-flag"
+            : "rounded-xl border border-reject/40 bg-reject-soft px-4 py-3 text-xs leading-relaxed text-reject"
         }
         role="note"
       >
@@ -87,16 +87,16 @@ export function OverviewTab({ modelId }: { modelId: string }) {
       </div>
 
       {/* 0. GLOSSARY — đọc trước để khỏi hiểu nhầm tiếng Việt chuyên ngành */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50">
-          <h3 className="font-bold text-slate-900 text-base">📖 Đọc trước: từ khó nghĩa là gì?</h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+      <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+        <div className="p-5 border-b border-hair bg-paper">
+          <h3 className="font-bold text-ink text-base">📖 Đọc trước: từ khó nghĩa là gì?</h3>
+          <p className="text-xs text-ink-3 mt-0.5">
             Mỗi thuật ngữ có 4 cột: từ gốc → nói đơn giản → ví dụ số thật trong trang này → điều hay bị hiểu nhầm.
           </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 text-slate-600 font-semibold">
+            <thead className="bg-paper text-ink-2 font-semibold">
               <tr>
                 <th className="py-2 px-3">Thuật ngữ</th>
                 <th className="py-2 px-3">Nói đơn giản</th>
@@ -104,7 +104,7 @@ export function OverviewTab({ modelId }: { modelId: string }) {
                 <th className="py-2 px-3">Đừng hiểu nhầm thành…</th>
               </tr>
             </thead>
-            <tbody className="text-slate-700">
+            <tbody className="text-ink-2">
               <GlossaryRow term="Accuracy (độ chính xác)" plain="Tỷ lệ câu được chấm đúng trên tổng số câu." example="VMLU 768/1.047 = 73,35%" pitfall="Điểm cao ở một bộ không đồng nghĩa với năng lực chung trên mọi miền." />
               <GlossaryRow term="Mốc chọn nhãn phổ biến" plain="Điểm đạt được nếu chỉ chọn nhãn phổ biến nhất, không cần đọc nội dung." example="Legal MC: chọn A luôn đạt 62,33%; mô hình đạt 87,67%." pitfall="Vượt mốc đối chứng là dữ kiện mô tả, chưa tự chứng minh mọi câu sai đều do thiếu kiến thức." />
               <GlossaryRow term="CI 95% (khoảng tin cậy)" plain="Khoảng giá trị kỳ vọng chứa tham số thực với xác suất 95% theo quy trình lấy mẫu lặp lại." example="VMLU tổng [70,6; 75,9]; môn n=10 có khoảng rất rộng." pitfall="Khoảng chồng nhau không tự động chứng minh hai môn không khác nhau; phụ thuộc phép thử và phương pháp." />
@@ -122,14 +122,14 @@ export function OverviewTab({ modelId }: { modelId: string }) {
       </div>
 
       {/* 1. MC */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50">
-          <h3 className="font-bold text-slate-900 text-base">1. Trắc nghiệm: điểm tổng + khoảng tin cậy + phân bố dự đoán</h3>
-          <p className="text-xs text-slate-500 mt-0.5">CI = Wilson 95%. Độ chính xác cân bằng bỏ nhãn không có mẫu; xem ghi chú bên dưới.</p>
+      <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+        <div className="p-5 border-b border-hair bg-paper">
+          <h3 className="font-bold text-ink text-base">1. Trắc nghiệm: điểm tổng + khoảng tin cậy + phân bố dự đoán</h3>
+          <p className="text-xs text-ink-3 mt-0.5">CI = Wilson 95%. Độ chính xác cân bằng bỏ nhãn không có mẫu; xem ghi chú bên dưới.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 text-slate-700 font-semibold">
+            <thead className="bg-paper text-ink-2 font-semibold">
               <tr>
                 <th className="py-2 px-3">Bộ</th>
                 <th className="py-2 px-3 text-right">Độ chính xác</th>
@@ -138,7 +138,7 @@ export function OverviewTab({ modelId }: { modelId: string }) {
                 <th className="py-2 px-3">Phân bố dự đoán</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
+            <tbody className="divide-y divide-hair/70 text-ink-2">
               <tr>
                 <td className="py-2 px-3 font-semibold">VMLU 1.047</td>
                 <td className="py-2 px-3 text-right font-mono font-bold">73,35% (768)</td>
@@ -170,7 +170,7 @@ export function OverviewTab({ modelId }: { modelId: string }) {
             </tbody>
           </table>
         </div>
-        <p className="px-5 py-3 text-[11px] text-slate-500 leading-relaxed border-t border-slate-100">
+        <p className="px-5 py-3 text-[11px] text-ink-3 leading-relaxed border-t border-hair/70">
           * Độ chính xác cân bằng sau khi bỏ nhãn không có mẫu: VMLU 73,5% (xấp xỉ độ chính xác thường), Legal MC 84,1%, VM14K 65,3%.
           VMLU có 1 câu đáp án E duy nhất; Legal MC có 0 câu D trong đề nhưng mô hình chọn D ở 8 câu.
         </p>
@@ -178,43 +178,43 @@ export function OverviewTab({ modelId }: { modelId: string }) {
 
       {/* 2. VMLU categories + VM14K difficulty */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-          <div className="p-5 border-b border-slate-200 bg-slate-50">
-            <h3 className="font-bold text-slate-900 text-sm">2a. VMLU theo nhóm (kèm CI)</h3>
+        <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+          <div className="p-5 border-b border-hair bg-paper">
+            <h3 className="font-bold text-ink text-sm">2a. VMLU theo nhóm (kèm CI)</h3>
           </div>
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 text-slate-700 font-semibold">
+            <thead className="bg-paper text-ink-2 font-semibold">
               <tr><th className="py-2 px-3">Nhóm</th><th className="py-2 px-3 text-right">Độ chính xác</th><th className="py-2 px-3 text-right">CI 95%</th></tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
+            <tbody className="divide-y divide-hair/70 text-ink-2 font-mono">
               <tr><td className="py-2 px-3 font-sans">STEM (383)</td><td className="py-2 px-3 text-right font-bold text-emerald-700">79,37%</td><td className="py-2 px-3 text-right">[75,0; 83,1]</td></tr>
               <tr><td className="py-2 px-3 font-sans">Xã hội (184)</td><td className="py-2 px-3 text-right font-bold">78,26%</td><td className="py-2 px-3 text-right">[71,8; 83,6]</td></tr>
-              <tr><td className="py-2 px-3 font-sans">Nhân văn (324)</td><td className="py-2 px-3 text-right font-bold text-amber-700">68,52%</td><td className="py-2 px-3 text-right">[63,3; 73,3]</td></tr>
-              <tr><td className="py-2 px-3 font-sans">Khác (156)</td><td className="py-2 px-3 text-right font-bold text-rose-700">62,82%</td><td className="py-2 px-3 text-right">[55,0; 70,0]</td></tr>
+              <tr><td className="py-2 px-3 font-sans">Nhân văn (324)</td><td className="py-2 px-3 text-right font-bold text-flag">68,52%</td><td className="py-2 px-3 text-right">[63,3; 73,3]</td></tr>
+              <tr><td className="py-2 px-3 font-sans">Khác (156)</td><td className="py-2 px-3 text-right font-bold text-reject">62,82%</td><td className="py-2 px-3 text-right">[55,0; 70,0]</td></tr>
             </tbody>
           </table>
-          <p className="px-5 py-3 text-[11px] text-slate-500 leading-relaxed border-t border-slate-100">
+          <p className="px-5 py-3 text-[11px] text-ink-3 leading-relaxed border-t border-hair/70">
             8 môn có điểm dưới 50% (mỗi môn chỉ n=10–20, chưa đủ đại diện cả mảng): mầm non 3/10 (30%) ·
             luật hành chính 3/10 (30%) · thuế công chức 6/18 · toán tiểu học 8/20 ·
             văn THPT 8/20 · kế toán 8/18 · toán THCS 5/11 · luật kinh tế 8/17.
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-          <div className="p-5 border-b border-slate-200 bg-slate-50">
-            <h3 className="font-bold text-slate-900 text-sm">2b. VM14K: điểm giảm theo nhãn độ khó</h3>
+        <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+          <div className="p-5 border-b border-hair bg-paper">
+            <h3 className="font-bold text-ink text-sm">2b. VM14K: điểm giảm theo nhãn độ khó</h3>
           </div>
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 text-slate-700 font-semibold">
+            <thead className="bg-paper text-ink-2 font-semibold">
               <tr><th className="py-2 px-3">Độ khó</th><th className="py-2 px-3 text-right">Độ chính xác</th><th className="py-2 px-3 text-right">CI 95%</th></tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
+            <tbody className="divide-y divide-hair/70 text-ink-2 font-mono">
               <tr><td className="py-2 px-3 font-sans">Easy (4.112)</td><td className="py-2 px-3 text-right font-bold">67,19%</td><td className="py-2 px-3 text-right">[65,7; 68,6]</td></tr>
               <tr><td className="py-2 px-3 font-sans">Medium (7.093)</td><td className="py-2 px-3 text-right font-bold">64,01%</td><td className="py-2 px-3 text-right">[62,9; 65,1]</td></tr>
               <tr><td className="py-2 px-3 font-sans">Challenging (1.193)</td><td className="py-2 px-3 text-right font-bold">61,78%</td><td className="py-2 px-3 text-right">[59,0; 64,5]</td></tr>
               <tr><td className="py-2 px-3 font-sans">Hard (90)</td><td className="py-2 px-3 text-right font-bold">56,67%</td><td className="py-2 px-3 text-right">[46,4; 66,4]</td></tr>
             </tbody>
           </table>
-          <p className="px-5 py-3 text-[11px] text-slate-500 leading-relaxed border-t border-slate-100">
+          <p className="px-5 py-3 text-[11px] text-ink-3 leading-relaxed border-t border-hair/70">
             Theo số lựa chọn: 4 lựa chọn 64,16% (11.111 câu — lấy làm số chính) ·
             Đúng/Sai 69,84% (1.240 câu, kéo điểm tổng lên) · 7 lựa chọn 57,9% (n=19).
           </p>
@@ -222,44 +222,44 @@ export function OverviewTab({ modelId }: { modelId: string }) {
       </div>
 
       {/* 3. Reading */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50">
-          <h3 className="font-bold text-slate-900 text-base">3. Đọc hiểu: mức trùng lớn và khác biệt theo dạng câu</h3>
+      <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+        <div className="p-5 border-b border-hair bg-paper">
+          <h3 className="font-bold text-ink text-base">3. Đọc hiểu: mức trùng lớn và khác biệt theo dạng câu</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 text-slate-700 font-semibold">
+            <thead className="bg-paper text-ink-2 font-semibold">
               <tr><th className="py-2 px-3">Dạng câu</th><th className="py-2 px-3 text-right">n</th><th className="py-2 px-3 text-right">EM</th><th className="py-2 px-3 text-right">char-F1</th><th className="py-2 px-3">Đọc thế nào</th></tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              <tr><td className="py-2 px-3 font-semibold">DROP dạng khác (other)</td><td className="py-2 px-3 text-right font-mono">7</td><td className="py-2 px-3 text-right font-mono font-bold text-rose-600">28,6%</td><td className="py-2 px-3 text-right font-mono">60,5</td><td className="py-2 px-3">Điểm thấp nhất nhưng n=7; khoảng tin cậy rất rộng, chỉ mô tả.</td></tr>
-              <tr><td className="py-2 px-3 font-semibold">DROP đếm (count)</td><td className="py-2 px-3 text-right font-mono">40</td><td className="py-2 px-3 text-right font-mono font-bold text-rose-600">47,5%</td><td className="py-2 px-3 text-right font-mono">56,0</td><td className="py-2 px-3">Thấp nhất trong nhóm đếm; cần kiểm tra lỗi đếm, cách diễn đạt gold và định dạng.</td></tr>
-              <tr><td className="py-2 px-3 font-semibold">DROP cộng/trừ</td><td className="py-2 px-3 text-right font-mono">55</td><td className="py-2 px-3 text-right font-mono font-bold text-amber-700">58,2%</td><td className="py-2 px-3 text-right font-mono">75,9</td><td className="py-2 px-3">Có thể liên quan đến phép tính hoặc cách chuẩn hóa câu trả lời.</td></tr>
-              <tr><td className="py-2 px-3 font-semibold">DROP so sánh</td><td className="py-2 px-3 text-right font-mono">57</td><td className="py-2 px-3 text-right font-mono font-bold text-amber-700">61,4%</td><td className="py-2 px-3 text-right font-mono">73,1</td><td className="py-2 px-3">Cần phép thử độc lập để tách lỗi so sánh khỏi lỗi diễn đạt.</td></tr>
+            <tbody className="divide-y divide-hair/70 text-ink-2">
+              <tr><td className="py-2 px-3 font-semibold">DROP dạng khác (other)</td><td className="py-2 px-3 text-right font-mono">7</td><td className="py-2 px-3 text-right font-mono font-bold text-reject">28,6%</td><td className="py-2 px-3 text-right font-mono">60,5</td><td className="py-2 px-3">Điểm thấp nhất nhưng n=7; khoảng tin cậy rất rộng, chỉ mô tả.</td></tr>
+              <tr><td className="py-2 px-3 font-semibold">DROP đếm (count)</td><td className="py-2 px-3 text-right font-mono">40</td><td className="py-2 px-3 text-right font-mono font-bold text-reject">47,5%</td><td className="py-2 px-3 text-right font-mono">56,0</td><td className="py-2 px-3">Thấp nhất trong nhóm đếm; cần kiểm tra lỗi đếm, cách diễn đạt gold và định dạng.</td></tr>
+              <tr><td className="py-2 px-3 font-semibold">DROP cộng/trừ</td><td className="py-2 px-3 text-right font-mono">55</td><td className="py-2 px-3 text-right font-mono font-bold text-flag">58,2%</td><td className="py-2 px-3 text-right font-mono">75,9</td><td className="py-2 px-3">Có thể liên quan đến phép tính hoặc cách chuẩn hóa câu trả lời.</td></tr>
+              <tr><td className="py-2 px-3 font-semibold">DROP so sánh</td><td className="py-2 px-3 text-right font-mono">57</td><td className="py-2 px-3 text-right font-mono font-bold text-flag">61,4%</td><td className="py-2 px-3 text-right font-mono">73,1</td><td className="py-2 px-3">Cần phép thử độc lập để tách lỗi so sánh khỏi lỗi diễn đạt.</td></tr>
               <tr><td className="py-2 px-3 font-semibold">DROP chọn đáp án</td><td className="py-2 px-3 text-right font-mono">41</td><td className="py-2 px-3 text-right font-mono font-bold text-emerald-600">92,7%</td><td className="py-2 px-3 text-right font-mono">94,3</td><td className="py-2 px-3">Điểm cao hơn các dạng cần phép tính; vẫn là lát cắt riêng.</td></tr>
               <tr><td className="py-2 px-3 font-semibold">SQuAD (trích xuất)</td><td className="py-2 px-3 text-right font-mono">200</td><td className="py-2 px-3 text-right font-mono font-bold text-emerald-600">96,5%</td><td className="py-2 px-3 text-right font-mono">~98–100</td><td className="py-2 px-3">Các nhóm direct khoảng 96–98; mỗi nhóm infer chỉ có n=5.</td></tr>
               <tr><td className="py-2 px-3 font-semibold">BidLQA val / test</td><td className="py-2 px-3 text-right font-mono">482 / 603</td><td className="py-2 px-3 text-right font-mono font-bold">32,8 / 33,2%</td><td className="py-2 px-3 text-right font-mono">74,2 / 73,2</td><td className="py-2 px-3">Nhiều câu có char-F1 cao nhưng EM=0; cần đánh giá ngữ nghĩa trước khi gọi là lỗi định dạng.</td></tr>
             </tbody>
           </table>
         </div>
-        <p className="px-5 py-3 text-[11px] text-slate-500 leading-relaxed border-t border-slate-100">
+        <p className="px-5 py-3 text-[11px] text-ink-3 leading-relaxed border-t border-hair/70">
           Câu sai ở Reading-400 ngắn hơn đáp án (trung bình 16 so với 26 ký tự), có thể liên quan đến giới hạn 48 token; cần `finish_reason` và số token để xác nhận.
           Ở BidLQA, độ dài và char-F1 chỉ mô tả khác biệt bề mặt; chưa đủ kết luận mô hình viết lại thay vì trích nguyên văn.
         </p>
       </div>
 
       {/* 4. V-Bench */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50">
-          <h3 className="font-bold text-slate-900 text-base">4. V-Bench: điểm miền và độ bất định</h3>
-          <p className="text-xs text-slate-500 mt-0.5">CI mô tả bất định của từng tỷ lệ; không tự chứng minh khác biệt giữa các miền. Tệp cuối có 14 câu guided.</p>
+      <div className="bg-card rounded-xl border border-hair shadow-2xs overflow-hidden">
+        <div className="p-5 border-b border-hair bg-paper">
+          <h3 className="font-bold text-ink text-base">4. V-Bench: điểm miền và độ bất định</h3>
+          <p className="text-xs text-ink-3 mt-0.5">CI mô tả bất định của từng tỷ lệ; không tự chứng minh khác biệt giữa các miền. Tệp cuối có 14 câu guided.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-100 text-slate-700 font-semibold">
+            <thead className="bg-paper text-ink-2 font-semibold">
               <tr><th className="py-2 px-3">Miền</th><th className="py-2 px-3 text-right">Điểm</th><th className="py-2 px-3 text-right">CI 95%</th></tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-mono">
+            <tbody className="divide-y divide-hair/70 text-ink-2 font-mono">
               {[
                 ["Toán", "20,00% (25/125)", "[13,9; 27,9]"],
                 ["Logic", "24,89% (56/225)", "[19,7; 30,9]"],
@@ -276,15 +276,15 @@ export function OverviewTab({ modelId }: { modelId: string }) {
                 ["Khoa học máy tính", "71,28% (134/188)", "[64,4; 77,3]"],
               ].map(([a, b, c]) => (
                 <tr key={a}>
-                  <td className="py-2 px-3 font-sans font-semibold text-slate-900">{a}</td>
+                  <td className="py-2 px-3 font-sans font-semibold text-ink">{a}</td>
                   <td className="py-2 px-3 text-right font-bold">{b}</td>
-                  <td className="py-2 px-3 text-right text-slate-500">{c}</td>
+                  <td className="py-2 px-3 text-right text-ink-3">{c}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="px-5 py-3 text-[11px] text-slate-500 leading-relaxed border-t border-slate-100">
+        <p className="px-5 py-3 text-[11px] text-ink-3 leading-relaxed border-t border-hair/70">
           Điểm agentic 397/1.000 thuộc tệp cuối có 14 câu guided; không nên gọi toàn bộ là minimal thuần.
           Y ở V-Bench 38,57% và VM14K 64,79% là hai phép đo khác dạng, chỉ mô tả khác hướng; không trừ phần trăm cho nhau.
         </p>
@@ -299,16 +299,16 @@ export function OverviewTab({ modelId }: { modelId: string }) {
           { t: "4. Điều kiện hỏi ảnh hưởng kết quả", d: "Prompt minimal→detailed làm 42,2% câu agentic của mô hình 27B đổi đáp án; tệp cuối của mô hình 9B còn có 14 câu guided. Mỗi phép so sánh phải khóa và báo rõ phương thức thu thập câu trả lời." },
         ].map((c) => (
           <div key={c.t} className="bg-indigo-50/50 rounded-xl p-4 border border-indigo-100">
-            <h4 className="font-bold text-slate-900 text-sm">{c.t}</h4>
-            <p className="text-xs text-slate-600 leading-relaxed mt-1">{c.d}</p>
+            <h4 className="font-bold text-ink text-sm">{c.t}</h4>
+            <p className="text-xs text-ink-2 leading-relaxed mt-1">{c.d}</p>
           </div>
         ))}
       </div>
 
       {/* 6. Limits */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-2">
-        <h3 className="font-bold text-amber-900 text-sm">⚠️ Giới hạn diễn giải</h3>
-        <ul className="list-disc pl-5 space-y-1 text-xs text-amber-900/90 leading-relaxed">
+      <div className="bg-flag-soft border border-flag/40 rounded-xl p-5 space-y-2">
+        <h3 className="font-bold text-flag text-sm">⚠️ Giới hạn diễn giải</h3>
+        <ul className="list-disc pl-5 space-y-1 text-xs text-flag/90 leading-relaxed">
           <li>Một lần chạy duy nhất (seed 42, temp 0) chưa đo biến động dịch vụ. So 9B với 27B còn bị đồng biến (confounded) giữa quy mô tham số và phương pháp lượng tử hóa; cần phép thử ghép cặp, lặp nhiều lần hoặc kiểm định tương đương.</li>
           <li>Không cộng/trừ điểm giữa các bộ khác thang đo. Chỉ mô tả “cùng hướng / khác hướng” và nêu rõ khác biệt dạng câu.</li>
           <li>Chưa có đối chứng song ngữ hoặc mẫu kiểm soát nội dung, nên chưa thể tách năng lực tiếng Việt khỏi tri thức môn.</li>

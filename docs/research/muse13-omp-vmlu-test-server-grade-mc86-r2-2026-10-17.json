@@ -1,0 +1,108 @@
+{
+  "source": "VMLU server grade provided by the user",
+  "recorded_at": "2026-10-17T16:39:54.295348+07:00",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "model_id": "zen-go/muse-spark-1.3-contributor",
+  "condition_ids": [
+    "MC-86",
+    "MC-86-R2"
+  ],
+  "item_count": 9833,
+  "submission_path": "submissions/vi_multimodel_v2/muse-spark-1-3-contributor/submission_vmlu_test_muse-spark-1-3-contributor_MC-86-R2.csv",
+  "submission_sha256": "42fe9835c20fe6be271e620d47d3c510516234a206ae06f440177c971b37727e",
+  "run_path": "all_res/muse13_omp_mc86/vmlu/muse-spark-1-3-contributor-omp-full-tools-mc86/run.json",
+  "manifest_sha256": "cb03f32c29daa2bea182efe08f1185630bddf1ab1084992dec082571dbce144d",
+  "condition_sha256": "dbe36e0633269b2fb24d61d18c8b2d95d28a7c57a26e76c09ef80f39494401c8",
+  "server_score_status": "scored_user_provided",
+  "total": 87.53,
+  "categories": {
+    "stem": {
+      "total": 90.64,
+      "subjects": {
+        "metrology_engineer": 80.14,
+        "middle_school_biology": 91.18,
+        "middle_school_chemistry": 96.67,
+        "middle_school_mathematics": 92.59,
+        "middle_school_physics": 95.56,
+        "operating_system": 80,
+        "statistics_and_probability": 97.7,
+        "applied_informatics": 90,
+        "computer_architecture": 93.33,
+        "computer_network": 88.27,
+        "discrete_mathematics": 93.33,
+        "electrical_engineering": 80.11,
+        "elementary_mathematics": 95.56,
+        "elementary_science": 95,
+        "high_school_biology": 89.44,
+        "high_school_chemistry": 96.67,
+        "high_school_mathematics": 89.86,
+        "high_school_physics": 88.33,
+        "introduction_to_chemistry": 92.18,
+        "introduction_to_physics": 95.95,
+        "introduction_to_programming": 81.56
+      }
+    },
+    "humanity": {
+      "total": 86.17,
+      "subjects": {
+        "administrative_law": 66.67,
+        "business_law": 87.71,
+        "civil_law": 92.22,
+        "criminal_law": 92.64,
+        "economic_law": 83.85,
+        "education_law": 80.12,
+        "elementary_history": 90.96,
+        "high_school_history": 92.22,
+        "high_school_literature": 90.56,
+        "history_of_world_civilization": 93.89,
+        "idealogical_and_moral_cultivation": 92.78,
+        "introduction_to_laws": 86.51,
+        "introduction_to_vietnam_culture": 82.22,
+        "logic": 82.76,
+        "middle_school_history": 92.78,
+        "middle_school_literature": 82.76,
+        "revolutionary_policy_of_the_vietnamese_commununist_part": 83.33,
+        "vietnamese_language_and_literature": 77.01
+      }
+    },
+    "social_science": {
+      "total": 87.12,
+      "subjects": {
+        "sociology": 85.39,
+        "business_administration": 70.69,
+        "high_school_civil_education": 93.33,
+        "high_school_geography": 76.54,
+        "ho_chi_minh_ideology": 94.41,
+        "macroeconomics": 86.11,
+        "microeconomics": 96.11,
+        "middle_school_civil_education": 91.01,
+        "middle_school_geography": 89.8,
+        "principles_of_marxism_and_leninism": 87.78
+      }
+    },
+    "other": {
+      "total": 83.46,
+      "subjects": {
+        "driving_license_certificate": 99.42,
+        "environmental_engineering": 56.14,
+        "internal_basic_medicine": 82.46,
+        "preschool_pedagogy": 71.57,
+        "tax_accountant": 83.91,
+        "tax_civil_servant": 93.57,
+        "accountant": 85.71,
+        "civil_servant": 90.06,
+        "clinical_pharmacology": 88.33
+      }
+    }
+  },
+  "correct": null,
+  "ci95": null,
+  "unparsed_submission_n": 0,
+  "timeout_recovery": {
+    "item_n": 8,
+    "prior_max_time_seconds": 300,
+    "recovery_max_time_seconds": 600,
+    "remaining_items_max_time_seconds": 300,
+    "note": "The server grade applies to the MC-86-R2 candidate submission; its eight recovered answers used 600 seconds per item. No per-item gold, correct count, or confidence interval was supplied."
+  }
+}
