@@ -53,7 +53,14 @@ các file đó đều gitignored nên `reset --hard` không đụng tới.
   bản ở máy đẩy (so sha256): file nào khác thì bản trên PC được backup vào
   `%USERPROFILE%\vmlu-push-backup\<stamp>\` rồi mới bị thay; không xoá gì. Copy xong, script
   chạy `tools/seed_db.ps1` trên PC (bỏ bằng `--no-seed`). Host: `--host user@pc` hoặc
-  `VMLU_PC_SSH` trong `.env`. `all_res/diagnostic*` bị chặn cứng — review packets không lên PC.
+  `VMLU_PC_SSH` trong `.env`.
+- **`/diagnostic` trên PC (review độc lập):** script đẩy thêm đúng 3 file
+  `all_res/diagnostic_v1/pilot-review-v4/{selection.json,pilot.jsonl,contrasts.jsonl}` (60 item +
+  danh sách 15 câu Independent), và `docker-compose.yml` mount từng file đó (chỉ đọc) cùng
+  `data/diagnostic_v1/` vào container web. Mọi thứ khác trong `all_res/diagnostic*` (gợi ý AI,
+  nhãn và CSV của người chấm chính, bản nháp phân xử/trích dẫn) bị chặn cứng: người chấm độc lập
+  làm trên PC phải không thấy chúng. Người chấm độc lập chỉ chọn scope Independent-15, với một
+  tên chưa từng mở Primary-60.
 - **Chỉ rebuild DB:** Actions → Deploy → Run workflow, tick `seed` (job `seed-db` chạy sau deploy).
 - **`tools/seed_db.ps1`:** container `python:3.12-slim` trên mạng `vmlu_default` (Mongo không
   publish port), repo mount read-only, seed → migrate → verify. Trên Windows, symlink

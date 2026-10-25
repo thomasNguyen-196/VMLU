@@ -10,7 +10,8 @@ from the machine that holds the finals to the PC, over SSH.
 
 The list is exactly what the backend reads: the registry's dataset sources
 (seed_registries.dataset_docs) plus migrate_results_to_mongo.migration_sources(),
-minus files tracked in git (deploy brings those). Afterwards every listed file
+minus files tracked in git (deploy brings those), plus the three-file packet the
+deployed /diagnostic page needs for the independent review. Afterwards every listed file
 on the PC is byte-identical to this machine's copy. A file that differs there is
 first backed up under %USERPROFILE%\\vmlu-push-backup\\<stamp>\\ on the PC;
 nothing else on the PC is touched or deleted. --execute then runs
@@ -36,21 +37,27 @@ sys.path.insert(0, str(ROOT))
 from code_benchmark.migrate_results_to_mongo import migration_sources
 from code_benchmark.seed_registries import dataset_docs, sha256_file
 
-# Diagnostic review packets (AI suggestions, adjudication drafts) never go to the
-# shared PC: the independent review done there must stay blind to them.
+# What the independent (blind) reviewer needs on the PC: the 60 pilot items and
+# the selection naming the 15 second-review keys, nothing derived from a review.
+# docker-compose.yml mounts exactly these three files into the web container.
+REVIEW_PACKET = tuple(f"all_res/diagnostic_v1/pilot-review-v4/{name}"
+                      for name in ("selection.json", "pilot.jsonl", "contrasts.jsonl"))
+# Everything else under all_res/diagnostic* (AI suggestions, the primary
+# reviewer's exports, adjudication and citation drafts) never goes to the shared
+# PC: the independent review done there must stay blind to it.
 NEVER_PUSH = ("all_res/diagnostic",)
 BATCH = 80  # paths per remote call, far below the 32K Windows command-line cap
 
 
 def local_files() -> dict[str, str]:
-    """{repo-relative posix path: sha256} of every untracked file the DB reads."""
+    """{repo-relative posix path: sha256} of every untracked file the PC serves from."""
     files = {doc["source_file"]: doc["source_sha256"] for doc in dataset_docs()}
-    for path in migration_sources():
+    for path in [*migration_sources(), *(Path(p) for p in REVIEW_PACKET if Path(p).is_file())]:
         files.setdefault(path.as_posix(), sha256_file(path))
     tracked = subprocess.run(["git", "ls-files", "-z", "--", *files], cwd=ROOT, check=True,
                              capture_output=True).stdout.decode("utf-8").split("\0")
     files = {p: h for p, h in files.items() if p not in set(tracked)}
-    leaked = [p for p in files if p.startswith(NEVER_PUSH)]
+    leaked = [p for p in files if p.startswith(NEVER_PUSH) and p not in REVIEW_PACKET]
     if leaked:
         raise SystemExit(f"Error: refusing to push diagnostic review files: {leaked}")
     return files
@@ -152,7 +159,7 @@ def main() -> None:
     remote = remote_hashes(host, args.remote_root, list(local))
     missing = [p for p in local if p not in remote]
     differ = [p for p in local if p in remote and remote[p] != local[p]]
-    print(f"{len(local)} files feed the results DB; on {host}:{args.remote_root}")
+    print(f"{len(local)} files the PC serves from; on {host}:{args.remote_root}")
     print(f"  identical {len(local) - len(missing) - len(differ)}, missing {len(missing)}, "
           f"differ {len(differ)} (backed up on the PC, then replaced)")
     for p in missing:
