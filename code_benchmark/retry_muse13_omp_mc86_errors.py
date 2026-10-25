@@ -196,9 +196,9 @@ def main() -> None:
     state.pop("finished_at", None)
     state.update({
         "pid": os.getpid(),
-        "pass": 2,
+        "pass": 2,  # nosec B105 - pass counter in the retry ledger, not a password
         "status": "running",
-        "current_pass_progress": 0,
+        "current_pass_progress": 0,  # nosec B105 - pass counter in the retry ledger, not a password
         "current_pass_total": len(retry_items),
         "recovery_id": RECOVERY_ID,
     })

@@ -299,10 +299,10 @@ def main() -> None:
         "pid": os.getpid(),
         "started_at": _now(),
         "status": "running",
-        "pass": 2,
+        "pass": 2,  # nosec B105 - pass counter in the retry ledger, not a password
         "worker_assignments": {},
         "peak_concurrent_items": 0,
-        "current_pass_progress": 0,
+        "current_pass_progress": 0,  # nosec B105 - pass counter in the retry ledger, not a password
         "current_pass_total": len(retry_items),
         "recovery_id": RECOVERY_ID,
         "parent_condition_sha256": parent_hash,

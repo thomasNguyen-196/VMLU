@@ -129,7 +129,7 @@ def main() -> None:
         "pid": os.getpid(),
         "status": "running",
         "continuation_id": CONTINUATION_ID,
-        "current_pass_progress": 0,
+        "current_pass_progress": 0,  # nosec B105 - pass counter in the retry ledger, not a password
         "current_pass_total": len(retry_items),
     })
     recovery["continuation"] = dict(plan, started_at=_now(), status="running")

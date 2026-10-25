@@ -200,7 +200,7 @@ def main() -> None:
         "pid": os.getpid(),
         "started_at": _now(),
         "status": "running",
-        "pass": 3,
+        "pass": 3,  # nosec B105 - pass counter in the retry ledger, not a password
         "worker_assignments": {},
         "peak_concurrent_items": 0,
         "recovery_id": RECOVERY_ID,
@@ -226,7 +226,7 @@ def main() -> None:
             mc89.MAX_OUTPUT_TOKENS_PER_TURN = GROUP_MAX_TOKENS[name]
             state.update({
                 "group": name,
-                "current_pass_progress": 0,
+                "current_pass_progress": 0,  # nosec B105 - pass counter in the retry ledger, not a password
                 "current_pass_total": len(group_items),
             })
             agent_dirs, runtime_models = mc89._prepare_agent_dirs(

@@ -140,7 +140,7 @@ def main() -> None:
         "status": "running",
         "continuation_id": CONTINUATION_ID,
         "workers": CONTINUATION_WORKERS,
-        "current_pass_progress": 0,
+        "current_pass_progress": 0,  # nosec B105 - pass counter in the retry ledger, not a password
         "current_pass_total": len(pending_items),
     })
     recovery["continuation"] = dict(plan, started_at=_now(), status="running")
@@ -165,7 +165,7 @@ def main() -> None:
             mc89.MAX_OUTPUT_TOKENS_PER_TURN = r2.GROUP_MAX_TOKENS[name]
             state.update({
                 "group": name,
-                "current_pass_progress": 0,
+                "current_pass_progress": 0,  # nosec B105 - pass counter in the retry ledger, not a password
                 "current_pass_total": len(group_items),
             })
             agent_dirs, runtime_models = mc89._prepare_agent_dirs(
