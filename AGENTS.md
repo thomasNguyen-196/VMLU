@@ -69,7 +69,7 @@ cd web && bunx tsc --noEmit
 cd web && bun test lib/harness-block.test.ts
 ```
 
-Mongo only for `/benchmark` (`/harness` needs nothing): `docker run -d --name vmlu-mongo -p 27017:27017 -v vmlu-mongo-data:/data/db mongo:7`, then `seed_registries.py && migrate_results_to_mongo.py && verify_results_db.py`.
+Mongo only for `/benchmark` (`/harness` needs nothing): `docker run -d --name vmlu-mongo -p 27017:27017 -v vmlu-mongo-data:/data/db mongo:7`, then `seed_registries.py && migrate_results_to_mongo.py && verify_results_db.py`. Lab PC: data reaches it only through `tools/push_data_to_pc.py` (SSH, dry run unless `--execute`), never git; see `docs/results-backend.md`.
 
 ## Code Conventions & Common Patterns
 

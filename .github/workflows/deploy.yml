@@ -3,6 +3,8 @@ name: Deploy
 # Deploys the web stack to the lab PC (Windows 11, Docker Desktop) via the
 # self-hosted runner registered there (labels: [self-hosted, vmlu-pc]).
 # PC side: C:\vmlu git clone of this repo + docker compose up -d --build.
+# Data files never come through git: tools/push_data_to_pc.py copies them
+# over SSH, and the `seed` input below rebuilds the results DB from them.
 on:
   push:
     branches: [main]
@@ -11,29 +13,47 @@ on:
       - "docker-compose.yml"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
+    inputs:
+      seed:
+        description: "After deploying, rebuild the results DB from the files on the PC (tools/seed_db.ps1)"
+        type: boolean
+        default: false
 
 defaults:
   run:
     shell: powershell -NoProfile -ExecutionPolicy Bypass -Command ". '{0}'"
+
+env:
+  # safe.directory via env — survives git reinstalls on the PC (the
+  # system-level `git config --system --add safe.directory` can be
+  # clobbered by winget git upgrades). Runner service runs NETWORK SERVICE.
+  GIT_CONFIG_COUNT: "1"
+  GIT_CONFIG_KEY_0: safe.directory
+  GIT_CONFIG_VALUE_0: C:/vmlu
 
 jobs:
   deploy:
     name: Deploy web stack on lab PC
     runs-on: [self-hosted, vmlu-pc]
     timeout-minutes: 30
-    env:
-      # safe.directory via env — survives git reinstalls on the PC (the
-      # system-level `git config --system --add safe.directory` can be
-      # clobbered by winget git upgrades). Runner service runs NETWORK SERVICE.
-      GIT_CONFIG_COUNT: "1"
-      GIT_CONFIG_KEY_0: safe.directory
-      GIT_CONFIG_VALUE_0: C:/vmlu
     steps:
       - name: Pull latest main
         working-directory: C:\vmlu
         run: |
           git fetch origin main
           git reset --hard origin/main
+
+      - name: Rewrite files an older checkout converted to CRLF
+        working-directory: C:\vmlu
+        run: |
+          # .gitattributes (* -text) stops line-ending conversion, but files an
+          # earlier core.autocrlf=true checkout wrote keep their CRLF until they
+          # are rewritten. Re-checkout once while any tracked LF file is CRLF on disk.
+          if (git ls-files --eol | Select-String -Quiet -Pattern '^i/lf\s+w/crlf') {
+            git rm --cached -r -q .
+            git reset --hard -q origin/main
+            Write-Output "checkout rewritten byte-identical to origin/main"
+          }
 
       - name: Rebuild and restart stack
         working-directory: C:\vmlu
@@ -52,3 +72,14 @@ jobs:
           } while ($code -ne 200 -and $tries -lt 12)
           if ($code -ne 200) { throw "web did not come up (last status $code)" }
           Write-Output "web up after $tries tries (HTTP $code)"
+
+  seed-db:
+    name: Rebuild results DB on lab PC
+    needs: deploy
+    if: github.event_name == 'workflow_dispatch' && inputs.seed
+    runs-on: [self-hosted, vmlu-pc]
+    timeout-minutes: 30
+    steps:
+      - name: Seed, migrate and verify
+        working-directory: C:\vmlu
+        run: .\tools\seed_db.ps1
