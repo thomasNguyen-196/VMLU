@@ -193,6 +193,32 @@ def reading_item(row: dict, *, run_id: str, model_id: str, dataset_id: str, card
 BUILDERS = {"mc": mc_item, "vbench": vbench_item, "reading": reading_item}
 
 
+# (filename infix, dataset_id) of the accuracy aggregates looked up per model dir.
+ACCURACY_INFIXES = (("", "vmlu-mqa-all-gold"), ("_legal", "legal-mc-146"), ("_nli", "legal-nli-150"),
+                    ("_vm14k", "vm14k-public-12488"))
+
+
+def accuracy_source(model_dir: Path, dir_slug: str, infix: str) -> Path | None:
+    """The file one accuracy aggregate comes from: the first accuracy CSV that
+    exists, else the final it is derived from, else None (no aggregate)."""
+    for cand in (f"accuracy{infix}_{dir_slug}.csv", f"accuracy_{dir_slug}.csv"):
+        if (model_dir / cand).exists():
+            return model_dir / cand
+    final = model_dir / f"full_evaluation{infix}_{dir_slug}.csv"
+    return final if final.exists() else None
+
+
+def reading_summary_name(scores_filename: str) -> str:
+    """reading_scores_<x>.csv -> reading_summary_<x>.csv (the run's committed EM/F1 rows)."""
+    slug = scores_filename.removeprefix("reading_scores").removesuffix(".csv").lstrip("_")
+    return f"reading_summary_{slug}.csv"
+
+
+def vbench_summary_names(dir_slug: str) -> tuple[str, str]:
+    """(valid summary, server scores) written next to a model's V-Bench final."""
+    return f"vbench_valid_summary_{dir_slug}.csv", f"vbench_server_scores_{dir_slug}.csv"
+
+
 def accuracy_summary_rows(model_dir: Path, dir_slug: str) -> dict[str, list[dict]]:
     """accuracy_<infix>_<slug>.csv rows keyed by dataset: the committed aggregates.
 
@@ -207,22 +233,49 @@ def accuracy_summary_rows(model_dir: Path, dir_slug: str) -> dict[str, list[dict
     except ImportError:  # direct run from code_benchmark/
         from run_mc_eval import build_accuracy_rows
     out: dict[str, list[dict]] = {}
-    for infix, dataset_id in (("", "vmlu-mqa-all-gold"), ("_legal", "legal-mc-146"), ("_nli", "legal-nli-150"),
-                              ("_vm14k", "vm14k-public-12488")):
-        for cand in (f"accuracy{infix}_{dir_slug}.csv", f"accuracy_{dir_slug}.csv"):
-            path = model_dir / cand
-            if path.exists():
-                out[dataset_id] = read_csv_checked(path, required={"level", "name", "n", "correct"},
-                                                   label=f"accuracy{infix}")
-                break
+    for infix, dataset_id in ACCURACY_INFIXES:
+        path = accuracy_source(model_dir, dir_slug, infix)
+        if path is None:
+            continue
+        if path.name.startswith("accuracy"):
+            out[dataset_id] = read_csv_checked(path, required={"level", "name", "n", "correct"},
+                                               label=f"accuracy{infix}")
         else:
-            final = model_dir / f"full_evaluation{infix}_{dir_slug}.csv"
-            if final.exists():
-                rows = read_csv_checked(final, required={"id", "correct"}, label=f"final{infix}")
-                scored = [{**r, "correct": int(str(r.get("correct", "")).strip() or 0)}
-                          for r in rows]
-                out[dataset_id] = build_accuracy_rows(scored)
+            rows = read_csv_checked(path, required={"id", "correct"}, label=f"final{infix}")
+            scored = [{**r, "correct": int(str(r.get("correct", "")).strip() or 0)}
+                      for r in rows]
+            out[dataset_id] = build_accuracy_rows(scored)
     return out
+
+
+def migration_sources() -> list[Path]:
+    """Every file migrate() reads, in plan order, without duplicates.
+
+    The planned finals plus the optional files migrate picks up next to them:
+    accuracy aggregates (or the final one is derived from), reading summaries,
+    V-Bench valid summaries and server scores. A missing final is an error, as in
+    migrate(); a missing optional file is simply not listed. tools/push_data_to_pc.py
+    ships exactly this list to the deploy PC, so a new lookup in migrate() belongs
+    here too (TestResultsIdentity pins the two together).
+    """
+    out: dict[Path, None] = {}
+    for dir_slug, _model_id, files in MIGRATION_PLAN:
+        model_dir = RESULTS_DIR / dir_slug
+        for filename, _dataset_id, _card_id, kind in files:
+            final = model_dir / filename
+            if not final.exists():
+                raise SystemExit(f"Error: finals file missing: {final}")
+            out[final] = None
+            optional = {"reading": (reading_summary_name(filename),),
+                        "vbench": vbench_summary_names(dir_slug)}.get(kind, ())
+            for name in optional:
+                if (model_dir / name).exists():
+                    out[model_dir / name] = None
+        for infix, _dataset_id in ACCURACY_INFIXES:
+            path = accuracy_source(model_dir, dir_slug, infix)
+            if path is not None:
+                out[path] = None
+    return list(out)
 
 
 def reading_summary_rows(model_dir: Path, filename: str) -> list[dict]:
@@ -293,14 +346,14 @@ def migrate(db, *, only: str | None = None, card_hash: str | None = None) -> dic
             if kind == "mc" and dataset_id in acc:
                 summary["accuracy_rows"] = acc[dataset_id]
             elif kind == "reading":
-                slug = filename.removeprefix("reading_scores").removesuffix(".csv").lstrip("_")
-                summary["reading_rows"] = reading_summary_rows(model_dir, f"reading_summary_{slug}.csv")
+                summary["reading_rows"] = reading_summary_rows(model_dir, reading_summary_name(filename))
             elif kind == "vbench":
-                valid_path = model_dir / f"vbench_valid_summary_{dir_slug}.csv"
+                valid_name, server_name = vbench_summary_names(dir_slug)
+                valid_path = model_dir / valid_name
                 if valid_path.exists():
                     summary["valid_rows"] = read_csv_checked(
                         valid_path, required={"track", "domain", "n", "valid"}, label="vbench_valid")
-                server_path = model_dir / f"vbench_server_scores_{dir_slug}.csv"
+                server_path = model_dir / server_name
                 if server_path.exists():
                     summary["server_rows"] = read_csv_checked(
                         server_path, required={"domain", "track", "score", "correct", "total"},

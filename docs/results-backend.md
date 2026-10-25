@@ -41,6 +41,28 @@ mang đủ cả hai (denormalize trên item để query không cần join).
 - `code_benchmark/verify_results_db.py` — diff row-for-row DB vs CSV gốc vs blob;
   exit 0 khi chỉ còn 2 drift KNOWN đã ghi nhận (xem dưới).
 
+## Lab PC (deploy)
+
+Code đi qua git (`deploy.yml`: push `main` → runner trên PC `git reset --hard origin/main`
+→ rebuild web). Dữ liệu thì không bao giờ đi qua git (repo public, dataset có licence riêng);
+các file đó đều gitignored nên `reset --hard` không đụng tới.
+
+- **Đẩy dữ liệu:** `.venv/bin/python tools/push_data_to_pc.py` (dry run) rồi thêm `--execute`.
+  Danh sách = dataset sources của registry (`dataset_docs()`) + `migration_sources()` (mọi file
+  migrate đọc), trừ file đã tracked. Sau khi chạy, mọi file trong danh sách trên PC giống hệt
+  bản ở máy đẩy (so sha256): file nào khác thì bản trên PC được backup vào
+  `%USERPROFILE%\vmlu-push-backup\<stamp>\` rồi mới bị thay; không xoá gì. Copy xong, script
+  chạy `tools/seed_db.ps1` trên PC (bỏ bằng `--no-seed`). Host: `--host user@pc` hoặc
+  `VMLU_PC_SSH` trong `.env`. `all_res/diagnostic*` bị chặn cứng — review packets không lên PC.
+- **Chỉ rebuild DB:** Actions → Deploy → Run workflow, tick `seed` (job `seed-db` chạy sau deploy).
+- **`tools/seed_db.ps1`:** container `python:3.12-slim` trên mạng `vmlu_default` (Mongo không
+  publish port), repo mount read-only, seed → migrate → verify. Trên Windows, symlink
+  `measurement_card.md` là file text chứa đường dẫn, nên script lấy đúng bytes đã commit của
+  sổ đăng ký và mount đè lên; card hash trong DB vì vậy khớp với máy Linux.
+- **`.gitattributes` (`* -text`):** checkout trên Windows giữ nguyên bytes như commit (trước đó
+  `core.autocrlf=true` đổi LF → CRLF, lệch mọi hash). Lần deploy đầu sau khi có file này tự
+  viết lại checkout một lần (step "Rewrite files an older checkout converted to CRLF").
+
 ## API (chỉ đọc, `Cache-Control: no-store`, không chạm blob)
 
 - `GET /api/results/models` → `{models}` (registry, sort `_id`).

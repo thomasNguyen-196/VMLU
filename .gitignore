@@ -91,3 +91,5 @@ web/.contract-test.ts
 .omp-qwen65k-real/
 .omp-qwen65k-pinned/
 
+# tools/seed_db.ps1 scratch on the deploy PC (committed bytes of the measurement card)
+/.seed/

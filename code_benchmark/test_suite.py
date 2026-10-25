@@ -1688,6 +1688,84 @@ class TestResultsIdentity(unittest.TestCase):
                 mig.RESULTS_DIR = old_dir
                 mig.RUN_CONFIGS = old_cfg
 
+    def test_migration_sources_cover_every_file_migrate_reads(self):
+        """tools/push_data_to_pc.py ships migration_sources() to the deploy PC: a
+        file migrate() opens but the list misses would be absent there."""
+        import csv as _csv
+
+        class FakeColl:
+            def __init__(self):
+                self.docs = {}
+
+            def update_one(self, flt, upd, upsert=False):
+                self.docs[flt["_id"]] = upd["$set"]
+
+            def count_documents(self, flt):
+                return sum(1 for d in self.docs.values()
+                           if all(d.get(k) == v for k, v in flt.items()))
+
+            def create_index(self, *a, **k):
+                pass
+
+        class FakeDB(dict):
+            def __missing__(self, k):
+                self[k] = FakeColl()
+                return self[k]
+
+        def write(path, row):
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                w = _csv.DictWriter(f, fieldnames=list(row))
+                w.writeheader()
+                w.writerow(row)
+
+        with tempfile.TemporaryDirectory() as td:
+            from code_benchmark import migrate_results_to_mongo as mig
+            d = Path(td) / "M"
+            d.mkdir()
+            mc_row = {"id": "28-0007", "answer": "A", "gold_answer": "A", "correct": "1"}
+            write(d / "full_evaluation_M.csv", mc_row)  # no aggregate: derived from this final
+            write(d / "full_evaluation_legal_M.csv", mc_row)
+            write(d / "accuracy_legal_M.csv",
+                  {"level": "overall", "name": "overall", "n": "1", "correct": "1", "accuracy": "100.00"})
+            write(d / "reading_scores_M.csv",
+                  {"dataset": "squad", "item_id": "0", "stratum": "s", "gold_answer": "x",
+                   "raw_response": "x", "prediction": "x", "em": "1", "f1": "1.0"})
+            write(d / "reading_summary_M.csv",
+                  {"dataset": "ALL", "n": "1", "em_count": "1", "em": "100.00", "char_f1": "100.00"})
+            write(d / "vbench_result_5141_M.csv",
+                  {"id": "1", "domain": "laws", "track": "mc", "question": "q", "raw_response": "A", "answer": "A"})
+            write(d / "vbench_valid_summary_M.csv", {"track": "mc", "domain": "laws", "n": "1", "valid": "1"})
+            write(d / "vbench_server_scores_M.csv",
+                  {"domain": "laws", "track": "mc", "score": "100.0", "correct": "1", "total": "1"})
+            read: list[Path] = []
+
+            def recording(fn):
+                def wrapper(path, *a, **kw):
+                    read.append(Path(path))
+                    return fn(path, *a, **kw)
+                return wrapper
+
+            saved = (mig.MIGRATION_PLAN, mig.RESULTS_DIR, mig.seed, mig.read_csv_checked, mig.read_finals_csv)
+            mig.MIGRATION_PLAN = [("M", "m", [
+                ("full_evaluation_M.csv", "vmlu-mqa-all-gold", "MC-9", "mc"),
+                ("full_evaluation_legal_M.csv", "legal-mc-146", "MC-10", "mc"),
+                ("reading_scores_M.csv", "reading-400", "MC-3", "reading"),
+                ("vbench_result_5141_M.csv", "vbench-public-test", "MC-8", "vbench"),
+            ])]
+            mig.RESULTS_DIR = Path(td)
+            mig.seed = lambda db: {"models": 0, "datasets": 0}
+            mig.read_csv_checked = recording(mig.read_csv_checked)
+            mig.read_finals_csv = recording(mig.read_finals_csv)
+            try:
+                migrate(FakeDB(), card_hash="h")
+                sources = mig.migration_sources()
+            finally:
+                (mig.MIGRATION_PLAN, mig.RESULTS_DIR, mig.seed,
+                 mig.read_csv_checked, mig.read_finals_csv) = saved
+        self.assertEqual(len(set(read)), 8)  # every file written above is read
+        self.assertLessEqual(set(read), set(sources))
+        self.assertEqual(len(sources), len(set(sources)))
+
 
 class TestHarnessRunner(unittest.TestCase):
     """The omp harness arm (run_harness_eval.py) — offline, no endpoint needed.
