@@ -1,0 +1,6 @@
+# Byte-exact checkouts on every platform. Runners, scorers and the results
+# backend hash tracked files (measurement card, manifests, protocols), and a
+# Windows clone with core.autocrlf=true would rewrite them with CRLF so every
+# hash differs from the committed bytes. -text turns line-ending conversion
+# off; diffs and merges are unaffected.
+* -text
