@@ -603,6 +603,32 @@ class TestRunner(unittest.TestCase):
         self.assertEqual([r["error_type"] for r in rows], ["model_identity_drift", "halted_before_send", "halted_before_send"])
         self.assertEqual(len(client.calls), 1)
 
+    def test_retrieval_arms_carry_their_trace_and_the_other_arms_do_not(self):
+        trace = {"corpus_sha256": "c" * 64, "retrieval_config_sha256": "f" * 64, "query_sha256": "q" * 64,
+                 "ranking": [{"chunk_id": "d#dieu-1", "score": 1.5, "text_sha256": "t" * 64}],
+                 "evidence_block_sha256": "e" * 64}
+        with engine_configured("core", retrieval_traces={f"{MC_DATASET}:T1": trace}):
+            rows = {arm: runner.base.request(FakeClient(), dataclasses.replace(make_item(), replicate_id=f"{arm}-r1"),
+                                             0, 0) for arm in ("B", "K", "KS")}
+        self.assertNotIn("retrieval", rows["B"])
+        self.assertEqual((rows["K"]["retrieval"], rows["KS"]["retrieval"]), (trace, trace))
+
+    def test_condition_records_the_corpus_only_when_retrieval_arms_run(self):
+        manifest = {"manifest_sha256": "m" * 64, "parent_manifest_sha256": "a" * 64, "campaign_protocol_sha256": "p" * 64,
+                    "prompt_templates_sha256": "t" * 64, "evidence_sha256": {}, "pilot_content_sha256": "c" * 64,
+                    "dataset_counts": {}, "arm_counts": {"B": 1}}
+        view = {"card_ids": {"core": "MC-901"}, "card_files": {"core": "measurement_card.md"}}
+        args = ("core", PROTOCOL, manifest, view, "http://llmapi.iec/v1", "v1", Path(runner.__file__))
+        retrieval = {"corpus_sha256": "c" * 64, "retrieval_config_sha256": "f" * 64, "records_sha256": "r" * 64}
+        self.assertNotIn("retrieval", runner.build_condition(*args))
+        self.assertEqual(runner.build_condition(*args, retrieval=retrieval)["retrieval"], retrieval)
+
+    def test_cli_keeps_evidence_files_to_the_core_phase(self):
+        for flag in ("--oracle-evidence", "--retrieved-evidence"):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+                runner.main(["--phase", "wide", flag, "evidence.jsonl"])
+            self.assertEqual(caught.exception.code, 2)
+
     def test_cli_rejects_non_positive_operational_options(self):
         for flag in ("--max-in-flight", "--stop-after-timeouts"):
             with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:

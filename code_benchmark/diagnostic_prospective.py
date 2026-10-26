@@ -51,10 +51,15 @@ TEMPLATE_KEYS = ("version", "s_mc_head", "s_reading_head", "evidence_header", "e
 EVIDENCE_PLACEHOLDERS = ("{index}", "{doc_title}", "{locator}", "{text}")
 PROVISION_KEYS = ("doc_id", "doc_title", "locator", "text", "text_sha256", "source_ref")
 ORACLE_KEYS = ("dataset_id", "item_id", "provisions", "reviewer_id", "review_export_sha256", "eligibility")
+RETRIEVED_KEYS = ("dataset_id", "item_id", "provisions", "ranking", "query_sha256", "corpus_sha256",
+                  "retrieval_config_sha256", "eligibility")
+RANKING_KEYS = ("chunk_id", "score", "text_sha256")
+RETRIEVAL_ARMS = frozenset({"K", "KS"})
 FORBIDDEN_EVIDENCE_KEYS = frozenset({
     "answer", "gold", "gold_answer", "option", "option_letter", "choice", "rationale", "solution", "explanation",
 })
-_LEAK = re.compile(r"(?:đáp án|answer)\s*[:：]\s*[A-Ea-e]\b|lời giải|giải thích", re.IGNORECASE)
+ANSWER_KEY = re.compile(r"(?:đáp án|answer)\s*[:：]\s*[A-Ea-e]\b", re.IGNORECASE)
+_LEAK = re.compile(ANSWER_KEY.pattern + r"|lời giải|giải thích", re.IGNORECASE)
 _MARKDOWN = re.compile(r"[*`]|^\s*#")
 _SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 # Same label pattern the frozen reading extractor uses (vi_multimodel.extract_final_answer).
@@ -225,7 +230,10 @@ def evidence_digest(evidence: dict[str, list[dict[str, Any]]]) -> str:
     return v1.sha256_bytes(v1.canonical_json(evidence))
 
 
-def validate_provisions(provisions: Any, where: str) -> list[dict[str, Any]]:
+def validate_provisions(provisions: Any, where: str, *, verbatim_source: bool = False) -> list[dict[str, Any]]:
+    """Shape, text hash and leakage of evidence provisions. Text copied verbatim from a corpus article is
+    checked for answer-key lines only, since statutes legitimately say "giải thích" ("Giải thích từ ngữ")."""
+    leak = ANSWER_KEY if verbatim_source else _LEAK
     if not isinstance(provisions, list) or not provisions:
         raise _fail(f"{where}: provisions must be a non-empty list")
     for index, provision in enumerate(provisions, 1):
@@ -235,45 +243,89 @@ def validate_provisions(provisions: Any, where: str) -> list[dict[str, Any]]:
             raise _fail(f"{where}: provision {index} has an empty field")
         if v1.sha256_bytes(provision["text"].encode("utf-8")) != provision["text_sha256"]:
             raise _fail(f"{where}: provision {index} text hash mismatch")
-        if _LEAK.search(provision["text"]):
+        if leak.search(provision["text"]):
             raise _fail(f"{where}: provision {index} looks like an answer or an explanation")
     return provisions
+
+
+def _evidence_rows(path: Path, label: str) -> list[Any]:
+    try:
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except (OSError, json.JSONDecodeError) as exc:
+        raise _fail(f"cannot read {label} {path}: {exc}") from exc
+
+
+def _evidence_key(row: Any, where: str, keys: tuple[str, ...], protocol: dict[str, Any],
+                  main_items: dict[str, v1.EvalItem], seen: dict[str, Any]) -> str:
+    """Checks every evidence record shares: exact keys, no answer-bearing key, an eligible frozen item."""
+    if not isinstance(row, dict):
+        raise _fail(f"{where}: record must be an object")
+    leaked = FORBIDDEN_EVIDENCE_KEYS & set(row)
+    if leaked:
+        raise _fail(f"{where}: record carries forbidden answer-bearing keys {sorted(leaked)}")
+    if set(row) != set(keys):
+        raise _fail(f"{where}: record must have exactly the keys {list(keys)}")
+    key = item_key(row["dataset_id"], row["item_id"])
+    if key in seen:
+        raise _fail(f"{where}: duplicate evidence for {key}")
+    if row["dataset_id"] not in protocol["evidence"]["eligible_datasets"]:
+        raise _fail(f"{where}: {key} is not an evidence-eligible dataset")
+    if f"{key}:{MAIN_REPLICATE}" not in main_items:
+        raise _fail(f"{where}: {key} is not a frozen main-v1 item")
+    required = protocol["evidence"]["required_input_evidence_sufficiency"]
+    if row["eligibility"] != {"input_evidence_sufficiency": required}:
+        raise _fail(f"{where}: eligibility must state input_evidence_sufficiency={required}")
+    return key
 
 
 def load_oracle_evidence(path: Path, protocol: dict[str, Any],
                          main_items: dict[str, v1.EvalItem]) -> dict[str, list[dict[str, Any]]]:
     """Return {dataset:item -> provisions}. Fails closed on leakage, ineligibility or hash drift."""
-    try:
-        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    except (OSError, json.JSONDecodeError) as exc:
-        raise _fail(f"cannot read oracle evidence {path}: {exc}") from exc
-    eligible = set(protocol["evidence"]["eligible_datasets"])
-    required = protocol["evidence"]["required_input_evidence_sufficiency"]
     result: dict[str, list[dict[str, Any]]] = {}
-    for number, row in enumerate(rows, 1):
+    for number, row in enumerate(_evidence_rows(path, "oracle evidence"), 1):
         where = f"{path.name}:{number}"
-        if not isinstance(row, dict):
-            raise _fail(f"{where}: record must be an object")
-        leaked = FORBIDDEN_EVIDENCE_KEYS & set(row)
-        if leaked:
-            raise _fail(f"{where}: record carries forbidden answer-bearing keys {sorted(leaked)}")
-        if set(row) != set(ORACLE_KEYS):
-            raise _fail(f"{where}: record must have exactly the keys {list(ORACLE_KEYS)}")
-        key = item_key(row["dataset_id"], row["item_id"])
-        if key in result:
-            raise _fail(f"{where}: duplicate evidence for {key}")
-        if row["dataset_id"] not in eligible:
-            raise _fail(f"{where}: {key} is not an evidence-eligible dataset")
-        if f"{key}:{MAIN_REPLICATE}" not in main_items:
-            raise _fail(f"{where}: {key} is not a frozen main-v1 item")
-        if row["eligibility"] != {"input_evidence_sufficiency": required}:
-            raise _fail(f"{where}: eligibility must state input_evidence_sufficiency={required}")
+        key = _evidence_key(row, where, ORACLE_KEYS, protocol, main_items, result)
         if not isinstance(row["reviewer_id"], str) or not row["reviewer_id"].strip():
             raise _fail(f"{where}: reviewer_id is empty")
         if not isinstance(row["review_export_sha256"], str) or not _SHA256_HEX.match(row["review_export_sha256"]):
             raise _fail(f"{where}: review_export_sha256 is not a SHA-256 hex digest")
         result[key] = validate_provisions(row["provisions"], where)
     return result
+
+
+def load_retrieved_evidence(path: Path, protocol: dict[str, Any], main_items: dict[str, v1.EvalItem]
+                            ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, dict[str, Any]]]:
+    """Return ({dataset:item -> provisions}, {dataset:item -> retrieval trace}) for arms K and KS.
+
+    Every provision must be the ranked corpus chunk whose hash it carries, scores must not increase down the
+    ranking, and all records must come from one corpus and one retrieval configuration."""
+    result: dict[str, list[dict[str, Any]]] = {}
+    traces: dict[str, dict[str, Any]] = {}
+    for number, row in enumerate(_evidence_rows(path, "retrieved evidence"), 1):
+        where = f"{path.name}:{number}"
+        key = _evidence_key(row, where, RETRIEVED_KEYS, protocol, main_items, result)
+        for field in ("query_sha256", "corpus_sha256", "retrieval_config_sha256"):
+            if not isinstance(row[field], str) or not _SHA256_HEX.match(row[field]):
+                raise _fail(f"{where}: {field} is not a SHA-256 hex digest")
+        provisions = validate_provisions(row["provisions"], where, verbatim_source=True)
+        ranking = row["ranking"]
+        if (not isinstance(ranking, list) or len(ranking) != len(provisions)
+                or any(not isinstance(entry, dict) or set(entry) != set(RANKING_KEYS) for entry in ranking)):
+            raise _fail(f"{where}: ranking must list {list(RANKING_KEYS)} for each provision")
+        if any(entry["text_sha256"] != provision["text_sha256"]
+               for entry, provision in zip(ranking, provisions, strict=True)):
+            raise _fail(f"{where}: a provision differs from the ranked chunk it stands for")
+        scores = [entry["score"] for entry in ranking]
+        if (any(isinstance(s, bool) or not isinstance(s, (int, float)) for s in scores)
+                or scores != sorted(scores, reverse=True)):
+            raise _fail(f"{where}: ranking scores must be numbers in non-increasing order")
+        result[key] = provisions
+        traces[key] = {field: row[field] for field in ("corpus_sha256", "retrieval_config_sha256", "query_sha256")}
+        traces[key]["ranking"] = ranking
+    sources = {(trace["corpus_sha256"], trace["retrieval_config_sha256"]) for trace in traces.values()}
+    if len(sources) > 1:
+        raise _fail(f"{path.name}: records come from {len(sources)} corpus/configuration pairs, not one")
+    return result, traces
 
 
 # A reviewer's note at the end of a drafted locator, e.g. "(kèm câu dẫn của khoản)"; never part of the prompt.
