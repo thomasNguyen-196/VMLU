@@ -10,8 +10,8 @@ from the machine that holds the finals to the PC, over SSH.
 
 The list is exactly what the backend reads: the registry's dataset sources
 (seed_registries.dataset_docs) plus migrate_results_to_mongo.migration_sources(),
-minus files tracked in git (deploy brings those), plus the three-file packet the
-deployed /diagnostic page needs for the independent review. Afterwards every listed file
+minus files tracked in git (deploy brings those), plus the review packet the
+deployed /diagnostic page reads (REVIEW_PACKET). Afterwards every listed file
 on the PC is byte-identical to this machine's copy. A file that differs there is
 first backed up under %USERPROFILE%\\vmlu-push-backup\\<stamp>\\ on the PC;
 nothing else on the PC is touched or deleted. --execute then runs
@@ -37,14 +37,17 @@ sys.path.insert(0, str(ROOT))
 from code_benchmark.migrate_results_to_mongo import migration_sources
 from code_benchmark.seed_registries import dataset_docs, sha256_file
 
-# What the independent (blind) reviewer needs on the PC: the 60 pilot items and
-# the selection naming the 15 second-review keys, nothing derived from a review.
-# docker-compose.yml mounts exactly these three files into the web container.
+# What the deployed /diagnostic page reads: the 60 pilot items, the selection
+# naming the 15 second-review keys, and the Primary-60 AI suggestions. The
+# suggestions ship since 2026-10-26, at the owner's request, so the second reviewer
+# can consult them; a review done on the PC is therefore not blind.
+# docker-compose.yml mounts exactly these files into the web container.
 REVIEW_PACKET = tuple(f"all_res/diagnostic_v1/pilot-review-v4/{name}"
-                      for name in ("selection.json", "pilot.jsonl", "contrasts.jsonl"))
-# Everything else under all_res/diagnostic* (AI suggestions, the primary
-# reviewer's exports, adjudication and citation drafts) never goes to the shared
-# PC: the independent review done there must stay blind to it.
+                      for name in ("selection.json", "pilot.jsonl", "contrasts.jsonl",
+                                   "assistant_suggestions.jsonl", "assistant-suggestions.json"))
+# Everything else under all_res/diagnostic* (the primary reviewer's exports and
+# imported reviews, adjudication, citation drafts, oracle evidence) stays on this
+# machine: the page does not read it.
 NEVER_PUSH = ("all_res/diagnostic",)
 BATCH = 80  # paths per remote call, far below the 32K Windows command-line cap
 
