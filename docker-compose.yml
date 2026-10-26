@@ -17,11 +17,14 @@ services:
       - "${VMLU_WEB_BIND:-127.0.0.1}:3000:3000"
     volumes:
       # /diagnostic reads ../all_res and ../data relative to WORKDIR /app. Only the
-      # three-file independent-review packet that tools/push_data_to_pc.py ships is
-      # mounted, file by file, so the AI suggestions can never be served from here.
+      # review packet that tools/push_data_to_pc.py ships is mounted, file by file:
+      # the pilot items plus the Primary-60 AI suggestions (served here since
+      # 2026-10-26 so the second reviewer can consult them; that review is not blind).
       - ./all_res/diagnostic_v1/pilot-review-v4/selection.json:/all_res/diagnostic_v1/pilot-review-v4/selection.json:ro
       - ./all_res/diagnostic_v1/pilot-review-v4/pilot.jsonl:/all_res/diagnostic_v1/pilot-review-v4/pilot.jsonl:ro
       - ./all_res/diagnostic_v1/pilot-review-v4/contrasts.jsonl:/all_res/diagnostic_v1/pilot-review-v4/contrasts.jsonl:ro
+      - ./all_res/diagnostic_v1/pilot-review-v4/assistant_suggestions.jsonl:/all_res/diagnostic_v1/pilot-review-v4/assistant_suggestions.jsonl:ro
+      - ./all_res/diagnostic_v1/pilot-review-v4/assistant-suggestions.json:/all_res/diagnostic_v1/pilot-review-v4/assistant-suggestions.json:ro
       - ./data/diagnostic_v1:/data/diagnostic_v1:ro
     depends_on:
       - mongo
