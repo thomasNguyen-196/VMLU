@@ -9,7 +9,7 @@
 - [x] 2.1 Build the `core` manifest from the locked pilot selection (60 anchors, `<ARM>-r<k>` ids, item-major order); verify 360 B/S attempts, plus 36 oracle attempts when 12 oracle records are supplied (K and KS add 72 once retrieval evidence exists), and unique run keys.
 - [x] 2.2 Build the `wide` manifest (1,239 non-anchor items, arms B and S, replicate r1); verify 2,478 attempts, per-dataset item counts 134/138/188/188/591 and disjointness from core.
 - [x] 2.3 Freeze the wide manifest as `data/diagnostic_prospective_v1/wide_v1.json` with an overwrite guard (2026-10-22, manifest SHA-256 `d5f022d6…c5e432e5c297`); verify that the committed file equals the manifest the runner rebuilds and that the registration hashes match (`test_committed_wide_registration_matches_its_frozen_artifacts`).
-- [ ] 2.4 (blocked until the oracle evidence of task 7.1 exists) Freeze the core manifest the same way; verify the same equality.
+- [ ] 2.4 (blocked until the oracle evidence of task 7.1 exists and, for K and KS, task 7.3) Freeze the core manifest the same way; verify the same equality and the attempt count: 360 B/S plus three replicates of each evidence arm per evidence anchor.
 
 ## 3. Scoring and parity (offline)
 
@@ -37,20 +37,20 @@ Model Qwen3.5-9B-65K (served as `Qwen3.5-9B-Q4_K_M.gguf` by llama.cpp), endpoint
 - [x] 6.2 Write the analysis-plan section (tests, corrections, intervals, seeds, router-rule placeholder); verify it names every metric the analysis code computes.
 - [ ] 6.3 (blocked until `audit-report.json` is final) Copy the confirmed controls into `data/diagnostic_v1/protocol.json`; verify `diagnostic.py` readiness lists no unresolved control and rebuild the pilot only if the demo page is still needed.
 - [x] 6.4 Register the wide card as MC-90 in `measurement_card.md` and `docs/measurement_cards/` and commit with a title containing `pre-register MC-90` (the wide card needs neither 6.3 nor the completed audit: it touches no anchor); verify the runner's preflight reports every gate PASS with `endpoint_calls=0`.
-- [ ] 6.5 (blocked until 6.3) Register the core card in the same way and fill the core entries of `registration.json`.
+- [ ] 6.5 (blocked until 6.3 and 14.3) Register the core card in the same way and fill the core entries of `registration.json`: the router rule SHA-256 and best fixed arm, the evidence-anchor list and, if K and KS are included, the corpus and retrieval-configuration hashes. Rewrite `measurement-card-core-draft.md` to design Decision 11 first.
 
-## 7. Evidence and corpus (blocked until the 12 Legal MC anchors are audited)
+## 7. Evidence and corpus (evidence anchors per design Decision 11; records and corpus stay under the ignored `all_res/`)
 
-- [ ] 7.1 Extract oracle evidence from the audit `evidence_reference` values and the provision texts; verify the validator accepts all 12 records.
+- [ ] 7.1 Extract oracle evidence from the audit `evidence_reference` values and the provision texts for the evidence anchors; verify the validator accepts every record and that no record exists for an anchor with sufficient or unassessable input or with gold that is not valid.
 - [ ] 7.2 Build corpus v0 (full texts of the cited documents plus distractors, chunked by article, hashed, provenance recorded); verify that no benchmark answer, model output or gold text is present.
-- [ ] 7.3 Implement lexical retrieval with a hashed configuration and a retrieval trace; verify the reviewer-cited article appears in the top k for the 12 anchors or that the misses are listed.
+- [ ] 7.3 Implement lexical retrieval with a hashed configuration and a retrieval trace; verify, once and with the frozen configuration, that the reviewer-cited article appears in the top k for each evidence anchor, or list the misses.
 
 ## 8. Execution (wide: registered as MC-90; core: blocked until 6.5)
 
 Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile `member-shared-tcp`), self-reported `Qwen3.5-9B-Q4_K_M.gguf`, resolver shim via `172.16.30.1`.
 
 - [ ] 8.1 Run `wide` with `--execute`; verify 2,478 attempts complete, the response model id is constant and per-arm summaries are written.
-- [ ] 8.2 Run `core` after 6.5 and `inference_ready`; verify 396 attempts complete (B 180, S 180, O 36; 468 only if K and KS are later registered for the same anchors) and `condition.json` matches the card.
+- [ ] 8.2 Run `core` after 6.5 and `inference_ready`; verify the registered attempt count completes (B 180, S 180, and O, K and KS three per evidence anchor) and `condition.json` matches the card.
 - [ ] 8.3 Register both outputs as diagnostic ledger sources; verify the coverage and score-parity reports pass.
 
 ## 9. Analysis code (offline, before data)
@@ -82,6 +82,13 @@ Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile 
 - [x] 12.1 Build a reproducible, seeded review packet: every EM-discordant reading item (rescue: the B answer; regression: the S answer) and a stratified sample of the both-wrong items (both answers), as separate blind units without arm, direction or stratum; verify the key file maps every unit back and the packet carries no arm information. (`code_benchmark/diagnostic_semantic_review.py build`; 502 units: R 136 and G 98 whole, W_hi squad 16 and drop 18 whole, W_hi bidlqa 70 of 253, W_lo 30 of 167; seed 42.)
 - [x] 12.2 Have two independent reviewers label each unit against the gold answer (correct, partial, incorrect) with a one-line reason; adjudicate the disagreements blind; verify the label files cover every unit. (Reviewers: sonnet and opus subagents, 4 batches each; 18 disagreements adjudicated blind by the lead assistant from the packet text only.)
 - [x] 12.3 Unblind and estimate the semantic rescues, regressions and net effect with a stratified interval; report agreement between reviewers and state that the review is AI-assisted and not a blind human review. (`aggregate`: raw agreement 96.4%, kappa 0.93; `report.json` under the review directory.)
+
+## 14. Router (amended 2026-10-26: designed on wide, frozen before the first core request, evaluated once on core; design Decision 11)
+
+- [x] 14.1 Record the amendment: design Decision 11, the `diagnostic-router` spec, the evidence and runner spec changes, `preregistration-draft.json` and these tasks; verify `openspec validate diagnostic-prospective-campaign --strict` passes.
+- [ ] 14.2 Implement the rule grammar, its validator (features and arms whitelisted, fail closed) and the offline evaluator (evaluation set, always-B, always-S, best fixed arm, deployable ceiling with the B-replicate null, McNemar with Holm, Wilson intervals, mean tokens, gold-validity sensitivity); verify unit tests on synthetic outcomes, including a rule that names a forbidden feature and one that selects O.
+- [ ] 14.3 Fit two or three candidate rules on wide (design fit only), have the project owner choose one, freeze it as `data/diagnostic_prospective_v1/router_v1.json` and add the core gate on its hash; verify the preflight fails for a missing or changed rule and passes for the frozen one.
+- [ ] 14.4 After the core run, evaluate the frozen rule once on core and report the wide design fit beside it; verify the report's keys equal the list in the core registration entry.
 
 ## 10. Verification and handoff
 

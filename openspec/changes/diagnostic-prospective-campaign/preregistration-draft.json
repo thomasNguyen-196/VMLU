@@ -1,6 +1,6 @@
 {
   "version": "diagnostic-experiment-preregistration-v1",
-  "status": "DRAFT - not registered; every value below is a proposal awaiting confirmation (see open_decisions)",
+  "status": "DRAFT - not registered; amended 2026-10-26 (router designed on wide and evaluated once on core, evidence anchors, K and KS); values stay proposals until the core registration (see open_decisions)",
   "research_scope": "Vietnamese tasks",
   "applies_to": {
     "change": "openspec/changes/diagnostic-prospective-campaign",
@@ -24,9 +24,14 @@
       "reverify": "ping and model-id check immediately before each execute; the runner pauses on a model-id change"
     },
     "versioned_vietnamese_corpus": {
-      "decision": "none in this registration",
-      "reason": "arms K and KS need a frozen corpus and a retriever and are registered later under a separate card; arm O uses reviewer-cited provisions whose hash is recorded as evidence_sha256",
-      "k_ks_status": "excluded from the first registration"
+      "decision": "corpus v0 in the first core registration if it passes tasks 7.2 and 7.3; otherwise none, and arms K and KS are registered later under their own card",
+      "scope": "full texts of the documents the reviewer cited for the evidence anchors plus distractor documents, chunked by article; scoped by the audit, so arm K measures article retrieval in a corpus known to hold the relevant documents, not open-domain retrieval",
+      "checks": "no benchmark question, option, answer or model output in the corpus; provenance (source URL, retrieval time, SHA-256) per document; hashed retrieval configuration; share of cited articles in the top k measured once, misses listed, configuration unchanged afterwards",
+      "retrieval": "lexical BM25 over articles (design.md Decision 7)",
+      "corpus_sha256": "<set at registration>",
+      "retrieval_config_sha256": "<set at registration>",
+      "oracle_evidence": "arm O uses reviewer-cited provisions whose hash is recorded as evidence_sha256",
+      "k_ks_status": "included in the first core registration if the checks pass (decided 2026-10-26)"
     },
     "hard_runtime_budget": {
       "item_cap_output_tokens": 4096,
@@ -36,7 +41,7 @@
     },
     "augmentation_model_and_controls": {
       "model": "Qwen3.5-9B-65K via the endpoint above, one model for every arm",
-      "controls": "identical sampling, output cap and system prompt for every arm; S changes only the instruction and adds no information; O prepends one frozen evidence block to the B prompt; item-major scheduling keeps the arms of one item adjacent in time",
+      "controls": "identical sampling, output cap and system prompt for every arm; S changes only the instruction and adds no information; O and K prepend one frozen evidence block (same template) to the B prompt and KS to the S prompt; item-major scheduling keeps the arms of one item adjacent in time",
       "prompt_templates_sha256": "<set at registration>"
     },
     "runtime_verification_policy": {
@@ -50,19 +55,20 @@
     "campaign_controls": {
       "protocol": "data/diagnostic_prospective_v1/protocol.json",
       "protocol_sha256": "<set at registration>",
-      "arms": {"B": "frozen main-v1 prompt", "S": "stepwise decomposition wording, same input", "O": "frozen evidence block plus the B prompt (Legal MC anchors with reviewer-cited provisions)"},
-      "phases": {"core": "60 audit anchors, 3 replicates, arms B, S, O", "wide": "1,239 non-anchor items, 1 replicate, arms B and S"},
+      "arms": {"B": "frozen main-v1 prompt", "S": "stepwise decomposition wording, same input", "O": "frozen evidence block of reviewer-cited provisions plus the B prompt", "K": "frozen evidence block of retrieved provisions (corpus v0) plus the B prompt", "KS": "the same retrieved evidence block plus the S prompt"},
+      "phases": {"core": "60 audit anchors, 3 replicates; arms B and S on every anchor; O, K and KS on the evidence anchors (Legal MC, adjudicated input insufficient and gold valid)", "wide": "1,239 non-anchor items, 1 replicate, arms B and S"},
       "transport": "direct OpenAI Responses API, streaming, temperature 1.0, no seed, no reasoning field, 300 s timeout, no SDK retries, 12 workers",
-      "scorers": "frozen V1 scorers for B and O; final-segment rule diagnostic-final-segment-v1 for S"
+      "scorers": "frozen V1 scorers for B, O and K; final-segment rule diagnostic-final-segment-v1 for S and KS"
     },
     "split_manifest": {
-      "development": "the 60 audit anchors (core), all analysis and the rule-based router are tuned here",
-      "held_out": "the 1,239 non-anchor items of the same five datasets (wide), router evaluated once",
+      "router_design": "wide: the 1,239 non-anchor items of the same five datasets, whose B and S outcomes (MC-90 to MC-92) were unblinded on 2026-10-22; candidate rules are fitted here and their wide figures are design fit only",
+      "router_evaluation": "core: the 60 audit anchors, which no prospective request has reached; the frozen rule is evaluated once",
       "grouping": "reading items grouped by passage_id; all arms and replicates of an item stay in one split",
-      "manifest_sha256": {"core": "<set at registration>", "wide": "<set at registration>"},
-      "caveat": "all items were evaluated by earlier runs: held-out with respect to rule design only, not pristine"
+      "manifest_sha256": {"core": "<set at registration>", "wide": "registered with MC-90 (registration.json)"},
+      "caveat": "every item was answered by earlier runs and the anchors were audited: core is unseen for the prospective arms and conditions only, and audit fields are forbidden router features",
+      "amended": "2026-10-26 (design.md Decision 11): design and evaluation roles swapped; the earlier draft tuned on core and evaluated once on wide"
     },
-    "corpus_version": "none (arms K and KS are not part of this registration)",
+    "corpus_version": "corpus v0 if it passes tasks 7.2 and 7.3 (see readiness_controls.versioned_vietnamese_corpus); none otherwise",
     "budget_policy": {
       "item_cap": 4096,
       "campaign_cap": 5000000,
@@ -87,31 +93,33 @@
       "all_arm_failure": "unresolved_or_abstain"
     },
     "comparisons": [
-      "matched prospective B, S and O attempts inside one core campaign",
-      "B versus S on the held-out wide set",
-      "oracle evidence versus baseline on the Legal MC anchors"
+      "matched prospective B, S, O, K and KS attempts inside one core campaign",
+      "B versus S on the wide set (MC-90 to MC-92, done)",
+      "oracle and retrieved evidence versus baseline on the evidence anchors",
+      "oracle versus retrieved evidence on the same anchors (retrieval isolated from evidence need)",
+      "rule router versus always-B, always-S and the best fixed arm on core"
     ],
     "deployment_comparisons": {
       "fresh-B": "included",
       "always-S": "included",
-      "always-K": "deferred (no K registration)",
-      "always-KS": "deferred (no K registration)",
-      "best-fixed-from-dev": "included: chosen on core, evaluated once on wide",
-      "rule-router": "included: rule written before outcomes are unblinded, tuned on core, evaluated once on wide",
+      "always-K": "evidence anchors only, descriptive (core arm analysis)",
+      "always-KS": "evidence anchors only, descriptive (core arm analysis)",
+      "best-fixed-from-dev": "included: B or S, whichever has the higher mean accuracy over its two wide draws, recorded with the rule and evaluated once on core",
+      "rule-router": "included: designed on wide, frozen by SHA-256 in the core registration before the first core request, evaluated once on core",
       "learned-router": "future work"
     },
     "diagnostic_contrasts": {
       "content_vs_length_position": "not run in v1",
       "prompt_vs_tools_vs_resources": "not run in v1",
-      "retriever_vs_assembly_vs_generator": "not run in v1 (arm O only; K deferred)"
+      "retriever_vs_assembly_vs_generator": "partial in v1: O versus K on the same evidence anchors (descriptive); assembly and generator contrasts not run"
     },
     "runtime_goal": "predict quality and cost and choose an arm under remaining budget; causal diagnosis is a separate offline analysis",
-    "request_accounting": "core: 396 top-level attempts (B 180 + S 180 + O 36 when 12 oracle records exist); wide: 2,478; each attempt is one model request and technical retries are visible in the attempt ledger",
+    "request_accounting": "core: 360 B and S attempts plus three replicates of each evidence arm (O; K and KS if registered) per evidence anchor; wide: 2,478 plus 1,239 for each supplement (MC-91, MC-92); each attempt is one model request and technical retries are visible in the attempt ledger",
     "reporting": "AI-assisted primary versus blind human agreement must not be described as two blind human raters"
   },
   "registration_record": {
-    "card_ids": {"core": "MC-NN (next free id at core registration; MC-91 at drafting time)", "wide": "MC-90 (REGISTERED 2026-10-22, see docs/measurement_cards/MC-90-diagnostic-prospective-wide.md)"},
-    "card_files": {"core": "docs/measurement_cards/MC-NN-diagnostic-prospective-core.md", "wide": "docs/measurement_cards/MC-NN-diagnostic-prospective-wide.md"},
+    "card_ids": {"core": "MC-NN (next free id at core registration; MC-93 on 2026-10-26)", "wide": "MC-90 (REGISTERED 2026-10-22, see docs/measurement_cards/MC-90-diagnostic-prospective-wide.md); supplements MC-91 and MC-92"},
+    "card_files": {"core": "docs/measurement_cards/MC-NN-diagnostic-prospective-core.md", "wide": "docs/measurement_cards/MC-90-diagnostic-prospective-wide.md"},
     "registered_on": "<set at registration>",
     "commit_title": "pre-register MC-NN"
   },
@@ -119,11 +127,22 @@
     "fixed_in": ["design.md Decision 8", "data/diagnostic_prospective_v1/protocol.json -> analysis (metric names are checked against the analysis code by a test)"],
     "router": {
       "rule": null,
-      "must_be_written_before": "outcomes are unblinded",
-      "runtime_features_allowed": ["dataset family", "prompt length", "question cue words"],
-      "forbidden_features": ["gold answers", "diagnostic labels", "outcomes of other arms"],
-      "design_split": "core",
-      "evaluation_split": "wide, evaluated once"
+      "rule_file": "data/diagnostic_prospective_v1/router_v1.json; its SHA-256 and the best fixed arm go into the core registration entry and card",
+      "must_be_written_before": "the first core request: core --execute refuses to start without the rule file or with another hash",
+      "chosen_by": "the project owner, from two or three candidate rules fitted on wide",
+      "runtime_features_allowed": ["dataset of the item", "length in characters of the frozen B prompt", "case-insensitive literal cue words in the question text"],
+      "forbidden_features": ["gold answers", "audit fields (diagnostic labels, gold validity, evidence sufficiency)", "outcomes of any arm"],
+      "selectable_arms": ["B", "S", "K", "KS"],
+      "not_selectable": "O: reviewer-cited provisions do not exist at request time; a ceiling only",
+      "design_split": "wide (design fit only, no tests)",
+      "evaluation_split": "core, evaluated once",
+      "evaluation_set": "core anchors whose manifest contains the arm the rule selects for them; excluded anchors are listed",
+      "comparators": ["always-B", "always-S", "best fixed arm from wide"],
+      "tests": "exact two-sided McNemar of the router against always-B and against always-S, Holm over the two; Wilson intervals for accuracy",
+      "ceilings": "ceiling over the deployable arms available per item next to the ceiling over B replicates (oracle_routing definition, O left out)",
+      "cost": "mean reported total tokens per item for each policy; unreported usage is unknown, not zero",
+      "sensitivity": "secondary: the same comparisons without anchors whose adjudicated gold is not valid",
+      "amended": "2026-10-26 (design.md Decision 11)"
     },
     "oracle_routing": "reported only with the ceiling over B replicates alone; on wide (one draw per arm) no noise floor exists and the ceiling is not read as headroom",
     "primary_metrics": ["recovery", "regression_rate", "net_gain", "mcnemar_p_holm"],
@@ -138,8 +157,11 @@
     "stable-recovery rule: strict majority of replicates",
     "tie-break among successful arms: fewer mean total tokens, then lower mean latency",
     "reading correctness: exact match, with token-F1 >= 0.8 listed for audit but not counted",
-    "arms K and KS excluded from the first registration and registered later under a separate card",
+    "SUPERSEDED 2026-10-26 (see below): arms K and KS excluded from the first registration and registered later under a separate card",
     "wide may run as soon as its own card is registered, without waiting for audit_complete",
-    "the rule-based router text, to be written by the project owner before outcomes are unblinded"
+    "OPEN: the rule-based router text, chosen by the project owner from the candidates fitted on wide before the core registration",
+    "DECIDED 2026-10-26 by the project owner (plan approval): the router is designed on wide, frozen before the first core request and evaluated once on core; its wide figures are design fit",
+    "DECIDED 2026-10-26: O, K and KS run on the same evidence anchors (Legal MC, adjudicated input insufficient and adjudicated gold valid); the anchor list is recorded at the core registration, after the independent review",
+    "DECIDED 2026-10-26: K and KS join the first core registration if corpus v0 passes tasks 7.2 and 7.3"
   ]
 }

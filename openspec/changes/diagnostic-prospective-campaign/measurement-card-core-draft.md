@@ -2,6 +2,8 @@
 
 DRAFT, not registered. At registration (task 6.4) assign the next free card id, fill the dates and hashes, copy the first block into `measurement_card.md` as a new `## MC-NN` section and the second block into `docs/measurement_cards/MC-NN-diagnostic-prospective-core.md`, and commit with the title `pre-register MC-NN`. Old blocks are never edited and conditions are never merged.
 
+Amended 2026-10-26 (design.md Decision 11): arms K and KS join this card if corpus v0 passes tasks 7.2 and 7.3; O, K and KS run only on the evidence anchors (Legal MC, adjudicated input insufficient and gold valid); the router rule SHA-256, the best fixed arm and the evidence-anchor list are recorded here at registration. The blocks below predate the amendment and are rewritten at task 6.5.
+
 ## Root block (for measurement_card.md)
 
 ## MC-NN — Qwen3.5-9B-65K (IEC) / diagnostic prospective core / B, S, O on the 60 audit anchors
