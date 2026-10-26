@@ -41,7 +41,7 @@ Model Qwen3.5-9B-65K (served as `Qwen3.5-9B-Q4_K_M.gguf` by llama.cpp), endpoint
 
 ## 7. Evidence and corpus (evidence anchors per design Decision 11; records and corpus stay under the ignored `all_res/`)
 
-- [ ] 7.1 Extract oracle evidence from the audit `evidence_reference` values and the provision texts for the evidence anchors; verify the validator accepts every record and that no record exists for an anchor with sufficient or unassessable input or with gold that is not valid.
+- [x] 7.1 Extract oracle evidence from the audit `evidence_reference` values and the provision texts for the evidence anchors; verify the validator accepts every record and that no record exists for an anchor with sufficient or unassessable input or with gold that is not valid. (2026-10-26: `code_benchmark/build_diagnostic_oracle_evidence.py` builds the records from one imported review export into the ignored `all_res/diagnostic_prospective/oracle/` and re-reads them with the runner's loader; built from the primary review, rebuilt with `--overwrite` before task 2.4 if adjudication changes the input sufficiency or gold validity of a Legal MC anchor.)
 - [ ] 7.2 Build corpus v0 (full texts of the cited documents plus distractors, chunked by article, hashed, provenance recorded); verify that no benchmark answer, model output or gold text is present.
 - [ ] 7.3 Implement lexical retrieval with a hashed configuration and a retrieval trace; verify, once and with the frozen configuration, that the reviewer-cited article appears in the top k for each evidence anchor, or list the misses.
 

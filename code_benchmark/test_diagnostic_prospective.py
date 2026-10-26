@@ -261,6 +261,63 @@ class TestEvidenceContract(unittest.TestCase):
             self.load(self.record, self.record)
 
 
+class TestOracleRecords(unittest.TestCase):
+    """Task 7.1: which anchors get oracle evidence (design Decision 11) and how drafted provisions become records."""
+
+    def setUp(self):
+        self.export = "b" * 64
+
+        def row(item_id, sufficiency="insufficient", gold="valid", dataset=MC_DATASET):
+            return {"observation_key": f"qwen-mc72|{dataset}:{item_id}:main-000", "annotator_id": "reviewer-a",
+                    "review_source_sha256": self.export, "input_evidence_sufficiency": sufficiency,
+                    "gold_validity": gold}
+
+        text = "1. Mức phạt tiền được quy định như sau:\na) Phạt cảnh cáo;"
+
+        def provision(item_id, **extra):
+            return {"item_id": item_id, "doc_id": "168/2024/NĐ-CP", "doc_title": "Nghị định 168/2024/NĐ-CP",
+                    "article_heading": "Điều 6", "locator": "Điều 6 khoản 1 điểm a (kèm câu dẫn của khoản)",
+                    "text": text, "text_sha256": v1.sha256_bytes(text.encode("utf-8")), "source_ref": "test",
+                    "leak": False, **extra}
+
+        self.rows = [row("T1"), row("T2", gold="suspect"), row("T3", sufficiency="sufficient"),
+                     row("T4", sufficiency="unassessable"), row("R1", dataset=RD_DATASET)]
+        self.provision = provision
+        self.provisions = [provision("T1"), provision("T2")]
+
+    def test_only_insufficient_anchors_with_valid_gold_get_a_record(self):
+        records, excluded = dp.oracle_records(self.rows, self.provisions, PROTOCOL)
+        self.assertEqual([r["item_id"] for r in records], ["T1"])
+        self.assertEqual(set(records[0]), set(dp.ORACLE_KEYS))
+        self.assertEqual(set(records[0]["provisions"][0]), set(dp.PROVISION_KEYS))
+        self.assertEqual(records[0]["provisions"][0]["locator"], "Điều 6 khoản 1 điểm a")
+        self.assertEqual((records[0]["reviewer_id"], records[0]["review_export_sha256"]), ("reviewer-a", self.export))
+        self.assertEqual(excluded, {f"{MC_DATASET}:T2": "gold_validity=suspect",
+                                    f"{MC_DATASET}:T3": "input_evidence_sufficiency=sufficient",
+                                    f"{MC_DATASET}:T4": "input_evidence_sufficiency=unassessable"})
+
+    def test_built_records_load_through_the_runner_loader(self):
+        records, _ = dp.oracle_records(self.rows, self.provisions, PROTOCOL)
+        main_items = {make_item(item_id="T1").run_key: make_item(item_id="T1")}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "oracle.jsonl"
+            path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records), encoding="utf-8")
+            self.assertEqual(list(dp.load_oracle_evidence(path, PROTOCOL, main_items)), [f"{MC_DATASET}:T1"])
+
+    def test_gaps_fail_closed(self):
+        cases = {
+            "no drafted provision": (self.rows, [self.provision("T2")]),
+            "provisional": (self.rows, [self.provision("T1", provisional=True)]),
+            "not an anchor": (self.rows, self.provisions + [self.provision("T9")]),
+            "exactly one imported review export": (self.rows + [{**self.rows[0], "annotator_id": "reviewer-b"}],
+                                                   self.provisions),
+        }
+        for reason, (rows, provisions) in cases.items():
+            with self.subTest(reason), self.assertRaises(SystemExit) as caught:
+                dp.oracle_records(rows, provisions, PROTOCOL)
+            self.assertIn(reason, str(caught.exception))
+
+
 class TestArmScoring(unittest.TestCase):
     def setUp(self):
         self.mc, self.rd = make_item("multiple_choice", "T1", gold="C"), make_item("reading", "T2", gold="1998")
@@ -372,6 +429,19 @@ class TestManifests(unittest.TestCase):
         self.assertTrue(oracle.prompt.startswith(TEMPLATES["evidence_header"]))
         self.assertTrue(oracle.prompt.endswith(dp.MC_TAIL))
         self.assertIn("O", manifest["evidence_sha256"])
+
+    def test_oracle_and_retrieved_evidence_must_cover_the_same_anchors(self):
+        first, second = [r["item_id"] for r in self.core["items"]
+                         if r["dataset_id"] == MC_DATASET and r["replicate_id"] == "B-r1"][:2]
+        text = "Điều 6. Quy định thử."
+        provisions = [{"doc_id": "d", "doc_title": "Văn bản thử", "locator": "Điều 6", "text": text,
+                       "text_sha256": v1.sha256_bytes(text.encode()), "source_ref": "test"}]
+        oracle = {f"{MC_DATASET}:{first}": provisions}
+        with self.assertRaises(SystemExit) as caught:
+            dp.build_manifest("core", evidence_by_arm={"O": oracle, "K": {f"{MC_DATASET}:{second}": provisions}})
+        self.assertIn("same items", str(caught.exception))
+        manifest, _ = dp.build_manifest("core", evidence_by_arm={"O": oracle, "K": dict(oracle)})
+        self.assertEqual(manifest["arm_counts"], {"B": 180, "K": 3, "KS": 3, "O": 3, "S": 180})
 
     def test_evidence_outside_the_phase_is_rejected(self):
         anchor = next(r for r in self.core["items"] if r["dataset_id"] == MC_DATASET)

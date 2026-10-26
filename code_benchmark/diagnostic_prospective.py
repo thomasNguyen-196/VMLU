@@ -276,6 +276,62 @@ def load_oracle_evidence(path: Path, protocol: dict[str, Any],
     return result
 
 
+# A reviewer's note at the end of a drafted locator, e.g. "(kèm câu dẫn của khoản)"; never part of the prompt.
+_LOCATOR_NOTE = re.compile(r"\s*\([^()]*\)\s*$")
+
+
+def oracle_records(review_rows: list[dict[str, Any]], provisions: list[dict[str, Any]],
+                   protocol: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    """Oracle evidence records from one imported review and the drafted provisions (design Decision 11).
+
+    An anchor of the evidence-eligible dataset gets a record when its audited input evidence has the required
+    sufficiency and its gold is valid; the dataset's other anchors come back as {item key: reason}. Fails closed
+    on labels from more than one review export, a provisional or unattached provision, or an evidence anchor
+    without a provision."""
+    eligible = protocol["evidence"]["eligible_datasets"]
+    required = protocol["evidence"]["required_input_evidence_sufficiency"]
+    if len(eligible) != 1:
+        raise _fail("drafted provisions carry no dataset id, so exactly one evidence-eligible dataset is supported")
+    dataset_id = eligible[0]
+    sources = {(row.get("annotator_id"), row.get("review_source_sha256")) for row in review_rows}
+    if len(sources) != 1:
+        raise _fail(f"labels must come from exactly one imported review export, found {len(sources)}")
+    (reviewer_id, export_sha256), = sources
+    reasons: dict[str, str | None] = {}
+    for row in review_rows:
+        row_dataset, rest = str(row["observation_key"]).split("|", 1)[-1].split(":", 1)
+        item_id = rest.rsplit(":", 1)[0]
+        if row_dataset != dataset_id:
+            continue
+        if item_id in reasons:
+            raise _fail(f"two label rows for {item_key(dataset_id, item_id)}")
+        if row["input_evidence_sufficiency"] != required:
+            reasons[item_id] = f"input_evidence_sufficiency={row['input_evidence_sufficiency']}"
+        elif row["gold_validity"] != "valid":
+            reasons[item_id] = f"gold_validity={row['gold_validity']}"
+        else:
+            reasons[item_id] = None
+    drafted: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for provision in provisions:
+        if provision.get("item_id") not in reasons:
+            raise _fail(f"provision for {provision.get('item_id')!r}, which is not an anchor of {dataset_id}")
+        drafted[provision["item_id"]].append(provision)
+    records = []
+    for item_id in sorted(key for key, reason in reasons.items() if reason is None):
+        if not drafted[item_id]:
+            raise _fail(f"evidence anchor {item_id} has no drafted provision")
+        if any(p.get("provisional") for p in drafted[item_id]):
+            raise _fail(f"evidence anchor {item_id} has a provisional provision; verify it against the source first")
+        cleaned = [{key: _LOCATOR_NOTE.sub("", p[key]) if key == "locator" else p[key] for key in PROVISION_KEYS}
+                   for p in drafted[item_id]]
+        records.append({"dataset_id": dataset_id, "item_id": item_id,
+                        "provisions": validate_provisions(cleaned, item_key(dataset_id, item_id)),
+                        "reviewer_id": reviewer_id, "review_export_sha256": export_sha256,
+                        "eligibility": {"input_evidence_sufficiency": required}})
+    excluded = {item_key(dataset_id, item_id): reason for item_id, reason in sorted(reasons.items()) if reason}
+    return records, excluded
+
+
 # ---------------------------------------------------------------- manifests
 
 def anchor_item_keys(pilot_dir: Path) -> tuple[list[str], str]:
@@ -360,6 +416,9 @@ def build_manifest(phase: str, *, evidence_by_arm: dict[str, dict[str, list[dict
         stray = sorted(set(mapping) - base_keys)
         if stray:
             raise _fail(f"evidence for items outside phase {phase}: {stray[:3]}")
+    if {"O", "K"} <= set(evidence_by_arm) and set(evidence_by_arm["O"]) != set(evidence_by_arm["K"]):
+        differ = sorted(set(evidence_by_arm["O"]) ^ set(evidence_by_arm["K"]))
+        raise _fail(f"oracle and retrieved evidence must cover the same items; they differ on {differ[:3]}")
     if supplement is None:
         items = expand_arms(base_items, phase, protocol, templates, evidence_by_arm)
     else:

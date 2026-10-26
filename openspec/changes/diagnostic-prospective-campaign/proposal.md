@@ -37,7 +37,7 @@ Touches Regime A prompts and protocol (capability under the gateway's default ch
 
 ## Impact
 
-- New: `data/diagnostic_prospective_v1/`, `code_benchmark/diagnostic_prospective.py`, `code_benchmark/run_diagnostic_prospective.py`, `code_benchmark/test_diagnostic_prospective.py`, an analysis module, a router module and their tests, four specs, and a draft pair of measurement cards (ids assigned at registration).
+- New: `data/diagnostic_prospective_v1/`, `code_benchmark/diagnostic_prospective.py`, `code_benchmark/run_diagnostic_prospective.py`, `code_benchmark/test_diagnostic_prospective.py`, an oracle-evidence builder, an analysis module, a router module and their tests, four specs, and a draft pair of measurement cards (ids assigned at registration).
 - Read-only dependencies: `vi_multimodel.py` (main-v1 manifest, `EvalItem`, frozen extractors), `score_vi_multimodel.py`, the `run_muse13_direct_*` engine, the `diagnostic.py` readiness report and `all_res/diagnostic_v1/pilot-review-v4/` (anchor selection).
 - Model and endpoint for any later run: Qwen3.5-9B-65K, self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf`, `http://llmapi.iec/v1` over the IEC VPN (OpenVPN 3 profile `member-shared-tcp`).
 - No change to CI gates and no web change.
