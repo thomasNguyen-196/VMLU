@@ -2684,3 +2684,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-93 |
 | `details` | `docs/measurement_cards/MC-94-diagnostic-router-v2-heldout.md` |
 | `outputs` | `all_res/diagnostic_router_v2/heldout/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-95 — Qwen3.5-9B-65K (IEC) / router v3 held-out test / B and S on 1,080 items no router has seen
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-95` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | 360 VMLU valid items outside MC-94 (by category), 360 VM14K four-option items (by category) and 360 ViBidLQA train items (seed 42), each split into 60 calibration and 300 test items, never used to design or evaluate a router; arms B and S with two draws each; 4,320 attempts. Single evaluation of router v3, the calibration procedure `procedure_v3.json` (SHA-256 `470d28a4…`: per dataset, the best of always-B, the v2 cascade and always-S on the calibration items, accuracy for multiple choice and mean token-F1 for reading), against the frozen v2 rule, always-B and always-S; multiple choice is the primary family |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90, MC-93 and MC-94: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 3 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-94 |
+| `details` | `docs/measurement_cards/MC-95-diagnostic-router-v3-heldout.md` |
+| `outputs` | `all_res/diagnostic_router_v3/heldout/qwen3-5-9b-65k-prospective/`; no upload |

@@ -1,0 +1,55 @@
+{
+  "status": "heldout registered",
+  "card_ids": {
+    "heldout": "MC-95"
+  },
+  "card_files": {
+    "heldout": "docs/measurement_cards/MC-95-diagnostic-router-v3-heldout.md"
+  },
+  "registered_on": {
+    "heldout": "2026-10-27"
+  },
+  "frozen": {
+    "heldout_protocol_sha256": "e435c7f6c49bfdd6e5104f62c9c681ce121f40b540026abd51821f16e3e5df6b",
+    "campaign_protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+    "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
+    "manifest_sha256": "e4780be9850f14797cff81a67e40181ab99fc377f83349812d635e0038f370e7"
+  },
+  "router": {
+    "procedure_file": "data/diagnostic_router_v3/procedure_v3.json",
+    "procedure_id": "router-v3-calibrated",
+    "procedure_sha256": "470d28a4ec7fb1df65f0e9f5d9afeed5cb7869ee04f0843b96b38d85b949c727",
+    "v2_rule_file": "data/diagnostic_router_v2/router_v2.json",
+    "v2_rule_sha256": "0585b9a8980f6b906c2abdbcf69652ee7e8f1c51cca24697f9826d2e4ee26b3a",
+    "report_keys": [
+      "plan_id",
+      "procedure_id",
+      "procedure_sha256",
+      "manifest_sha256",
+      "v2_rule_sha256",
+      "primary_family",
+      "primary_rotation",
+      "calibration",
+      "families"
+    ]
+  },
+  "heldout": {
+    "operational": {
+      "max_in_flight": 4,
+      "stop_after_timeouts": 4
+    },
+    "plan_id": "diagnostic-router-v3-heldout-v1",
+    "primary_family": "mc",
+    "primary_rotation": 1,
+    "families": {
+      "mc": [
+        "vi-multimodel-v1-vmlu-valid",
+        "vm14k-4-options"
+      ],
+      "reading": [
+        "bidlqa-train"
+      ]
+    }
+  },
+  "note": "MC-95 is the single evaluation of router v3, a per-dataset calibration procedure, on items no router has seen (openspec change diagnostic-router-v3). The v1 and v2 artifacts and cards MC-90 to MC-94 are not changed."
+}

@@ -27,7 +27,7 @@
 
   (2026-10-27: `code_benchmark/diagnostic_heldout_v3.py`. Pools: VMLU valid outside MC-94, 444; VM14K four-option, 11,094 once empty questions and placeholder options are left out; ViBidLQA train with unique questions, 1,848. `heldout_v3.json` self-hash e4780be9…: 1,080 items and 4,320 attempts, 60 calibration items per dataset. The test rebuilds it from the sources and finds no MC-94 item; every item parses for the router.)
 - [x] 2.3 Implement the v3 runner on the campaign engine. Gates: card, detail card, manifest and protocol hashes, endpoint identity, procedure hash; the registered limits of 4 in flight and a breaker after 4 failures. Verify that the offline preflight prints `endpoint_calls=0`, passes when registered and fails for a changed procedure or manifest. (2026-10-27: `code_benchmark/run_router_v3_heldout.py` on the campaign engine, with a gate on the procedure and v2 rule hashes; `TestV3Gates`. The evaluation is `analyze_diagnostic_router heldout-v3`; `TestV3Evaluation`.)
-- [ ] 2.4 Register MC-95: root block, detail card, and a registration with the procedure hash and the report keys. Commit it as `pre-register MC-95`, and verify the preflight passes every gate.
+- [x] 2.4 Register MC-95: root block, detail card, and a registration with the procedure hash and the report keys. Commit it as `pre-register MC-95`, and verify the preflight passes every gate. (2026-10-27: root block in `measurement_card.md`, `docs/measurement_cards/MC-95-diagnostic-router-v3-heldout.md`, `data/diagnostic_router_v3/registration.json` with the procedure (470d28a4…) and v2 rule (0585b9a8…) hashes and the report keys; the offline preflight passes all five gates with `endpoint_calls=0`.)
 
 ## 3. Run and evaluation
 
