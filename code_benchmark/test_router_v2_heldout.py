@@ -173,6 +173,58 @@ class TestHeldoutEvaluation(unittest.TestCase):
             evaluate(manifest_sha256="y" * 64)
 
 
+def semantic_case():
+    """Five discordant reading items. Escalated (probe disagrees, v2 answers with S): e1 and e2 S exact, B not (B
+    reviewed: correct, incorrect); e3 B exact, S not (S reviewed: partial). Kept at B (probe agrees): k1 B exact, S
+    not (S reviewed: correct); k2 S exact, B not (B reviewed: partial)."""
+    def entry(key, arm, b, s):
+        chosen = s if arm == "S" else b
+        return {"item_key": f"{dh.BIDLQA}:{key}", "arm": arm, "probe_agrees": arm == "B", "v2": chosen,
+                "always_B": b, "always_S": s}
+    discordant = [entry("e1", "S", False, True), entry("e2", "S", False, True), entry("e3", "S", True, False),
+                  entry("k1", "B", True, False), entry("k2", "B", False, True)]
+    reviews = {"e1": ("rescue", "correct"), "e2": ("rescue", "incorrect"), "e3": ("regression", "partial"),
+               "k1": ("regression", "correct"), "k2": ("rescue", "partial")}
+    semantic = {f"{dh.BIDLQA}:{key}": {"direction": direction, "loser_right_in_meaning": label == "correct",
+                                       "loser_label": label} for key, (direction, label) in reviews.items()}
+    # exact match: v2 against B +2 (e1, e2) / -1 (e3); against S +1 (k1) / -1 (k2)
+    tests = {"v2_vs_always_B": {"rescues": 2, "regressions": 1}, "v2_vs_always_S": {"rescues": 1, "regressions": 1}}
+    report = {"families": {"reading": {"items": 10, "discordant_rotation_1": discordant, "rotations": {"1": {"tests": tests}}}}}
+    return report, semantic
+
+
+class TestHeldoutSemantic(unittest.TestCase):
+    def test_discordance_in_meaning_strict_and_lenient(self):
+        result = ar.heldout_semantic(*semantic_case())
+        counts = {mode: {name: (t["rescues"], t["regressions"], t["net"]) for name, t in by_name.items()}
+                  for mode, by_name in result["tests"].items()}
+        self.assertEqual(counts["exact_match"], {"v2_vs_always_B": (2, 1, 1), "v2_vs_always_S": (1, 1, 0)})
+        # strict: e1 and k1 are measurement effects; e2 stays a rescue, e3 a regression against B; k2 a regression
+        self.assertEqual(counts["strict"], {"v2_vs_always_B": (1, 1, 0), "v2_vs_always_S": (0, 1, -1)})
+        # lenient: the partial answers of e3 and k2 count as right too, so only e2 differs in meaning
+        self.assertEqual(counts["lenient"], {"v2_vs_always_B": (1, 0, 1), "v2_vs_always_S": (0, 0, 0)})
+        self.assertEqual(result["loser_labels"], {"correct": 2, "incorrect": 1, "partial": 2})
+        self.assertEqual(result["groups"], [
+            {"v2_arm": "B", "probe": "agree", "em_regressions": 1, "em_regressions_loser_correct": 1,
+             "em_rescues": 1, "em_rescues_loser_partial": 1},
+            {"v2_arm": "S", "probe": "disagree", "em_regressions": 1, "em_regressions_loser_partial": 1,
+             "em_rescues": 2, "em_rescues_loser_correct": 1, "em_rescues_loser_incorrect": 1}])
+
+    def test_the_review_must_match_the_discordance(self):
+        report, semantic = semantic_case()
+        del semantic[f"{dh.BIDLQA}:k2"]
+        with self.assertRaises(SystemExit):
+            ar.heldout_semantic(report, semantic)
+        report, semantic = semantic_case()
+        semantic[f"{dh.BIDLQA}:e1"]["direction"] = "regression"
+        with self.assertRaises(SystemExit):
+            ar.heldout_semantic(report, semantic)
+        report, semantic = semantic_case()
+        report["families"]["reading"]["rotations"]["1"]["tests"]["v2_vs_always_S"]["rescues"] = 2
+        with self.assertRaises(SystemExit):
+            ar.heldout_semantic(report, semantic)
+
+
 @unittest.skipUnless(dh.REGISTRATION_PATH.is_file(), "MC-94 is not registered yet")
 class TestHeldoutRegistration(unittest.TestCase):
     def test_the_registration_matches_the_frozen_files_and_the_evaluator(self):

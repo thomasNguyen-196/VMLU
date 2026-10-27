@@ -31,6 +31,12 @@ Usage (repo root):
   .venv/bin/python -m code_benchmark.analyze_diagnostic_router evaluate --run-dir <core output dir> \
       [--rule data/diagnostic_prospective_v1/router_v1.json] [--lexicon <json>] \
       [--diagnosis <anchor_diagnosis_v1.jsonl>] [--with-design-fit] [--out <json>]
+  .venv/bin/python -m code_benchmark.analyze_diagnostic_router heldout --run-dir <held-out output dir>
+  .venv/bin/python -m code_benchmark.analyze_diagnostic_router heldout-semantic --run-dir <held-out output dir>
+
+heldout-semantic (descriptive, after the single held-out evaluation): the reading items whose exact match differs
+between B and S in the first rotation, set against the AI-assisted semantic review of the answer that lost
+(`diagnostic_semantic_review build --heldout`); it writes its own file and leaves the registered report as it is.
 """
 from __future__ import annotations
 
@@ -120,7 +126,8 @@ def load_semantic_review(review_dir: Path, scores_path: Path) -> dict[str, dict[
         direction, loser = reviewed[unit["stratum"]]
         if unit["arm"] != loser:
             raise _fail(f"semantic unit {unit['unit_id']}: stratum {unit['stratum']} should review arm {loser}")
-        result[unit["item_key"]] = {"direction": direction, "loser_right_in_meaning": final[unit["unit_id"]] == "correct"}
+        result[unit["item_key"]] = {"direction": direction, "loser_right_in_meaning": final[unit["unit_id"]] == "correct",
+                                    "loser_label": final[unit["unit_id"]]}
     return result
 
 
@@ -370,6 +377,55 @@ def _semantic_block(rule: dict[str, Any], by_condition: dict[int | None, list[st
             "measurement_effect": "the answer that lost on exact match was right in meaning", "groups": rows}
 
 
+HELDOUT_SEMANTIC_SOURCE = ("AI-assisted semantic review of the held-out reading answers that lost on exact match in "
+                           "the first rotation: two blind AI reviewers and a blind adjudication; descriptive, not a "
+                           "blind human review")
+
+
+def heldout_semantic(report: dict[str, Any], semantic: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """The held-out reading discordance (first rotation) in meaning. In a discordant item exactly one of the B and
+    S answers is exact; it counts as right, and the review labels the other one. Strict: only `correct` is right;
+    lenient: `partial` too. A losing answer right in meaning is a measurement effect. Items whose B and S answers
+    are both exact or both inexact were not reviewed, so their differences in meaning are not counted."""
+    reading = report["families"]["reading"]
+    discordant = reading["discordant_rotation_1"]
+    if {d["item_key"] for d in discordant} != set(semantic):
+        raise _fail("the semantic review must cover exactly the reading items discordant in the first rotation")
+    groups: dict[tuple[str, bool], Counter] = defaultdict(Counter)
+    tests = {mode: {name: Counter(rescues=0, regressions=0) for name in ("v2_vs_always_B", "v2_vs_always_S")}
+             for mode in ("exact_match", "strict", "lenient")}
+    for d in discordant:
+        if d["always_B"] == d["always_S"]:
+            raise _fail(f"{d['item_key']}: B and S are both exact or both inexact, so v2 cannot differ from one")
+        direction = "rescue" if d["always_S"] else "regression"
+        review = semantic[d["item_key"]]
+        if review["direction"] != direction:
+            raise _fail(f"the semantic review has no {direction} unit for {d['item_key']}")
+        group = groups[(d["arm"], d["probe_agrees"])]
+        group[f"em_{direction}s"] += 1
+        group[f"em_{direction}s_loser_{review['loser_label']}"] += 1
+        for mode, right in (("exact_match", False), ("strict", review["loser_label"] == "correct"),
+                            ("lenient", review["loser_label"] != "incorrect")):
+            b, s = d["always_B"] or right, d["always_S"] or right
+            chosen = s if d["arm"] == "S" else b
+            for name, fixed in (("v2_vs_always_B", b), ("v2_vs_always_S", s)):
+                tests[mode][name]["rescues"] += chosen and not fixed
+                tests[mode][name]["regressions"] += fixed and not chosen
+    registered = reading["rotations"]["1"]["tests"]
+    for name, counts in tests["exact_match"].items():
+        if (counts["rescues"], counts["regressions"]) != (registered[name]["rescues"], registered[name]["regressions"]):
+            raise _fail(f"{name}: the discordant items do not reproduce the reported exact-match counts")
+    return {
+        "source": HELDOUT_SEMANTIC_SOURCE, "rotation": 1, "reading_items": reading["items"],
+        "items_reviewed": len(discordant),
+        "loser_labels": dict(sorted(Counter(review["loser_label"] for review in semantic.values()).items())),
+        "groups": [{"v2_arm": arm, "probe": "agree" if agrees else "disagree", **dict(sorted(counts.items()))}
+                   for (arm, agrees), counts in sorted(groups.items())],
+        "tests": {mode: {name: {**counts, "net": counts["rescues"] - counts["regressions"]}
+                         for name, counts in by_name.items()} for mode, by_name in tests.items()},
+    }
+
+
 # ---------------------------------------------------------------- core: one evaluation
 
 def _comparisons(keys: list[str], arms_for: dict[str, Callable[[str], str]],
@@ -533,6 +589,34 @@ def _heldout_cli(args: argparse.Namespace, protocol: dict[str, Any], lexicon: di
     return 0
 
 
+def _heldout_semantic_cli(args: argparse.Namespace) -> int:
+    review_dir = args.review_dir or args.run_dir / "semantic_review"
+    report_path = args.run_dir / "analysis" / "router_v2_report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    result = heldout_semantic(report, load_semantic_review(review_dir, args.run_dir / "scores.jsonl"))
+    design = json.loads((review_dir / "design.json").read_text(encoding="utf-8"))
+    key = json.loads((review_dir / "key.json").read_text(encoding="utf-8"))
+    valid = {unit["unit_id"] for unit in key}
+    first, second = (sr.read_labels(review_dir / name, valid) for name in ("labels_A.jsonl", "labels_B.jsonl"))
+    result.update({"review_design": {name: design[name] for name in ("seed", "population", "sampled", "units")},
+                   "reviewer_agreement": sr.agreement(first, second, key), "report_sha256": v1.sha256_file(report_path)})
+    out = args.out or args.run_dir / "analysis" / "router_v2_semantic_review.json"
+    _write_json(out, result)
+    agreement = result["reviewer_agreement"]
+    kappa = agreement["kappa_three_class"]
+    print(f"{result['source']}\n{result['items_reviewed']} items; reviewers agree on "
+          f"{agreement['units'] - agreement['disagreements']}/{agreement['units']} "
+          f"(kappa {'—' if kappa is None else f'{kappa:.2f}'}); losing answers {result['loser_labels']}")
+    for group in result["groups"]:
+        print(f"  v2 -> {group['v2_arm']} (probe {group['probe']}): "
+              + ", ".join(f"{name} {value}" for name, value in group.items() if name.startswith("em_")))
+    for mode, by_name in result["tests"].items():
+        print(f"  {mode:11} " + "  ".join(f"{name}: +{t['rescues']}/-{t['regressions']} (net {t['net']:+d})"
+                                          for name, t in by_name.items()))
+    print(f"report -> {out}")
+    return 0
+
+
 def _print_probe_fit(fit: dict[str, Any]) -> None:
     def pct(value):
         return "—" if value is None else f"{100 * value:5.1f}"
@@ -580,7 +664,13 @@ def main(argv: list[str] | None = None) -> int:
     ho.add_argument("--run-dir", type=Path, required=True, help="held-out output dir (scores.jsonl)")
     ho.add_argument("--lexicon", type=Path, default=router.LEXICON_PATH, help=f"default: {router.LEXICON_PATH}")
     ho.add_argument("--out", type=Path, help="default: <run-dir>/analysis/router_v2_report.json")
+    hs = sub.add_parser("heldout-semantic", help="descriptive: the held-out reading discordance in meaning")
+    hs.add_argument("--run-dir", type=Path, required=True, help="held-out output dir (scores.jsonl, analysis/)")
+    hs.add_argument("--review-dir", type=Path, help="default: <run-dir>/semantic_review")
+    hs.add_argument("--out", type=Path, help="default: <run-dir>/analysis/router_v2_semantic_review.json")
     args = ap.parse_args(argv)
+    if args.command == "heldout-semantic":
+        return _heldout_semantic_cli(args)
     protocol = dp.load_protocol()
     lexicon, lexicon_digest = router.load_lexicon(args.lexicon)
     if args.command == "heldout":
