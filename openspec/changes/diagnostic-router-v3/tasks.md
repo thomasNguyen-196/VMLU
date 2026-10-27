@@ -43,4 +43,4 @@
   - Multiple choice, rotation 1 (primary, 600 test items): v3 67.8% at 563 tokens per item, v2 69.2% at 697, always-B 62.2% at 129, always-S 71.3% at 1,067. v3 against v2 +35/−43, Holm p 0.43; against always-S +33/−54, Holm p 0.063. Neither difference is significant.
   - Rotation 2 chose always-S everywhere, so v3 equals always-S (71.7%); against v2 +37/−22, Holm p 0.135.
   - Reading (descriptive): mean token-F1 regret of 0.4 and 0.2 points against v2, which costs twice the tokens of S.)
-- [ ] 3.3 Add the result to the Notion core-results page and the thesis plan, keeping internal hostnames and addresses out.
+- [x] 3.3 Add the result to the Notion core-results page and the thesis plan, keeping internal hostnames and addresses out. (2026-10-27: section 11 of the core-results page, with the appendix moved to section 12; on the plan page, a status update, the result under stage 5, and the progress list and milestone table.)
