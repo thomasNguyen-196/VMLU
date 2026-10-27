@@ -42,7 +42,7 @@
   - the report keys.
 
   (2026-10-27: `analyze_diagnostic_router k2` (`evaluate_k2`, `sign_flip_p`, `bootstrap_mean_ci`); `TestStatistics` and `TestK2Evaluation`.)
-- [ ] 2.4 Register MC-96 (root block, detail card, `registration.json` with the hashes and report keys) and commit it as `pre-register MC-96`. Verify that the preflight passes every gate.
+- [x] 2.4 Register MC-96 (root block, detail card, `registration.json` with the hashes and report keys) and commit it as `pre-register MC-96`. Verify that the preflight passes every gate. (2026-10-27: root block in `measurement_card.md`, `docs/measurement_cards/MC-96-diagnostic-k2-retrieval.md`, `data/diagnostic_k2/registration.json` with the procedure hash e7f2daa7… and the report keys. The offline preflight passes all five gates with `endpoint_calls=0`.)
 
 ## 3. Run and evaluation
 

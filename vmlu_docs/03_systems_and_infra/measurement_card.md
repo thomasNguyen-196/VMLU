@@ -2698,3 +2698,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-94 |
 | `details` | `docs/measurement_cards/MC-95-diagnostic-router-v3-heldout.md` |
 | `outputs` | `all_res/diagnostic_router_v3/heldout/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-96 — Qwen3.5-9B-65K (IEC) / K2 retrieval test / B, K, KS and O on 360 ViBidLQA questions without their passage
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-96` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | 360 ViBidLQA train questions not used by MC-95, asked without their passage (dataset `bidlqa-train-retrieval`, seed 42), split into 60 calibration and 300 test items; arms B (closed book), K (the two BM25 passages of the frozen 863-passage ViBidLQA corpus in the reading prompt), KS (the same passages, S reading prompt) and O (the own passage, a ceiling), two draws each; 2,880 attempts. Single evaluation of the K2 calibration procedure `procedure_k2.json` (SHA-256 `e7f2daa7…`: the best of always-B, always-K, the K cascade and always-KS by mean token-F1 on the calibration items, ties to the more thorough) against always-K and always-KS |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-95: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 3 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-95 |
+| `details` | `docs/measurement_cards/MC-96-diagnostic-k2-retrieval.md` |
+| `outputs` | `all_res/diagnostic_k2/heldout/qwen3-5-9b-65k-prospective/`; no upload |

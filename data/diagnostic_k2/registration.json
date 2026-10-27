@@ -1,0 +1,45 @@
+{
+  "status": "heldout registered",
+  "card_ids": {
+    "heldout": "MC-96"
+  },
+  "card_files": {
+    "heldout": "docs/measurement_cards/MC-96-diagnostic-k2-retrieval.md"
+  },
+  "registered_on": {
+    "heldout": "2026-10-27"
+  },
+  "frozen": {
+    "k2_protocol_sha256": "a8c5d481739dace26b88f7b5c36086315f5c07f471944f2da4bde7b63fb8ccdc",
+    "campaign_protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+    "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
+    "retrieval_config_sha256": "693916f23712f8a716908f492b70a89264fcc9303cc2fa1ce8c7796d8e512c0c",
+    "manifest_sha256": "366bf4495edbb68e2997c58b1bea4fde76a29e52dda8fd3e795c296d37c808c2"
+  },
+  "router": {
+    "procedure_file": "data/diagnostic_k2/procedure_k2.json",
+    "procedure_id": "router-k2-calibrated",
+    "procedure_sha256": "e7f2daa76d848f88e89fac6a850baef854839945df478380a04992c455caa961",
+    "report_keys": [
+      "plan_id",
+      "procedure_id",
+      "procedure_sha256",
+      "manifest_sha256",
+      "retrieval_config_sha256",
+      "primary_rotation",
+      "retrieval",
+      "calibration",
+      "rotations"
+    ]
+  },
+  "heldout": {
+    "operational": {
+      "max_in_flight": 4,
+      "stop_after_timeouts": 4
+    },
+    "plan_id": "diagnostic-k2-heldout-v1",
+    "primary_rotation": 1,
+    "dataset": "bidlqa-train-retrieval"
+  },
+  "note": "MC-96 is the single evaluation of K2 (openspec change diagnostic-k2-retrieval): ViBidLQA train questions not used by MC-95, asked without their passage and answered closed book (B), with the two BM25 passages of the frozen ViBidLQA passage corpus (K, KS) and with their own passage (O, ceiling); the K2 calibration procedure chooses among always-B, always-K, the K cascade and always-KS. The artifacts and cards MC-90 to MC-95 are not changed."
+}
