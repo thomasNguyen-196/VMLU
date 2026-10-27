@@ -2670,3 +2670,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures, as MC-91 and MC-92 |
 | `details` | `docs/measurement_cards/MC-93-diagnostic-prospective-core.md` |
 | `outputs` | `all_res/diagnostic_prospective/core/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-94 — Qwen3.5-9B-65K (IEC) / router v2 held-out test / B and S on 600 items no router has seen
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-94` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | 300 VMLU valid items (by category) and 300 ViBidLQA val items (seed 42), never used to design or evaluate a router; arms B and S with two draws each; 2,400 attempts. Single evaluation of router v2 (`router_v2.json`, SHA-256 `0585b9a8…`: Vi-DROP to S, otherwise B answers twice and the item goes to S when the two answers differ) against always-B and always-S; multiple choice is the primary family |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 2 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-93 |
+| `details` | `docs/measurement_cards/MC-94-diagnostic-router-v2-heldout.md` |
+| `outputs` | `all_res/diagnostic_router_v2/heldout/qwen3-5-9b-65k-prospective/`; no upload |
