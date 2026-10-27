@@ -28,7 +28,8 @@ it, in a group that shares a target with the condition.
 A rule may also declare a probe (router v2, openspec change diagnostic-router-v2): arm B answered twice, and a
 condition may test whether the two parsed answers agree ("probe": "agree" | "disagree"). The probe runs only
 when a condition whose other features hold needs it; when the decision is then B, the first probe answer is the
-answer. Only the model's own answers enter the probe, never gold or scores.
+answer. Only the model's own answers enter the probe, never gold or scores. The probe may also be arm K
+(openspec change diagnostic-k2-retrieval): K answers twice, and when the decision is K the first answer stands.
 
     {"router_id": "router-v2", "probe": {"arm": "B", "samples": 2, "agreement": "normalized-answer-v1"},
      "conditions": [{"arm": "S", "targets": ["reasoning_gap"], "when": {"probe": "disagree"}}],
@@ -70,6 +71,7 @@ FEATURES = ("dataset", "b_prompt_chars", "question_cues", "probe")
 LENGTH_BOUNDS = ("at_least", "below")
 RULE_KEYS = ("router_id", "description", "probe", "conditions", "default")
 PROBE_KEYS = ("arm", "samples", "agreement")
+PROBE_ARMS = ("B", "K")
 AGREEMENT_RULES = ("normalized-answer-v1",)
 PROBE_OUTCOMES = ("agree", "disagree")
 CONDITION_KEYS = ("arm", "targets", "when", "note")
@@ -165,8 +167,8 @@ def _check_decision(decision: Any, where: str, keys: tuple[str, ...], required: 
 def _check_probe(probe: Any) -> None:
     if not isinstance(probe, dict) or set(probe) != set(PROBE_KEYS):
         raise _fail(f"the probe must have exactly the keys {list(PROBE_KEYS)}")
-    if probe["arm"] != "B":
-        raise _fail(f"the probe answers with arm B, not {probe['arm']!r}")
+    if probe["arm"] not in PROBE_ARMS:
+        raise _fail(f"the probe answers with {' or '.join(f'arm {arm}' for arm in PROBE_ARMS)}, not {probe['arm']!r}")
     if isinstance(probe["samples"], bool) or probe["samples"] != 2:
         raise _fail("the probe compares exactly 2 samples")
     if probe["agreement"] not in AGREEMENT_RULES:
@@ -335,7 +337,7 @@ class Decision:
     arm: str
     targets: tuple[str, ...]
     condition: int | None  # 1-based number of the deciding condition; None for the default
-    probed: bool = False   # the B probe ran before the decision (its two answers are part of the cost)
+    probed: bool = False   # the probe ran before the decision (its two answers are part of the cost)
 
 
 def answers_agree(first: str, second: str, task: str) -> bool:

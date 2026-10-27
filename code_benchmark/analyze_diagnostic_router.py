@@ -35,6 +35,7 @@ Usage (repo root):
   .venv/bin/python -m code_benchmark.analyze_diagnostic_router heldout-semantic --run-dir <held-out output dir>
   .venv/bin/python -m code_benchmark.analyze_diagnostic_router heldout-v3 --run-dir <held-out v3 output dir>
   .venv/bin/python -m code_benchmark.analyze_diagnostic_router calibration-check [--out <json>]
+  .venv/bin/python -m code_benchmark.analyze_diagnostic_router k2 --run-dir <K2 output dir>
 
 heldout-semantic (descriptive, after the single held-out evaluation): the reading items whose exact match differs
 between B and S in the first rotation, set against the AI-assisted semantic review of the answer that lost
@@ -46,6 +47,11 @@ test items; v3, the frozen v2 rule, always-B and always-S are compared per famil
 against always-S (Holm over the two), and per dataset the choice is set against the best policy in hindsight.
 calibration-check (exploratory design information): the same procedure on random calibration samples of the used
 draws (wide and MC-94), scored on each dataset's other items.
+
+k2 (openspec change diagnostic-k2-retrieval, run once): ViBidLQA questions without their passage. Per rotation the
+60 calibration items choose among always-B (closed book), always-K, the K cascade and always-KS by mean token-F1
+(`diagnostic_k2`), and the emitted rule routes the 300 test items; the router is tested against always-K and
+always-KS with paired sign-flip tests on token-F1 (Holm over the two), next to the O ceiling and the retrieval hits.
 """
 from __future__ import annotations
 
@@ -62,6 +68,7 @@ try:
     from code_benchmark import diagnostic_calibration as cal
     from code_benchmark import diagnostic_heldout as dh
     from code_benchmark import diagnostic_heldout_v3 as h3
+    from code_benchmark import diagnostic_k2 as k2
     from code_benchmark import diagnostic_prospective as dp
     from code_benchmark import diagnostic_router as router
     from code_benchmark import diagnostic_semantic_review as sr
@@ -72,6 +79,7 @@ except ImportError:  # executed from code_benchmark/
     import diagnostic_calibration as cal
     import diagnostic_heldout as dh
     import diagnostic_heldout_v3 as h3
+    import diagnostic_k2 as k2
     import diagnostic_prospective as dp
     import diagnostic_router as router
     import diagnostic_semantic_review as sr
@@ -98,6 +106,11 @@ V3_PLAN_ID = "diagnostic-router-v3-heldout-v1"
 V3_REPORT_KEYS = ("plan_id", "procedure_id", "procedure_sha256", "manifest_sha256", "v2_rule_sha256",
                   "primary_family", "primary_rotation", "calibration", "families")
 V3_POLICIES = ("v3", "v2", "always_B", "always_S")
+K2_PLAN_ID = "diagnostic-k2-heldout-v1"
+K2_REPORT_KEYS = ("plan_id", "procedure_id", "procedure_sha256", "manifest_sha256", "retrieval_config_sha256",
+                  "primary_rotation", "retrieval", "calibration", "rotations")
+K2_POLICIES = ("router", *k2.CANDIDATES, "O")
+K2_SIGN_FLIPS, K2_BOOTSTRAP, K2_SEED = 20_000, 2_000, 7
 
 
 def _fail(message: str) -> SystemExit:
@@ -599,6 +612,147 @@ def calibration_check(procedure: dict[str, Any], rows: list[dict[str, Any]], *, 
     return result
 
 
+# ---------------------------------------------------------------- K2: calibration, then one evaluation
+
+def sign_flip_p(differences: list[float], resamples: int = K2_SIGN_FLIPS, seed: int = K2_SEED) -> float:
+    """Two-sided paired sign-flip test of a zero mean difference: Monte Carlo over random signs, the observed
+    arrangement counted once, so p = (1 + hits) / (1 + resamples)."""
+    nonzero = [value for value in differences if value != 0]
+    if not nonzero:
+        return 1.0
+    observed = abs(sum(nonzero))
+    rng = random.Random(seed)
+    hits = 0
+    for _ in range(resamples):
+        signs = rng.getrandbits(len(nonzero))
+        total = sum(value if signs >> index & 1 else -value for index, value in enumerate(nonzero))
+        hits += abs(total) >= observed - 1e-12
+    return (1 + hits) / (1 + resamples)
+
+
+def bootstrap_mean_ci(values: list[float], resamples: int = K2_BOOTSTRAP, seed: int = K2_SEED) -> list[float] | None:
+    """95% percentile bootstrap interval of a mean, in percent."""
+    if not values:
+        return None
+    rng = random.Random(seed)
+    means = sorted(statistics.fmean(rng.choices(values, k=len(values))) for _ in range(resamples))
+    return [100 * means[int(0.025 * resamples)], 100 * means[int(0.975 * resamples) - 1]]
+
+
+def _k2_policy_block(keys: list[str], f1: dict[str, float], em: dict[str, bool], tokens: dict[str, int | None]
+                     ) -> dict[str, Any]:
+    values = [f1[key] for key in keys]
+    correct = sum(em[key] for key in keys)
+    mean, unknown = _known_mean(tokens[key] for key in keys)
+    return {"n": len(keys), "mean_token_f1": statistics.fmean(values) if values else None,
+            "token_f1_ci95_pct": bootstrap_mean_ci(values), "em_correct": correct,
+            "em": correct / len(keys) if keys else None, "em_ci95_pct": wilson_interval(correct, len(keys)),
+            "mean_total_tokens": mean, "tokens_unknown_items": unknown}
+
+
+def evaluate_k2(procedure: dict[str, Any], procedure_sha256: str, registered: dict[str, Any], manifest: dict[str, Any],
+                items: list[v1.EvalItem], rows: list[dict[str, Any]], protocol: dict[str, Any]) -> dict[str, Any]:
+    """The single evaluation of K2 (spec diagnostic-k2-router). Per rotation the calibration items choose among
+    always-B, always-K, the K cascade and always-KS and the emitted rule routes the test items. For the router, each
+    candidate and O: mean token-F1 with a bootstrap interval, exact match with a Wilson interval and mean reported
+    tokens (both K answers whenever the probe ran); sign-flip tests of the router against always-K and always-KS on
+    token-F1 with Holm over the two; the best candidate in hindsight, the regret and the retrieval split."""
+    for name, actual in (("procedure", procedure_sha256), ("manifest", manifest["manifest_sha256"]),
+                         ("retrieval_config", manifest["retrieval_config_sha256"])):
+        if actual != registered.get(f"{name}_sha256"):
+            raise _fail(f"{name} sha256 {actual} differs from the registered {registered.get(f'{name}_sha256')}; "
+                        "nothing is reported")
+    keyed = {dp.item_key(item.dataset_id, item.item_id): item for item in items}
+    calibration = list(manifest["calibration_items"])
+    if not set(calibration) <= set(keyed) or len(calibration) != procedure["calibration_items"]:
+        raise _fail("the calibration items must be K2 items, as many as the procedure takes")
+    test = sorted(set(keyed) - set(calibration))
+    groups = an.group_attempts(rows)
+    for key in keyed:
+        for arm in k2.ARMS:
+            draws = tuple(an.replicate_number(a) for a in groups.get((arm, key), []))
+            if draws != WIDE_DRAWS:
+                raise _fail(f"K2 item {key} needs draws {WIDE_DRAWS} of arm {arm}, found {draws}")
+    features = {key: k2.request_features(item, protocol) for key, item in keyed.items()}
+    retrieval = manifest["retrieval"]
+    hit = {key: retrieval[key]["own_rank"] is not None and retrieval[key]["own_rank"] <= 2 for key in keyed}
+    report_calibration: dict[str, Any] = {}
+    report_rotations: dict[str, Any] = {}
+    discordant: list[dict[str, Any]] = []
+    for rotation, (answer, probe, _) in enumerate(ROTATIONS, 1):
+        def draws(key: str, answer: int = answer, probe: int = probe) -> tuple[dict[str, Any], ...]:
+            return (groups[("B", key)][answer], groups[("K", key)][answer], groups[("K", key)][probe],
+                    groups[("KS", key)][answer])
+        cells = [draws(key) for key in calibration]
+        chosen = k2.choose(procedure, cells)
+        spent = [_tokens(*cell) for cell in cells]
+        chosen["calibration_tokens"] = None if None in spent else sum(spent)  # type: ignore[arg-type]
+        rule = k2.emit_rule(procedure, chosen["choice"], f"{procedure['procedure_id']}-rotation-{rotation}")
+        report_calibration[str(rotation)] = {**chosen, "rule": rule}
+        f1: dict[str, dict[str, float]] = defaultdict(dict)
+        em: dict[str, dict[str, bool]] = defaultdict(dict)
+        tokens: dict[str, dict[str, int | None]] = defaultdict(dict)
+        router_arms: Counter = Counter()
+        for key in test:
+            b, k, k_second, ks = draws(key)
+            agree = router.answers_agree(str(k.get("prediction") or ""), str(k_second.get("prediction") or ""), "reading")
+            decision = router.route(rule, features[key], agree)
+            router_arms[decision.arm] += 1
+            attempt = {"B": b, "K": k, "KS": ks}[decision.arm]
+            cost = (_tokens(attempt) if not decision.probed else
+                    _tokens(k, k_second) if attempt is k else _tokens(k, k_second, attempt))
+            returned = {"router": (attempt, cost),
+                        **{candidate: k2.outcome(candidate, b, k, k_second, ks) for candidate in k2.CANDIDATES},
+                        "O": (groups[("O", key)][answer], _tokens(groups[("O", key)][answer]))}
+            for policy, (row, row_tokens) in returned.items():
+                f1[policy][key] = cal.score_of(row, "reading")
+                em[policy][key] = bool(an.attempt_correct(row))
+                tokens[policy][key] = row_tokens
+            if rotation == 1 and (em["router"][key] != em["always_K"][key] or em["router"][key] != em["always_KS"][key]):
+                discordant.append({"item_key": key, "arm": decision.arm, "own_passage_retrieved": hit[key],
+                                   **{policy: em[policy][key] for policy in ("router", "always_K", "always_KS")}})
+        policies = {policy: _k2_policy_block(test, f1[policy], em[policy], tokens[policy]) for policy in K2_POLICIES}
+        tests = {}
+        for other in ("always_K", "always_KS"):
+            differences = [f1["router"][key] - f1[other][key] for key in test]
+            rescues = sum(em["router"][key] and not em[other][key] for key in test)
+            regressions = sum(em[other][key] and not em["router"][key] for key in test)
+            tests[f"router_vs_{other}"] = {
+                "mean_token_f1_difference": statistics.fmean(differences) if differences else None,
+                "items_differing": sum(value != 0 for value in differences),
+                "sign_flip_p": sign_flip_p(differences),
+                "em_rescues": rescues, "em_regressions": regressions,
+                "em_mcnemar_p": an.mcnemar_exact_p(regressions, rescues)}
+        adjusted = an.holm_adjust({name: result["sign_flip_p"] for name, result in tests.items()})
+        for name, result in tests.items():
+            result["sign_flip_p_holm"] = adjusted[name]
+        means = {candidate: policies[candidate]["mean_token_f1"] for candidate in k2.CANDIDATES}
+        best = max(means.values())
+        best_in_hindsight = [c for c in k2.CANDIDATES if best - means[c] <= procedure["equal_within"]][-1]
+        by_retrieval = {}
+        for label, subset in (("own_passage_in_top_2", [key for key in test if hit[key]]),
+                              ("own_passage_missed", [key for key in test if not hit[key]])):
+            by_retrieval[label] = {"items": len(subset), **{
+                policy: statistics.fmean(f1[policy][key] for key in subset) if subset else None
+                for policy in ("always_B", "always_K", "always_KS", "O")}}
+        report_rotations[str(rotation)] = {
+            "test_items": len(test), "choice": chosen["choice"], "router_arms": dict(sorted(router_arms.items())),
+            "policies": policies, "tests": tests, "best_in_hindsight": best_in_hindsight,
+            "regret": means[best_in_hindsight] - policies["router"]["mean_token_f1"], "by_retrieval": by_retrieval,
+        }
+    report_rotations["1"]["discordant"] = discordant
+    ranks = {role: [retrieval[key]["own_rank"] for key in keys] for role, keys in (("calibration", calibration), ("test", test))}
+    return {
+        "plan_id": K2_PLAN_ID, "procedure_id": procedure["procedure_id"], "procedure_sha256": procedure_sha256,
+        "manifest_sha256": manifest["manifest_sha256"], "retrieval_config_sha256": manifest["retrieval_config_sha256"],
+        "primary_rotation": 1,
+        "retrieval": {role: {"items": len(values), "own_rank_1": sum(rank == 1 for rank in values),
+                             "own_in_top_2": sum(rank is not None and rank <= 2 for rank in values),
+                             "own_not_ranked": sum(rank is None for rank in values)} for role, values in ranks.items()},
+        "calibration": report_calibration, "rotations": report_rotations,
+    }
+
+
 # ---------------------------------------------------------------- core: one evaluation
 
 def _comparisons(keys: list[str], arms_for: dict[str, Callable[[str], str]],
@@ -838,6 +992,36 @@ def _calibration_check_cli(args: argparse.Namespace) -> int:
     return 0
 
 
+def _k2_cli(args: argparse.Namespace) -> int:
+    registration = json.loads(k2.REGISTRATION_PATH.read_text(encoding="utf-8"))
+    entry, frozen = registration["router"], registration["frozen"]
+    if entry.get("report_keys") != list(K2_REPORT_KEYS):
+        raise _fail("the registered K2 report keys differ from the evaluator's")
+    protocol = k2.load_protocol()
+    procedure, digest = k2.load_procedure()
+    manifest, rebuilt = k2.build_manifest(protocol)
+    if manifest != k2.load_frozen_manifest():
+        raise _fail("the rebuilt K2 manifest differs from the frozen one")
+    report = evaluate_k2(procedure, digest, {**entry, "manifest_sha256": frozen["manifest_sha256"],
+                                             "retrieval_config_sha256": frozen["retrieval_config_sha256"]},
+                         manifest, k2.base_items(rebuilt), read_jsonl(args.run_dir / "scores.jsonl"), protocol)
+    out = args.out or args.run_dir / "analysis" / "k2_report.json"
+    _write_json(out, report)
+    print("retrieval: " + "  ".join(f"{role} {r['own_in_top_2']}/{r['items']} own passage in the top 2"
+                                    for role, r in report["retrieval"].items()))
+    for rotation, block in report["rotations"].items():
+        calibration = report["calibration"][rotation]
+        print(f"rotation {rotation}: calibration chose {calibration['choice']} ("
+              + ", ".join(f"{c} {v:.3f}" for c, v in calibration["scores"].items()) + f"); router arms {block['router_arms']}")
+        print("  " + "  ".join(f"{name} F1 {p['mean_token_f1']:.3f} EM {p['em_correct']}/{p['n']} tok "
+                               f"{p['mean_total_tokens'] or 0:.0f}" for name, p in block["policies"].items()))
+        print("  " + "  ".join(f"{name}: {t['mean_token_f1_difference']:+.4f} holm {t['sign_flip_p_holm']:.3f}"
+                               for name, t in block["tests"].items())
+              + f"  |  best in hindsight {block['best_in_hindsight']}, regret {block['regret']:+.4f}")
+    print(f"report -> {out}")
+    return 0
+
+
 def _print_probe_fit(fit: dict[str, Any]) -> None:
     def pct(value):
         return "—" if value is None else f"{100 * value:5.1f}"
@@ -895,6 +1079,9 @@ def main(argv: list[str] | None = None) -> int:
     check = sub.add_parser("calibration-check", help="exploratory: the v3 procedure on the used draws (wide, MC-94)")
     check.add_argument("--resamples", type=int, default=300)
     check.add_argument("--out", type=Path, help="write the check as JSON")
+    kk = sub.add_parser("k2", help="the single evaluation of K2 (MC-96)")
+    kk.add_argument("--run-dir", type=Path, required=True, help="K2 output dir (scores.jsonl)")
+    kk.add_argument("--out", type=Path, help="default: <run-dir>/analysis/k2_report.json")
     args = ap.parse_args(argv)
     if args.command == "heldout-semantic":
         return _heldout_semantic_cli(args)
@@ -902,6 +1089,8 @@ def main(argv: list[str] | None = None) -> int:
         return _heldout_v3_cli(args)
     if args.command == "calibration-check":
         return _calibration_check_cli(args)
+    if args.command == "k2":
+        return _k2_cli(args)
     protocol = dp.load_protocol()
     lexicon, lexicon_digest = router.load_lexicon(args.lexicon)
     if args.command == "heldout":

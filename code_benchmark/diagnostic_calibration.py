@@ -66,6 +66,8 @@ def validate_procedure(procedure: Any) -> dict[str, Any]:
     if procedure["tie"] != TIE:
         raise _fail(f"the tie rule must be {TIE}")
     router._check_probe(procedure["probe"])  # noqa: SLF001  # the probe of router v2
+    if procedure["probe"]["arm"] != "B":
+        raise _fail("the v2 cascade probes arm B")
     return procedure
 
 
