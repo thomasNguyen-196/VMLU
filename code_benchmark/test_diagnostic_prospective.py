@@ -528,6 +528,12 @@ class TestRunner(unittest.TestCase):
         self.assertFalse(missing.ok)
         self.assertIn("cannot read router rule", missing.detail)
 
+    def test_core_refuses_limits_other_than_its_registered_ones(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit):
+            runner.main(["--phase", "core", "--max-in-flight", "8"])
+        self.assertIn("differs from the 4 registered for core", err.getvalue())
+
     def test_hash_drift_and_wrong_endpoint_block_execution(self):
         drifted = {**self.manifest_stub(), "prompt_templates_sha256": "x" * 64}
         gates = self.gates("wide", manifest=drifted)

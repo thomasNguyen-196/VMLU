@@ -520,12 +520,14 @@ def main(argv: list[str] | None = None) -> int:
     if supplement and supplement["base_phase"] != args.phase:
         parser.error(f"supplement {args.supplement} belongs to phase {supplement['base_phase']}, not {args.phase}")
     registered = supplement_registration_view(registration, supplement, args.phase) if supplement else registration
-    operational = (supplement or {}).get("operational") or {}
-    for flag in ("max_in_flight", "stop_after_timeouts"):  # registered limits are part of the supplement's condition
+    # registered limits (a supplement's, or the core entry's) apply by default and other values are refused
+    operational = ((supplement or {}).get("operational") if supplement
+                   else (registration.get(args.phase) or {}).get("operational")) or {}
+    for flag in ("max_in_flight", "stop_after_timeouts"):
         value = getattr(args, flag)
         if value is not None and operational.get(flag) not in (None, value):
             parser.error(f"--{flag.replace('_', '-')} {value} differs from the {operational[flag]} registered "
-                         f"for supplement {args.supplement}")
+                         f"for {args.supplement or args.phase}")
         if value is None:
             setattr(args, flag, operational.get(flag))
     evidence_by_arm: dict[str, dict[str, list[dict[str, Any]]]] = {}
