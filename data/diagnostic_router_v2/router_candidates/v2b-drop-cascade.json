@@ -1,0 +1,31 @@
+{
+  "router_id": "router-v2b-drop-cascade",
+  "description": "Need and uncertainty. Vi-DROP items go to S as in router v1, without a probe; every other item is answered by B twice and goes to S only when the two parsed answers differ.",
+  "probe": {
+    "arm": "B",
+    "samples": 2,
+    "agreement": "normalized-answer-v1"
+  },
+  "conditions": [
+    {
+      "arm": "S",
+      "targets": ["reasoning_gap", "reading_representation_gap"],
+      "when": {
+        "dataset": ["vi-multimodel-v1-vi-drop-200"]
+      },
+      "note": "as router v1: Vi-DROP questions ask for counting, arithmetic and comparison"
+    },
+    {
+      "arm": "S",
+      "targets": ["reasoning_gap", "reading_representation_gap"],
+      "when": {
+        "probe": "disagree"
+      },
+      "note": "the two B answers differ, so the model is unsure: escalate; S cannot separate a reading failure from a reasoning one, so it targets both"
+    }
+  ],
+  "default": {
+    "arm": "B",
+    "targets": []
+  }
+}

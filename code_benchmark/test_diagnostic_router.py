@@ -432,6 +432,101 @@ class TestDesignFit(unittest.TestCase):
             ar.design_fit(router.validate_rule(DROP_RULE, DATASETS), "h" * 64, items, rows)
 
 
+# ---------------------------------------------------------------- router v2: the B probe
+
+PROBE = {"arm": "B", "samples": 2, "agreement": "normalized-answer-v1"}
+ESCALATE = cond("S", ["reasoning_gap", "reading_representation_gap"], probe="disagree")
+
+
+def probe_rule(*conditions: dict) -> dict:
+    return {**rule(*conditions), "probe": dict(PROBE)}
+
+
+DROP_THEN_ESCALATE = probe_rule(cond("S", ["reasoning_gap"], dataset=[DROP]), ESCALATE)
+
+
+def probe_case():
+    """Two draws of B and S with parsed answers. d1 (DROP): B answers 5 and 7, both wrong; S right twice.
+    s1 (SQuAD): B answers 'Hà Nội.' and 'hà nội' (they agree), both right; S wrong then right.
+    m1 (Legal MC): B answers A and C (they differ), both wrong; S right then wrong. Tokens: B 100, S 500."""
+    items = [make_item(DROP, "d1"), make_item(SQUAD, "s1"), make_item(MC, "m1")]
+    rows = []
+    for key, draws in ((f"{DROP}:d1", {"B": [(0, "5"), (0, "7")], "S": [(1, "9"), (1, "9")]}),
+                       (f"{SQUAD}:s1", {"B": [(1, "Hà Nội."), (1, "hà nội")], "S": [(0, "Huế"), (1, "Hà Nội")]}),
+                       (f"{MC}:m1", {"B": [(0, "A"), (0, "C")], "S": [(1, "B"), (0, "D")]})):
+        for arm, answers in draws.items():
+            for n, (ok, answer) in enumerate(answers, 1):
+                row = {**attempt(key, arm, n, bool(ok), 100 if arm == "B" else 500), "prediction": answer}
+                if not key.startswith(MC):
+                    row["em"] = row.pop("correct")
+                rows.append(row)
+    return items, rows
+
+
+class TestProbeGrammar(unittest.TestCase):
+    def test_a_probe_condition_needs_a_declared_probe_of_two_b_answers(self):
+        router.validate_rule(copy.deepcopy(DROP_THEN_ESCALATE), DATASETS)
+        raises(self, rule(ESCALATE), "tests the probe but the rule declares no probe")
+        raises(self, {**DROP_THEN_ESCALATE, "probe": {**PROBE, "arm": "S"}}, "arm B")
+        raises(self, {**DROP_THEN_ESCALATE, "probe": {**PROBE, "samples": 3}}, "exactly 2 samples")
+        raises(self, {**DROP_THEN_ESCALATE, "probe": {**PROBE, "agreement": "f1>0.8"}}, "unknown agreement rule")
+        raises(self, probe_rule(cond("S", ["reasoning_gap"], probe="maybe")), "probe takes one of")
+
+    def test_the_committed_v2_candidates_load(self):
+        candidates = sorted((dp.ROOT / "data/diagnostic_router_v2/router_candidates").glob("*.json"))
+        self.assertEqual([path.stem for path in candidates], ["v2a-cascade", "v2b-drop-cascade"])
+        for path in candidates:
+            self.assertEqual(router.load_rule(path, dp.load_protocol()["datasets"])[0]["probe"], PROBE)
+
+    def test_answers_agree_on_parsed_answers_and_never_on_empty_ones(self):
+        self.assertTrue(router.answers_agree("B", " b ", "multiple_choice"))
+        self.assertFalse(router.answers_agree("B", "C", "multiple_choice"))
+        self.assertFalse(router.answers_agree("", "", "multiple_choice"))
+        self.assertTrue(router.answers_agree("Hà Nội.", " hà  nội ", "reading"))
+        self.assertFalse(router.answers_agree("24 giờ", "24 giờ kể từ khi mở thầu", "reading"))
+
+
+class TestProbeRouting(unittest.TestCase):
+    def test_static_features_decide_before_the_probe_runs(self):
+        the_rule = router.validate_rule(copy.deepcopy(DROP_THEN_ESCALATE), DATASETS)
+        drop = router.features_of(router.request_view(make_item(DROP, "d1")))
+        squad = router.features_of(router.request_view(make_item(SQUAD, "s1")))
+        self.assertFalse(router.needs_probe(the_rule, drop))
+        self.assertEqual(router.route(the_rule, drop), router.Decision("S", ("reasoning_gap",), 1, False))
+        self.assertTrue(router.needs_probe(the_rule, squad))
+        with self.assertRaises(SystemExit):
+            router.route(the_rule, squad)  # the probe outcome is needed and was not given
+        self.assertEqual(router.route(the_rule, squad, False), router.Decision("S", tuple(ESCALATE["targets"]), 2, True))
+        self.assertEqual(router.route(the_rule, squad, True), router.Decision("B", (), None, True))
+
+
+class TestProbeDesignFit(unittest.TestCase):
+    def test_two_rotations_with_the_probe_cost(self):
+        items, rows = probe_case()
+        fit = ar.design_fit_probe(router.validate_rule(copy.deepcopy(DROP_THEN_ESCALATE), DATASETS), "h" * 64,
+                                  items, rows)
+        # rule: d1 S (1, 1), s1 B after an agreeing probe (1, 1), m1 escalated to S (S1 right, S2 wrong) -> 5/6
+        self.assertAlmostEqual(fit["accuracy"]["rule"], 5 / 6)
+        self.assertAlmostEqual(fit["accuracy"]["always_B"], 2 / 6)   # s1 only
+        self.assertAlmostEqual(fit["accuracy"]["always_S"], 4 / 6)   # d1 twice, s1 S2, m1 S1
+        # tokens: d1 S 500 (no probe); s1 B1 + B2 = 200; m1 B1 + B2 + S = 700 -> (500 + 200 + 700) / 3
+        self.assertAlmostEqual(fit["mean_total_tokens"]["rule"], 1400 / 3)
+        self.assertAlmostEqual(fit["probed_share"], 4 / 6)
+        self.assertAlmostEqual(fit["escalated_share"], 2 / 6)
+        # where the B answers agree (s1) B is always right; where they differ (d1, m1) S is right 3 times in 4
+        self.assertEqual((fit["probe_split"]["agree"]["cells"], fit["probe_split"]["agree"]["always_B"]), (2, 1.0))
+        self.assertAlmostEqual(fit["probe_split"]["disagree"]["always_S"], 0.75)
+        self.assertFalse({key for key in all_keys(fit) if "mcnemar" in key or key.endswith("_p") or "ci95" in key})
+
+    def test_a_rule_without_probe_fits_as_the_mean_of_two_draws(self):
+        items, rows = probe_case()
+        plain = router.validate_rule(copy.deepcopy(DROP_RULE), DATASETS)
+        rotated, drawn = ar.design_fit_probe(plain, "h" * 64, items, rows), ar.design_fit(plain, "h" * 64, items, rows)
+        self.assertAlmostEqual(rotated["accuracy"]["rule"], drawn["accuracy"]["router"])
+        self.assertAlmostEqual(rotated["mean_total_tokens"]["rule"], drawn["mean_total_tokens"]["router"])
+        self.assertEqual(rotated["probed_share"], 0)
+
+
 # ---------------------------------------------------------------- anchor diagnosis
 
 FINAL = ("FINAL semantic_correctness=incorrect | gold_validity=valid | input_evidence_sufficiency=sufficient | "

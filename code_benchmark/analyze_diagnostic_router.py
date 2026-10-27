@@ -7,6 +7,10 @@ and 12, spec `diagnostic-router`).
   items of the first draw pair, each routed group's exact-match rescues and regressions of S against B are
   set against the semantic review of task 12: a rescue whose B answer was already right in meaning, or a
   regression whose S answer was, is a measurement effect.
+* design_fit_probe (wide, design only, router v2): a rule with a B probe is fitted through two rotations,
+  (B1 answers, B2 is the probe's second answer, S1 on escalation) and (B2, B1, S2), and the rotations are
+  averaged. The cost of an item includes both probe answers whenever the probe ran. It also reports the share of
+  escalated items and B and S accuracy where the two B answers agree and where they differ.
 * best_fixed_arm (wide): B or S, whichever has the higher mean accuracy over its two draws (a tie goes to the
   arm with fewer mean reported tokens).
 * design-fit and evaluate load the rule with the cue lexicon (`diagnostic_router.load_lexicon`): a cue outside
@@ -184,6 +188,87 @@ def design_fit(rule: dict[str, Any], rule_sha256: str, items: list[v1.EvalItem],
     return report
 
 
+ROTATIONS = ((0, 1, 0), (1, 0, 1))  # (index of the answering B draw, of the probe's second B draw, of the S draw)
+
+
+def _tokens(*attempts: dict[str, Any]) -> int | None:
+    values = [dp.reported_tokens(attempt) for attempt in attempts]
+    return None if any(value is None for value in values) else sum(values)  # type: ignore[arg-type]
+
+
+def design_fit_probe(rule: dict[str, Any], rule_sha256: str, items: list[v1.EvalItem], rows: list[dict[str, Any]],
+                     semantic: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+    """Design fit of a rule that may probe B, on items with two draws of B and of S, over two rotations."""
+    groups = an.group_attempts(rows)
+    keyed = {dp.item_key(item.dataset_id, item.item_id): item for item in items}
+    _two_draws(groups, list(keyed))
+    cells, first_rotation = [], {}
+    for key, item in keyed.items():
+        features = router.features_of(router.request_view(item))
+        for rotation, (answer, probe, s_draw) in enumerate(ROTATIONS, 1):
+            b1, b2, s = groups[("B", key)][answer], groups[("B", key)][probe], groups[("S", key)][s_draw]
+            agree = router.answers_agree(str(b1.get("prediction") or ""), str(b2.get("prediction") or ""), item.task)
+            decision = router.route(rule, features, agree)
+            chosen = {"B": b1, "S": s}.get(decision.arm)  # K and KS have no wide draw
+            if chosen is None:
+                cost = None
+            elif not decision.probed:
+                cost = _tokens(chosen)
+            else:  # both probe answers are paid, and the first one is the B answer
+                cost = _tokens(b1, b2) if chosen is b1 else _tokens(b1, b2, chosen)
+            cells.append({"key": key, "dataset": item.dataset_id, "rotation": rotation, "agree": agree,
+                          "decision": decision, "rule": None if chosen is None else an.attempt_correct(chosen),
+                          "always_B": an.attempt_correct(b1), "always_S": an.attempt_correct(s),
+                          "tokens": {"rule": cost, "always_B": _tokens(b1), "always_S": _tokens(s)}})
+            if rotation == 1:
+                first_rotation[key] = decision
+    policies = ("rule", "always_B", "always_S")
+
+    def summary(subset: list[dict[str, Any]]) -> dict[str, Any]:
+        measured = [cell for cell in subset if cell["rule"] is not None]
+        return {"cells": len(subset), **{policy: statistics.fmean(c[policy] for c in measured) if measured else None
+                                         for policy in policies}}
+
+    by_condition: dict[int | None, list[str]] = defaultdict(list)
+    for key, decision in first_rotation.items():
+        by_condition[decision.condition].append(key)
+    measured = [cell for cell in cells if cell["rule"] is not None]
+    report: dict[str, Any] = {
+        "design_fit": True, "note": "wide outcomes informed the rule: design fit, no test and no interval",
+        "rule_id": rule["router_id"], "rule_sha256": rule_sha256, "items": len(keyed), "rotations": len(ROTATIONS),
+        "routed": dict(sorted(Counter(cell["decision"].arm for cell in cells).items())),
+        "not_measurable_on_wide": len(cells) - len(measured),
+        "accuracy": summary(cells),
+        "accuracy_by_rotation": {str(r): summary([c for c in cells if c["rotation"] == r]) for r in (1, 2)},
+        "mean_total_tokens": {policy: _known_mean(c["tokens"][policy] for c in measured)[0] for policy in policies},
+        "probed_share": statistics.fmean(cell["decision"].probed for cell in cells),
+        "escalated_share": statistics.fmean(cell["decision"].probed and cell["decision"].arm != "B" for cell in cells),
+        "probe_split": {name: summary([c for c in cells if c["agree"] is flag])
+                        for name, flag in (("agree", True), ("disagree", False))},
+        "by_dataset": {dataset: {**summary(subset),
+                                 "escalated_share": statistics.fmean(c["decision"].probed and c["decision"].arm != "B"
+                                                                     for c in subset),
+                                 "mean_total_tokens_rule": _known_mean(c["tokens"]["rule"] for c in subset)[0]}
+                       for dataset, subset in sorted(_group_by(cells, "dataset").items())},
+        "by_condition": [{"condition": condition or "default",
+                          "arm": (rule["conditions"][condition - 1] if condition else rule["default"])["arm"],
+                          **summary([c for c in cells if c["decision"].condition == condition])}
+                         for condition in sorted({c["decision"].condition for c in cells},
+                                                 key=lambda c: (c is None, c or 0))],
+        "semantic_review": None,
+    }
+    if semantic is not None:  # the semantic review covers the first draw pair, that is the first rotation
+        report["semantic_review"] = _semantic_block(rule, by_condition, groups, semantic)
+    return report
+
+
+def _group_by(cells: list[dict[str, Any]], field: str) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for cell in cells:
+        grouped[cell[field]].append(cell)
+    return grouped
+
+
 def _semantic_block(rule: dict[str, Any], by_condition: dict[int | None, list[str]],
                     groups: dict[tuple[str, str], list[dict[str, Any]]], semantic: dict[str, dict[str, Any]]) -> dict[str, Any]:
     rows = []
@@ -340,6 +425,27 @@ def _print_fit(fit: dict[str, Any]) -> None:
               f"({group['em_regressions_measurement_effect']} measurement)")
 
 
+def _print_probe_fit(fit: dict[str, Any]) -> None:
+    def pct(value):
+        return "—" if value is None else f"{100 * value:5.1f}"
+    acc, tokens = fit["accuracy"], fit["mean_total_tokens"]
+    print(f"{fit['rule_id']}  sha256 {fit['rule_sha256'][:12]}  routed (item x rotation) {fit['routed']}  "
+          f"probed {pct(fit['probed_share'])}%  escalated {pct(fit['escalated_share'])}%")
+    print(f"  accuracy (mean of two rotations)  rule {pct(acc['rule'])}  always-B {pct(acc['always_B'])}  "
+          f"always-S {pct(acc['always_S'])}   tokens rule {tokens['rule'] or 0:.0f}  B {tokens['always_B'] or 0:.0f}  "
+          f"S {tokens['always_S'] or 0:.0f}")
+    for name, split in fit["probe_split"].items():
+        print(f"  probe {name}: {split['cells']} cells  B {pct(split['always_B'])}  S {pct(split['always_S'])}")
+    for dataset, row in fit["by_dataset"].items():
+        print(f"  {dataset.replace('vi-multimodel-v1-', ''):14} rule {pct(row['rule'])}  B {pct(row['always_B'])}  "
+              f"S {pct(row['always_S'])}  escalated {pct(row['escalated_share'])}%  "
+              f"tokens {row['mean_total_tokens_rule'] or 0:.0f}")
+    for group in (fit["semantic_review"] or {}).get("groups", []):
+        print(f"  reading rotation 1, condition {group['condition']}: EM rescues {group['em_rescues']} "
+              f"({group['em_rescues_measurement_effect']} measurement), EM regressions {group['em_regressions']} "
+              f"({group['em_regressions_measurement_effect']} measurement)")
+
+
 def _write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
@@ -373,8 +479,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"cue lexicon {lexicon['lexicon_id']}  sha256 {lexicon_digest}")
         for path in args.rule:
             rule, digest = router.load_rule(path, protocol["datasets"], lexicon)
-            result["fits"].append(design_fit(rule, digest, items, rows, semantic))
-            _print_fit(result["fits"][-1])
+            if "probe" in rule:
+                result["fits"].append(design_fit_probe(rule, digest, items, rows, semantic))
+                _print_probe_fit(result["fits"][-1])
+            else:
+                result["fits"].append(design_fit(rule, digest, items, rows, semantic))
+                _print_fit(result["fits"][-1])
         best = result["best_fixed_arm"]
         print(f"best fixed arm {best['arm']} (mean of two draws: "
               + ", ".join(f"{arm} {100 * value:.2f}" for arm, value in best["mean_accuracy_over_two_draws"].items()) + ")")

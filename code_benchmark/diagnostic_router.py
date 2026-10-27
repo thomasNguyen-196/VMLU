@@ -25,6 +25,15 @@ Cue words come from the cue lexicon (`data/diagnostic_prospective_v1/cue_lexicon
 a need and the labels it points to. A rule that tests cues loads only with the lexicon: every cue must be in
 it, in a group that shares a target with the condition.
 
+A rule may also declare a probe (router v2, openspec change diagnostic-router-v2): arm B answered twice, and a
+condition may test whether the two parsed answers agree ("probe": "agree" | "disagree"). The probe runs only
+when a condition whose other features hold needs it; when the decision is then B, the first probe answer is the
+answer. Only the model's own answers enter the probe, never gold or scores.
+
+    {"router_id": "router-v2", "probe": {"arm": "B", "samples": 2, "agreement": "normalized-answer-v1"},
+     "conditions": [{"arm": "S", "targets": ["reasoning_gap"], "when": {"probe": "disagree"}}],
+     "default": {"arm": "B", "targets": []}}
+
 Usage (repo root): .venv/bin/python -m code_benchmark.diagnostic_router --rule <rule.json> [--lexicon <json>]
 prints the SHA-256 of the rule and of the lexicon and the arm the rule selects per dataset on the core anchors
 and the wide items.
@@ -57,9 +66,12 @@ DEPLOYABLE_ARMS = ("B", "S", "K", "KS")
 _S_TARGETS = frozenset({"reasoning_gap", "reading_representation_gap"})
 _K_TARGETS = frozenset({"external_evidence_gap", "parametric_knowledge_gap", "parametric_knowledge_error"})
 ADDRESSABLE = {"B": frozenset(), "S": _S_TARGETS, "K": _K_TARGETS, "KS": _S_TARGETS | _K_TARGETS}
-FEATURES = ("dataset", "b_prompt_chars", "question_cues")
+FEATURES = ("dataset", "b_prompt_chars", "question_cues", "probe")
 LENGTH_BOUNDS = ("at_least", "below")
-RULE_KEYS = ("router_id", "description", "conditions", "default")
+RULE_KEYS = ("router_id", "description", "probe", "conditions", "default")
+PROBE_KEYS = ("arm", "samples", "agreement")
+AGREEMENT_RULES = ("normalized-answer-v1",)
+PROBE_OUTCOMES = ("agree", "disagree")
 CONDITION_KEYS = ("arm", "targets", "when", "note")
 DEFAULT_KEYS = ("arm", "targets")
 LEXICON_KEYS = ("lexicon_id", "description", "match", "written", "groups", "excluded")
@@ -150,12 +162,28 @@ def _check_decision(decision: Any, where: str, keys: tuple[str, ...], required: 
         raise _fail(f"{where}: note must be text")
 
 
-def _check_when(when: Any, where: str, datasets: frozenset[str]) -> None:
+def _check_probe(probe: Any) -> None:
+    if not isinstance(probe, dict) or set(probe) != set(PROBE_KEYS):
+        raise _fail(f"the probe must have exactly the keys {list(PROBE_KEYS)}")
+    if probe["arm"] != "B":
+        raise _fail(f"the probe answers with arm B, not {probe['arm']!r}")
+    if isinstance(probe["samples"], bool) or probe["samples"] != 2:
+        raise _fail("the probe compares exactly 2 samples")
+    if probe["agreement"] not in AGREEMENT_RULES:
+        raise _fail(f"unknown agreement rule {probe['agreement']!r} (known: {list(AGREEMENT_RULES)})")
+
+
+def _check_when(when: Any, where: str, datasets: frozenset[str], has_probe: bool = False) -> None:
     if not isinstance(when, dict) or not when:
         raise _fail(f"{where}: `when` must be a non-empty object")
     unknown = sorted(set(when) - set(FEATURES))
     if unknown:
         raise _fail(f"{where} tests {unknown}, which is not a router feature (allowed: {list(FEATURES)})")
+    if "probe" in when:
+        if when["probe"] not in PROBE_OUTCOMES:
+            raise _fail(f"{where}: probe takes one of {list(PROBE_OUTCOMES)}")
+        if not has_probe:
+            raise _fail(f"{where} tests the probe but the rule declares no probe")
     if "dataset" in when:
         values = when["dataset"]
         if (not isinstance(values, list) or not values or len(values) != len(set(values))
@@ -190,11 +218,13 @@ def validate_rule(rule: Any, datasets: Iterable[str]) -> dict[str, Any]:
         raise _fail("rule description must be text")
     if not isinstance(rule.get("conditions"), list):
         raise _fail("rule conditions must be a list (it may be empty)")
+    if "probe" in rule:
+        _check_probe(rule["probe"])
     allowed = frozenset(datasets)
     for number, condition in enumerate(rule["conditions"], 1):
         where = f"condition {number}"
         _check_decision(condition, where, CONDITION_KEYS, ("arm", "targets", "when"))
-        _check_when(condition["when"], where, allowed)
+        _check_when(condition["when"], where, allowed, "probe" in rule)
     _check_decision(rule.get("default"), "default", DEFAULT_KEYS, DEFAULT_KEYS)
     return rule
 
@@ -305,9 +335,20 @@ class Decision:
     arm: str
     targets: tuple[str, ...]
     condition: int | None  # 1-based number of the deciding condition; None for the default
+    probed: bool = False   # the B probe ran before the decision (its two answers are part of the cost)
+
+
+def answers_agree(first: str, second: str, task: str) -> bool:
+    """normalized-answer-v1: both parsed answers non-empty and equal (multiple choice: the letter; reading: the
+    exact-match normalization). An empty parse is a disagreement, so an unparsed B answer is never trusted."""
+    def normal(answer: str) -> str:
+        return v1.normalize_em_answer(answer) if task == "reading" else answer.strip().upper()
+    a, b = normal(first or ""), normal(second or "")
+    return bool(a) and a == b
 
 
 def _matches(when: dict[str, Any], features: Features) -> bool:
+    """The static features of a condition (everything but the probe)."""
     if "dataset" in when and features.dataset_id not in when["dataset"]:
         return False
     bounds = when.get("b_prompt_chars")
@@ -317,17 +358,41 @@ def _matches(when: dict[str, Any], features: Features) -> bool:
     return not cues or any(cue_present(cue, features.question) for cue in cues)
 
 
-def route(rule: dict[str, Any], features: Features) -> Decision:
-    for number, condition in enumerate(rule["conditions"], 1):
+def needs_probe(rule: dict[str, Any], features: Features) -> bool:
+    """Whether routing this request reaches a probe condition before a condition decides without one."""
+    for condition in rule["conditions"]:
         if _matches(condition["when"], features):
-            return Decision(condition["arm"], tuple(condition["targets"]), number)
-    return Decision(rule["default"]["arm"], tuple(rule["default"]["targets"]), None)
+            return "probe" in condition["when"]
+    return False
 
 
-def route_items(rule: dict[str, Any], items: Iterable[v1.EvalItem]) -> dict[str, Decision]:
-    """{dataset:item: decision} for frozen main-v1 items, each seen only through its RequestView."""
-    return {dp.item_key(item.dataset_id, item.item_id): route(rule, features_of(request_view(item)))
-            for item in items}
+def route(rule: dict[str, Any], features: Features, probe_agrees: bool | None = None) -> Decision:
+    """The first condition that holds decides. A condition testing the probe is read only after its static
+    features hold; from then on the probe has run, whatever the final decision."""
+    probed = False
+    for number, condition in enumerate(rule["conditions"], 1):
+        when = condition["when"]
+        if not _matches(when, features):
+            continue
+        if "probe" in when:
+            if probe_agrees is None:
+                raise _fail(f"condition {number} of {rule['router_id']} needs the probe outcome")
+            probed = True
+            if (when["probe"] == "agree") != probe_agrees:
+                continue
+        return Decision(condition["arm"], tuple(condition["targets"]), number, probed)
+    return Decision(rule["default"]["arm"], tuple(rule["default"]["targets"]), None, probed)
+
+
+def route_items(rule: dict[str, Any], items: Iterable[v1.EvalItem],
+                probe_agrees: dict[str, bool] | None = None) -> dict[str, Decision]:
+    """{dataset:item: decision} for frozen main-v1 items, each seen only through its RequestView. A probe rule
+    needs the probe outcome of every item that reaches a probe condition."""
+    decisions = {}
+    for item in items:
+        key = dp.item_key(item.dataset_id, item.item_id)
+        decisions[key] = route(rule, features_of(request_view(item)), (probe_agrees or {}).get(key))
+    return decisions
 
 
 # ---------------------------------------------------------------- command line
@@ -350,6 +415,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"cue lexicon {lexicon['lexicon_id']}  sha256 {lexicon_digest}")
     for phase in dp.PHASES:
         items = phase_items(phase, protocol, main_items)
+        if "probe" in rule:  # the arm depends on the probe outcome, which only a run can give
+            views = [features_of(request_view(item)) for item in items]
+            arms = {outcome: dict(Counter(route(rule, view, outcome == "agree").arm for view in views))
+                    for outcome in PROBE_OUTCOMES}
+            print(f"{phase}: {len(items)} items, probe needed for {sum(needs_probe(rule, v) for v in views)}; "
+                  f"arms if every probe agrees {arms['agree']}, if every probe disagrees {arms['disagree']}")
+            continue
         decisions = route_items(rule, items)
         counts = Counter((item.dataset_id, decisions[dp.item_key(item.dataset_id, item.item_id)].arm) for item in items)
         print(f"{phase}: {len(items)} items, arms {dict(sorted(Counter(d.arm for d in decisions.values()).items()))}")
