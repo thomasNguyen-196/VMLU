@@ -1,0 +1,106 @@
+{
+  "protocol_id": "vmlu-diagnostic-router-v2-heldout",
+  "protocol_version": 1,
+  "change": "openspec/changes/diagnostic-router-v2",
+  "purpose": "Held-out set for the single evaluation of router v2: items that no router has seen, answered by arms B and S with two draws each under the conditions of the prospective campaign (MC-93).",
+  "parent": {
+    "campaign_protocol": "data/diagnostic_prospective_v1/protocol.json",
+    "prompt_templates": "data/diagnostic_prospective_v1/prompt_templates_v1.json",
+    "mirrored_blocks": [
+      "model",
+      "transport",
+      "scoring",
+      "budget"
+    ]
+  },
+  "datasets": [
+    "vi-multimodel-v1-vmlu-valid",
+    "bidlqa-val"
+  ],
+  "sampling": {
+    "vi-multimodel-v1-vmlu-valid": {
+      "source": "vmlu_mqa_v1.5/valid.jsonl through the main-v1 builder",
+      "n": 300,
+      "seed": 42,
+      "strata": "category",
+      "rule": "per VMLU category, in proportion to its size (largest remainder); inside a category the items with the lowest sha256(seed + tab + dataset:item) come first"
+    },
+    "bidlqa-val": {
+      "source": "v_legal_slsp/bidlqa/ViBidLQA_val.jsonl through the main-v1 builder",
+      "n": 300,
+      "seed": 42,
+      "strata": "none",
+      "rule": "the items with the lowest sha256(seed + tab + dataset:item)"
+    }
+  },
+  "phases": {
+    "heldout": {
+      "item_source": "fresh-heldout",
+      "arms": [
+        "B",
+        "S"
+      ],
+      "replicates": 2,
+      "requires_inference_ready": false
+    }
+  },
+  "model": {
+    "requested_id": "Qwen3.5-9B-65K",
+    "profile_id": "qwen3-5-9b-65k-prospective",
+    "provider": "IEC internal endpoint",
+    "endpoint_host": "llmapi.iec",
+    "endpoint_path": "/v1",
+    "self_reported_id": "/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf",
+    "self_reported_on": "2026-10-22"
+  },
+  "transport": {
+    "api_protocol": "openai-responses",
+    "stream": true,
+    "temperature": 1.0,
+    "seed": null,
+    "reasoning_effort": null,
+    "system_prompt": "Answer the user's question.",
+    "gateway_header": {
+      "x-9router-token-saver": "off"
+    },
+    "sdk_retries": 0,
+    "timeout_seconds": 300,
+    "shards": 4,
+    "lanes": 3,
+    "max_output_tokens": 4096
+  },
+  "scoring": {
+    "final_segment_rule_id": "diagnostic-final-segment-v1",
+    "reading_correct_metric": "em",
+    "semantic_audit_candidate_token_f1": 0.8
+  },
+  "budget": {
+    "item_cap_output_tokens": 4096,
+    "campaign_cap_tokens": 5000000,
+    "campaign_cap_scope": "per run: each phase keeps its own guard, started from the usage already recorded in its own output",
+    "usage_policy": "unknown_not_zero",
+    "currency": null
+  },
+  "analysis": {
+    "plan_id": "diagnostic-router-v2-heldout-v1",
+    "families": {
+      "mc": [
+        "vi-multimodel-v1-vmlu-valid"
+      ],
+      "reading": [
+        "bidlqa-val"
+      ]
+    },
+    "primary_family": "mc",
+    "primary_rotation": 1,
+    "rotations": {
+      "1": "first B draw answers, second B draw is the probe's second answer, first S draw on escalation",
+      "2": "second B draw answers, first B draw is the probe's second answer, second S draw on escalation (replication)"
+    },
+    "item_outcome": "single draw, as deployment answers",
+    "tests": "per family and rotation: exact two-sided McNemar of v2 against always-B and against always-S, Holm over the two; the confirmatory claim is the primary family and rotation",
+    "intervals": "Wilson 95% for each policy's accuracy",
+    "cost": "mean reported total tokens per item, both probe answers included whenever the probe ran",
+    "reading_extras": "token-F1 per policy; items whose correctness differs between v2 and a fixed policy are exported for an AI-assisted semantic review, reported as descriptive"
+  }
+}

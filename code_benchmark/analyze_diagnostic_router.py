@@ -43,6 +43,7 @@ from typing import Any, Callable, Iterable
 
 try:
     from code_benchmark import analyze_diagnostic_prospective as an
+    from code_benchmark import diagnostic_heldout as dh
     from code_benchmark import diagnostic_prospective as dp
     from code_benchmark import diagnostic_router as router
     from code_benchmark import diagnostic_semantic_review as sr
@@ -50,6 +51,7 @@ try:
     from code_benchmark.score_vi_multimodel import wilson_interval
 except ImportError:  # executed from code_benchmark/
     import analyze_diagnostic_prospective as an
+    import diagnostic_heldout as dh
     import diagnostic_prospective as dp
     import diagnostic_router as router
     import diagnostic_semantic_review as sr
@@ -68,6 +70,9 @@ WIDE_DRAWS = (1, 2)
 ROUTER_REPORT_KEYS = ("rule_id", "rule_sha256", "cue_lexicon_sha256", "anchor_diagnosis_sha256", "best_fixed_arm",
                       "anchors", "evaluation_set", "excluded_anchors", "routing", "primary", "secondary_valid_gold",
                       "deployable_ceiling", "detection", "design_fit_wide")
+HELDOUT_PLAN_ID = "diagnostic-router-v2-heldout-v1"
+HELDOUT_REPORT_KEYS = ("plan_id", "rule_id", "rule_sha256", "manifest_sha256", "v1_equals_always_B",
+                       "primary_family", "primary_rotation", "families")
 
 
 def _fail(message: str) -> SystemExit:
@@ -262,6 +267,79 @@ def design_fit_probe(rule: dict[str, Any], rule_sha256: str, items: list[v1.Eval
     return report
 
 
+def evaluate_heldout(rule: dict[str, Any], rule_sha256: str, registered: dict[str, Any], manifest_sha256: str,
+                     items: list[v1.EvalItem], rows: list[dict[str, Any]], v1_rule: dict[str, Any],
+                     families: dict[str, list[str]], primary_family: str) -> dict[str, Any]:
+    """The single held-out evaluation of the frozen v2 rule (spec diagnostic-router-heldout). Per family and
+    rotation: v2, always-B and always-S with Wilson intervals and mean reported tokens (both probe answers
+    included whenever the probe ran), McNemar of v2 against each fixed policy with Holm over the two."""
+    for name, actual in (("rule", rule_sha256), ("manifest", manifest_sha256)):
+        if actual != registered.get(f"{name}_sha256"):
+            raise _fail(f"{name} sha256 {actual} differs from the registered {registered.get(f'{name}_sha256')}; "
+                        "nothing is reported")
+    keyed = {dp.item_key(item.dataset_id, item.item_id): item for item in items}
+    groups = an.group_attempts(rows)
+    _two_draws(groups, list(keyed))
+    features = {key: router.features_of(router.request_view(item)) for key, item in keyed.items()}
+    report_families: dict[str, Any] = {}
+    for family, datasets in families.items():
+        keys = [key for key, item in keyed.items() if item.dataset_id in datasets]
+        rotations: dict[str, Any] = {}
+        discordant: list[dict[str, Any]] = []
+        for rotation, (answer, probe, s_draw) in enumerate(ROTATIONS, 1):
+            outcomes: dict[tuple[str, str], bool] = {}
+            tokens: dict[tuple[str, str], float | None] = {}
+            f1: dict[str, list[float]] = defaultdict(list)
+            split: dict[str, Counter] = {"agree": Counter(), "disagree": Counter()}
+            escalated = 0
+            for key in keys:
+                b1, b2, s = groups[("B", key)][answer], groups[("B", key)][probe], groups[("S", key)][s_draw]
+                agree = router.answers_agree(str(b1.get("prediction") or ""), str(b2.get("prediction") or ""),
+                                             keyed[key].task)
+                decision = router.route(rule, features[key], agree)
+                if decision.arm not in WIDE_ARMS:
+                    raise _fail(f"{key}: the held-out set has no arm {decision.arm}")
+                chosen = b1 if decision.arm == "B" else s
+                cost = (_tokens(chosen) if not decision.probed else
+                        _tokens(b1, b2) if chosen is b1 else _tokens(b1, b2, chosen))
+                escalated += decision.probed and decision.arm != "B"
+                for policy, attempt, spent in (("v2", chosen, cost), ("always_B", b1, _tokens(b1)),
+                                               ("always_S", s, _tokens(s))):
+                    outcomes[(policy, key)] = bool(an.attempt_correct(attempt))
+                    tokens[(policy, key)] = spent
+                    if "token_f1" in attempt:
+                        f1[policy].append(float(attempt["token_f1"]))
+                name = "agree" if agree else "disagree"
+                split[name]["items"] += 1
+                split[name]["B_correct"] += outcomes[("always_B", key)]
+                split[name]["S_correct"] += outcomes[("always_S", key)]
+                if rotation == 1 and (outcomes[("v2", key)] != outcomes[("always_B", key)]
+                                      or outcomes[("v2", key)] != outcomes[("always_S", key)]):
+                    discordant.append({"item_key": key, "arm": decision.arm, "probe_agrees": agree,
+                                       **{policy: outcomes[(policy, key)] for policy in ("v2", "always_B", "always_S")}})
+            block = _comparisons(keys, {"router": lambda key: "v2", "always_B": lambda key: "always_B",
+                                        "always_S": lambda key: "always_S"}, outcomes, tokens)
+            block["policies"]["v2"] = block["policies"].pop("router")
+            block["tests"] = {name.replace("router", "v2"): test for name, test in block["tests"].items()}
+            rotations[str(rotation)] = {
+                "items": block.pop("anchors"), **block,
+                "escalated_share": escalated / len(keys) if keys else None,
+                "probe_split": {name: {"items": c["items"],
+                                       "B_accuracy": c["B_correct"] / c["items"] if c["items"] else None,
+                                       "S_accuracy": c["S_correct"] / c["items"] if c["items"] else None}
+                                for name, c in split.items()},
+                "mean_token_f1": {policy: statistics.fmean(values) for policy, values in f1.items()} or None,
+            }
+        report_families[family] = {"datasets": datasets, "items": len(keys), "rotations": rotations,
+                                   "discordant_rotation_1": discordant}
+    return {
+        "plan_id": HELDOUT_PLAN_ID, "rule_id": rule["router_id"], "rule_sha256": rule_sha256,
+        "manifest_sha256": manifest_sha256,
+        "v1_equals_always_B": all(router.route(v1_rule, features[key]).arm == "B" for key in keyed),
+        "primary_family": primary_family, "primary_rotation": 1, "families": report_families,
+    }
+
+
 def _group_by(cells: list[dict[str, Any]], field: str) -> dict[str, list[dict[str, Any]]]:
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for cell in cells:
@@ -425,6 +503,36 @@ def _print_fit(fit: dict[str, Any]) -> None:
               f"({group['em_regressions_measurement_effect']} measurement)")
 
 
+def _heldout_cli(args: argparse.Namespace, protocol: dict[str, Any], lexicon: dict[str, Any]) -> int:
+    registration = json.loads(dh.REGISTRATION_PATH.read_text(encoding="utf-8"))
+    entry = registration["router"]
+    if entry.get("report_keys") != list(HELDOUT_REPORT_KEYS):
+        raise _fail("the registered held-out report keys differ from the evaluator's")
+    heldout = dh.load_protocol()
+    rule, digest = router.load_rule(dh.RULE_PATH, protocol["datasets"], lexicon)
+    v1_rule, _ = router.load_rule(router.RULE_PATH, protocol["datasets"], lexicon)
+    manifest, _ = dh.build_manifest(heldout)
+    if manifest != dh.load_frozen_manifest():
+        raise _fail("the rebuilt held-out manifest differs from the frozen one")
+    report = evaluate_heldout(rule, digest, {**entry, "manifest_sha256": registration["frozen"]["manifest_sha256"]},
+                              manifest["manifest_sha256"], dh.sample_items(heldout),
+                              read_jsonl(args.run_dir / "scores.jsonl"), v1_rule,
+                              heldout["analysis"]["families"], heldout["analysis"]["primary_family"])
+    out = args.out or args.run_dir / "analysis" / "router_v2_report.json"
+    _write_json(out, report)
+    for family, block in report["families"].items():
+        for rotation, result in block["rotations"].items():
+            policies, tests = result["policies"], result["tests"]
+            print(f"{family} rotation {rotation} ({result['items']} items, escalated {100 * result['escalated_share']:.1f}%): "
+                  + "  ".join(f"{name} {p['correct']}/{p['n']} tokens {p['mean_total_tokens'] or 0:.0f}"
+                              for name, p in policies.items())
+                  + "  |  " + "  ".join(f"{name}: +{t['rescues']}/-{t['regressions']} p {t['mcnemar_p']:.3f} "
+                                        f"holm {t['mcnemar_p_holm']:.3f}" for name, t in tests.items()))
+    print(f"v1 equals always-B on the held-out set: {report['v1_equals_always_B']}")
+    print(f"report -> {out}")
+    return 0
+
+
 def _print_probe_fit(fit: dict[str, Any]) -> None:
     def pct(value):
         return "—" if value is None else f"{100 * value:5.1f}"
@@ -468,9 +576,15 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument("--diagnosis", type=Path, default=DIAGNOSIS_PATH, help=f"default: {DIAGNOSIS_PATH}")
     ev.add_argument("--with-design-fit", action="store_true", help="add the wide design fit of the same rule")
     ev.add_argument("--out", type=Path, help="default: <run-dir>/analysis/router_report.json")
+    ho = sub.add_parser("heldout", help="the single held-out evaluation of router v2 (MC-94)")
+    ho.add_argument("--run-dir", type=Path, required=True, help="held-out output dir (scores.jsonl)")
+    ho.add_argument("--lexicon", type=Path, default=router.LEXICON_PATH, help=f"default: {router.LEXICON_PATH}")
+    ho.add_argument("--out", type=Path, help="default: <run-dir>/analysis/router_v2_report.json")
     args = ap.parse_args(argv)
     protocol = dp.load_protocol()
     lexicon, lexicon_digest = router.load_lexicon(args.lexicon)
+    if args.command == "heldout":
+        return _heldout_cli(args, protocol, lexicon)
     if args.command == "design-fit":
         items, rows = _wide_inputs(protocol)
         semantic = load_semantic_review(args.semantic_review, WIDE_SCORES[0])
