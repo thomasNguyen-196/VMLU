@@ -38,6 +38,9 @@ def _main_available() -> bool:
 MAIN_OK = _main_available()
 PILOT_OK = (dp.ROOT / "all_res/diagnostic_v1/pilot-review-v4/pilot.jsonl").is_file()
 DATA_OK = MAIN_OK and PILOT_OK
+ORACLE_RECORDS = dp.ROOT / "all_res/diagnostic_prospective/oracle/oracle_evidence_v1.jsonl"
+RETRIEVED_RECORDS = dp.ROOT / "all_res/diagnostic_prospective/retrieval/retrieved_evidence_v1.jsonl"
+CORE_OK = DATA_OK and ORACLE_RECORDS.is_file() and RETRIEVED_RECORDS.is_file()
 TEMPLATES = dp.load_templates()
 PROTOCOL = dp.load_protocol()
 MC_DATASET = "vi-multimodel-v1-legal-mc-146"
@@ -740,6 +743,22 @@ class TestRunner(unittest.TestCase):
         self.assertEqual(saved, manifest)  # the archived frozen file is the manifest the runner rebuilds
         self.assertEqual(len(dp.verify_manifest_rows(saved, rebuilt)), 2478)
         self.assertEqual((manifest["item_count"], manifest["arm_counts"]), (1239, {"B": 1239, "S": 1239}))
+
+    @unittest.skipUnless(CORE_OK, "the locked pilot, the main-v1 sources or the core evidence records are not available")
+    def test_committed_core_registration_matches_its_frozen_artifacts(self):
+        """MC-93: the core manifest rebuilt from the evidence records, the readiness controls, the router rule and the
+        cue lexicon pass every gate against the committed registration."""
+        protocol, registration = dp.load_protocol(), dp.load_registration()
+        main_items = v1.rebuild_items(protocol["parent"]["manifest_phase"])
+        evidence = {"O": dp.load_oracle_evidence(ORACLE_RECORDS, protocol, main_items),
+                    "K": dp.load_retrieved_evidence(RETRIEVED_RECORDS, protocol, main_items)[0]}
+        manifest, _ = dp.build_manifest("core", evidence_by_arm=evidence, main_items=main_items)
+        gates = {g.name: g for g in runner.evaluate_gates("core", protocol, manifest, registration, self.ENV)}
+        self.assertEqual({name: g.detail for name, g in gates.items() if not g.ok}, {})
+        self.assertEqual(set(gates), {"card_registered", "detail_card", "frozen_hashes", "endpoint_identity",
+                                      "inference_ready", "router_rule"})
+        self.assertEqual(manifest["arm_counts"], {"B": 180, "K": 24, "KS": 24, "O": 24, "S": 180})
+        self.assertEqual(set(evidence["O"]), set(registration["core"]["evidence_anchors"]))
 
 
 SUPPLEMENT_DESIGN = {"base_phase": "wide", "arms": ["B"], "first_replicate": 2, "replicates": 1}

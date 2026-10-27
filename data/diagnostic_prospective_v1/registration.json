@@ -1,16 +1,39 @@
 {
-  "status": "wide-registered; supplements wide-b-r2 and wide-s-r2 registered; core unregistered",
-  "card_ids": {"core": null, "wide": "MC-90"},
-  "card_files": {"core": null, "wide": "docs/measurement_cards/MC-90-diagnostic-prospective-wide.md"},
-  "registered_on": {"core": null, "wide": "2026-10-22"},
+  "status": "wide and core registered; supplements wide-b-r2 and wide-s-r2 registered",
+  "card_ids": {"core": "MC-93", "wide": "MC-90"},
+  "card_files": {"core": "docs/measurement_cards/MC-93-diagnostic-prospective-core.md", "wide": "docs/measurement_cards/MC-90-diagnostic-prospective-wide.md"},
+  "registered_on": {"core": "2026-10-27", "wide": "2026-10-22"},
   "frozen": {
     "protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
     "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
     "manifest_sha256": {
-      "core": null,
+      "core": "c00bc988d61711a18a5a348c0d34cc6bb8e373c9feacde9af8447616aa823d54",
       "wide": "d5f022d63d641ceb635882537f914c6e7e9df17a1695649f0dd6b67432e5c297"
     },
-    "evidence_sha256": {"core": {}, "wide": {}}
+    "evidence_sha256": {"core": {"K": "fb3e43de3448a922337dce12c82dd514eb83ddb0ecbd8af91de90c0ef88e3139", "O": "4be39757903c649c8e50056bb6eadb5b44a95158dedd4929178acdb7ea3b2691"}, "wide": {}}
+  },
+  "router": {
+    "rule_file": "data/diagnostic_prospective_v1/router_v1.json",
+    "rule_sha256": "8140c13eade80cbaa5f3b0e7f14cbba88caa547c844df014de1d5f35a845b292",
+    "rule_id": "router-c1-drop-s",
+    "cue_lexicon_sha256": "59e749b863687c22d5ff87a68179a95238b6ad1703a9c339a2be939446e82692",
+    "best_fixed_arm": "S",
+    "anchor_diagnosis_sha256": "1df9fc414a90155be48820795e693e20352bada1c1a2d83dd32344984756ed90",
+    "report_keys": ["rule_id", "rule_sha256", "cue_lexicon_sha256", "anchor_diagnosis_sha256", "best_fixed_arm", "anchors", "evaluation_set", "excluded_anchors", "routing", "primary", "secondary_valid_gold", "deployable_ceiling", "detection", "design_fit_wide"]
+  },
+  "core": {
+    "evidence_anchors": ["vi-multimodel-v1-legal-mc-146:LG-0035", "vi-multimodel-v1-legal-mc-146:LG-0054", "vi-multimodel-v1-legal-mc-146:LG-0057", "vi-multimodel-v1-legal-mc-146:LG-0063", "vi-multimodel-v1-legal-mc-146:LG-0090", "vi-multimodel-v1-legal-mc-146:LG-0117", "vi-multimodel-v1-legal-mc-146:LG-0124", "vi-multimodel-v1-legal-mc-146:LG-0139"],
+    "gold_not_valid": ["vi-multimodel-v1-bidlqa-test:BIDLQA-T-0447", "vi-multimodel-v1-legal-mc-146:LG-0062", "vi-multimodel-v1-legal-mc-146:LG-0083", "vi-multimodel-v1-legal-nli-150:LG-NLI-0034", "vi-multimodel-v1-legal-nli-150:LG-NLI-0061", "vi-multimodel-v1-legal-nli-150:LG-NLI-0062", "vi-multimodel-v1-legal-nli-150:LG-NLI-0092", "vi-multimodel-v1-legal-nli-150:LG-NLI-0131"],
+    "pilot_content_sha256": "19b31d71643d8c894edb0afe3439fc35270e51099c51e49bbde1fe9b0d774b26",
+    "readiness_controls_sha256": "5fba4f742c49574620d77b64fd3e83f2ba61e76606caab4f6ec74b1f9b5a3377",
+    "corpus_sha256": "967f9cad805dbd10b9104e25b534c3cf8446a486bea0c5b7d6f121417499fdca",
+    "retrieval_config_sha256": "2504f177ed5c08d9610bfbe65b212bc027e718c5eb90b8dd61527f32de6def0c",
+    "operational": {"max_in_flight": 4, "stop_after_timeouts": 4},
+    "analysis": {
+      "plan_id": "diagnostic-prospective-analysis-v1",
+      "recovery_by_hypothesis": {"plan_id": "diagnostic-prospective-recovery-by-hypothesis-v1", "top_level": ["plan_id", "anchor_diagnosis_sha256", "descriptive", "audited_answers", "groups", "contrast_candidates", "not_reproduced"]},
+      "router": "analyze_diagnostic_router evaluate, top-level keys in router.report_keys"
+    }
   },
   "supplements": {
     "wide-b-r2": {
@@ -53,5 +76,5 @@
       }
     }
   },
-  "note": "Wide was registered on 2026-10-22 as MC-90; supplements wide-b-r2 (MC-91, a second B draw of the wide items) and wide-s-r2 (MC-92, a second S draw) were registered the same day, each under its own manifest and card, reusing the protocol and template hashes below. Core is registered after the pilot audit is final and the oracle evidence exists. protocol.json and prompt_templates_v1.json are frozen for this campaign from now on: a change needs a new protocol version and new cards. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
+  "note": "Core was registered on 2026-10-27 as MC-93 with the router v1, the cue lexicon, the anchor diagnosis and the readiness controls above. Wide was registered on 2026-10-22 as MC-90; supplements wide-b-r2 (MC-91, a second B draw of the wide items) and wide-s-r2 (MC-92, a second S draw) were registered the same day, each under its own manifest and card, reusing the protocol and template hashes below. Core is registered after the pilot audit is final and the oracle evidence exists. protocol.json and prompt_templates_v1.json are frozen for this campaign from now on: a change needs a new protocol version and new cards. Kept apart from protocol.json so that frozen manifests, which bind protocol.json, never depend on the registration record."
 }

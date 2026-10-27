@@ -2656,3 +2656,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition |
 | `details` | `docs/measurement_cards/MC-92-diagnostic-prospective-wide-s-replicate.md` |
 | `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-s-r2/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-93 — Qwen3.5-9B-65K (IEC) / diagnostic prospective core / B, S, O, K, KS on the 60 audit anchors and router v1
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-93` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | The 60 audit anchors of the locked pilot (12 each: Legal MC, Legal NLI, Vi-SQuAD, Vi-DROP, ViBidLQA); arms B and S on all 60, arms O, K and KS on the 8 evidence anchors (Legal MC, adjudicated input insufficient and gold valid); 3 replicates; 432 attempts. Router v1 (`router_v1.json`, SHA-256 `8140c13e…`: Vi-DROP to S, everything else to B) is evaluated once on these anchors against always-B, always-S and the best fixed arm S |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096` for every arm; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 0.5 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures, as MC-91 and MC-92 |
+| `details` | `docs/measurement_cards/MC-93-diagnostic-prospective-core.md` |
+| `outputs` | `all_res/diagnostic_prospective/core/qwen3-5-9b-65k-prospective/`; no upload |
