@@ -7,9 +7,9 @@
     "campaign_protocol": "data/diagnostic_prospective_v1/protocol.json"
   },
   "copy_target": {
-    "readiness_controls": "data/diagnostic_v1/protocol.json -> readiness_controls (5 keys)",
-    "future_experiment_contract": "data/diagnostic_v1/protocol.json -> future_experiment_contract (status becomes `preregistered` only at registration)",
-    "order": "only after audit-report.json is final: editing protocol.json changes its SHA-256, which binds the review page, review import, adjudication and the reviewer's draft keys"
+    "readiness_controls": "data/diagnostic_v1/readiness_controls_v1.json -> readiness_controls (the 5 keys protocol.json leaves unset)",
+    "future_experiment_contract": "data/diagnostic_v1/readiness_controls_v1.json -> future_experiment_contract (6 fields and status preregistered)",
+    "order": "only after audit-report.json is final; amended 2026-10-27: protocol.json itself is not edited, because its SHA-256 binds the review page, review import, adjudication and the draft keys, and the pilot content hash is part of every campaign manifest; the controls file names that SHA-256"
   },
   "readiness_controls": {
     "verified_endpoint": {

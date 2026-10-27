@@ -100,9 +100,14 @@ def evaluate_gates(phase: str, protocol: dict[str, Any], manifest: dict[str, Any
                       f"host={endpoint.hostname} model={env.get('OPENAI_MODEL')} (card expects "
                       f"{model['endpoint_host']} / {model['requested_id']})"))
     if protocol["phases"][phase]["requires_inference_ready"]:
-        report = (readiness or (lambda: diagnostic.readiness_report(audit_dir=PILOT_DIR)))()
+        controls = diagnostic.CONTROLS_PATH if diagnostic.CONTROLS_PATH.is_file() else None
+        try:
+            report = (readiness or (lambda: diagnostic.readiness_report(audit_dir=PILOT_DIR, controls_path=controls)))()
+        except diagnostic.DiagnosticError as exc:
+            report = {"inference_ready": False, "inference_blockers": [str(exc)]}
         blockers = "; ".join(report.get("inference_blockers", []))[:300]
-        gates.append(Gate("inference_ready", bool(report.get("inference_ready")), blockers or "ready"))
+        gates.append(Gate("inference_ready", bool(report.get("inference_ready")),
+                          blockers or f"ready (controls sha256 {str(report.get('controls_sha256'))[:12]})"))
     if phase == "core":
         gates.append(router_gate(protocol, registration, root))
     return gates

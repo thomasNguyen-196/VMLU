@@ -27,7 +27,7 @@ The runner SHALL send no request unless `--execute` is passed. Without it the ru
 - **THEN** it prints the item, arm and attempt counts, reports `endpoint_calls=0` and performs no network access
 
 ### Requirement: Fail-closed execution gates
-With `--execute` the runner SHALL refuse to start unless all of these hold: the campaign's measurement-card heading exists in `measurement_card.md` and its detail card file exists; the configured endpoint root host and model id equal those named by the card; the manifest, prompt-template and evidence hashes equal the frozen values; and, for the `core` phase, the diagnostic readiness report states `inference_ready` true and the router rule file exists with the SHA-256 recorded in the core registration entry.
+With `--execute` the runner SHALL refuse to start unless all of these hold: the campaign's measurement-card heading exists in `measurement_card.md` and its detail card file exists; the configured endpoint root host and model id equal those named by the card; the manifest, prompt-template and evidence hashes equal the frozen values; and, for the `core` phase, the diagnostic readiness report states `inference_ready` true and the router rule file exists with the SHA-256 recorded in the core registration entry. The prospective controls are resolved in `data/diagnostic_v1/readiness_controls_v1.json`, which names the SHA-256 of `data/diagnostic_v1/protocol.json` and resolves exactly the controls that file leaves unset; `protocol.json` is never edited for them, because its hash binds the pilot.
 
 #### Scenario: Unregistered campaign cannot run
 - **WHEN** `--execute` is passed and the card heading is absent from `measurement_card.md`
@@ -36,6 +36,10 @@ With `--execute` the runner SHALL refuse to start unless all of these hold: the 
 #### Scenario: Core waits for the audit
 - **WHEN** `--execute` is passed for `core` while `inference_ready` is false
 - **THEN** the runner exits before any request and lists the readiness blockers
+
+#### Scenario: Controls written for another protocol
+- **WHEN** the controls file names a protocol SHA-256 other than that of `data/diagnostic_v1/protocol.json`, or leaves a control without a value
+- **THEN** the readiness gate fails naming the problem and no core request is sent
 
 #### Scenario: Core waits for a frozen router rule
 - **WHEN** `--execute` is passed for `core` and the router rule file is missing or its SHA-256 differs from the core registration entry

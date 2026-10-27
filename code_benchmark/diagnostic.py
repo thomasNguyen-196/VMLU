@@ -25,6 +25,13 @@ PROTOCOL_PATH = DATA_DIR / "protocol.json"
 REGISTRY_PATH = DATA_DIR / "source_registry.json"
 TAXONOMY_PATH = DATA_DIR / "taxonomy.json"
 REVIEW_SCHEMA_PATH = DATA_DIR / "review_schema.json"
+# The prospective controls are resolved in their own file, bound to the protocol by its SHA-256, so that
+# protocol.json keeps its bytes and the pilot, the review page and the frozen wide manifests keep theirs.
+CONTROLS_PATH = DATA_DIR / "readiness_controls_v1.json"
+CONTROLS_KEYS = {"controls_id", "protocol_sha256", "registered_on", "note", "readiness_controls",
+                 "future_experiment_contract"}
+EXPERIMENT_CONTROLS = ("campaign_controls", "split_manifest", "corpus_version", "budget_policy",
+                       "replicate_pairing_and_stability", "verification_policy")
 OUTPUT_ROOT = ROOT / "all_res" / "diagnostic_v1"
 DIAGNOSTIC_LABELS = {'reading_representation_gap', 'retrieval_gap', 'reasoning_gap', 'instruction_gap', 'parametric_knowledge_error', 'harness_gap', 'parser_gap', 'parametric_knowledge_gap', 'measurement_gap', 'generator_evidence_use_gap', 'context_assembly_gap', 'external_evidence_gap', 'run_instability'}
 OBSERVED_ISSUES = {'output_truncation', 'retrieval_miss', 'wrong_entity_relation', 'parser_mismatch', 'answer_mismatch', 'other', 'calculation_error', 'instruction_violation', 'gold_metric_issue', 'factual_conflict', 'run_variation', 'context_assembly_issue', 'missing_input_evidence'}
@@ -664,7 +671,32 @@ def build_ledger(source_id: str, *, output_dir: Path | None = None) -> dict[str,
     return provenance
 
 
-def readiness_report(*, ledger_dirs: list[Path] | None = None, audit_dir: Path | None = None) -> dict[str, Any]:
+def load_controls(path: Path, protocol: dict[str, Any], protocol_sha: str) -> tuple[dict[str, Any], str]:
+    """The controls file and its SHA-256. It must name the current protocol and resolve exactly the controls
+    the protocol leaves unset, each with a value, and declare the experiment contract preregistered."""
+    controls = _read_json(path)
+    if set(controls) != CONTROLS_KEYS:
+        raise DiagnosticError(f"Error: controls file {path} must have exactly the keys {sorted(CONTROLS_KEYS)}")
+    if controls["protocol_sha256"] != protocol_sha:
+        raise DiagnosticError("Error: the controls file was written for another protocol revision")
+    unset = sorted(key for key, value in protocol["readiness_controls"].items() if value in (None, ""))
+    experiment = protocol.get("future_experiment_contract", {})
+    unset_experiment = sorted(field for field in EXPERIMENT_CONTROLS if not experiment.get(field))
+    resolved, contract = controls["readiness_controls"], controls["future_experiment_contract"]
+    if not isinstance(resolved, dict) or sorted(resolved) != unset:
+        raise DiagnosticError(f"Error: the controls file must resolve exactly the unset readiness controls {unset}")
+    if (not isinstance(contract, dict) or sorted(set(contract) - {"status"}) != unset_experiment
+            or contract.get("status") != "preregistered"):
+        raise DiagnosticError(f"Error: the controls file must resolve exactly {unset_experiment} "
+                              "and set the experiment status preregistered")
+    empty = [key for key, value in {**resolved, **contract}.items() if not isinstance(value, str) or not value.strip()]
+    if empty:
+        raise DiagnosticError(f"Error: controls without a value: {empty}")
+    return controls, _sha256_file(path)
+
+
+def readiness_report(*, ledger_dirs: list[Path] | None = None, audit_dir: Path | None = None,
+                     controls_path: Path | None = None) -> dict[str, Any]:
     protocol, protocol_sha = load_protocol()
     registry = load_registry()
     ledgers: dict[str, Any] = {}
@@ -677,10 +709,15 @@ def readiness_report(*, ledger_dirs: list[Path] | None = None, audit_dir: Path |
             "source_rows": prov.get("expected_observations"),
             "parity_passed": bool(parity.get("item_score_parity") and parity.get("summary_parity")),
         }
-    unresolved = {key: value for key, value in protocol["readiness_controls"].items() if value in (None, "")}
-    experiment = protocol.get("future_experiment_contract", {})
-    experiment_blockers = [f"unregistered prospective control: {field}" for field in
-                           ("campaign_controls", "split_manifest", "corpus_version", "budget_policy", "replicate_pairing_and_stability", "verification_policy")
+    readiness_controls = dict(protocol["readiness_controls"])
+    experiment = dict(protocol.get("future_experiment_contract", {}))
+    controls_sha = None
+    if controls_path is not None:
+        controls, controls_sha = load_controls(controls_path, protocol, protocol_sha)
+        readiness_controls.update(controls["readiness_controls"])
+        experiment.update(controls["future_experiment_contract"])
+    unresolved = {key: value for key, value in readiness_controls.items() if value in (None, "")}
+    experiment_blockers = [f"unregistered prospective control: {field}" for field in EXPERIMENT_CONTROLS
                            if not experiment.get(field)]
     if experiment.get("status") != "preregistered":
         experiment_blockers.append("prospective intervention protocol is not preregistered")
@@ -692,7 +729,7 @@ def readiness_report(*, ledger_dirs: list[Path] | None = None, audit_dir: Path |
         audit_complete = bool(audit.get("audit_complete"))
     prep_ready = bool(ledgers) and all(value["parity_passed"] for value in ledgers.values())
     return {
-        "protocol_id": protocol["protocol_id"], "protocol_sha256": protocol_sha,
+        "protocol_id": protocol["protocol_id"], "protocol_sha256": protocol_sha, "controls_sha256": controls_sha,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "declared_sources": sorted(registry), "built_ledgers": ledgers,
         "preparation_ready": prep_ready,
@@ -1349,7 +1386,8 @@ def _cmd_report(args: argparse.Namespace) -> None:
 
 def _cmd_readiness(args: argparse.Namespace) -> None:
     dirs = [OUTPUT_ROOT / "sources" / value for value in args.source]
-    report = readiness_report(ledger_dirs=dirs, audit_dir=Path(args.pilot_dir) if args.pilot_dir else None)
+    report = readiness_report(ledger_dirs=dirs, audit_dir=Path(args.pilot_dir) if args.pilot_dir else None,
+                              controls_path=Path(args.controls) if args.controls else None)
     if args.output:
         _write_json(Path(args.output), report)
     print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -1390,6 +1428,7 @@ def main(argv: list[str] | None = None) -> int:
     readiness = commands.add_parser("readiness", help="Report preparation, audit, and inference gates")
     readiness.add_argument("--source", action="append", default=[])
     readiness.add_argument("--pilot-dir")
+    readiness.add_argument("--controls", help=f"resolved prospective controls, e.g. {CONTROLS_PATH.relative_to(ROOT)}")
     readiness.add_argument("--output")
     readiness.set_defaults(func=_cmd_readiness)
     args = parser.parse_args(argv)
