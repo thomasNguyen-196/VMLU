@@ -169,7 +169,7 @@ class TestCueLexicon(unittest.TestCase):
             load(rule(cond("K", ["external_evidence_gap"], dataset=[MC], question_cues=["quy định"])))
             load(rule(cond("S", ["reasoning_gap"], dataset=[DROP])), None)  # no cue, no lexicon needed
 
-    def test_the_committed_lexicon_and_router_candidates_load(self):
+    def test_the_committed_lexicon_candidates_and_frozen_rule_load(self):
         lexicon, _ = router.load_lexicon()
         groups = lexicon["groups"]
         self.assertTrue(set(groups["calculation_or_combination"]["targets"]) <= router.ADDRESSABLE["S"])
@@ -178,6 +178,9 @@ class TestCueLexicon(unittest.TestCase):
         self.assertEqual(len(candidates), 3)
         for path in candidates:
             router.load_rule(path, dp.load_protocol()["datasets"], lexicon)
+        # the frozen rule is one of the candidates fitted on wide, byte for byte
+        self.assertIn(router.RULE_PATH.read_bytes(), [path.read_bytes() for path in candidates])
+        router.load_rule(router.RULE_PATH, dp.load_protocol()["datasets"], lexicon)
 
 
 class TestRouting(unittest.TestCase):
