@@ -21,8 +21,13 @@ the question only (reading: the text after "Câu hỏi:"; multiple choice: the s
 `targets` names the audit-taxonomy labels the routed arm is meant to address; it is checked against the arm
 and never changes the selection.
 
-Usage (repo root): .venv/bin/python -m code_benchmark.diagnostic_router --rule <rule.json>
-prints the rule's SHA-256 and the arm it selects per dataset on the core anchors and the wide items.
+Cue words come from the cue lexicon (`data/diagnostic_prospective_v1/cue_lexicon_v1.json`), whose groups name
+a need and the labels it points to. A rule that tests cues loads only with the lexicon: every cue must be in
+it, in a group that shares a target with the condition.
+
+Usage (repo root): .venv/bin/python -m code_benchmark.diagnostic_router --rule <rule.json> [--lexicon <json>]
+prints the SHA-256 of the rule and of the lexicon and the arm the rule selects per dataset on the core anchors
+and the wide items.
 """
 from __future__ import annotations
 
@@ -57,6 +62,10 @@ LENGTH_BOUNDS = ("at_least", "below")
 RULE_KEYS = ("router_id", "description", "conditions", "default")
 CONDITION_KEYS = ("arm", "targets", "when", "note")
 DEFAULT_KEYS = ("arm", "targets")
+LEXICON_KEYS = ("lexicon_id", "description", "match", "written", "groups", "excluded")
+GROUP_KEYS = ("need", "targets", "cues")
+RULE_PATH = dp.DATA_DIR / "router_v1.json"
+LEXICON_PATH = dp.DATA_DIR / "cue_lexicon_v1.json"
 
 
 def _fail(message: str) -> SystemExit:
@@ -190,20 +199,103 @@ def validate_rule(rule: Any, datasets: Iterable[str]) -> dict[str, Any]:
     return rule
 
 
-def load_rule(path: Path, datasets: Iterable[str] | None = None) -> tuple[dict[str, Any], str]:
-    """The validated rule and the SHA-256 of its bytes (the value the core registration records)."""
+def load_rule(path: Path, datasets: Iterable[str] | None = None,
+              lexicon: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
+    """The validated rule and the SHA-256 of its bytes (the value the core registration records). A rule that
+    tests question cues needs the lexicon they come from."""
     try:
         raw = path.read_bytes()
         rule = json.loads(raw)
     except (OSError, json.JSONDecodeError) as exc:
         raise _fail(f"cannot read router rule {path}: {exc}") from exc
-    return validate_rule(rule, datasets if datasets is not None else dp.load_protocol()["datasets"]), v1.sha256_bytes(raw)
+    rule = validate_rule(rule, datasets if datasets is not None else dp.load_protocol()["datasets"])
+    if any("question_cues" in condition["when"] for condition in rule["conditions"]):
+        if lexicon is None:
+            raise _fail(f"{path} tests question cues; load it with the cue lexicon they come from")
+        check_cues(rule, lexicon)
+    return rule, v1.sha256_bytes(raw)
 
 
 def fixed_rule(arm: str) -> dict[str, Any]:
     """Always-<arm> written in the same grammar, so every policy goes through route()."""
     return {"router_id": f"always-{arm}", "conditions": [],
             "default": {"arm": arm, "targets": sorted(ADDRESSABLE[arm])}}
+
+
+# ---------------------------------------------------------------- the cue lexicon
+
+def _check_group(name: str, group: Any, seen: dict[str, str]) -> None:
+    where = f"cue group {name}"
+    if not isinstance(group, dict) or set(group) != set(GROUP_KEYS):
+        raise _fail(f"{where} must have exactly the keys {list(GROUP_KEYS)}")
+    if not isinstance(group["need"], str) or not group["need"].strip():
+        raise _fail(f"{where}: need must be text")
+    addressable = frozenset().union(*ADDRESSABLE.values())
+    targets = group["targets"]
+    if (not isinstance(targets, list) or not targets or not all(isinstance(t, str) for t in targets)
+            or len(targets) != len(set(targets)) or not set(targets) <= addressable):
+        raise _fail(f"{where}: targets must be distinct labels that a deployable arm addresses {sorted(addressable)}")
+    if not isinstance(group["cues"], list) or not group["cues"]:
+        raise _fail(f"{where}: cues must be a non-empty list")
+    for entry in group["cues"]:
+        if (not isinstance(entry, dict) or set(entry) != {"cue", "gloss"} or not isinstance(entry["cue"], str)
+                or not re.search(r"\w", entry["cue"]) or not isinstance(entry["gloss"], str)):
+            raise _fail(f"{where}: each cue is {{cue, gloss}} naming a word or phrase, not {entry!r}")
+        folded = fold(entry["cue"])
+        if folded in seen:
+            raise _fail(f"cue {entry['cue']!r} appears in {seen[folded]} and in {name}")
+        seen[folded] = name
+
+
+def validate_lexicon(lexicon: Any) -> dict[str, Any]:
+    """Fail closed: groups named by need, each with the labels that need points to and its cue words."""
+    if not isinstance(lexicon, dict):
+        raise _fail("a cue lexicon must be a JSON object")
+    unknown = sorted(set(lexicon) - set(LEXICON_KEYS))
+    if unknown:
+        raise _fail(f"cue lexicon has keys outside its schema: {unknown} (allowed: {list(LEXICON_KEYS)})")
+    if not isinstance(lexicon.get("lexicon_id"), str) or not lexicon["lexicon_id"].strip():
+        raise _fail("cue lexicon lacks a lexicon_id")
+    if any(not isinstance(lexicon[key], str) for key in ("description", "match", "written") if key in lexicon):
+        raise _fail("cue lexicon description, match and written must be text")
+    if not isinstance(lexicon.get("groups"), dict) or not lexicon["groups"]:
+        raise _fail("cue lexicon needs at least one group")
+    seen: dict[str, str] = {}
+    for name, group in lexicon["groups"].items():
+        _check_group(name, group, seen)
+    excluded = lexicon.get("excluded", [])
+    if not isinstance(excluded, list):
+        raise _fail("cue lexicon excluded must be a list")
+    for entry in excluded:
+        if not isinstance(entry, dict) or set(entry) != {"cue", "reason"} or not isinstance(entry["cue"], str):
+            raise _fail(f"each excluded cue is {{cue, reason}}, not {entry!r}")
+        if fold(entry["cue"]) in seen:
+            raise _fail(f"cue {entry['cue']!r} is both in {seen[fold(entry['cue'])]} and excluded")
+    return lexicon
+
+
+def load_lexicon(path: Path = LEXICON_PATH) -> tuple[dict[str, Any], str]:
+    """The validated lexicon and the SHA-256 of its bytes."""
+    try:
+        raw = path.read_bytes()
+        lexicon = json.loads(raw)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise _fail(f"cannot read cue lexicon {path}: {exc}") from exc
+    return validate_lexicon(lexicon), v1.sha256_bytes(raw)
+
+
+def check_cues(rule: dict[str, Any], lexicon: dict[str, Any]) -> None:
+    """Every cue a condition tests is in the lexicon, in a group whose targets the condition shares."""
+    group_of = {fold(entry["cue"]): name for name, group in lexicon["groups"].items() for entry in group["cues"]}
+    for number, condition in enumerate(rule["conditions"], 1):
+        for cue in condition["when"].get("question_cues", []):
+            name = group_of.get(fold(cue))
+            if name is None:
+                raise _fail(f"condition {number}: cue {cue!r} is not in the cue lexicon {lexicon['lexicon_id']}")
+            needs = lexicon["groups"][name]["targets"]
+            if not set(needs) & set(condition["targets"]):
+                raise _fail(f"condition {number}: cue {cue!r} marks the need {name} (targets {needs}), which "
+                            f"shares no target with the condition's {condition['targets']}")
 
 
 # ---------------------------------------------------------------- routing
@@ -248,11 +340,14 @@ def phase_items(phase: str, protocol: dict[str, Any], main_items: dict[str, v1.E
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Validate a router rule and show the arms it selects (offline).")
     ap.add_argument("--rule", type=Path, required=True, help="router rule JSON")
+    ap.add_argument("--lexicon", type=Path, default=LEXICON_PATH, help=f"cue lexicon (default: {LEXICON_PATH})")
     args = ap.parse_args(argv)
     protocol = dp.load_protocol()
-    rule, digest = load_rule(args.rule, protocol["datasets"])
+    lexicon, lexicon_digest = load_lexicon(args.lexicon)
+    rule, digest = load_rule(args.rule, protocol["datasets"], lexicon)
     main_items = v1.rebuild_items(protocol["parent"]["manifest_phase"])
     print(f"rule {rule['router_id']}  sha256 {digest}")
+    print(f"cue lexicon {lexicon['lexicon_id']}  sha256 {lexicon_digest}")
     for phase in dp.PHASES:
         items = phase_items(phase, protocol, main_items)
         decisions = route_items(rule, items)

@@ -26,14 +26,22 @@ Every condition and the default SHALL declare `targets`, the labels of the audit
 - **THEN** validation fails and names the arm and the target
 
 ### Requirement: Rule frozen before the core run
-The SHA-256 of the chosen rule file SHALL be recorded in the core registration entry and in the core measurement card before the first core request, together with the best fixed arm: B or S, whichever has the higher mean accuracy over its two wide draws. The evaluator SHALL refuse a rule whose SHA-256 differs from the registered value.
+The SHA-256 of the chosen rule file SHALL be recorded in the core registration entry and in the core measurement card before the first core request, together with the SHA-256 of the cue lexicon and the best fixed arm: B or S, whichever has the higher mean accuracy over its two wide draws. The evaluator SHALL refuse a rule or lexicon whose SHA-256 differs from the registered value, and the core run SHALL refuse to execute while the rule file or the lexicon is missing or differs from it.
 
 #### Scenario: Rule edited after registration
 - **WHEN** the rule file changes after the core registration
 - **THEN** the router evaluation exits naming both hashes and reports nothing
 
+#### Scenario: Core launch without the frozen rule
+- **WHEN** the core run is executed while the rule file is missing or its SHA-256 differs from the registration
+- **THEN** the router gate fails and no core request is sent
+
 ### Requirement: Designed on wide, evaluated once on core
 Candidate rules SHALL be fitted on wide outcomes only, and figures computed on wide SHALL be labelled design fit and reported without tests or intervals. Cue words SHALL come from a lexicon grouped by need whose SHA-256 is recorded before any cue-level outcome on wide is computed. For the reading items of the first draw pair, the design fit SHALL report per routed group the exact-match rescues and regressions of S against B and how many of them the semantic review found to be measurement effects. The frozen rule SHALL be evaluated once on core, with the item outcome defined as the strict majority of replicates, as in the core analysis.
+
+#### Scenario: Cue outside the lexicon
+- **WHEN** a candidate rule tests a cue word that is not in the hashed lexicon, or one whose need group shares no target with the condition
+- **THEN** loading the rule fails and names the cue
 
 #### Scenario: Wide figures are not evidence
 - **WHEN** router accuracy on wide is reported

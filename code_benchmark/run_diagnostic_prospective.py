@@ -9,8 +9,10 @@ From the repo root:
 The default is an offline preflight: inputs, hashes, counts and gates are reported and
 `endpoint_calls=0` is printed. `--execute` fails closed unless the measurement card is
 pre-registered (registration.json + measurement_card.md) and, for core, diagnostic readiness
-reports inference_ready. The engine, condition freeze and resume rules are those of MC-80/82/83;
-completed attempts, including truncated or unparsed ones, are never retried automatically.
+reports inference_ready and the router rule and cue lexicon on disk carry the SHA-256 values of the
+registration's router entry (design Decision 11). The engine, condition freeze and resume rules are
+those of MC-80/82/83; completed attempts, including truncated or unparsed ones, are never retried
+automatically.
 Arms K and KS appear with --retrieved-evidence (corpus v0 records, task 7.3); each of their rows carries the
 retrieval trace: corpus and configuration hashes, the ranked chunks with their scores and the evidence-block hash.
 
@@ -41,11 +43,13 @@ from openai import OpenAI
 try:
     from code_benchmark import diagnostic
     from code_benchmark import diagnostic_prospective as dp
+    from code_benchmark import diagnostic_router as router
     from code_benchmark import run_muse13_direct_mc80 as base
     from code_benchmark import vi_multimodel as v1
 except ImportError:  # executed from code_benchmark/
     import diagnostic
     import diagnostic_prospective as dp
+    import diagnostic_router as router
     import run_muse13_direct_mc80 as base
     import vi_multimodel as v1
 
@@ -99,7 +103,25 @@ def evaluate_gates(phase: str, protocol: dict[str, Any], manifest: dict[str, Any
         report = (readiness or (lambda: diagnostic.readiness_report(audit_dir=PILOT_DIR)))()
         blockers = "; ".join(report.get("inference_blockers", []))[:300]
         gates.append(Gate("inference_ready", bool(report.get("inference_ready")), blockers or "ready"))
+    if phase == "core":
+        gates.append(router_gate(protocol, registration, root))
     return gates
+
+
+def router_gate(protocol: dict[str, Any], registration: dict[str, Any], root: Path = ROOT) -> Gate:
+    """The rule the core run is evaluated with is frozen before the first core request (design Decision 11)."""
+    entry = registration.get("router")
+    if not isinstance(entry, dict):
+        return Gate("router_rule", False, "the registration has no router entry")
+    try:
+        lexicon, lexicon_sha256 = router.load_lexicon(root / router.LEXICON_PATH.relative_to(ROOT))
+        rule, rule_sha256 = router.load_rule(root / router.RULE_PATH.relative_to(ROOT), protocol["datasets"], lexicon)
+    except SystemExit as exc:
+        return Gate("router_rule", False, str(exc))
+    differing = [name for name, actual in (("rule", rule_sha256), ("cue_lexicon", lexicon_sha256))
+                 if entry.get(f"{name}_sha256") != actual]
+    return Gate("router_rule", not differing, f"{rule['router_id']} as registered" if not differing
+                else f"{differing} differ from the registered sha256")
 
 
 # ---------------------------------------------------------------- process-local DNS shim

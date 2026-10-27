@@ -114,6 +114,72 @@ class TestGrammar(unittest.TestCase):
             self.assertEqual(loaded["conditions"][0]["arm"], "S")
 
 
+LEXICON = {"lexicon_id": "test-lexicon", "groups": {
+    "calculation_or_combination": {"need": "compute from the input", "targets": ["reasoning_gap"],
+                                   "cues": [{"cue": "bao nhiêu", "gloss": "how many"}, {"cue": "hơn", "gloss": "than"}]},
+    "legal_provision_outside_input": {"need": "a provision the prompt lacks", "targets": ["external_evidence_gap"],
+                                      "cues": [{"cue": "quy định", "gloss": "provision"}]}},
+    "excluded": [{"cue": "nhất", "reason": "too broad"}]}
+
+
+def lexicon_raises(test: unittest.TestCase, lexicon: dict, *fragments: str) -> None:
+    with test.assertRaises(SystemExit) as caught:
+        router.validate_lexicon(lexicon)
+    for fragment in fragments:
+        test.assertIn(fragment, str(caught.exception))
+
+
+class TestCueLexicon(unittest.TestCase):
+    def test_the_lexicon_schema_fails_closed(self):
+        router.validate_lexicon(copy.deepcopy(LEXICON))
+        twice = copy.deepcopy(LEXICON)
+        twice["groups"]["legal_provision_outside_input"]["cues"].append({"cue": "Bao  Nhiêu", "gloss": "how many"})
+        lexicon_raises(self, twice, "'Bao  Nhiêu' appears in calculation_or_combination")
+        no_arm = copy.deepcopy(LEXICON)
+        no_arm["groups"]["calculation_or_combination"]["targets"] = ["measurement_gap"]
+        lexicon_raises(self, no_arm, "a deployable arm addresses")
+        excluded = copy.deepcopy(LEXICON)
+        excluded["excluded"].append({"cue": "HƠN", "reason": "x"})
+        lexicon_raises(self, excluded, "both in calculation_or_combination and excluded")
+        no_need = copy.deepcopy(LEXICON)
+        del no_need["groups"]["calculation_or_combination"]["need"]
+        lexicon_raises(self, no_need, "exactly the keys")
+        lexicon_raises(self, {**LEXICON, "weights": {}}, "weights")
+
+    def test_a_cue_rule_loads_only_with_its_lexicon_and_a_shared_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "rule.json"
+
+            def load(the_rule: dict, lexicon: dict | None = LEXICON) -> dict:
+                path.write_text(json.dumps(the_rule, ensure_ascii=False), encoding="utf-8")
+                return router.load_rule(path, DATASETS, lexicon)[0]
+
+            def fails(the_rule: dict, *fragments: str, lexicon: dict | None = LEXICON) -> None:
+                with self.assertRaises(SystemExit) as caught:
+                    load(the_rule, lexicon)
+                for fragment in fragments:
+                    self.assertIn(fragment, str(caught.exception))
+
+            counting = rule(cond("S", ["reasoning_gap"], dataset=[DROP], question_cues=["Bao nhiêu"]))
+            self.assertEqual(load(counting)["conditions"][0]["arm"], "S")
+            fails(counting, "load it with the cue lexicon", lexicon=None)
+            fails(rule(cond("S", ["reasoning_gap"], question_cues=["mấy"])), "'mấy' is not in the cue lexicon test-lexicon")
+            fails(rule(cond("S", ["reasoning_gap", "reading_representation_gap"], question_cues=["quy định"])),
+                  "marks the need legal_provision_outside_input", "shares no target")
+            load(rule(cond("K", ["external_evidence_gap"], dataset=[MC], question_cues=["quy định"])))
+            load(rule(cond("S", ["reasoning_gap"], dataset=[DROP])), None)  # no cue, no lexicon needed
+
+    def test_the_committed_lexicon_and_router_candidates_load(self):
+        lexicon, _ = router.load_lexicon()
+        groups = lexicon["groups"]
+        self.assertTrue(set(groups["calculation_or_combination"]["targets"]) <= router.ADDRESSABLE["S"])
+        self.assertTrue(set(groups["legal_provision_outside_input"]["targets"]) <= router.ADDRESSABLE["K"])
+        candidates = sorted((dp.DATA_DIR / "router_candidates").glob("*.json"))
+        self.assertEqual(len(candidates), 3)
+        for path in candidates:
+            router.load_rule(path, dp.load_protocol()["datasets"], lexicon)
+
+
 class TestRouting(unittest.TestCase):
     def test_first_matching_condition_decides(self):
         the_rule = rule(cond("K", ["external_evidence_gap"], dataset=[MC]),
@@ -206,22 +272,27 @@ def core_case(the_rule: dict = DROP_RULE):
     return validated, router.route_items(validated, items), arms, outcomes_to_rows(spec), diagnosis
 
 
-REGISTERED = {"rule_sha256": "r" * 64, "anchor_diagnosis_sha256": "d" * 64, "best_fixed_arm": "S"}
+REGISTERED = {"rule_sha256": "r" * 64, "cue_lexicon_sha256": "c" * 64, "anchor_diagnosis_sha256": "d" * 64,
+              "best_fixed_arm": "S"}
 
 
 def run_evaluate(the_rule: dict = DROP_RULE, **overrides):
     validated, decisions, arms, rows, diagnosis = core_case(the_rule)
-    arguments = {"rule": validated, "rule_sha256": "r" * 64, "registered": REGISTERED, "decisions": decisions,
-                 "manifest_arms": arms, "rows": rows, "diagnosis": diagnosis, "diagnosis_sha256": "d" * 64}
+    arguments = {"rule": validated, "rule_sha256": "r" * 64, "lexicon_sha256": "c" * 64, "registered": REGISTERED,
+                 "decisions": decisions, "manifest_arms": arms, "rows": rows, "diagnosis": diagnosis,
+                 "diagnosis_sha256": "d" * 64}
     arguments.update(overrides)
     return ar.evaluate(**arguments)
 
 
 class TestCoreEvaluation(unittest.TestCase):
-    def test_a_changed_rule_or_diagnosis_exits_naming_both_hashes(self):
+    def test_a_changed_rule_lexicon_or_diagnosis_exits_naming_both_hashes(self):
         with self.assertRaises(SystemExit) as caught:
             run_evaluate(rule_sha256="x" * 64)
         self.assertIn(f"{'x' * 64} differs from the registered {'r' * 64}", str(caught.exception))
+        with self.assertRaises(SystemExit) as caught:
+            run_evaluate(lexicon_sha256="z" * 64)
+        self.assertIn(f"cue_lexicon sha256 {'z' * 64} differs from the registered {'c' * 64}", str(caught.exception))
         with self.assertRaises(SystemExit) as caught:
             run_evaluate(diagnosis_sha256="y" * 64)
         self.assertIn(f"{'y' * 64} differs from the registered {'d' * 64}", str(caught.exception))

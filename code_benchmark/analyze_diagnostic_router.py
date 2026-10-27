@@ -9,7 +9,10 @@ and 12, spec `diagnostic-router`).
   regression whose S answer was, is a measurement effect.
 * best_fixed_arm (wide): B or S, whichever has the higher mean accuracy over its two draws (a tie goes to the
   arm with fewer mean reported tokens).
-* evaluate (core, once): the SHA-256 of the rule and of the anchor diagnosis must equal the registration.
+* design-fit and evaluate load the rule with the cue lexicon (`diagnostic_router.load_lexicon`): a cue outside
+  it fails, and the lexicon's SHA-256 is part of both results.
+* evaluate (core, once): the SHA-256 of the rule, of the cue lexicon and of the anchor diagnosis must equal
+  the registration.
   The evaluation set is the anchors whose core manifest holds the arm the rule selects; the others are
   listed. The item outcome is the strict majority of replicates. For the router, always-B, always-S and the
   registered best fixed arm: accuracy with a Wilson interval and the mean reported total tokens per item
@@ -19,10 +22,11 @@ and 12, spec `diagnostic-router`).
   adjudicated hypotheses, which the router itself never reads.
 
 Usage (repo root):
-  .venv/bin/python -m code_benchmark.analyze_diagnostic_router design-fit --rule <rule.json> [--rule ...] [--out <json>]
+  .venv/bin/python -m code_benchmark.analyze_diagnostic_router design-fit --rule <rule.json> [--rule ...] \
+      [--lexicon <json>] [--out <json>]
   .venv/bin/python -m code_benchmark.analyze_diagnostic_router evaluate --run-dir <core output dir> \
-      [--rule data/diagnostic_prospective_v1/router_v1.json] [--diagnosis <anchor_diagnosis_v1.jsonl>] \
-      [--with-design-fit] [--out <json>]
+      [--rule data/diagnostic_prospective_v1/router_v1.json] [--lexicon <json>] \
+      [--diagnosis <anchor_diagnosis_v1.jsonl>] [--with-design-fit] [--out <json>]
 """
 from __future__ import annotations
 
@@ -55,11 +59,10 @@ WIDE_SCORES = (RESULTS_DIR / "wide" / MODEL_DIR / "scores.jsonl",
                RESULTS_DIR / "wide-supplements" / "wide-s-r2" / MODEL_DIR / "scores.jsonl")
 SEMANTIC_DIR = RESULTS_DIR / "wide" / MODEL_DIR / "semantic_review"
 DIAGNOSIS_PATH = RESULTS_DIR / "audit" / "anchor_diagnosis_v1.jsonl"
-RULE_PATH = dp.DATA_DIR / "router_v1.json"
 WIDE_ARMS = ("B", "S")
 WIDE_DRAWS = (1, 2)
-ROUTER_REPORT_KEYS = ("rule_id", "rule_sha256", "anchor_diagnosis_sha256", "best_fixed_arm", "anchors",
-                      "evaluation_set", "excluded_anchors", "routing", "primary", "secondary_valid_gold",
+ROUTER_REPORT_KEYS = ("rule_id", "rule_sha256", "cue_lexicon_sha256", "anchor_diagnosis_sha256", "best_fixed_arm",
+                      "anchors", "evaluation_set", "excluded_anchors", "routing", "primary", "secondary_valid_gold",
                       "deployable_ceiling", "detection", "design_fit_wide")
 
 
@@ -262,11 +265,12 @@ def detection(keys: list[str], decisions: dict[str, router.Decision],
     }
 
 
-def evaluate(rule: dict[str, Any], rule_sha256: str, registered: dict[str, Any], decisions: dict[str, router.Decision],
-             manifest_arms: dict[str, set[str]], rows: list[dict[str, Any]], diagnosis: dict[str, dict[str, Any]],
-             diagnosis_sha256: str, design_fit_wide: dict[str, Any] | None = None) -> dict[str, Any]:
+def evaluate(rule: dict[str, Any], rule_sha256: str, lexicon_sha256: str, registered: dict[str, Any],
+             decisions: dict[str, router.Decision], manifest_arms: dict[str, set[str]], rows: list[dict[str, Any]],
+             diagnosis: dict[str, dict[str, Any]], diagnosis_sha256: str,
+             design_fit_wide: dict[str, Any] | None = None) -> dict[str, Any]:
     """The single core evaluation of the frozen rule. Exits before computing anything when a hash differs."""
-    for name, actual in (("rule", rule_sha256), ("anchor_diagnosis", diagnosis_sha256)):
+    for name, actual in (("rule", rule_sha256), ("cue_lexicon", lexicon_sha256), ("anchor_diagnosis", diagnosis_sha256)):
         expected = registered.get(f"{name}_sha256")
         if actual != expected:
             raise _fail(f"{name} sha256 {actual} differs from the registered {expected}; nothing is reported")
@@ -293,7 +297,8 @@ def evaluate(rule: dict[str, Any], rule_sha256: str, registered: dict[str, Any],
     valid = [key for key in keys if diagnosis[key]["gold_validity"] == "valid"]
     in_set = set(keys)
     return {
-        "rule_id": rule["router_id"], "rule_sha256": rule_sha256, "anchor_diagnosis_sha256": diagnosis_sha256,
+        "rule_id": rule["router_id"], "rule_sha256": rule_sha256, "cue_lexicon_sha256": lexicon_sha256,
+        "anchor_diagnosis_sha256": diagnosis_sha256,
         "best_fixed_arm": best, "anchors": len(anchors), "evaluation_set": len(keys), "excluded_anchors": excluded,
         "routing": {"arms": dict(sorted(Counter(decisions[key].arm for key in anchors).items())),
                     "conditions": dict(Counter(str(decisions[key].condition or "default") for key in anchors))},
@@ -347,22 +352,27 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="command", required=True)
     fit = sub.add_parser("design-fit", help="design fit of candidate rules on the wide draws (no tests)")
     fit.add_argument("--rule", type=Path, action="append", required=True, help="candidate rule JSON (repeatable)")
+    fit.add_argument("--lexicon", type=Path, default=router.LEXICON_PATH, help=f"default: {router.LEXICON_PATH}")
     fit.add_argument("--semantic-review", type=Path, default=SEMANTIC_DIR, help=f"default: {SEMANTIC_DIR}")
     fit.add_argument("--out", type=Path, help="write the design fits and the best fixed arm as JSON")
     ev = sub.add_parser("evaluate", help="the single core evaluation of the registered rule")
     ev.add_argument("--run-dir", type=Path, required=True, help="core output dir (scores.jsonl, source_manifest.json)")
-    ev.add_argument("--rule", type=Path, default=RULE_PATH, help=f"default: {RULE_PATH}")
+    ev.add_argument("--rule", type=Path, default=router.RULE_PATH, help=f"default: {router.RULE_PATH}")
+    ev.add_argument("--lexicon", type=Path, default=router.LEXICON_PATH, help=f"default: {router.LEXICON_PATH}")
     ev.add_argument("--diagnosis", type=Path, default=DIAGNOSIS_PATH, help=f"default: {DIAGNOSIS_PATH}")
     ev.add_argument("--with-design-fit", action="store_true", help="add the wide design fit of the same rule")
     ev.add_argument("--out", type=Path, help="default: <run-dir>/analysis/router_report.json")
     args = ap.parse_args(argv)
     protocol = dp.load_protocol()
+    lexicon, lexicon_digest = router.load_lexicon(args.lexicon)
     if args.command == "design-fit":
         items, rows = _wide_inputs(protocol)
         semantic = load_semantic_review(args.semantic_review, WIDE_SCORES[0])
-        result = {"best_fixed_arm": best_fixed_arm(rows), "fits": []}
+        result = {"cue_lexicon": {"lexicon_id": lexicon["lexicon_id"], "sha256": lexicon_digest},
+                  "best_fixed_arm": best_fixed_arm(rows), "fits": []}
+        print(f"cue lexicon {lexicon['lexicon_id']}  sha256 {lexicon_digest}")
         for path in args.rule:
-            rule, digest = router.load_rule(path, protocol["datasets"])
+            rule, digest = router.load_rule(path, protocol["datasets"], lexicon)
             result["fits"].append(design_fit(rule, digest, items, rows, semantic))
             _print_fit(result["fits"][-1])
         best = result["best_fixed_arm"]
@@ -376,7 +386,7 @@ def main(argv: list[str] | None = None) -> int:
         raise _fail("the registration has no router entry yet (task 6.5)")
     if entry.get("report_keys") != list(ROUTER_REPORT_KEYS):
         raise _fail("the registered router report keys differ from the evaluator's")
-    rule, digest = router.load_rule(args.rule, protocol["datasets"])
+    rule, digest = router.load_rule(args.rule, protocol["datasets"], lexicon)
     diagnosis, diagnosis_digest = dp.load_anchor_diagnosis(args.diagnosis)
     main_items = v1.rebuild_items(protocol["parent"]["manifest_phase"])
     decisions = router.route_items(rule, router.phase_items("core", protocol, main_items))
@@ -388,8 +398,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.with_design_fit:
         items, rows = _wide_inputs(protocol)
         wide = design_fit(rule, digest, items, rows, load_semantic_review(SEMANTIC_DIR, WIDE_SCORES[0]))
-    report = evaluate(rule, digest, entry, decisions, dict(manifest_arms), read_jsonl(args.run_dir / "scores.jsonl"),
-                      diagnosis, diagnosis_digest, wide)
+    report = evaluate(rule, digest, lexicon_digest, entry, decisions, dict(manifest_arms),
+                      read_jsonl(args.run_dir / "scores.jsonl"), diagnosis, diagnosis_digest, wide)
     out = args.out or args.run_dir / "analysis" / "router_report.json"
     _write_json(out, report)
     primary = report["primary"]

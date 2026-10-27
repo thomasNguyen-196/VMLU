@@ -1,0 +1,37 @@
+{
+  "router_id": "router-c3-need-s-k-ks",
+  "description": "Need cues with evidence arms (computation, external evidence and both). A Legal MC prompt carries no provision text: a Legal MC question that also asks to compute or compare goes to KS, one that names a legal provision goes to K. A reading question that asks to compute or combine facts goes to S. Every other item stays on B. K and KS have no wide outcome, and on core they exist only for the evidence anchors.",
+  "conditions": [
+    {
+      "arm": "KS",
+      "targets": ["reasoning_gap", "external_evidence_gap", "parametric_knowledge_gap", "parametric_knowledge_error"],
+      "when": {
+        "dataset": ["vi-multimodel-v1-legal-mc-146"],
+        "question_cues": ["bao nhiêu", "mấy", "bao lâu", "tổng số", "tổng cộng", "tính tổng", "chênh lệch", "phần trăm", "tỷ lệ", "tỉ lệ", "trung bình", "so sánh", "hơn", "cao nhất", "thấp nhất", "lớn nhất", "nhỏ nhất", "nhiều nhất", "ít nhất", "dài nhất", "ngắn nhất", "sớm nhất", "muộn nhất"]
+      },
+      "note": "Legal MC question with a calculation_or_combination cue: it needs the provisions and a combination of them"
+    },
+    {
+      "arm": "K",
+      "targets": ["external_evidence_gap", "parametric_knowledge_gap", "parametric_knowledge_error"],
+      "when": {
+        "dataset": ["vi-multimodel-v1-legal-mc-146"],
+        "question_cues": ["quy định", "luật", "nghị định", "thông tư", "nghị quyết", "hiện hành"]
+      },
+      "note": "Legal MC question with a legal_provision_outside_input cue"
+    },
+    {
+      "arm": "S",
+      "targets": ["reasoning_gap", "reading_representation_gap"],
+      "when": {
+        "dataset": ["vi-multimodel-v1-vi-squad-200", "vi-multimodel-v1-vi-drop-200", "vi-multimodel-v1-bidlqa-test"],
+        "question_cues": ["bao nhiêu", "mấy", "bao lâu", "tổng số", "tổng cộng", "tính tổng", "chênh lệch", "phần trăm", "tỷ lệ", "tỉ lệ", "trung bình", "so sánh", "hơn", "cao nhất", "thấp nhất", "lớn nhất", "nhỏ nhất", "nhiều nhất", "ít nhất", "dài nhất", "ngắn nhất", "sớm nhất", "muộn nhất"]
+      },
+      "note": "reading question with a calculation_or_combination cue of cue-lexicon-v1; S cannot separate a reading failure from a reasoning one, so it targets both"
+    }
+  ],
+  "default": {
+    "arm": "B",
+    "targets": []
+  }
+}

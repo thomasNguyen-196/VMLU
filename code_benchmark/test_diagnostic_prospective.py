@@ -450,6 +450,24 @@ class TestManifests(unittest.TestCase):
 
 
 class TestRunner(unittest.TestCase):
+    LEXICON = {"lexicon_id": "test-lexicon", "groups": {"calculation_or_combination": {
+        "need": "compute", "targets": ["reasoning_gap"], "cues": [{"cue": "bao nhiêu", "gloss": "how many"}]}}}
+    RULE = {"router_id": "test-router", "conditions": [
+        {"arm": "S", "targets": ["reasoning_gap"], "when": {"question_cues": ["bao nhiêu"]}}],
+        "default": {"arm": "B", "targets": []}}
+
+    def setUp(self):
+        # a repo root holding the detail card and the frozen router rule and cue lexicon
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        (self.root / "measurement_card.md").write_text("## MC-901 — test\n", encoding="utf-8")
+        self.rule_path = self.root / runner.router.RULE_PATH.relative_to(dp.ROOT)
+        self.lexicon_path = self.root / runner.router.LEXICON_PATH.relative_to(dp.ROOT)
+        self.rule_path.parent.mkdir(parents=True)
+        self.rule_path.write_text(json.dumps(self.RULE, ensure_ascii=False), encoding="utf-8")
+        self.lexicon_path.write_text(json.dumps(self.LEXICON, ensure_ascii=False), encoding="utf-8")
+
     def manifest_stub(self):
         return {"campaign_protocol_sha256": "p" * 64, "prompt_templates_sha256": "t" * 64,
                 "manifest_sha256": "m" * 64, "evidence_sha256": {}}
@@ -457,12 +475,14 @@ class TestRunner(unittest.TestCase):
     def registration(self, phase="wide", card_file="measurement_card.md"):
         return {"card_ids": {phase: "MC-901"}, "card_files": {phase: card_file},
                 "frozen": {"protocol_sha256": "p" * 64, "prompt_templates_sha256": "t" * 64,
-                           "manifest_sha256": {phase: "m" * 64}, "evidence_sha256": {phase: {}}}}
+                           "manifest_sha256": {phase: "m" * 64}, "evidence_sha256": {phase: {}}},
+                "router": {"rule_sha256": v1.sha256_file(self.rule_path),
+                           "cue_lexicon_sha256": v1.sha256_file(self.lexicon_path)}}
 
     ENV = {"OPENAI_BASE_URL": "http://llmapi.iec/v1", "OPENAI_MODEL": "Qwen3.5-9B-65K", "OPENAI_API_KEY": "k"}
 
     def gates(self, phase="wide", **overrides):
-        args = dict(card_text="## MC-901 — test\n", readiness=lambda: {"inference_ready": True})
+        args = dict(card_text="## MC-901 — test\n", readiness=lambda: {"inference_ready": True}, root=self.root)
         args.update(overrides)
         manifest = overrides.pop("manifest", None) or self.manifest_stub()
         registration = args.pop("registration", None) or self.registration(phase)
@@ -485,6 +505,25 @@ class TestRunner(unittest.TestCase):
         self.assertFalse(core["inference_ready"].ok)
         self.assertIn("verified_endpoint", core["inference_ready"].detail)
         self.assertNotIn("inference_ready", self.gates("wide", readiness=pending))
+
+    def test_core_runs_only_with_the_registered_router_rule_and_lexicon(self):
+        self.assertEqual(self.gates("core")["router_rule"].detail, "test-router as registered")
+        self.assertNotIn("router_rule", self.gates("wide"))
+        unregistered = {key: value for key, value in self.registration("core").items() if key != "router"}
+        self.assertIn("no router entry", self.gates("core", registration=unregistered)["router_rule"].detail)
+        registered = self.registration("core")
+        frozen_rule, frozen_lexicon = self.rule_path.read_bytes(), self.lexicon_path.read_bytes()
+        self.rule_path.write_text(json.dumps({**self.RULE, "router_id": "edited"}), encoding="utf-8")
+        edited = self.gates("core", registration=registered)["router_rule"]
+        self.assertEqual((edited.ok, edited.detail), (False, "['rule'] differ from the registered sha256"))
+        self.rule_path.write_bytes(frozen_rule)
+        self.lexicon_path.write_text(json.dumps({**self.LEXICON, "lexicon_id": "edited"}), encoding="utf-8")
+        self.assertIn("['cue_lexicon']", self.gates("core", registration=registered)["router_rule"].detail)
+        self.lexicon_path.write_bytes(frozen_lexicon)
+        self.rule_path.unlink()
+        missing = self.gates("core", registration=registered)["router_rule"]
+        self.assertFalse(missing.ok)
+        self.assertIn("cannot read router rule", missing.detail)
 
     def test_hash_drift_and_wrong_endpoint_block_execution(self):
         drifted = {**self.manifest_stub(), "prompt_templates_sha256": "x" * 64}
