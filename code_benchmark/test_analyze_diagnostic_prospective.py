@@ -500,6 +500,68 @@ class TestPlanConsistency(unittest.TestCase):
         self.assertEqual(named - reported, set(), "metrics named in the plan but not reported")
 
 
+def hypothesis_case():
+    """Five Legal MC anchors, three replicates per arm (core). Item 0: reasoning_gap, input sufficient, B 0/3, S 3/3.
+    Item 1: external_evidence_gap, input insufficient, B 0/3, O 3/3, K 0/3, S 0/3. Item 2: reasoning_gap, B 2/3
+    (correct by majority: the historical failure is not reproduced), S 3/3. Item 3: no observed issue, B 3/3, S 1/3.
+    Item 4: unresolved, B 1/3, S 1/3."""
+    spec = {0: {"B": (0, 0, 0), "S": (1, 1, 1)}, 1: {"B": (0, 0, 0), "S": (0, 0, 0), "O": (1, 1, 1), "K": (0, 0, 0)},
+            2: {"B": (1, 0, 1), "S": (1, 1, 1)}, 3: {"B": (1, 1, 1), "S": (1, 0, 0)}, 4: {"B": (1, 0, 0), "S": (0, 1, 0)}}
+    rows = [mc_row(arm, item, n, bool(ok)) for item, arms in spec.items() for arm, draws in arms.items()
+            for n, ok in enumerate(draws, 1)]
+
+    def judged(outcome, labels=(), sufficiency="sufficient"):
+        return {"diagnostic_outcome": outcome, "diagnostic_labels": list(labels), "gold_validity": "valid",
+                "input_evidence_sufficiency": sufficiency, "hypothesis_status": {label: "hypothesis" for label in labels}}
+
+    diagnosis = {f"{MC}:M000": judged("issue_observed", ("reasoning_gap",)),
+                 f"{MC}:M001": judged("issue_observed", ("external_evidence_gap",), "insufficient"),
+                 f"{MC}:M002": judged("issue_observed", ("reasoning_gap",)),
+                 f"{MC}:M003": judged("no_observed_issue"), f"{MC}:M004": judged("unresolved")}
+    return rows, diagnosis
+
+
+class TestRecoveryByHypothesis(unittest.TestCase):
+    def test_groups_count_rescues_per_arm_and_list_candidates_without_upgrading(self):
+        rows, diagnosis = hypothesis_case()
+        before = json.loads(json.dumps(diagnosis))
+        report = an.recovery_by_hypothesis(rows, diagnosis, "d" * 64)
+        self.assertEqual(tuple(report), an.HYPOTHESIS_REPORT_KEYS)
+        self.assertEqual(diagnosis, before)
+        reasoning = report["groups"]["reasoning_gap"]
+        self.assertEqual((reasoning["anchors"], reasoning["b_majority_incorrect"], reasoning["not_reproduced"]), (2, 1, 1))
+        self.assertEqual(reasoning["arms"]["S"], {"paired": 2, "rescues": 1, "regressions": 0})
+        evidence = report["groups"]["external_evidence_gap"]
+        self.assertEqual((evidence["arms"]["O"]["rescues"], evidence["arms"]["K"]["rescues"]), (1, 0))
+        self.assertEqual(report["groups"]["no_observed_issue"]["arms"]["S"]["regressions"], 1)
+        self.assertEqual(report["groups"]["unresolved"]["no_arm_correct"], 1)
+        candidates = {(c["item_key"], c["label"]): c for c in report["contrast_candidates"]}
+        self.assertEqual(candidates[(f"{MC}:M000", "reasoning_gap")]["status"], "hypothesis")
+        self.assertIn((f"{MC}:M001", "external_evidence_gap"), candidates)
+        retrieval = candidates[(f"{MC}:M001", "retrieval_gap")]
+        self.assertEqual((retrieval["hypothesis_recorded"], retrieval["status"]), (False, None))
+        self.assertIn((f"{MC}:M002", "run_instability"), candidates)  # B replicates 1, 0, 1 disagree
+        self.assertNotIn((f"{MC}:M002", "reasoning_gap"), candidates)  # B is right by majority: no rescue
+
+    def test_a_failure_that_is_not_reproduced_is_never_a_rescue(self):
+        rows, diagnosis = hypothesis_case()
+        report = an.recovery_by_hypothesis(rows, diagnosis, "d" * 64)
+        self.assertEqual(report["not_reproduced"], [f"{MC}:M002"])
+        self.assertEqual(report["groups"]["reasoning_gap"]["arms"]["S"]["rescues"], 1)  # item 0 only
+
+    def test_a_matched_contrast_needs_the_registered_input_sufficiency(self):
+        rows, diagnosis = hypothesis_case()
+        diagnosis[f"{MC}:M000"]["input_evidence_sufficiency"] = "insufficient"
+        report = an.recovery_by_hypothesis(rows, diagnosis, "d" * 64)
+        self.assertNotIn((f"{MC}:M000", "reasoning_gap"),
+                         {(c["item_key"], c["label"]) for c in report["contrast_candidates"]})
+
+    def test_an_anchor_without_b_attempts_fails_closed(self):
+        rows, diagnosis = hypothesis_case()
+        with self.assertRaises(SystemExit):
+            an.recovery_by_hypothesis([r for r in rows if r["item_id"] != "M003"], diagnosis, "d" * 64)
+
+
 class TestCli(unittest.TestCase):
     def test_cli_writes_report_and_discordant_export(self):
         with tempfile.TemporaryDirectory() as tmp:

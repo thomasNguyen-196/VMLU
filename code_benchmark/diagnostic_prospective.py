@@ -19,9 +19,11 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from code_benchmark import diagnostic
     from code_benchmark import vi_multimodel as v1
     from code_benchmark.score_vi_multimodel import score_rows
 except ImportError:  # executed from code_benchmark/
+    import diagnostic
     import vi_multimodel as v1
     from score_vi_multimodel import score_rows
 
@@ -382,6 +384,141 @@ def oracle_records(review_rows: list[dict[str, Any]], provisions: list[dict[str,
                         "eligibility": {"input_evidence_sufficiency": required}})
     excluded = {item_key(dataset_id, item_id): reason for item_id, reason in sorted(reasons.items()) if reason}
     return records, excluded
+
+
+# ---------------------------------------------------------------- anchor diagnosis (design Decision 12)
+
+ANCHOR_DIAGNOSIS_KEYS = ("dataset_id", "item_id", "judgment_source", "reviewers", "semantic_correctness",
+                         "gold_validity", "input_evidence_sufficiency", "corpus_evidence_availability",
+                         "diagnostic_outcome", "observed_issues", "diagnostic_labels", "hypothesis_status")
+JUDGMENT_FIELDS = ("semantic_correctness", "gold_validity", "input_evidence_sufficiency",
+                   "corpus_evidence_availability", "diagnostic_outcome")
+JUDGMENT_SETS = ("observed_issues", "diagnostic_labels")
+
+
+def judgment_vocabulary() -> dict[str, frozenset[str]]:
+    """Allowed values of every final-judgment field, from the frozen review schema and the audit taxonomy."""
+    enums = _read_json(diagnostic.REVIEW_SCHEMA_PATH, "review schema")["enums"]
+    vocabulary = {field: frozenset(enums[field]) for field in JUDGMENT_FIELDS}
+    vocabulary["observed_issues"] = frozenset(diagnostic.OBSERVED_ISSUES)
+    vocabulary["diagnostic_labels"] = frozenset(diagnostic.DIAGNOSTIC_LABELS)
+    return vocabulary
+
+
+def anchor_of_observation(observation_key: str) -> str:
+    """`source|dataset:item:replicate` -> `dataset:item`."""
+    return str(observation_key).split("|", 1)[-1].rsplit(":", 1)[0]
+
+
+def final_judgment(rationale: str, vocabulary: dict[str, frozenset[str]]) -> dict[str, Any]:
+    """The final labels an adjudication records as `FINAL field=value | ... || reason`. Every judgment field
+    appears exactly once; the two set fields are `;`-separated and may be empty."""
+    head, separator, _ = str(rationale).partition("||")
+    if not head.startswith("FINAL ") or not separator:
+        raise _fail("adjudication rationale lacks a `FINAL field=value | ... || reason` block")
+    judgment: dict[str, Any] = {}
+    for part in head[len("FINAL "):].split("|"):
+        name, equals, value = part.strip().partition("=")
+        if not equals or name not in vocabulary or name in judgment:
+            raise _fail(f"adjudication field {name!r} is unknown, malformed or repeated")
+        value = value.strip()
+        if name in JUDGMENT_SETS:
+            values = [entry.strip() for entry in value.split(";") if entry.strip()]
+            if len(values) != len(set(values)) or not set(values) <= vocabulary[name]:
+                raise _fail(f"adjudication {name}={value!r} repeats a value or names one outside the vocabulary")
+            judgment[name] = sorted(values)
+        elif value in vocabulary[name]:
+            judgment[name] = value
+        else:
+            raise _fail(f"adjudication {name}={value!r} is outside the vocabulary")
+    missing = sorted(set(vocabulary) - set(judgment))
+    if missing:
+        raise _fail(f"adjudication lacks the final {missing}")
+    return judgment
+
+
+def _review_judgment(row: dict[str, Any]) -> dict[str, Any]:
+    return {**{field: row[field] for field in JUDGMENT_FIELDS},
+            **{field: sorted(row[field]) for field in JUDGMENT_SETS}}
+
+
+def anchor_diagnosis(pilot_dir: Path) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    """The final audit judgment of every anchor (design Decision 12), in pilot order: the judgment every imported
+    review agrees on, or the FINAL block of the anchor's latest resolved adjudication. Fails closed on an anchor
+    without a review, on reviews that disagree without a resolved adjudication and on an unreadable final block.
+    Returns the records and the SHA-256 of each input file."""
+    anchors, _ = anchor_item_keys(pilot_dir)
+    vocabulary = judgment_vocabulary()
+    inputs: dict[str, str] = {}
+    reviews: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for path in sorted((pilot_dir / "reviews").glob("*.jsonl")):
+        inputs[f"reviews/{path.name}"] = v1.sha256_file(path)
+        for row in _evidence_rows(path, "imported review"):
+            if row.get("review_status"):
+                reviews[anchor_of_observation(row["observation_key"])].append(row)
+    adjudicated: dict[str, dict[str, Any]] = {}
+    path = pilot_dir / "adjudications.jsonl"
+    if path.is_file():
+        inputs["adjudications.jsonl"] = v1.sha256_file(path)
+        adjudicated = {anchor_of_observation(row["observation_key"]): row
+                       for row in _evidence_rows(path, "adjudications")}
+    stray = sorted(set(reviews) - set(anchors))
+    if stray:
+        raise _fail(f"reviews for items outside the pilot anchors: {stray[:3]}")
+    records = []
+    for key in anchors:
+        rows = reviews.get(key)
+        if not rows:
+            raise _fail(f"anchor {key} has no imported review")
+        views = [_review_judgment(row) for row in rows]
+        decision = adjudicated.get(key, {})
+        if decision.get("decision") == "resolved":
+            judgment, source = final_judgment(decision["rationale"], vocabulary), "adjudicated"
+        elif all(view == views[0] for view in views):
+            judgment, source = views[0], "agreed" if len(rows) > 1 else "single_review"
+        else:
+            raise _fail(f"the reviews of {key} disagree and no resolved adjudication records the final judgment")
+        primary = next((row for row in rows if row.get("review_scope") == "primary-60"), rows[0])
+        status = {support["label"]: support["status"] for support in primary.get("diagnostic_support", [])}
+        dataset_id, item_id = key.split(":", 1)
+        records.append({"dataset_id": dataset_id, "item_id": item_id, "judgment_source": source,
+                        "reviewers": sorted({str(row["annotator_id"]) for row in rows}), **judgment,
+                        "hypothesis_status": {label: status.get(label, "hypothesis")
+                                              for label in judgment["diagnostic_labels"]}})
+    return records, inputs
+
+
+def load_anchor_diagnosis(path: Path) -> tuple[dict[str, dict[str, Any]], str]:
+    """{dataset:item: final judgment} and the SHA-256 of the file (the value the core registration records)."""
+    vocabulary = judgment_vocabulary()
+    mapping: dict[str, dict[str, Any]] = {}
+    for number, row in enumerate(_evidence_rows(path, "anchor diagnosis"), 1):
+        where = f"{path.name}:{number}"
+        if not isinstance(row, dict) or set(row) != set(ANCHOR_DIAGNOSIS_KEYS):
+            raise _fail(f"{where}: record must have exactly the keys {list(ANCHOR_DIAGNOSIS_KEYS)}")
+        key = item_key(row["dataset_id"], row["item_id"])
+        if key in mapping:
+            raise _fail(f"{where}: duplicate diagnosis for {key}")
+        if (any(row[field] not in vocabulary[field] for field in JUDGMENT_FIELDS)
+                or any(not isinstance(row[field], list) or not set(row[field]) <= vocabulary[field]
+                       for field in JUDGMENT_SETS)
+                or not isinstance(row["hypothesis_status"], dict)
+                or set(row["hypothesis_status"]) != set(row["diagnostic_labels"])
+                or not set(row["hypothesis_status"].values()) <= diagnostic.ATTRIBUTION_STATUSES):
+            raise _fail(f"{where}: {key} has a value outside the audit vocabulary")
+        mapping[key] = row
+    return mapping, v1.sha256_file(path)
+
+
+def reported_tokens(row: dict[str, Any]) -> int | None:
+    """Total tokens the endpoint reported for an attempt; None when it reported none (unknown, never zero)."""
+    total = row.get("total_tokens")
+    if isinstance(total, int):
+        return total
+    prompt, completion = row.get("prompt_tokens"), row.get("completion_tokens")
+    if isinstance(prompt, int) and isinstance(completion, int):
+        return prompt + completion
+    return None
 
 
 # ---------------------------------------------------------------- manifests

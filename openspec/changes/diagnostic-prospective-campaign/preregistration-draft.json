@@ -142,14 +142,19 @@
       "ceilings": "ceiling over the deployable arms available per item next to the ceiling over B replicates (oracle_routing definition, O left out)",
       "cost": "mean reported total tokens per item for each policy; unreported usage is unknown, not zero",
       "sensitivity": "secondary: the same comparisons without anchors whose adjudicated gold is not valid",
-      "amended": "2026-10-26 (design.md Decision 11)"
+      "targets": "every condition and the default declare the audit-taxonomy labels the routed arm is meant to address (S: reasoning_gap, reading_representation_gap; K: external_evidence_gap, parametric_knowledge_gap, parametric_knowledge_error; KS: their union; B: none); declarations only, never routing inputs",
+      "cue_lexicon": "cue words come from a lexicon grouped by need (calculation or combination of facts; legal provisions outside the input), hashed before any cue-level wide outcome is computed",
+      "design_fit_semantic": "for reading items of the first wide draw pair, the exact-match rescues and regressions of each routed group and how many the semantic review found to be measurement effects",
+      "detection": "descriptive: anchors with at least one adjudicated hypothesis that the router sent to an arm targeting one of them (total and per label), and no-issue anchors sent to an arm other than B; labels from the anchor-diagnosis file whose SHA-256 is registered",
+      "amended": "2026-10-26 (design.md Decision 11); targets, lexicon, semantic design fit and detection 2026-10-27 (Decision 12)"
     },
     "oracle_routing": "reported only with the ceiling over B replicates alone; on wide (one draw per arm) no noise floor exists and the ceiling is not read as headroom",
     "primary_metrics": ["recovery", "regression_rate", "net_gain", "mcnemar_p_holm"],
     "secondary_metrics": ["attempt_level", "baseline_noise", "sensitivity_format_compliant", "mean_f1_diff", "mean_f1_diff_ci95_pts", "rescues_format_suspect"],
     "noise_reference": "core: attempt-level rescue and regression between B replicates, shown next to each arm's attempt-level rates; wide: unavailable (one draw)",
     "parity_gate": "wide only: B per dataset must lie inside the MC-83 interval (Legal MC 76.70-88.70, Legal NLI 85.74-94.87, Vi-SQuAD EM 69.59-81.50, Vi-DROP EM 41.09-55.05, ViBidLQA EM 24.05-31.58) before any effect is interpreted",
-    "power_note": "the multiple-choice family has only about thirty B-incorrect items on wide: a null result there is reported as insufficient power, not as no effect"
+    "power_note": "the multiple-choice family has only about thirty B-incorrect items on wide: a null result there is reported as insufficient power, not as no effect",
+    "recovery_by_hypothesis": "core, descriptive, a separate registered analysis: anchors grouped by adjudicated hypothesis plus no-issue, unresolved and empty-hypothesis groups; B-incorrect anchors, per-arm rescues, regressions and anchors no arm answers; contrast candidates for a reviewer (never an automatic upgrade to contrast_supported); issue anchors whose new B majority is correct reported as not reproduced (design.md Decision 12)"
   },
   "open_decisions": [
     "DECIDED 2026-10-22 by the project owner: core replicates = 3; the defaults of the remaining items were accepted ('OK') unless a later message says otherwise",
@@ -162,6 +167,7 @@
     "OPEN: the rule-based router text, chosen by the project owner from the candidates fitted on wide before the core registration",
     "DECIDED 2026-10-26 by the project owner (plan approval): the router is designed on wide, frozen before the first core request and evaluated once on core; its wide figures are design fit",
     "DECIDED 2026-10-26: O, K and KS run on the same evidence anchors (Legal MC, adjudicated input insufficient and adjudicated gold valid); the anchor list is recorded at the core registration, after the independent review",
-    "DECIDED 2026-10-26: K and KS join the first core registration if corpus v0 passes tasks 7.2 and 7.3"
+    "DECIDED 2026-10-26: K and KS join the first core registration if corpus v0 passes tasks 7.2 and 7.3",
+    "DECIDED 2026-10-27 by the project owner: router conditions declare the diagnostic labels they target; the core report adds a detection block and a recovery-by-hypothesis analysis; audit labels score the routing and never steer it (design.md Decision 12)"
   ]
 }

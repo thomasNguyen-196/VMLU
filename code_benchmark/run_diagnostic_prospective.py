@@ -195,16 +195,6 @@ class OutageGuard:
                 self.consecutive += 1
 
 
-def reported_tokens(row: dict[str, Any]) -> int | None:
-    total = row.get("total_tokens")
-    if isinstance(total, int):
-        return total
-    prompt, completion = row.get("prompt_tokens"), row.get("completion_tokens")
-    if isinstance(prompt, int) and isinstance(completion, int):
-        return prompt + completion
-    return None
-
-
 def existing_usage(output: Path) -> int:
     """Tokens already spent by completed attempts of an interrupted run (latest row per run key)."""
     path = output / "attempts.jsonl"
@@ -215,7 +205,7 @@ def existing_usage(output: Path) -> int:
         if line.strip():
             row = json.loads(line)
             latest[row["run_key"]] = row
-    return sum(reported_tokens(row) or 0 for row in latest.values() if row.get("status") == "complete")
+    return sum(dp.reported_tokens(row) or 0 for row in latest.values() if row.get("status") == "complete")
 
 
 def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: BudgetGuard, *,
@@ -310,7 +300,7 @@ def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: Budg
                     row["stream_close_error"] = type(exc).__name__
         row.update({"latency_s": round(time.monotonic() - start, 4), "finished_at": base.now()})
         if row["status"] == "complete":
-            guard.add(reported_tokens(row))
+            guard.add(dp.reported_tokens(row))
         elif not row.get("fatal"):
             row["retry_wait_seconds"] = 60 if row.get("http_status") == 429 else 30 if row.get("http_status") == 503 else 5
         outage.record(row)
