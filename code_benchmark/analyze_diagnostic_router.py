@@ -33,15 +33,25 @@ Usage (repo root):
       [--diagnosis <anchor_diagnosis_v1.jsonl>] [--with-design-fit] [--out <json>]
   .venv/bin/python -m code_benchmark.analyze_diagnostic_router heldout --run-dir <held-out output dir>
   .venv/bin/python -m code_benchmark.analyze_diagnostic_router heldout-semantic --run-dir <held-out output dir>
+  .venv/bin/python -m code_benchmark.analyze_diagnostic_router heldout-v3 --run-dir <held-out v3 output dir>
+  .venv/bin/python -m code_benchmark.analyze_diagnostic_router calibration-check [--out <json>]
 
 heldout-semantic (descriptive, after the single held-out evaluation): the reading items whose exact match differs
 between B and S in the first rotation, set against the AI-assisted semantic review of the answer that lost
 (`diagnostic_semantic_review build --heldout`); it writes its own file and leaves the registered report as it is.
+
+heldout-v3 (router v3, openspec change diagnostic-router-v3, run once): per rotation, the calibration items of each
+dataset choose its policy through the frozen procedure (`diagnostic_calibration`) and the emitted rule routes the
+test items; v3, the frozen v2 rule, always-B and always-S are compared per family, with McNemar of v3 against v2 and
+against always-S (Holm over the two), and per dataset the choice is set against the best policy in hindsight.
+calibration-check (exploratory design information): the same procedure on random calibration samples of the used
+draws (wide and MC-94), scored on each dataset's other items.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import random
 import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -49,7 +59,9 @@ from typing import Any, Callable, Iterable
 
 try:
     from code_benchmark import analyze_diagnostic_prospective as an
+    from code_benchmark import diagnostic_calibration as cal
     from code_benchmark import diagnostic_heldout as dh
+    from code_benchmark import diagnostic_heldout_v3 as h3
     from code_benchmark import diagnostic_prospective as dp
     from code_benchmark import diagnostic_router as router
     from code_benchmark import diagnostic_semantic_review as sr
@@ -57,7 +69,9 @@ try:
     from code_benchmark.score_vi_multimodel import wilson_interval
 except ImportError:  # executed from code_benchmark/
     import analyze_diagnostic_prospective as an
+    import diagnostic_calibration as cal
     import diagnostic_heldout as dh
+    import diagnostic_heldout_v3 as h3
     import diagnostic_prospective as dp
     import diagnostic_router as router
     import diagnostic_semantic_review as sr
@@ -79,6 +93,11 @@ ROUTER_REPORT_KEYS = ("rule_id", "rule_sha256", "cue_lexicon_sha256", "anchor_di
 HELDOUT_PLAN_ID = "diagnostic-router-v2-heldout-v1"
 HELDOUT_REPORT_KEYS = ("plan_id", "rule_id", "rule_sha256", "manifest_sha256", "v1_equals_always_B",
                        "primary_family", "primary_rotation", "families")
+HELDOUT_V2_SCORES = dp.ROOT / "all_res" / "diagnostic_router_v2" / "heldout" / MODEL_DIR / "scores.jsonl"
+V3_PLAN_ID = "diagnostic-router-v3-heldout-v1"
+V3_REPORT_KEYS = ("plan_id", "procedure_id", "procedure_sha256", "manifest_sha256", "v2_rule_sha256",
+                  "primary_family", "primary_rotation", "calibration", "families")
+V3_POLICIES = ("v3", "v2", "always_B", "always_S")
 
 
 def _fail(message: str) -> SystemExit:
@@ -426,10 +445,165 @@ def heldout_semantic(report: dict[str, Any], semantic: dict[str, dict[str, Any]]
     }
 
 
+# ---------------------------------------------------------------- router v3: calibration, then one evaluation
+
+def _deployed(decision: router.Decision, b1: dict[str, Any], b2: dict[str, Any], s: dict[str, Any]
+              ) -> tuple[dict[str, Any], int | None]:
+    """The attempt a routing decision returns and its reported tokens, both probe answers included when it ran."""
+    chosen = b1 if decision.arm == "B" else s
+    if not decision.probed:
+        return chosen, _tokens(chosen)
+    return chosen, _tokens(b1, b2) if chosen is b1 else _tokens(b1, b2, chosen)
+
+
+def _least(candidates: Iterable[str], score: dict[str, float], tokens: dict[str, float | None]) -> str:
+    """The highest score; a tie goes to fewer mean tokens, then to the order given (the procedure's tie rule)."""
+    candidates = list(candidates)
+    return min(candidates, key=lambda c: (-score[c], float("inf") if tokens[c] is None else tokens[c],
+                                          candidates.index(c)))
+
+
+def evaluate_v3(procedure: dict[str, Any], procedure_sha256: str, registered: dict[str, Any],
+                manifest: dict[str, Any], items: list[v1.EvalItem], rows: list[dict[str, Any]],
+                v2_rule: dict[str, Any], v2_rule_sha256: str, families: dict[str, list[str]], primary_family: str,
+                datasets: list[str]) -> dict[str, Any]:
+    """The single evaluation of the router v3 procedure (spec diagnostic-router-v3-heldout). Per rotation the
+    calibration items of each dataset choose its policy and the emitted rule routes the test items. Per family and
+    rotation: v3, the frozen v2 rule, always-B and always-S on the test items with Wilson intervals and mean reported
+    tokens (both probe answers whenever the probe ran), McNemar of v3 against v2 and against always-S with Holm over
+    the two; per dataset the choice, the best of always-B, v2 and always-S in hindsight and the regret against it."""
+    for name, actual in (("procedure", procedure_sha256), ("manifest", manifest["manifest_sha256"]),
+                         ("v2_rule", v2_rule_sha256)):
+        if actual != registered.get(f"{name}_sha256"):
+            raise _fail(f"{name} sha256 {actual} differs from the registered {registered.get(f'{name}_sha256')}; "
+                        "nothing is reported")
+    keyed = {dp.item_key(item.dataset_id, item.item_id): item for item in items}
+    calibration = {dataset: list(keys) for dataset, keys in manifest["calibration_items"].items()}
+    in_calibration = {key for keys in calibration.values() for key in keys}
+    if not in_calibration <= set(keyed) or set(calibration) != set(datasets):
+        raise _fail("the calibration items must be held-out items of the registered datasets")
+    groups = an.group_attempts(rows)
+    _two_draws(groups, list(keyed))
+    features = {key: router.features_of(router.request_view(item)) for key, item in keyed.items()}
+    task_of = {item.dataset_id: item.task for item in items}
+    report_calibration: dict[str, Any] = {}
+    rules: dict[int, dict[str, Any]] = {}
+    for rotation, (answer, probe, s_draw) in enumerate(ROTATIONS, 1):
+        chosen: dict[str, dict[str, Any]] = {}
+        for dataset in sorted(calibration):
+            cells = [(groups[("B", key)][answer], groups[("B", key)][probe], groups[("S", key)][s_draw])
+                     for key in calibration[dataset]]
+            chosen[dataset] = cal.choose(procedure, cells, task_of[dataset])
+            spent = [_tokens(*cell) for cell in cells]
+            chosen[dataset]["calibration_tokens"] = None if None in spent else sum(spent)  # type: ignore[arg-type]
+        choices = {dataset: result["choice"] for dataset, result in chosen.items()}
+        rules[rotation] = cal.emit_rule(procedure, choices, datasets, f"{procedure['procedure_id']}-rotation-{rotation}")
+        report_calibration[str(rotation)] = {"choices": choices, "datasets": chosen, "rule": rules[rotation]}
+    report_families: dict[str, Any] = {}
+    for family, family_datasets in families.items():
+        keys = sorted(key for key, item in keyed.items() if item.dataset_id in family_datasets and key not in in_calibration)
+        rotations: dict[str, Any] = {}
+        discordant: list[dict[str, Any]] = []
+        for rotation, (answer, probe, s_draw) in enumerate(ROTATIONS, 1):
+            outcomes: dict[tuple[str, str], bool] = {}
+            tokens: dict[tuple[str, str], float | None] = {}
+            scores: dict[tuple[str, str], float] = {}
+            v3_arms: Counter = Counter()
+            for key in keys:
+                item = keyed[key]
+                b1, b2, s = groups[("B", key)][answer], groups[("B", key)][probe], groups[("S", key)][s_draw]
+                agree = router.answers_agree(str(b1.get("prediction") or ""), str(b2.get("prediction") or ""), item.task)
+                returned = {}
+                for policy, rule in (("v3", rules[rotation]), ("v2", v2_rule)):
+                    decision = router.route(rule, features[key], agree)
+                    if decision.arm not in WIDE_ARMS:
+                        raise _fail(f"{key}: the held-out v3 set has no arm {decision.arm}")
+                    returned[policy] = _deployed(decision, b1, b2, s)
+                    if policy == "v3":
+                        v3_arms[decision.arm] += 1
+                returned["always_B"], returned["always_S"] = (b1, _tokens(b1)), (s, _tokens(s))
+                for policy, (attempt, spent) in returned.items():
+                    outcomes[(policy, key)] = bool(an.attempt_correct(attempt))
+                    tokens[(policy, key)] = spent
+                    scores[(policy, key)] = cal.score_of(attempt, item.task)
+                if rotation == 1 and (outcomes[("v3", key)] != outcomes[("always_B", key)]
+                                      or outcomes[("v3", key)] != outcomes[("always_S", key)]):
+                    discordant.append({"item_key": key, "arm": "B" if returned["v3"][0] is b1 else "S",
+                                       "probe_agrees": agree,
+                                       **{policy: outcomes[(policy, key)] for policy in V3_POLICIES}})
+            block = _comparisons(keys, {"router": lambda key: "v3", **{p: (lambda key, p=p: p) for p in V3_POLICIES[1:]}},
+                                 outcomes, tokens, against=("v2", "always_S"))
+            block["policies"] = {"v3": block["policies"].pop("router"), **block["policies"]}
+            block["tests"] = {name.replace("router", "v3"): test for name, test in block["tests"].items()}
+            by_dataset: dict[str, Any] = {}
+            for dataset in sorted(family_datasets):
+                subset = [key for key in keys if keyed[key].dataset_id == dataset]
+                mean_score = {p: statistics.fmean(scores[(p, key)] for key in subset) for p in V3_POLICIES}
+                mean_spent = {p: _known_mean(tokens[(p, key)] for key in subset)[0] for p in V3_POLICIES}
+                best = _least(("always_B", "v2", "always_S"), mean_score, mean_spent)
+                by_dataset[dataset] = {"test_items": len(subset), "score": cal.SCORES[task_of[dataset]],
+                                       "choice": report_calibration[str(rotation)]["choices"][dataset],
+                                       "scores": mean_score, "mean_tokens": mean_spent, "best_in_hindsight": best,
+                                       "regret": mean_score[best] - mean_score["v3"]}
+            rotations[str(rotation)] = {"items": block.pop("anchors"), **block, "v3_arms": dict(sorted(v3_arms.items())),
+                                        "by_dataset": by_dataset}
+        report_families[family] = {"datasets": family_datasets, "test_items": len(keys), "rotations": rotations,
+                                   "discordant_rotation_1": discordant}
+    return {
+        "plan_id": V3_PLAN_ID, "procedure_id": procedure["procedure_id"], "procedure_sha256": procedure_sha256,
+        "manifest_sha256": manifest["manifest_sha256"], "v2_rule_sha256": v2_rule_sha256,
+        "primary_family": primary_family, "primary_rotation": 1, "calibration": report_calibration,
+        "families": report_families,
+    }
+
+
+def _candidate_score(cells: list[tuple[dict[str, Any], dict[str, Any], dict[str, Any]]], candidate: str,
+                     task: str) -> float:
+    return statistics.fmean(cal.score_of(cal.outcome(candidate, *cell, task)[0], task) for cell in cells)
+
+
+def calibration_check(procedure: dict[str, Any], rows: list[dict[str, Any]], *, resamples: int = 300,
+                      seed: int = 7) -> dict[str, Any]:
+    """Exploratory design information on used draws: per dataset, the procedure chooses from a random calibration
+    sample in a random rotation, and the choice is scored on the dataset's other items of that rotation against the
+    best candidate on those items (regret). Items without two draws of B and of S are left out."""
+    groups = an.group_attempts(rows)
+    entries: dict[str, list[str]] = defaultdict(list)
+    task_of: dict[str, str] = {}
+    for (arm, key), attempts in sorted(groups.items()):
+        if arm == "B" and len(attempts) == 2 and len(groups.get(("S", key), [])) == 2:
+            entries[attempts[0]["dataset_id"]].append(key)
+            task_of[attempts[0]["dataset_id"]] = "reading" if "em" in attempts[0] else "multiple_choice"
+    rng = random.Random(seed)
+    size = procedure["calibration_items"]
+    result: dict[str, Any] = {"resamples": resamples, "seed": seed, "calibration_items": size, "datasets": {}}
+    for dataset, keys in sorted(entries.items()):
+        task = task_of[dataset]
+        cells = [[(groups[("B", key)][a], groups[("B", key)][p], groups[("S", key)][s]) for key in keys]
+                 for a, p, s in ROTATIONS]
+
+        whole = {c: statistics.fmean(_candidate_score(rotation_cells, c, task) for rotation_cells in cells) for c in cal.CANDIDATES}
+        picks: Counter = Counter()
+        regrets = []
+        for _ in range(resamples):
+            rotation = rng.randrange(len(ROTATIONS))
+            chosen_idx = set(rng.sample(range(len(keys)), size))
+            sample = [cell for i, cell in enumerate(cells[rotation]) if i in chosen_idx]
+            rest = [cell for i, cell in enumerate(cells[rotation]) if i not in chosen_idx]
+            choice = cal.choose(procedure, sample, task)["choice"]
+            picks[choice] += 1
+            regrets.append(max(_candidate_score(rest, c, task) for c in cal.CANDIDATES) - _candidate_score(rest, choice, task))
+        result["datasets"][dataset] = {"items": len(keys), "score": cal.SCORES[task], "whole_set_scores": whole,
+                                       "choices": {c: picks[c] for c in cal.CANDIDATES},
+                                       "mean_regret": statistics.fmean(regrets)}
+    return result
+
+
 # ---------------------------------------------------------------- core: one evaluation
 
 def _comparisons(keys: list[str], arms_for: dict[str, Callable[[str], str]],
-                 outcomes: dict[tuple[str, str], bool], tokens: dict[tuple[str, str], float | None]) -> dict[str, Any]:
+                 outcomes: dict[tuple[str, str], bool], tokens: dict[tuple[str, str], float | None],
+                 against: tuple[str, ...] = ("always_B", "always_S")) -> dict[str, Any]:
     policies = {}
     for name, arm_for in arms_for.items():
         correct = sum(outcomes[(arm_for(key), key)] for key in keys)
@@ -439,7 +613,7 @@ def _comparisons(keys: list[str], arms_for: dict[str, Callable[[str], str]],
                           "tokens_unknown_items": unknown}
     chosen = arms_for["router"]
     tests = {}
-    for other in ("always_B", "always_S"):
+    for other in against:
         fixed = arms_for[other]
         rescues = sum(outcomes[(chosen(key), key)] and not outcomes[(fixed(key), key)] for key in keys)
         regressions = sum(outcomes[(fixed(key), key)] and not outcomes[(chosen(key), key)] for key in keys)
@@ -617,6 +791,53 @@ def _heldout_semantic_cli(args: argparse.Namespace) -> int:
     return 0
 
 
+def _heldout_v3_cli(args: argparse.Namespace) -> int:
+    registration = json.loads(h3.REGISTRATION_PATH.read_text(encoding="utf-8"))
+    entry = registration["router"]
+    if entry.get("report_keys") != list(V3_REPORT_KEYS):
+        raise _fail("the registered held-out v3 report keys differ from the evaluator's")
+    campaign, protocol = dp.load_protocol(), h3.load_protocol()
+    procedure, digest = cal.load_procedure()
+    v2_rule, v2_digest = router.load_rule(dh.RULE_PATH, campaign["datasets"])
+    manifest, _ = h3.build_manifest(protocol)
+    if manifest != h3.load_frozen_manifest():
+        raise _fail("the rebuilt held-out v3 manifest differs from the frozen one")
+    items, _ = h3.sample_items(protocol)
+    analysis = protocol["analysis"]
+    report = evaluate_v3(procedure, digest, {**entry, "manifest_sha256": registration["frozen"]["manifest_sha256"]},
+                         manifest, items, read_jsonl(args.run_dir / "scores.jsonl"), v2_rule, v2_digest,
+                         analysis["families"], analysis["primary_family"], protocol["datasets"])
+    out = args.out or args.run_dir / "analysis" / "router_v3_report.json"
+    _write_json(out, report)
+    for rotation, block in report["calibration"].items():
+        print(f"rotation {rotation} choices: " + "  ".join(f"{d}: {c}" for d, c in block["choices"].items()))
+    for family, block in report["families"].items():
+        for rotation, result in block["rotations"].items():
+            print(f"{family} rotation {rotation} ({result['items']} test items, v3 arms {result['v3_arms']}): "
+                  + "  ".join(f"{name} {p['correct']}/{p['n']} tokens {p['mean_total_tokens'] or 0:.0f}"
+                              for name, p in result["policies"].items())
+                  + "  |  " + "  ".join(f"{name}: +{t['rescues']}/-{t['regressions']} holm {t['mcnemar_p_holm']:.3f}"
+                                        for name, t in result["tests"].items()))
+            for dataset, row in result["by_dataset"].items():
+                print(f"    {dataset}: chose {row['choice']}, best in hindsight {row['best_in_hindsight']}, "
+                      f"regret {row['regret']:+.4f}")
+    print(f"report -> {out}")
+    return 0
+
+
+def _calibration_check_cli(args: argparse.Namespace) -> int:
+    procedure, digest = cal.load_procedure()
+    rows = [row for path in (*WIDE_SCORES, HELDOUT_V2_SCORES) for row in read_jsonl(path)]
+    result = {"procedure_sha256": digest, **calibration_check(procedure, rows, resamples=args.resamples)}
+    for dataset, row in result["datasets"].items():
+        whole = "  ".join(f"{c} {row['whole_set_scores'][c]:.3f}" for c in cal.CANDIDATES)
+        print(f"{dataset.replace('vi-multimodel-v1-', ''):16} n {row['items']:4}  {row['score']:13} {whole}  "
+              f"choices {row['choices']}  mean regret {row['mean_regret']:.4f}")
+    if args.out:
+        _write_json(args.out, result)
+    return 0
+
+
 def _print_probe_fit(fit: dict[str, Any]) -> None:
     def pct(value):
         return "—" if value is None else f"{100 * value:5.1f}"
@@ -668,9 +889,19 @@ def main(argv: list[str] | None = None) -> int:
     hs.add_argument("--run-dir", type=Path, required=True, help="held-out output dir (scores.jsonl, analysis/)")
     hs.add_argument("--review-dir", type=Path, help="default: <run-dir>/semantic_review")
     hs.add_argument("--out", type=Path, help="default: <run-dir>/analysis/router_v2_semantic_review.json")
+    v3 = sub.add_parser("heldout-v3", help="the single evaluation of the router v3 procedure (MC-95)")
+    v3.add_argument("--run-dir", type=Path, required=True, help="held-out v3 output dir (scores.jsonl)")
+    v3.add_argument("--out", type=Path, help="default: <run-dir>/analysis/router_v3_report.json")
+    check = sub.add_parser("calibration-check", help="exploratory: the v3 procedure on the used draws (wide, MC-94)")
+    check.add_argument("--resamples", type=int, default=300)
+    check.add_argument("--out", type=Path, help="write the check as JSON")
     args = ap.parse_args(argv)
     if args.command == "heldout-semantic":
         return _heldout_semantic_cli(args)
+    if args.command == "heldout-v3":
+        return _heldout_v3_cli(args)
+    if args.command == "calibration-check":
+        return _calibration_check_cli(args)
     protocol = dp.load_protocol()
     lexicon, lexicon_digest = router.load_lexicon(args.lexicon)
     if args.command == "heldout":
