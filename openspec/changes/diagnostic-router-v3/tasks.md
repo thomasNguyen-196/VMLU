@@ -31,10 +31,16 @@
 
 ## 3. Run and evaluation
 
-- [ ] 3.1 Run the held-out v3 phase with `--execute` on Qwen3.5-9B-65K (IEC endpoint, VPN `member-shared-tcp`, tunnel DNS). Verify that 4,320 attempts complete with a constant response model id, and append the run record to the MC-95 detail card.
-- [ ] 3.2 Evaluate the procedure once. Verify the report keys equal the registered list. Contents:
+- [x] 3.1 Run the held-out v3 phase with `--execute` on Qwen3.5-9B-65K (IEC endpoint, VPN `member-shared-tcp`, tunnel DNS). Verify that 4,320 attempts complete with a constant response model id, and append the run record to the MC-95 detail card. (2026-10-27: one launch, 19:38 to 22:34 +07; 4,320 of 4,320 complete, no failed attempt, the registered model id in every row, 3,222,161 reported tokens. Run record appended to `docs/measurement_cards/MC-95-diagnostic-router-v3-heldout.md`.)
+- [x] 3.2 Evaluate the procedure once. Verify the report keys equal the registered list. Contents:
   - per rotation, calibration and emitted rule;
   - the multiple-choice family in rotation 1 as primary: v3 against v2 and against always-S, McNemar with Holm; Wilson intervals; tokens with the probe;
   - per dataset, the choice, regret and calibration cost;
   - reading as descriptive.
+
+  (2026-10-27: `analysis/router_v3_report.json`, report keys equal to the registered list.
+  - Rotation 1 chose always-S for VMLU and ViBidLQA and always-B for VM14K. On VM14K's 60 calibration items B and the cascade tied at 76.7% against S at 70.0%, and the tie went to the cheaper B; on the test items B scored 54.3% against v2 61.7% and S 61.3%, a regret of 7.3 points.
+  - Multiple choice, rotation 1 (primary, 600 test items): v3 67.8% at 563 tokens per item, v2 69.2% at 697, always-B 62.2% at 129, always-S 71.3% at 1,067. v3 against v2 +35/−43, Holm p 0.43; against always-S +33/−54, Holm p 0.063. Neither difference is significant.
+  - Rotation 2 chose always-S everywhere, so v3 equals always-S (71.7%); against v2 +37/−22, Holm p 0.135.
+  - Reading (descriptive): mean token-F1 regret of 0.4 and 0.2 points against v2, which costs twice the tokens of S.)
 - [ ] 3.3 Add the result to the Notion core-results page and the thesis plan, keeping internal hostnames and addresses out.
