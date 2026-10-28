@@ -2740,3 +2740,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 4 requests in flight; the run halts on 4 consecutive network failures, a changed response model id, an authentication error or the budget guard |
 | `details` | `docs/measurement_cards/MC-98-diagnostic-llm-router-design-check.md` |
 | `outputs` | `all_res/diagnostic_llm_router/labels/muse-spark-1-3-contributor/`; no upload |
+
+## MC-99 — Jev 1.13 Free (OpenCode console) / router signals: pre-hoc question signals and post-hoc answer checks on the 967 wide reading items, plus an offline logprob cascade on VMLU
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-99` |
+| `status` | Preregistered 2026-10-28 (+07), before benchmark-item requests of this card |
+| `scope` | The 967 wide reading items of the menu set (ViBidLQA test 591, Vi-DROP 188, Vi-SQuAD 188). J1: one pre-hoc request per item (passage and question; the six MC-98 groups as a Choice, seven yes/no statements). J2: two post-hoc requests per item (passage, question and the scored B answer of MC-90 or MC-91; four yes/no statements about that answer). 2,901 requests in all, no student-model request, no gold sent. J3 is offline: the MC-43/44 temperature-0 letter confidence against the B and S draws of MC-94 and MC-95 on 660 VMLU items. Descriptive design-stage study with a registered reading rule |
+| `harness / tools` | Direct HTTP API, no harness, no tools; TypeSafe System One request format (`state` and typed `questions`) |
+| `model / route` | Jev 1.13 Free (`jev-1.13-free`) on the OpenCode console System One endpoint (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | No sampling parameters exist for this model; 120 s timeout; the run halts on any response with non-free billing or a non-zero reported cost |
+| `workers / scheduler` | At most 2 requests in flight; 429 and 5xx re-sent after Retry-After (30 s without one), at most 5 times, recorded; the run halts on 4 consecutive network failures, a changed response model, an authentication error or non-free billing |
+| `details` | `docs/measurement_cards/MC-99-diagnostic-router-signals.md` |
+| `outputs` | `all_res/diagnostic_router_signals/jev/jev-1.13-free/`; no upload |

@@ -1,0 +1,32 @@
+{
+ "status": "signals registered",
+ "card_ids": {
+  "signals": "MC-99"
+ },
+ "card_files": {
+  "signals": "docs/measurement_cards/MC-99-diagnostic-router-signals.md"
+ },
+ "registered_on": {
+  "signals": "2026-10-28"
+ },
+ "frozen": {
+  "config_sha256": "5804fcb6156aa916e0108bc63906ebecbf62c5640a1e34a77c57a6a43235a805",
+  "manifest_sha256": "a96473956a1f4f36be50912b9205ae6d75730f8cce38bc11a9ee6ebd9f053f16"
+ },
+ "route": {
+  "endpoint_host": "opencode.ai",
+  "path": "/inference/systemone/v1/systemone",
+  "model_id": "jev-1.13-free"
+ },
+ "signals": {
+  "plan_id": "diagnostic-router-signals-v1",
+  "quality_points": 1.0,
+  "cost_slack_points": 0.5,
+  "cost_share": 0.6,
+  "answer_source_sha256": {
+   "B1": "efdd024049e0e26d44e23dc9ff014032f3cfaa7e5517c500aef9d7c5a18a4a26",
+   "B2": "e77896487615d99c2e5ab4236996973e36c031704d4cd3a0b98b2ff1e6a3e75b"
+  }
+ },
+ "note": "MC-99 measures router signals on design data (openspec change diagnostic-router-signals): Jev 1.13 Free answers pre-hoc questions about each wide reading item and post-hoc checks of B's two wide answers; J3 sets the MC-43/44 letter confidence against the B and S draws of MC-94 and MC-95 on VMLU, offline. No student-model request is sent. MC-90 to MC-98 and their artifacts are not changed."
+}

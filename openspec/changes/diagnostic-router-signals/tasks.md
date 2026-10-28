@@ -34,12 +34,14 @@
 
 ## 2. Registration and run (MC-99)
 
-- [ ] 2.1 Register MC-99:
+- [x] 2.1 Register MC-99:
   - the root block;
   - the detail card `docs/measurement_cards/MC-99-diagnostic-router-signals.md`;
   - `data/diagnostic_router_signals/registration.json` with the configuration and manifest hashes.
 
   Commit as `pre-register MC-99`. Verify that the offline preflight passes every gate.
+
+  (2026-10-28: all four gates pass, and the preflight prints `endpoint_calls=0`.)
 - [ ] 2.2 Run MC-99 with `--execute`. Verify:
   - 2,901 complete calls;
   - a constant response model;
