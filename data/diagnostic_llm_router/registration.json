@@ -1,0 +1,26 @@
+{
+ "status": "menu registered",
+ "card_ids": {
+  "menu": "MC-97"
+ },
+ "card_files": {
+  "menu": "docs/measurement_cards/MC-97-diagnostic-quote-arm-wide.md"
+ },
+ "registered_on": {
+  "menu": "2026-10-28"
+ },
+ "frozen": {
+  "menu_protocol_sha256": "0b9dc30eeb15a24d8004cc4f3c6c8380d016d9e53fa9a801b263133b15261866",
+  "campaign_protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+  "source_manifest_sha256": "9e5451dce7c77c7d92c576837b402dd339aa80b78ad9de63b557257ca7c50d94",
+  "manifest_sha256": "993694c4ca2118073a44dfa14f762e55dec89aa956e19425077396c2661122cb"
+ },
+ "menu": {
+  "operational": {
+   "max_in_flight": 4,
+   "stop_after_timeouts": 4
+  },
+  "plan_id": "diagnostic-menu-q-v1"
+ },
+ "note": "MC-97 is the design run of the LLM router (openspec change diagnostic-llm-router): the 967 reading items of the wide phase answered twice with the new reading arm Q (quote, then answer). With B and S of MC-90 to MC-92, every design item has two draws of B, S and Q. The analysis is descriptive. The router's groups, its prompt and the group-to-arm mapping are registered on a later card before any router request. The artifacts and cards MC-90 to MC-96 are not changed."
+}

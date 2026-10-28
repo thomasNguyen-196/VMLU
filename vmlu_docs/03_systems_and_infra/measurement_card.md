@@ -2712,3 +2712,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-95 |
 | `details` | `docs/measurement_cards/MC-96-diagnostic-k2-retrieval.md` |
 | `outputs` | `all_res/diagnostic_k2/heldout/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-97 — Qwen3.5-9B-65K (IEC) / LLM router design run / arm Q ("trích rồi đáp") on the 967 wide reading items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-97` |
+| `status` | Preregistered 2026-10-28 (+07), before benchmark-item requests of this card |
+| `scope` | The 967 reading items of the wide phase (ViBidLQA test 591, Vi-DROP 188, Vi-SQuAD 188; the B-r1 rows of `wide_v1.json`), each answered twice with the new reading arm Q: the model copies the part of the passage that answers, then gives the shortest answering phrase on a final `Trả lời:` line; 1,934 attempts. Design run of the LLM router (openspec change `diagnostic-llm-router`): with B and S of MC-90 to MC-92, every design item has two draws of B, S and Q. Descriptive analysis only |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-96: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 1.6 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-96 |
+| `details` | `docs/measurement_cards/MC-97-diagnostic-quote-arm-wide.md` |
+| `outputs` | `all_res/diagnostic_llm_router/menu/qwen3-5-9b-65k-prospective/`; no upload |
