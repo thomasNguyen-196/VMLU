@@ -1,0 +1,76 @@
+{
+ "signals_id": "jev-signals-v1",
+ "protocol_id": "vmlu-diagnostic-router-signals",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-signals",
+ "purpose": "Router signals from Jev 1.13 on the 967 wide reading items (MC-99): pre-hoc signals from the passage and question (J1), and post-hoc signals from the answer B actually gave on each of its two wide draws (J2). No student-model request; no gold reaches Jev.",
+ "items": {
+  "source": "The 967 wide reading items of the menu set (data/diagnostic_llm_router/menu_q_v1.json; diagnostic_menu.design_items), in menu-manifest order. Passage and question come from the item's frozen main-v1 reading prompt.",
+  "dataset_counts": {
+   "vi-multimodel-v1-bidlqa-test": 591,
+   "vi-multimodel-v1-vi-drop-200": 188,
+   "vi-multimodel-v1-vi-squad-200": 188
+  }
+ },
+ "answer_sources": {
+  "B1": {"card": "MC-90", "path": "all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective/scores.jsonl", "replicate_id": "B-r1", "field": "prediction"},
+  "B2": {"card": "MC-91", "path": "all_res/diagnostic_prospective/wide-supplements/wide-b-r2/qwen3-5-9b-65k-prospective/scores.jsonl", "replicate_id": "B-r2", "field": "prediction"}
+ },
+ "requests": {
+  "pre": {
+   "replicate_id": "jev-pre",
+   "state_fields": ["passage", "question"],
+   "questions": {
+    "group": {
+     "type": "choice",
+     "instructions": "Which kind of question is this, given the passage?",
+     "criteria": {
+      "so_hieu": "The question asks for the number or name of an article, clause, point, chapter or section, or for the name of a document (for example 'which clause', 'which article', 'which document regulates'); the answer usually sits in the heading or the lead-in of the passage.",
+      "tinh_toan": "The answer must be computed, counted, compared or combined from several numbers or facts in the passage; it is not stated verbatim.",
+      "toan_bo": "The question asks for a complete list, all the cases, or the entire content of a provision.",
+      "mot_phan": "The passage lists several items or cases, or gives a long provision, and the question asks for only one item, one case or one part of it.",
+      "dieu_kien": "The question asks for a condition, a case, a time of application or a consequence, and needs matching several parts of the passage.",
+      "tra_cuu": "The answer is a short phrase stated verbatim in one sentence of the passage, such as a subject, a deadline, a stated number or a definition."
+     }
+    },
+    "asks_designation": {"type": "noul", "instructions": "The question asks for the number or name of an article, clause, point, chapter or section, or for the name of a legal document."},
+    "needs_computation": {"type": "noul", "instructions": "Answering needs counting, arithmetic, comparing or combining several numbers or facts from the passage; the answer is not written verbatim in it."},
+    "asks_whole_list": {"type": "noul", "instructions": "The question asks for a complete list, all the cases, or the entire content of a provision."},
+    "asks_one_part": {"type": "noul", "instructions": "The passage lists several items or cases, or gives a long provision, and the question asks for only one item, case or part of it."},
+    "asks_condition": {"type": "noul", "instructions": "The question asks for a condition, a case, a time of application or a consequence, which needs matching several parts of the passage."},
+    "verbatim_short": {"type": "noul", "instructions": "The answer is a short phrase written verbatim in one sentence of the passage, such as a subject, a deadline, a stated number or a definition."},
+    "passage_insufficient": {"type": "noul", "instructions": "The passage does not contain the information needed to answer the question."}
+   }
+  },
+  "post": {
+   "replicate_ids": {"B1": "jev-post-B1", "B2": "jev-post-B2"},
+   "state_fields": ["passage", "question", "proposed_answer"],
+   "questions": {
+    "answer_correct": {"type": "noul", "instructions": "The proposed answer correctly answers the question, according to the passage."},
+    "answer_complete": {"type": "noul", "instructions": "The proposed answer contains every part that the question asks for."},
+    "answer_extra": {"type": "noul", "instructions": "The proposed answer adds information that the question does not ask for."},
+    "answer_verbatim": {"type": "noul", "instructions": "The proposed answer is copied word for word from the passage."}
+   }
+  }
+ },
+ "route": {
+  "endpoint_host": "opencode.ai",
+  "path": "/inference/systemone/v1/systemone",
+  "model_id": "jev-1.13-free",
+  "credential": "the opencode-go key of the local OpenCode auth store, read in the runner process and never written to outputs",
+  "session_header": "x-opencode-session",
+  "user_agent": "vmlu-diagnostic/1.0",
+  "timeout_seconds": 120,
+  "max_in_flight": 2,
+  "stop_after_network_failures": 4,
+  "retry_statuses": [429, 500, 502, 503, 504],
+  "max_retries": 5,
+  "retry_wait_seconds": 30,
+  "require_free_billing": true
+ },
+ "analysis": {
+  "plan_id": "diagnostic-router-signals-v1",
+  "module": "code_benchmark/analyze_router_signals.py",
+  "reading_rule": "promising when, against the best fixed per-dataset policy on the same items, the pooled score is at least 1.0 point higher, or at most 0.5 points lower at no more than 60% of its mean student-model tokens"
+ }
+}
