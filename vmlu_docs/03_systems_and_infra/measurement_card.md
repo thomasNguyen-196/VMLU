@@ -2726,3 +2726,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-96 |
 | `details` | `docs/measurement_cards/MC-97-diagnostic-quote-arm-wide.md` |
 | `outputs` | `all_res/diagnostic_llm_router/menu/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-98 — Muse Spark 1.3 (OpenCode Go) / LLM router design check / one group per ViBidLQA design item
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-98` |
+| `status` | Preregistered 2026-10-28 (+07), before benchmark-item requests of this card |
+| `scope` | The 591 ViBidLQA test items of the menu set (wide phase), one router call each: Muse Spark 1.3 reads the item's passage and question and returns one group from the closed list of six in `data/diagnostic_llm_router/router_v1.json`. No student-model request is sent. Each group is mapped to B, Q or S from the student draws of MC-90 to MC-92 and MC-97 (chosen on one draw, scored on the other), and the Muse grouping is compared with always-S and with a frozen keyword grouping. Descriptive design-stage check with a registered reading rule |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, not streamed |
+| `model / route` | Muse Spark 1.3 Contributor (`muse-spark-1.3-contributor`) on the direct OpenCode Go route of MC-86; credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | Temperature, seed and reasoning effort not sent (provider defaults); no system prompt; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 3,000,000 reported tokens (expected about 1 million) |
+| `workers / scheduler` | At most 4 requests in flight; the run halts on 4 consecutive network failures, a changed response model id, an authentication error or the budget guard |
+| `details` | `docs/measurement_cards/MC-98-diagnostic-llm-router-design-check.md` |
+| `outputs` | `all_res/diagnostic_llm_router/labels/muse-spark-1-3-contributor/`; no upload |

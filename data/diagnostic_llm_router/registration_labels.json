@@ -1,0 +1,21 @@
+{
+ "status": "labels registered",
+ "card_ids": {
+  "labels": "MC-98"
+ },
+ "card_files": {
+  "labels": "docs/measurement_cards/MC-98-diagnostic-llm-router-design-check.md"
+ },
+ "registered_on": {
+  "labels": "2026-10-28"
+ },
+ "frozen": {
+  "router_config_sha256": "15ffc94b06a10df0b2fe924a7760ecae2a5d6f867d1f5f387f711987ca127df8",
+  "manifest_sha256": "53692d0864af5c9bbb9f7d95c1dcbd7bead6de355eab49eb2efce32f7ec99743"
+ },
+ "labels": {
+  "plan_id": "diagnostic-router-labels-v1",
+  "reading_rule_threshold_points": 1.0
+ },
+ "note": "MC-98 is the design-stage check of the LLM router (openspec change diagnostic-llm-router), chosen by the project owner after MC-97: Muse Spark 1.3 assigns one of six groups to each of the 591 ViBidLQA design items, the groups are mapped to B, Q or S from the student draws (cross-draw), and the Muse grouping is compared with always-S and a frozen keyword grouping. No student-model request is sent. The MC-97 registration and artifacts are not changed."
+}
