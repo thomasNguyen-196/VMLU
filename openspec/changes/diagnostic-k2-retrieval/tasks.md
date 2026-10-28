@@ -52,4 +52,4 @@
   - Rotation 2 (replication). Calibration chose the cascade again. The router scored 60.7, against 58.7 for always-K (Holm 0.150) and 58.2 for always-KS (Holm 0.025).
   - The cascade was best in hindsight in both rotations, so regret was 0.
   - O scored 66.6 and always-B 14.5. On the 231 items whose own passage is in the top 2, K scored 67.9 and O 67.9. On the 69 others, K scored 32.0 and O 62.1.)
-- [ ] 3.3 Add the result to the Notion core-results page and the thesis plan, keeping internal hostnames and addresses out.
+- [x] 3.3 Add the result to the Notion core-results page and the thesis plan, keeping internal hostnames and addresses out. (2026-10-28: the core-results page has a new section 12 for K2 (MC-96), the appendix is now section 13 and lists the MC-96 commits and hashes, and the checklist item is ticked. The plan page has the 28/10 status, the stage-5 K2 result, the schedule, checklist, priorities and the milestone row. Neither page names a host or an address.)
