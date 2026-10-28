@@ -25,6 +25,15 @@ The mapping SHALL be frozen before any held-out request.
 - **WHEN** fewer design items than the registered minimum fall in a group
 - **THEN** that group maps to the arm with the best mean token-F1 over all design items
 
+### Requirement: Design-stage router check
+Before any held-out request, the router SHALL label the ViBidLQA design items of the menu set once each (MC-98). The Muse grouping SHALL be mapped to arms by the registered cross-draw rule. It SHALL be compared, on the same items and by the same rule, with always-B, always-Q, always-S and a keyword grouping of the question text that was frozen before any router request.
+
+The registered reading rule SHALL decide the next step. The router is promising when its cross-draw routing score exceeds always-S by at least 1.0 token-F1 point and exceeds the keyword grouping. Only a promising router SHALL proceed to a held-out evaluation.
+
+#### Scenario: Router not better than keywords
+- **WHEN** the Muse grouping's cross-draw score does not exceed the keyword grouping's
+- **THEN** the router is not promising and no held-out evaluation is run
+
 ### Requirement: Held-out evaluation with the passage baseline
 The router SHALL be evaluated once on fresh items that carry their passage and that no design step used. The held-out set SHALL be ViBidLQA train items not used by MC-95 or MC-96. Each held-out item SHALL have two draws each of B, S and Q, and one router call.
 

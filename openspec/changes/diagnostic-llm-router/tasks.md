@@ -27,12 +27,24 @@
   - On ViBidLQA, Q cut over-long answers from 24.2% to 21.9% of attempts. It raised partial answers from 10.2% to 15.1% and wrong answers from 9.6% to 11.1%.
   - Q against B over all items: better on 297, worse on 336.)
 
-## 2. Router design (registered before any router request)
+## 2. Router design check on the design items (MC-98, registered before any router request)
 
-- [ ] 2.1 From the MC-97 analysis, write the closed list of groups with their definitions and the Muse Spark 1.3 router prompt (passage and question in, one group name out), the default arm, and the mapping rule (best mean token-F1 per group on the design labels, ties to the more thorough arm, a minimum group size).
-- [ ] 2.2 Register the router's labelling of the design items on its own card, run it, fit the mapping by the registered rule, and freeze the router and the mapping.
+After MC-97 the owner chose a quick check of the Muse router on the design items before any held-out evaluation.
 
-## 3. Held-out evaluation (registered before its first request)
+- [x] 2.1 From the MC-97 analysis, write `data/diagnostic_llm_router/router_v1.json` with:
+  - the six groups with their definitions, in order;
+  - the Muse Spark 1.3 router prompt: passage and question in, one `Nhóm: <id>` line out;
+  - the parsing rule and the route (direct OpenCode Go Responses, credential from the local OpenCode auth store);
+  - the cross-draw mapping rule (ties to the more thorough arm, minimum group of 20, fallback S);
+  - the frozen keyword comparator;
+  - plan `diagnostic-router-labels-v1` with its reading rule.
+
+  Implement `code_benchmark/diagnostic_llm_router.py`, `run_router_labels.py` and `analyze_router_labels.py`, and freeze `router_labels_v1.json`, one call for each of the 591 ViBidLQA design items. Verify with unit tests on synthetic cells and a fake client: the prompt, the parsing, the keyword groups, the cross-draw mapping worked by hand, the reading rule, the gates, the call record and the halts. (2026-10-28: `router_v1.json` sha256 15ffc94b…; manifest self-hash 53692d08…; `test_diagnostic_llm_router`.)
+- [x] 2.2 Register MC-98: root block, detail card `docs/measurement_cards/MC-98-diagnostic-llm-router-design-check.md`, and `registration_labels.json`. Commit as `pre-register MC-98`. Verify that the offline preflight passes every gate.
+- [ ] 2.3 Run MC-98 with `--execute`. Verify 591 complete calls with a constant response model id, and append the run record to the MC-98 detail card.
+- [ ] 2.4 Run `analyze_router_labels` once and apply the reading rule. If the router is promising, plan section 3; otherwise the router line stops at the design stage and section 3 is not run.
+
+## 3. Held-out evaluation (only if MC-98 reads promising; registered before its first request)
 
 - [ ] 3.1 Build the held-out set (300 ViBidLQA train items with their passages, not used by MC-95 or MC-96) and register its card:
   - B, S and Q two draws each, one router call per item;

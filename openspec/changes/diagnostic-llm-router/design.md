@@ -77,6 +77,12 @@ See `proposal.md` for the motivation.
      - Primary: the router against always-B and against always-S on token-F1, with paired sign-flip tests and Holm.
      - Tokens per item include the router's, reported apart because the router is another model.
 
+8. **Design-stage router check (MC-98), added after MC-97.**
+   - **Why.** On ViBidLQA, Q scored below B and S. The per-item cross-draw bound is only 1.5 points above always-S, and a post hoc keyword grouping found a single clear group. So the owner chose to check the Muse router on the design items before any held-out run.
+   - **Router.** Muse Spark 1.3, on the direct OpenCode Go route of MC-86 (9Router is not running), labels each of the 591 ViBidLQA design items once with one of six groups.
+   - **Mapping and comparisons.** The groups are mapped by the cross-draw rule. The mapped Muse grouping is compared with always-S and with the frozen keyword grouping.
+   - **Next step.** It depends on the registered reading rule: the router must beat always-S by at least 1.0 point and beat the keyword grouping.
+
 ## Risks / Trade-offs
 
 - **Q may cut answers short.** "The shortest phrase" can drop items of an answer that is itself a list, and Q may suit Vi-DROP calculations less well than S. That is the point of a menu: such questions should map to B or S.
