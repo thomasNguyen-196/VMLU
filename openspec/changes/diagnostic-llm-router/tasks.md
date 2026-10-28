@@ -51,8 +51,12 @@ After MC-97 the owner chose a quick check of the Muse router on the design items
 
 ## 3. Held-out evaluation (only if MC-98 reads promising; registered before its first request)
 
-- [ ] 3.1 Build the held-out set (300 ViBidLQA train items with their passages, not used by MC-95 or MC-96) and register its card:
+Closed on 2026-10-28 without a run. MC-98 did not meet the reading rule (task 2.4), so by that rule this section is not run. The project owner then chose to end the router line here. No held-out set was built, no card was registered, and no request was sent.
+
+- [x] 3.1 Build the held-out set (300 ViBidLQA train items with their passages, not used by MC-95 or MC-96) and register its card:
   - B, S and Q two draws each, one router call per item;
   - primary: the router against always-B and always-S on token-F1, with paired sign-flip tests and Holm;
   - tokens per item include the router's.
-- [ ] 3.2 Run, evaluate once, and report on the Notion core-results page and the thesis plan, keeping internal hostnames and addresses out.
+
+  (Not run: closed by task 2.4, see the note above.)
+- [x] 3.2 Run, evaluate once, and report on the Notion core-results page and the thesis plan, keeping internal hostnames and addresses out. (Not run: closed by task 2.4. MC-98 itself was reported on the Notion core-results page, §13, and in the thesis plan on 2026-10-28.)
