@@ -73,6 +73,15 @@ The audit's cause hypotheses exist only after an answer has been scored against 
 
 Alternatives rejected: audit labels as router features (unknown at request time and present only on the evaluation set); a learned cause classifier (20 anchors carry a hypothesis, all of them at hypothesis level, and the two reviewers agreed on 0 of 3 hypothesis sets); a probe call, or a B-first cascade that escalates when two B draws disagree (deployable, but a new runtime component with its own cost and validation; future work).
 
+### 13. Campaign outputs as ledger sources (added 2026-10-28, after every campaign run)
+Task 8.3 puts the campaign outputs into the diagnostic ledger of `diagnostic-protocol-ledger-pilot`, one source per run directory: wide (MC-90), its supplements `wide-b-r2` (MC-91) and `wide-s-r2` (MC-92), and core (MC-93). The V1 adapters cannot read them. The manifests belong to `vmlu-diagnostic-prospective-v1`, the arm prompts are not main-v1 prompts, S and KS are scored from the final-answer label, and the summaries are kept per arm.
+
+A third adapter, `campaign-arms-v1` (family `diagnostic-prospective-v1`, `code_benchmark/diagnostic_campaign_ledger.py`), checks a run by building its phase again. The frozen main-v1 items, the campaign protocol, the prompt templates, the pilot anchors and, for core, the oracle and retrieved evidence files named in the registry must reproduce the frozen manifest exactly. The adapter then re-scores with `score_arm_rows` and requires item parity and per-arm, per-dataset summary parity, as the V1 adapters do.
+
+Rows keep the V1 fields and add the arm, the final-label scoring details and, for K and KS, the retrieval trace. Two flags are added: `format_not_ok`, and `at_token_cap`, because the endpoint reports `stop` even at the 4,096-token cap. The V1 adapters and their rows are unchanged.
+
+Alternative rejected: one source for the whole wide phase. It would join three manifests and three run records into one provenance record.
+
 ## Risks / Trade-offs
 
 - [S final-label non-compliance depresses S accuracy] → measure compliance separately, freeze the wording only after the synthetic-set threshold, report accuracy over all attempts.

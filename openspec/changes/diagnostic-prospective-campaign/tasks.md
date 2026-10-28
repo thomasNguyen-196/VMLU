@@ -51,7 +51,16 @@ Model Qwen3.5-9B-65K, endpoint `http://llmapi.iec/v1` over the IEC VPN (profile 
 
 - [x] 8.1 Run `wide` with `--execute`; verify 2,478 attempts complete, the response model id is constant and per-arm summaries are written. (2026-10-22: MC-90 complete, 2,478 of 2,478 attempts, constant response model id, summaries written; run record in the MC-90 detail card.)
 - [x] 8.2 Run `core` after 6.5 and `inference_ready`; verify the registered attempt count completes (B 180, S 180, and O, K and KS three per evidence anchor) and `condition.json` matches the card. (2026-10-27, MC-93: one launch of 14 minutes at 4 in flight, 432 of 432 attempts complete, no failure, constant response model id, 2 S outputs at the token cap, 408,939 reported tokens; run record in the MC-93 detail card.)
-- [ ] 8.3 Register both outputs as diagnostic ledger sources; verify the coverage and score-parity reports pass.
+- [x] 8.3 Register both outputs as diagnostic ledger sources; verify the coverage and score-parity reports pass. (2026-10-28, design Decision 13: four sources in `data/diagnostic_v1/source_registry.json`, with adapter `campaign-arms-v1`.
+  - Sources: `qwen-mc90-wide` (2,478 rows), `qwen-mc91-wide-b-r2` and `qwen-mc92-wide-s-r2` (1,239 each), and `qwen-mc93-core` (432).
+  - Each ledger under `all_res/diagnostic_v1/sources/` is complete. Every expected observation is scored, item and summary parity hold, and the manifest is rebuilt from frozen inputs.
+  - Readiness over these four and the two V1 ledgers reports parity for all six. With the controls file and the pilot directory, `preparation_ready`, `audit_complete` and `inference_ready` are all true.
+  - Flags:
+    - 16 outputs at the token cap: core 2, wide 6, wide-s-r2 8;
+    - 8 S outputs without a usable final-answer line: wide 4, wide-s-r2 4;
+    - 3 unparsed multiple-choice answers: wide 2, wide-s-r2 1.
+  - Rebuilding the V1 ledgers today changes only the row field `protocol_sha256`, because `protocol.json` was revised on 2026-10-16, after those ledgers were built. The existing snapshots stay unchanged, including the one the pilot names.
+  - Tests: 11 in `test_diagnostic_campaign_ledger.py`.)
 
 ## 9. Analysis code (offline, before data)
 

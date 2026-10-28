@@ -57,6 +57,10 @@ EXPECTED_ANCHOR_COUNTS = {
     "vi-multimodel-v1-bidlqa-test": 603,
     "vi-multimodel-v1-vmlu-valid": 744,
 }
+CAMPAIGN_ADAPTER = "campaign-arms-v1"  # prospective-campaign runs, built by diagnostic_campaign_ledger.py
+CAMPAIGN_FAMILY = "diagnostic-prospective-v1"
+SOURCE_ADAPTERS = {"v1-main-v1", "v1-main-subset-v1", CAMPAIGN_ADAPTER}
+SOURCE_FAMILIES = {"vi-multimodel-v1-main", "qwen-mc72", CAMPAIGN_FAMILY}
 SOURCE_METADATA_ALLOWLIST = {
     "status", "model_id", "model_ref", "profile_id", "measurement_card_id",
     "measurement_card_hash", "protocol_id", "protocol_sha256", "manifest_sha256",
@@ -201,12 +205,22 @@ def load_registry(path: Path = REGISTRY_PATH) -> dict[str, dict[str, Any]]:
     if len(by_id) != len(sources) or "None" in by_id:
         raise DiagnosticError("Error: source registry has missing or duplicate source_run_id")
     for source in sources:
-        if source.get("adapter") not in {"v1-main-v1", "v1-main-subset-v1"}:
+        if source.get("adapter") not in SOURCE_ADAPTERS:
             raise DiagnosticError(f"Error: unsupported source adapter for {source.get('source_run_id')}")
-        if source.get("family") not in {"vi-multimodel-v1-main", "qwen-mc72"}:
+        if source.get("family") not in SOURCE_FAMILIES:
             raise DiagnosticError(f"Error: unsupported source family for {source.get('source_run_id')}")
         if not source.get("datasets") or len(source["datasets"]) != len(set(source["datasets"])):
             raise DiagnosticError(f"Error: invalid dataset allowlist for {source.get('source_run_id')}")
+        if (source["adapter"] == CAMPAIGN_ADAPTER) != (source["family"] == CAMPAIGN_FAMILY):
+            raise DiagnosticError(f"Error: {source.get('source_run_id')}: adapter {CAMPAIGN_ADAPTER} goes with family {CAMPAIGN_FAMILY} only")
+        if source["adapter"] == CAMPAIGN_ADAPTER:
+            evidence = source.get("evidence") or {}
+            if (source.get("phase") not in {"wide", "core"} or "supplement_id" not in source
+                    or not source.get("parent_manifest_path") or not source.get("expected_parent_manifest_sha256")
+                    or not isinstance(evidence, dict) or not set(evidence) <= {"O", "K"}
+                    or not all(isinstance(path, str) and path for path in evidence.values())):
+                raise DiagnosticError(f"Error: {source.get('source_run_id')}: a campaign source needs phase, supplement_id, "
+                                      "the parent manifest and its hash, and evidence paths for O or K only")
     return by_id
 
 
@@ -357,6 +371,12 @@ def _source_annotations(source: dict[str, Any], run: dict[str, Any]) -> dict[str
 
 
 def build_source_ledger(source: dict[str, Any], *, protocol_path: Path = PROTOCOL_PATH) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    if source.get("adapter") == CAMPAIGN_ADAPTER:
+        try:
+            from code_benchmark import diagnostic_campaign_ledger as campaign
+        except ImportError:
+            import diagnostic_campaign_ledger as campaign
+        return campaign.build_source_ledger(source, protocol_path=protocol_path)
     protocol, protocol_sha = load_protocol(protocol_path)
     paths = _source_paths(source)
     for label, path in paths.items():

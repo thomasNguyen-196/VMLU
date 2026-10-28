@@ -103,3 +103,23 @@ A supplement SHALL re-run arms of an already registered phase under further repl
 #### Scenario: Registered limits cannot be loosened
 - **WHEN** a supplement registers a cap of four simultaneous requests and a launch asks for another value, or a resume would change the registered limits
 - **THEN** the launch or the resume is refused
+
+### Requirement: Campaign outputs as diagnostic ledger sources
+Each completed campaign run SHALL be declared in the diagnostic source registry as its own source with adapter `campaign-arms-v1`. The entry SHALL name the run's phase, its supplement or none, its manifest and the parent manifest with their hashes, and, for core, its evidence files.
+
+A ledger SHALL be published only when all of these hold:
+
+- A fresh build of the phase or supplement from frozen inputs reproduces the registered manifest.
+- Every prediction carries the manifest prompt hash, and the prompt that was sent hashes to it.
+- K and KS rows carry the retrieval trace that the evidence file gives.
+- Re-scoring with the campaign scorer reproduces every score row and every per-arm dataset summary.
+
+The ledger SHALL keep one row per expected observation, with its arm.
+
+#### Scenario: Evidence differs from the run's
+- **WHEN** the oracle or retrieved evidence file no longer gives the evidence the core manifest was built with
+- **THEN** the phase cannot be rebuilt and no ledger is published
+
+#### Scenario: Changed format count
+- **WHEN** a supplied per-arm summary reports a format-compliance count that the campaign scorer does not reproduce
+- **THEN** publication fails, and the error names the arm and the dataset
