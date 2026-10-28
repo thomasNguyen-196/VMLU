@@ -41,8 +41,13 @@ After MC-97 the owner chose a quick check of the Muse router on the design items
 
   Implement `code_benchmark/diagnostic_llm_router.py`, `run_router_labels.py` and `analyze_router_labels.py`, and freeze `router_labels_v1.json`, one call for each of the 591 ViBidLQA design items. Verify with unit tests on synthetic cells and a fake client: the prompt, the parsing, the keyword groups, the cross-draw mapping worked by hand, the reading rule, the gates, the call record and the halts. (2026-10-28: `router_v1.json` sha256 15ffc94b…; manifest self-hash 53692d08…; `test_diagnostic_llm_router`.)
 - [x] 2.2 Register MC-98: root block, detail card `docs/measurement_cards/MC-98-diagnostic-llm-router-design-check.md`, and `registration_labels.json`. Commit as `pre-register MC-98`. Verify that the offline preflight passes every gate.
-- [ ] 2.3 Run MC-98 with `--execute`. Verify 591 complete calls with a constant response model id, and append the run record to the MC-98 detail card.
-- [ ] 2.4 Run `analyze_router_labels` once and apply the reading rule. If the router is promising, plan section 3; otherwise the router line stops at the design stage and section 3 is not run.
+- [x] 2.3 Run MC-98 with `--execute`. Verify 591 complete calls with a constant response model id, and append the run record to the MC-98 detail card. (2026-10-28: 16:15–16:47 +07. 591 of 591 complete, a constant model id, no halt. 26 calls ended at the cap during hidden reasoning and take S. 1,819,635 reported tokens, 3,079 per call, 2,197 of them reasoning. The run record is in the card.)
+- [x] 2.4 Run `analyze_router_labels` once and apply the reading rule. If the router is promising, plan section 3; otherwise the router line stops at the design stage and section 3 is not run. (2026-10-28: `analysis/router_labels_report.json`.
+  - Cross-draw token-F1 on the 591 items: Muse grouping 66.16, keyword grouping 66.25, always-S 65.88, always-B 64.63, always-Q 62.67; the per-item bound is 67.38.
+  - Muse minus always-S: +0.28 points (95% interval -1.11 to +1.69, sign-flip p 0.70).
+  - Muse minus keywords: -0.09 points (p 0.87).
+  - Groups: `so_hieu` 156 (B 63.0, S 60.4, Q 56.0, so B on both draws); every other group maps to S, except `toan_bo` on draw 1, which maps to Q; 26 unrecognised.
+  - The reading rule is not met (+0.28 < 1.0, and below the keyword grouping). The router line stops at the design stage, and section 3 is not run.)
 
 ## 3. Held-out evaluation (only if MC-98 reads promising; registered before its first request)
 
