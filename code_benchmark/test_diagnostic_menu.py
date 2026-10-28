@@ -13,6 +13,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from code_benchmark import analyze_menu_q as am
 from code_benchmark import diagnostic_menu as menu
 from code_benchmark import diagnostic_prospective as dp
 from code_benchmark import run_menu_q as runner
@@ -109,6 +110,47 @@ class TestScoring(unittest.TestCase):
         self.assertEqual((scored[1]["markdown_final_line"], scored[1]["em"]), (True, 0))
         summary = summaries["Q"][RD_DATASET]
         self.assertEqual((summary["completed_n"], summary["format_ok_n"], summary["markdown_final_line_n"]), (2, 1, 1))
+
+
+def cell(**scores: float) -> dict[str, dict]:
+    """Six rows from token-F1 values named B1, B2, Q1, Q2, S1, S2."""
+    return {name: {"item_id": "T", "token_f1": f1, "em": int(f1 == 1.0), "total_tokens": 100,
+                   "prediction": "x", "gold_answer": "x" if f1 == 1.0 else "y"} for name, f1 in scores.items()}
+
+
+class TestAnalysis(unittest.TestCase):
+    # item A: means B 0.5, Q 0.5, S 0.8; draw 1 is won by Q (1.0), draw 2 by S (0.8), so the winner does not repeat;
+    # cross = (Q2 0.0 + S1 0.8) / 2 = 0.4; same draws = 0.8. Item C: every draw 1.0, a tie everywhere.
+    A = cell(B1=0.5, B2=0.5, Q1=1.0, Q2=0.0, S1=0.8, S2=0.8)
+    C = cell(B1=1.0, B2=1.0, Q1=1.0, Q2=1.0, S1=1.0, S2=1.0)
+
+    def test_item_record(self):
+        record = am.item_record(self.A)
+        self.assertEqual((record["winner"], record["draw1_winner"], record["draw2_winner"], record["repeats"]),
+                         ("S", "Q", "S", False))
+        self.assertAlmostEqual(record["cross"], 0.4)
+        self.assertAlmostEqual(record["same_draws"], 0.8)
+        tie = am.item_record(self.C)
+        self.assertEqual((tie["winner"], tie["repeats"], tie["cross"]), (None, None, 1.0))
+
+    def test_summary_of_two_items(self):
+        # B (0.5+0.5+1+1)/4 = 75, Q (1+0+1+1)/4 = 75, S (0.8+0.8+1+1)/4 = 90; bounds (0.4+1)/2 = 70, (0.8+1)/2 = 90
+        summary = am.summarize([self.A, self.C])
+        self.assertEqual({arm: summary["arms"][arm]["token_f1"] for arm in am.ARMS}, {"B": 75.0, "Q": 75.0, "S": 90.0})
+        self.assertEqual(summary["best_fixed_arm"], "S")
+        self.assertEqual(summary["winners"], {"B": 0, "Q": 0, "S": 1, "tie": 1})
+        self.assertEqual(summary["repeat"], {"decided_both_draws": 1, "same_winner": 0, "same_winner_pct": 0.0})
+        self.assertEqual(summary["bounds"], {"cross": 70.0, "same_draws": 90.0})
+        self.assertEqual(summary["pairwise"]["Q_vs_B"], {"better": 0, "worse": 0, "equal": 2, "mean_difference": 0.0})
+        self.assertEqual(summary["pairwise"]["Q_vs_S"], {"better": 0, "worse": 1, "equal": 1, "mean_difference": -15.0})
+
+    def test_failure_kinds(self):
+        cases = [("7 ngày làm việc", "7 ngày", 0.667, "over"), ("7", "7 ngày", 0.667, "partial"),
+                 ("abc", "7 ngày", 0.0, "wrong"), ("Uỷ ban nhân dân", "Ủy ban nhân dân", 0.75, "mixed"),
+                 ("ủy ban nhân dân xã", "ủy ban nhân dân", 0.889, "near"), ("x", "x", 1.0, "correct")]
+        for prediction_text, gold, f1, kind in cases:
+            self.assertEqual(am.failure_kind({"prediction": prediction_text, "gold_answer": gold, "token_f1": f1}),
+                             kind, prediction_text)
 
 
 class TestGates(unittest.TestCase):
