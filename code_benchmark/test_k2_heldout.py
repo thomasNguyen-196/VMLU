@@ -176,6 +176,15 @@ class TestK2Registration(unittest.TestCase):
         self.assertEqual(frozen["retrieval_config_sha256"], v1.sha256_file(k2.RETRIEVAL_PATH))
         self.assertEqual(frozen["manifest_sha256"], k2.load_frozen_manifest()["manifest_sha256"])
 
+    def test_every_k2_item_has_a_retrieval_trace_for_the_engine(self):
+        manifest, rebuilt = k2.build_manifest()
+        traces = runner.retrieval_traces(manifest, rebuilt)
+        retrieval_keys = {dp.item_key(item.dataset_id, item.item_id) for item in rebuilt.values()
+                          if dp.arm_of_replicate(item.replicate_id) in dp.RETRIEVAL_ARMS}
+        self.assertEqual(set(traces), retrieval_keys)
+        self.assertTrue(all(len(trace["ranking"]) == 2 and trace["corpus_sha256"] == manifest["corpus_sha256"]
+                            for trace in traces.values()))
+
     def test_limits_other_than_the_registered_ones_are_refused(self):
         err = io.StringIO()
         with contextlib.redirect_stderr(err), self.assertRaises(SystemExit):

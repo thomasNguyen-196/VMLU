@@ -86,6 +86,17 @@ def procedure_gate(registration: dict[str, Any], root: Path = ROOT) -> Gate:
                 "procedure as registered" if registered == digest else "differs from the registration: ['procedure']")
 
 
+def retrieval_traces(manifest: dict[str, Any], rebuilt: dict[str, v1.EvalItem]) -> dict[str, dict[str, Any]]:
+    """{dataset:item: retrieval trace} for the engine, which attaches one to every K and KS row, shaped like the
+    MC-93 traces (corpus, configuration and query hashes, the kept ranking) and read from the frozen manifest."""
+    questions = {dp.item_key(item.dataset_id, item.item_id): item.question for item in k2.base_items(rebuilt)}
+    return {key: {"corpus_sha256": manifest["corpus_sha256"], "retrieval_config_sha256": manifest["retrieval_config_sha256"],
+                  "query_sha256": v1.sha256_bytes(questions[key].encode("utf-8")),
+                  "ranking": [{"passage_id": passage, "score": score}
+                              for passage, score in zip(record["passages"], record["scores"], strict=True)]}
+            for key, record in manifest["retrieval"].items()}
+
+
 def build_condition(campaign: dict[str, Any], manifest: dict[str, Any], registration: dict[str, Any],
                     endpoint: str, templates_version: str) -> dict[str, Any]:
     transport, model = campaign["transport"], campaign["model"]
@@ -200,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
                                                             dp.load_templates()["version"]), args.resume)
     guard = pr.BudgetGuard(campaign["budget"]["campaign_cap_tokens"], pr.existing_usage(output))
     pr.configure_engine(campaign, k2.PHASE, card_id, guard, outage=pr.OutageGuard(args.stop_after_timeouts or 0),
-                        max_in_flight=args.max_in_flight)
+                        max_in_flight=args.max_in_flight, retrieval_traces=retrieval_traces(manifest, rebuilt))
     pr.base.PROTOCOL = k2.PROTOCOL_ID  # rows carry the K2 protocol id
     record_launch(output, resume=args.resume, max_in_flight=args.max_in_flight,
                   stop_after_timeouts=args.stop_after_timeouts, note=args.note)
