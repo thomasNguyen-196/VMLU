@@ -33,8 +33,13 @@ PROTOCOL_PATH = DATA_DIR / "protocol.json"
 TEMPLATES_PATH = DATA_DIR / "prompt_templates_v1.json"
 REGISTRATION_PATH = DATA_DIR / "registration.json"
 PROTOCOL_ID = "vmlu-diagnostic-prospective-v1"
-ARMS = ("B", "S", "O", "K", "KS")
+CAMPAIGN_ARMS = ("B", "S", "O", "K", "KS")
+# Arms a replicate id may carry: the campaign's, plus Q ("trích rồi đáp", openspec change diagnostic-llm-router),
+# whose prompts that change builds itself.
+ARMS = CAMPAIGN_ARMS + ("Q",)
 REASONING_ARMS = frozenset({"S", "KS"})
+# Arms scored from the text after the last final-answer label: the reasoning arms and Q.
+FINAL_LABEL_ARMS = REASONING_ARMS | {"Q"}
 EVIDENCE_ARMS = frozenset({"O", "K", "KS"})
 PHASES = ("core", "wide")
 MAIN_REPLICATE = "main-000"
@@ -103,13 +108,13 @@ def load_protocol(path: Path = PROTOCOL_PATH) -> dict[str, Any]:
     protocol = _read_json(path, "campaign protocol")
     if protocol.get("protocol_id") != PROTOCOL_ID or protocol.get("protocol_version") != 1:
         raise _fail("unsupported prospective protocol id/version")
-    if set(protocol.get("arms", {})) != set(ARMS):
+    if set(protocol.get("arms", {})) != set(CAMPAIGN_ARMS):
         raise _fail("protocol arms differ from B/S/O/K/KS")
     if set(protocol.get("phases", {})) != set(PHASES):
         raise _fail("protocol phases differ from core/wide")
     for name, phase in protocol["phases"].items():
         arms = phase.get("arms", [])
-        if not set(arms) <= set(ARMS) or "B" not in arms:
+        if not set(arms) <= set(CAMPAIGN_ARMS) or "B" not in arms:
             raise _fail(f"phase {name} must use known arms and include B")
         if not isinstance(phase.get("replicates"), int) or phase["replicates"] < 1:
             raise _fail(f"phase {name} needs a positive replicate count")
@@ -210,7 +215,7 @@ def render_evidence_block(provisions: list[dict[str, Any]], templates: dict[str,
 
 def build_arm_prompt(item: v1.EvalItem, arm: str, templates: dict[str, str],
                      provisions: list[dict[str, Any]] | None = None) -> str:
-    if arm not in ARMS:
+    if arm not in CAMPAIGN_ARMS:
         raise _fail(f"unknown arm {arm!r}")
     needs_evidence = arm in EVIDENCE_ARMS
     if needs_evidence != bool(provisions):
@@ -678,7 +683,7 @@ def final_segment(raw: str) -> tuple[str, bool]:
 
 def score_arm_rows(manifest: dict[str, Any], predictions: dict[str, dict[str, Any]],
                    item_map: dict[str, v1.EvalItem]) -> tuple[list[dict[str, Any]], dict[str, dict[str, dict[str, Any]]]]:
-    """Frozen scoring applied per arm; reasoning arms are scored from the final-answer segment.
+    """Frozen scoring applied per arm; reasoning arms and Q are scored from the final-answer segment.
 
     Returns (scored rows for all arms, {arm: {dataset_id: summary}}). Arms are never pooled."""
     refs_by_arm: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -697,7 +702,7 @@ def score_arm_rows(manifest: dict[str, Any], predictions: dict[str, dict[str, An
             prediction = predictions.get(key)
             if prediction is None:
                 continue
-            if arm in REASONING_ARMS and prediction.get("status") == "complete":
+            if arm in FINAL_LABEL_ARMS and prediction.get("status") == "complete":
                 raw = str(prediction.get("raw_response", ""))
                 segment, found = final_segment(raw)
                 is_mc = item_map[key].task == "multiple_choice"
@@ -717,7 +722,7 @@ def score_arm_rows(manifest: dict[str, Any], predictions: dict[str, dict[str, An
         for dataset_id, summary in arm_summaries.items():
             subset = [row for row in scored if row["dataset_id"] == dataset_id]
             summary["arm"] = arm
-            if arm in REASONING_ARMS:
+            if arm in FINAL_LABEL_ARMS:
                 compliant = sum(bool(row["format_ok"]) for row in subset)
                 summary.update({
                     "format_ok_n": compliant,
