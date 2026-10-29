@@ -33,7 +33,7 @@
 
 ## 3. Registration and run (MC-100)
 
-- [ ] 3.1 Register MC-100:
+- [x] 3.1 Register MC-100:
   - the root block;
   - the detail card;
   - `registration.json` with the frozen hashes.

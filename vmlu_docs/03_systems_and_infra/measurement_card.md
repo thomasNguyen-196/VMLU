@@ -2754,3 +2754,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 2 requests in flight; 429 and 5xx re-sent after Retry-After (30 s without one), at most 5 times, recorded; the run halts on 4 consecutive network failures, a changed response model, an authentication error or non-free billing |
 | `details` | `docs/measurement_cards/MC-99-diagnostic-router-signals.md` |
 | `outputs` | `all_res/diagnostic_router_signals/jev/jev-1.13-free/`; no upload |
+
+## MC-100 — Qwen3.5-9B-65K (IEC) / Legal MC oracle test / B and O (the governing provision) on 56 Legal MC items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-100` |
+| `status` | Preregistered 2026-10-29 (+07), before benchmark-item requests of this card |
+| `scope` | 56 Legal MC items of the wide phase: stratum `wrong`, all 28 items B missed on at least one of its MC-90 and MC-91 draws; stratum `right`, 28 of the 106 items B answered correctly on both, in fixed hash order. Arms B (the frozen main-v1 MC prompt) and O (the item's governing provisions in the campaign evidence block, then the same prompt; 53 items), two draws each: 218 attempts. Provisions located by four Claude agents blind to the stratum, extracted verbatim by code from stored hethongphapluat.com pages and labelled against the gold; 14 labels reviewed by the project owner (AI-assisted). Evidence `oracle_evidence_v1.jsonl` SHA-256 `367632d7…`. Ceiling test with a registered reading rule and a descriptive gold check |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-96: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected under 0.5 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-96 |
+| `details` | `docs/measurement_cards/MC-100-diagnostic-legal-oracle.md` |
+| `outputs` | `all_res/diagnostic_legal_oracle/run/qwen3-5-9b-65k-prospective/`; no upload |
