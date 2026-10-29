@@ -1,0 +1,46 @@
+{
+ "status": "legal-retrieval registered",
+ "card_ids": {
+  "legal-retrieval": "MC-101"
+ },
+ "card_files": {
+  "legal-retrieval": "docs/measurement_cards/MC-101-diagnostic-legal-retrieval.md"
+ },
+ "registered_on": {
+  "legal-retrieval": "2026-10-29"
+ },
+ "frozen": {
+  "legal_retrieval_protocol_sha256": "c24205ce8805f017bc09d482d6fc97220c96bb4330ea6cf38cf323634153bcc8",
+  "campaign_protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+  "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
+  "sources_sha256": "852286d55e97cd9d5c8226665e7cebfe52607fd8f36a6e76dbd4dd2556479737",
+  "corpus_sha256": "66e4a349320420afb83aa6e3af71c478c0f89cd38b063aa46185386074af678a",
+  "retrieval_config_sha256": "136bac9395d3fe14b14c2df0d777e0450f9ce1af0064e286670add79adce440e",
+  "k_evidence_sha256": "97d058b2a9d3d3ac7ed819e8f62254974cd404d817feafc578417f951cd4006a",
+  "oracle_evidence_sha256": "367632d7243855d8818dac7d7d34207a2b718f0723d389a0204c296eda5275bb",
+  "manifest_sha256": "fb0559644e26ef68e00320a818cd4cdc04683e37911c0556279ebe81e882f94a"
+ },
+ "mc100": {
+  "registration": "data/diagnostic_legal_oracle/registration.json",
+  "manifest_sha256": "4eb235e6f3ece13bbbd40e0f968c9b5444bc87cf8372c31dd4a19ca4b5cd9ab8",
+  "owner_review_sha256": "9e69313c9bfc1a590ca55a69add0302f2c33a423ab8553cce2607cffe77a71c2"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-retrieval-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "k_evidence_sha256",
+   "corpus_sha256",
+   "scores_sha256",
+   "primary",
+   "reading_rule",
+   "mc100_strata",
+   "outside_mc100",
+   "retrieval",
+   "gold_check",
+   "descriptive"
+  ]
+ }
+}

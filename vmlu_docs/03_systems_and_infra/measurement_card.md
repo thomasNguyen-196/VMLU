@@ -2768,3 +2768,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-96 |
 | `details` | `docs/measurement_cards/MC-100-diagnostic-legal-oracle.md` |
 | `outputs` | `all_res/diagnostic_legal_oracle/run/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-101 — Qwen3.5-9B-65K (IEC) / Legal MC retrieval test / B, K (two BM25 units from a question-based legal corpus) and O on the 134 wide Legal MC items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-101` |
+| `status` | Preregistered 2026-10-29 (+07), before benchmark-item requests of this card |
+| `scope` | The 134 Legal MC items of the wide phase (the MC-100 pool). Arms B (the frozen main-v1 MC prompt), K (the campaign evidence block with the item's top 2 BM25 units, then the same prompt) and O (MC-100's oracle provisions, then the same prompt; 53 items), two draws each: 642 attempts. Corpus `vi-legal-corpus-lmc-v1`: 303 hethongphapluat.com documents chosen by four Claude agents from the question stems only (no options, no gold), 24,265 units read verbatim by code (SHA-256 `66e4a349…`); BM25 with the corpus v0 settings, untuned; K evidence `97d058b2…`. Before registration, hit@2 against the MC-100 oracle articles was 40 of 53. Primary test: always-K against always-B over the 134 items, with a registered reading rule for the Legal MC route |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-100: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected under 1 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-100 |
+| `details` | `docs/measurement_cards/MC-101-diagnostic-legal-retrieval.md` |
+| `outputs` | `all_res/diagnostic_legal_retrieval/run/qwen3-5-9b-65k-prospective/`; no upload |

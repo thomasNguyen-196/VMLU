@@ -67,7 +67,7 @@
 
 ## 5. Registration and run (MC-101)
 
-- [ ] 5.1 Register MC-101: the root block, the detail card, and `registration.json` with every hash and the report keys. Commit as `pre-register MC-101`. Verify that the offline preflight passes every gate.
+- [x] 5.1 Register MC-101: the root block, the detail card, and `registration.json` with every hash and the report keys. Commit as `pre-register MC-101`. Verify that the offline preflight passes every gate.
 - [ ] 5.2 Run with `--execute` on Qwen3.5-9B-65K at the IEC endpoint: openvpn3 `member-shared-tcp`, endpoint host resolved through the in-tunnel DNS. Verify:
   - every attempt is complete;
   - one response model throughout.
