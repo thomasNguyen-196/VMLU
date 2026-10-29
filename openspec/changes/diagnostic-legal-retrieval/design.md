@@ -41,6 +41,7 @@ See proposal.md for the motivation. Most of the needed machinery already exists:
   - **`part`:** the heading line, for a document with an attached Quy chế.
 - **Merge and freeze.**
   - The lists are merged by URL, one entry per page. On a clash, `topical` wins over `predecessor`, which wins over `distractor`.
+  - Consolidated texts (VBHN) are numbered anew each year, so one number can sit on pages of different years. Such a number is qualified by the year its page title prints, for example `09/VBHN-VPQH (2025)`. Any other number on two pages fails the merge.
   - The list is frozen as `corpus_sources_v1.json` before the corpus is built and before any retrieval query.
 - **Fetching.** Pages are fetched by code: https only, hethongphapluat.com only, 2 s apart. Each is stored with its SHA-256 and time under `all_res/diagnostic_legal_retrieval/corpus/raw/`, with a fetch log.
 - **Expected size.** 80 to 150 documents. The owner's earlier estimate of 50 to 100 was for fewer questions.
@@ -49,7 +50,7 @@ See proposal.md for the motivation. Most of the needed machinery already exists:
 ### 3. Reader and units
 - **Reading articles.** MC-100's reader, with two more rules:
   - a heading with a footnote marker, as in the consolidated texts (`Điều 15[15].`), is the heading of Điều 15;
-  - for a document with a `part`, every article of the attached text is read: each runs from its heading line to the next article, chapter, section or annex heading, or to a signature or `Nơi nhận` line.
+  - for a document with a `part`, every article of the attached text is read. Each runs from its heading line to the next article heading. A chapter, section or upper-case annex heading ends an article. The attached text ends at a signature or `Nơi nhận` line, at the blocks the site appends to every document (`Văn bản liên quan…`, `HIỆU LỰC VĂN BẢN`, `Số hiệu:`), or at a repeated article number (the site repeats the Quyết định after its attachment). Only an upper-case `PHỤ LỤC` counts as an annex heading, because a sentence may open with "Phụ lục".
 - **Unit.** An article, except that an article over 6,000 characters is split into consecutive parts at line boundaries.
   - Each part is at most 6,000 characters where its lines allow.
   - Every part after the first opens with the article's heading line.
@@ -76,7 +77,7 @@ See proposal.md for the motivation. Most of the needed machinery already exists:
 - **Alternatives.** Top 1 has fewer distractions and more misses; top 3 is MC-93's setting. Neither runs, so K stays a single preset arm. Hit@1, hit@2 and hit@3 are reported as description.
 - **K evidence file.** Each record holds:
   - the two units as provisions;
-  - the ranking (unit id, score, text hash);
+  - the ranking of the top 3 units (unit id, score, text hash), the third kept only for hit@3;
   - the query hash, the corpus hash and the configuration hash.
 
   The file is frozen before registration.

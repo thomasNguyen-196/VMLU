@@ -8,6 +8,8 @@
 - [x] 1.2 Locate the oracle provisions for the 56 items with four agents blind to the stratum. Store every source page with its SHA-256.
 
   (2026-10-29: 66 pages stored. Provisions for 53 items: 74 provisions from 45 documents. Nothing found for 3 items: LG-0007 cites a Party notice without articles; LG-0024's page skips the governing articles; LG-0070 cites a 2025 draft decree that is not on the site. One location was amended per the agent's own note: LG-0126 names the attached Quy chế (`part`); the raw row is kept beside the batch file.)
+
+  (Correction, 2026-10-29 evening: the agents' working files, including that raw row and the batch files, sat in a temporary scratchpad that a machine restart at 20:10 +07 cleared. The frozen evidence file, the stored pages, the review sheet and the owner's review in `all_res/diagnostic_legal_oracle/` remain.)
 - [x] 1.3 Build the evidence records by code: verbatim article text, or heading line and named clauses. Write the owner's review sheet for the 14-item sample.
 
   (2026-10-29: 56 draft records, all built from the stored pages: `supports_gold` 48, `contradicts_gold` 2, `unclear` 3, `not_found` 3. 8 provisions are clause cuts of articles over 6,000 characters; evidence per item has a mean of 2,587 characters and a maximum of 7,172. Two reader exceptions were added before any freeze and recorded in the design and the protocol's `reader`: a page breaking off inside its last article (NĐ 99/2022), and attached Quy chế without article markup (QĐ 05/2025/QĐ-TTg, QĐ 21/QĐ-SGDVN). Review sample: LG-0001, 0021, 0027, 0028, 0038, 0065, 0072, 0078, 0082, 0111, 0122, 0137, 0138, 0142.)

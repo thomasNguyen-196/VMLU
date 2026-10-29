@@ -1,0 +1,70 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-retrieval",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-legal-retrieval",
+ "purpose": "Does retrieval from a question-based legal corpus (arm K) improve Qwen3.5-9B on Legal MC over the frozen closed-book prompt (arm B), and how much of the MC-100 oracle gain (arm O) does it keep?",
+ "dataset": "vi-multimodel-v1-legal-mc-146",
+ "pool": {
+  "description": "the 134 Legal MC items of the wide phase, each answered by B on two draws: the pool of MC-100",
+  "size": 134,
+  "from": "data/diagnostic_legal_oracle/protocol.json, selection.sources"
+ },
+ "mc100": {
+  "registration": "data/diagnostic_legal_oracle/registration.json",
+  "use": "its frozen strata, support labels and oracle provisions (arm O and the mechanism analysis) and its owner review (the gold check), each checked against the SHA-256 that MC-100 registered"
+ },
+ "corpus": {
+  "corpus_id": "vi-legal-corpus-lmc-v1",
+  "source_site": "hethongphapluat.com",
+  "chosen_by": "four Claude agents, about 34 items each in item-id order, from the question stems only: no options, no gold, no strata, no MC-100 file",
+  "roles": {
+   "topical": "up to 3 per item: documents that govern the question's subject, preferring the version in force",
+   "predecessor": "for a topical document, the instrument it replaced or amends, when the site carries it",
+   "distractor": "up to 5 per batch: documents of the same fields that govern other matters"
+  },
+  "merge": "by URL, one entry per page; on a clash topical wins over predecessor, which wins over distractor; a consolidated-text number (VBHN) printed on pages of different years is qualified by the year its page title prints, and any other number on two pages fails the merge",
+  "frozen_before": "the corpus build and any retrieval query",
+  "reader": "MC-100's reader (top-level article elements; a page breaking off inside its last article element keeps the articles closed before it), plus: a heading with a footnote marker (Điều 15[15].) heads Điều 15; a document with a `part` also yields every article of the text attached under that heading line, each running to the next article heading; a chapter, section or upper-case annex heading ends an article, and the attached text ends at a signature or recipients line, at the site's own blocks that follow every document (related documents, validity, document data, notices) or at a repeated article number",
+  "unit": "an article; an article over unit_max_chars characters is split into consecutive parts at line boundaries, each part after the first opening with the article's heading line",
+  "unit_max_chars": 6000,
+  "leak_check": "a question stem copied verbatim, or an answer-key line, in a unit fails the build; options copied verbatim are counted only",
+  "omitted": "a document whose page cannot be fetched or yields no article is listed with its reason, never filled in by hand"
+ },
+ "retrieval": {
+  "config": "data/diagnostic_legal_retrieval/retrieval_v1.json",
+  "top_k": 2,
+  "ranking_kept": 3,
+  "pause_before_registration": "if hit@2 against the MC-100 oracle articles is below 0.5 on its items with provisions, pause and report to the owner"
+ },
+ "arms": {
+  "B": "the item's frozen main-v1 MC prompt",
+  "K": "the campaign evidence block with the item's top-2 units, then the frozen prompt",
+  "O": "the campaign evidence block with the item's MC-100 oracle provisions, then the frozen prompt; items with provisions only"
+ },
+ "draws": 2,
+ "templates": "data/diagnostic_prospective_v1/prompt_templates_v1.json",
+ "analysis": {
+  "plan_id": "diagnostic-legal-retrieval-v1",
+  "item_score": "mean correctness of an arm over its two draws",
+  "primary": "always-K against always-B over the 134 items: mean per-item difference",
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7,
+   "interval": "percentile 95%"
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7,
+   "sides": 2
+  },
+  "reading_rule": {
+   "alpha": 0.05,
+   "rule": "K becomes the Legal MC arm of the router when its mean exceeds B's and the two-sided sign-flip p-value is below alpha; otherwise always-B stays the Legal MC route"
+  },
+  "descriptive": "per MC-100 stratum on supports_gold items: K against B, K against O, and in stratum wrong the share of O's gain that K keeps; the items outside MC-100: K against B; hit@1, hit@2 and hit@3 against the MC-100 oracle articles, and K's and O's accuracy on hit and miss items; the overlap of corpus and oracle documents; each arm's options on contradicts_gold items (gold, owner, other); clear rescues and regressions on the pool; the share answering A; mean tokens per arm; evidence length"
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4
+ }
+}
