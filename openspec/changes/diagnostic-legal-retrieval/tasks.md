@@ -68,9 +68,22 @@
 ## 5. Registration and run (MC-101)
 
 - [x] 5.1 Register MC-101: the root block, the detail card, and `registration.json` with every hash and the report keys. Commit as `pre-register MC-101`. Verify that the offline preflight passes every gate.
-- [ ] 5.2 Run with `--execute` on Qwen3.5-9B-65K at the IEC endpoint: openvpn3 `member-shared-tcp`, endpoint host resolved through the in-tunnel DNS. Verify:
+- [x] 5.2 Run with `--execute` on Qwen3.5-9B-65K at the IEC endpoint: openvpn3 `member-shared-tcp`, endpoint host resolved through the in-tunnel DNS. Verify:
   - every attempt is complete;
   - one response model throughout.
 
   Append the run record to the detail card, then close the VPN.
-- [ ] 5.3 Run the analysis once, apply the reading rule and report it here.
+
+  (2026-10-29 23:00–23:05 +07, one launch: 642/642 complete, finish reason `stop` throughout, the registered model id in every row, none at the cap, none unparsed, every K row with its retrieval trace; 629,918 tokens. Run record appended; VPN closed after the run.)
+- [x] 5.3 Run the analysis once, apply the reading rule and report it here.
+
+  (2026-10-29, report SHA-256 `98c08533…`.
+  - **Primary, 134 items:** B 84.3%, K 84.7%, +0.4 points (95% bootstrap −5.2 to +5.6; sign-flip p = 1.0); 14 items better, 12 worse, 108 equal. **Reading rule not met: always-B stays the Legal MC route.**
+  - **MC-100 stratum `wrong`, 23 `supports_gold` items:** B 32.6%, K 52.2% (+19.6; interval +4.3 to +37.0; p = 0.061), O 84.8% (+52.2; p = 0.0002). K keeps 38% of O's gain; K against O −32.6 (p = 0.009).
+  - **Stratum `right`, 25 items:** B 100%, K 96%, O 96%; one item worse in each.
+  - **The 78 items outside MC-100:** B 96.2%, K 95.5% (−0.6; p = 1.0).
+  - **Retrieval:** on the 40 items whose top 2 units hold an oracle article, B 72.5%, K 76.3%, O 83.8%; on the 13 others, B 46.2%, K 50.0%, O 88.5%.
+  - **Gold check:** on the two `contradicts_gold` items, B picked the gold's option 3 of 4 times, K and O the owner's option 3 of 4.
+  - **Tokens per attempt:** B 235, K 1,718, O 1,005.
+
+  K helps where Qwen errs but costs a little where it is already right, the larger group, so the pool shows no net gain. Even when the right article is among the two units, K gains far less than O. A likely reason, not tested here: the oracle text is the cited clauses of the version that decides the gold, while K brings two whole units, possibly of another version or another part of a long article.)
