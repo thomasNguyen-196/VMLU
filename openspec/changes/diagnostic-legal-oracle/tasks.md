@@ -39,9 +39,22 @@
   - `registration.json` with the frozen hashes.
 
   Commit as `pre-register MC-100`.
-- [ ] 3.2 Run with `--execute`, with the VPN on. Verify:
+- [x] 3.2 Run with `--execute`, with the VPN on. Verify:
   - every attempt is complete;
   - one response model throughout.
 
   Append the run record to the detail card.
-- [ ] 3.3 Run the analysis once, apply the reading rule and report it here.
+
+  (2026-10-29 15:55–15:56 +07, one launch: 218/218 complete, finish reason `stop` throughout, the registered model id in every row, none at the cap, none unparsed, 132,134 tokens. Run record appended; VPN closed after the run.)
+- [x] 3.3 Run the analysis once, apply the reading rule and report it here.
+
+  (2026-10-29, report SHA-256 `f0ac91f0…`. Primary set, O against fresh B:
+  - `wrong` (23 items): B 37.0%, O 82.6%, +45.7 points (95% bootstrap +26.1 to +63.0; sign-flip p = 0.0004); 17 items better, 2 worse, 4 equal; 6 clear rescues, no clear regression.
+  - `right` (25 items): B 94.0%, O 96.0%, +2.0 points (−4.0 to +10.0; p = 1.0); no clear rescue or regression.
+  - **Reading rule met** (gain ≥ 20 in `wrong`, loss ≤ 10 in `right`): a retrieval study on Legal MC is worth building.
+
+  Descriptive:
+  - `wrong` items missed on both earlier draws: 20.8% → 70.8%; missed on one: 54.5% → 95.5%.
+  - `unclear` (3 items): 33.3% → 50.0%.
+  - `contradicts_gold` (2 items, scored against the gold): 50.0% → 25.0%. Gold check on those two items, four answers per arm: B picked the gold's option 2 times and the owner's 1; O picked the gold's 1 time and the owner's 3. With the law in hand, Qwen moved to the option the law supports.
+  - Share answering A: B 50.9%, O 53.8%. Mean tokens per attempt: B 229, O 1,005.)
