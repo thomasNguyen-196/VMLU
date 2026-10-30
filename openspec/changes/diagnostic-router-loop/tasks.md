@@ -78,6 +78,21 @@
   - **Re-scoring.** `analyze_reading_v3` puts MC-103's reading dataset through the weakness-map-v1 analysis and sets v2 against v3 for every registered run with reading answers. It is descriptive, decided after the MC-103 exploratory finding.
   - **Verify.** `test_vi_reading_v3` passes. The analysis checks that every stored score is the v2 score of its text and that the v2 blocks reproduce the registered MC-103 report.
 
+  (2026-10-30, re-scoring run once after commit `06fcaf3`, report SHA-256 `3ddf1732…`; record appended to the MC-103 card. Post hoc and descriptive.
+  - **Checks.** Every stored reading score of the 23 cards is the v2 score of its text, and the recomputed v2 blocks reproduce the registered MC-103 report.
+  - **MC-103, ViBidLQA train (token-F1), MiMo under v3:**
+    - B-r1 72.0 (v2 58.5) and B-r2 69.1 (v2 61.9). S-r1 79.5 and Q-r1 75.1 do not change, because their final lines carry no marks.
+    - S +7.5 (+1.7 to +13.7; p 0.018), against +21.0 under v2. S rescues 6 items and damages 1 (v2: 15 and 1).
+    - Q +3.1 (−3.3 to +9.9; p 0.38), against +16.6 under v2.
+    - MiMo's two B draws agree on 35 of 60 items, against 17 under v2: the marks also made equal answers look different. The rule loop gives 79.8 (v2 78.8).
+  - **Qwen** does not change: B-r1 59.1, S-r1 66.8, S +7.7 (p 0.07).
+  - **Interaction** −0.2 (−9.6 to +9.3; p 0.97), against +13.3 (p 0.020) under v2. On ViBidLQA, S helps MiMo and Qwen by the same amount. The maps do not change: MiMo S / S, Qwen S / B. VMLU therefore remains the only dataset where S's effect clearly differs between the two models.
+  - **Earlier runs, token-F1 v2 → v3 over all reading items:**
+    - Muse Spark 1.2: MC-73 50.5 → 66.3, MC-84 51.3 → 67.5, MC-87 47.6 → 65.5. Exact match roughly doubles (MC-84 20.2 → 38.9).
+    - MiMo V2.6 Flash: MC-85 (direct, 20,000-token cap) 65.2 → 74.4, MC-54 71.9 → 72.4, MC-89 69.1 → 69.8. MiMo V2.5 (MC-55): 64.0 → 66.9.
+    - Muse Spark 1.3 (MC-53, MC-80, MC-86) and every Qwen run (MC-56, MC-72, MC-83, MC-88, MC-90 to MC-97) change by less than 0.1 point. MC-102's Muse reference, Muse Spark 1.3's MC-80/81 answers, is therefore unaffected.
+  - **What it changes.** Under v2, cross-model reading comparisons understate Muse Spark 1.2 and MiMo. Under v3, Muse 1.2 direct (67.5) is level with Qwen direct (68.5, MC-83) instead of 17 points behind. The registered numbers stay; v3 is a sensitivity analysis beside them.)
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).
