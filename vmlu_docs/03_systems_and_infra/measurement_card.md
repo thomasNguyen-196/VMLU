@@ -2810,3 +2810,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 4 requests in flight; breaker after 4 consecutive network failures; halt on an authentication error, a model id without `mimo`, or a model id change |
 | `details` | `docs/measurement_cards/MC-103-diagnostic-weakness-map-mimo.md` |
 | `outputs` | `all_res/diagnostic_router_loop/weakness_map/mimo-v2-6-flash/`; no upload |
+
+## MC-104 — Qwen3.5-9B-65K (IEC) and MiMo V2.6 Flash (OpenCode Go) / self-improvement loop / evidence for knowledge questions and gated reasoning for multiple choice on 903 unused items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-104` |
+| `status` | Preregistered 2026-10-30 (+07), before benchmark-item requests of this card |
+| `scope` | 903 items no router has used, for each of two students: 300 ViBidLQA train questions asked without their own passage (arms B, K with the top 2 and the top 5 BM25 clauses, O), the 303 VMLU dev items and 300 unused VM14K items (B and three S answers). The loop (B; S when unsure; a majority of three S answers when S disagrees) is replayed from the logged answers; the student writes every final answer. Primary: loop against always-B and always-S, and K top 5 against K top 2 |
+| `harness / tools` | Direct HTTP API, no harness, no tools |
+| `model / route` | Qwen3.5-9B-65K on the IEC endpoint with the campaign transport (Responses API); its multiple-choice B is the MC-43 chat-completions probe with letter log-probabilities. MiMo V2.6 Flash (`mimo-v2.6-flash`) on the direct OpenCode Go route of MC-103. Credentials are never written to outputs |
+| `sampling / limits` | Qwen: temperature 1.0 and 4,096 output tokens; the probe at temperature 0, seed 42, 4 tokens, top 20 log-probabilities. MiMo: provider defaults, `max_completion_tokens=20000`. Both: 300 s timeout, no SDK retries; budget guards of 5,000,000 (Qwen) and 6,000,000 (MiMo) reported tokens |
+| `workers / scheduler` | At most 4 requests in flight per student; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-104-diagnostic-self-loop.md` |
+| `outputs` | `all_res/diagnostic_router_loop/self_loop/`; no upload |

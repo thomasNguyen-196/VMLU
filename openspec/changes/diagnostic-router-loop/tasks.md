@@ -102,6 +102,8 @@
   - **Build.** `diagnostic_self_loop` holds the items, prompts, the two frozen manifests, the loop rules and the threshold rule. `run_self_loop` runs Qwen's MC-43 probe and the campaign transport behind one gate, and MiMo on the MC-103 route. `analyze_self_loop` is the registered analysis.
   - **Verify.** `test_diagnostic_self_loop`, `test_run_self_loop` and `test_analyze_self_loop` pass. The threshold is reproduced from its recorded inputs. The offline preflight passes every gate for both students with `endpoint_calls=0`.
 
+  (2026-10-30: configuration `11025602…`, manifests Qwen `3138b609…` (3,612 attempts) and MiMo `d9488ac1…` (4,215), card MC-104. Both preflights pass all four gates offline, and 19 tests pass. Before any answer, BM25 ranks the own clause in the top 2 for 235 of the 300 knowledge items and in the top 5 for 268. Two VM14K probe prompts have an option broken across lines, so their confidence will be missing and the loop treats them as unsure.)
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).

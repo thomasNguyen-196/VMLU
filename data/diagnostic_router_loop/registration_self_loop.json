@@ -1,0 +1,32 @@
+{
+ "status": "self-improvement loop registered",
+ "card_ids": {
+  "self_loop": "MC-104"
+ },
+ "card_files": {
+  "self_loop": "docs/measurement_cards/MC-104-diagnostic-self-loop.md"
+ },
+ "registered_on": {
+  "self_loop": "2026-10-30"
+ },
+ "frozen": {
+  "config_sha256": "110256027249f4f1eb8445c21c0015186f58229755650f666a8100a50c28b354",
+  "manifest_sha256": {
+   "qwen": "3138b609e116a149c8f8acb9e1715e19f5c105b003abd772f4638947f3cc4aed",
+   "mimo": "d9488ac1521d4cba230e194a84795ca4c4cd5f843b6131e58412b63a9a85819a"
+  }
+ },
+ "analysis": {
+  "plan_id": "self-loop-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "multiple_choice",
+   "knowledge",
+   "primary",
+   "cost"
+  ]
+ }
+}
