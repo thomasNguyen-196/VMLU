@@ -98,11 +98,24 @@
   - **Builder repair.** The builder had stopped running: the bandit annotations of 2026-10-25 (`0e4da97`) changed the bytes of the MC-87 to MC-89 runners, which no longer matched their frozen hashes. It now checks local snapshots of the frozen runners, restored byte for byte from git, as MC-86 already did. Apart from the v3 rows, the rebuilt reports equal the committed ones, except that the three runner source paths now point at those snapshots.
   - **Not changed.** `/benchmark` reads MongoDB, which holds only Qwen runs scored by the Reading-400 scorer; none of their answers carries a mark. `/multimodel` still shows v2 only; there v3 moves MiMo V2.5 by about 3 points and the other three models by less than 1.)
 
-- [ ] 2.6 (added 2026-10-30, at the owner's request) MC-104: the self-improvement loop for Qwen3.5-9B and MiMo V2.6 Flash (decision 11). The student writes every final answer.
+- [x] 2.6 (added 2026-10-30, at the owner's request) MC-104: the self-improvement loop for Qwen3.5-9B and MiMo V2.6 Flash (decision 11). The student writes every final answer.
   - **Build.** `diagnostic_self_loop` holds the items, prompts, the two frozen manifests, the loop rules and the threshold rule. `run_self_loop` runs Qwen's MC-43 probe and the campaign transport behind one gate, and MiMo on the MC-103 route. `analyze_self_loop` is the registered analysis.
   - **Verify.** `test_diagnostic_self_loop`, `test_run_self_loop` and `test_analyze_self_loop` pass. The threshold is reproduced from its recorded inputs. The offline preflight passes every gate for both students with `endpoint_calls=0`.
 
   (2026-10-30: configuration `11025602…`, manifests Qwen `3138b609…` (3,612 attempts) and MiMo `d9488ac1…` (4,215), card MC-104. Both preflights pass all four gates offline, and 19 tests pass. Before any answer, BM25 ranks the own clause in the top 2 for 235 of the 300 knowledge items and in the top 5 for 268. Two VM14K probe prompts have an option broken across lines, so their confidence will be missing and the loop treats them as unsure.)
+
+  (2026-10-31: both runs complete; the analysis was run once, report SHA-256 `705c5788…`; the run record is appended to the MC-104 card.
+  - **Multiple choice**, 603 items pooled, accuracy % with the mean reported tokens per item in brackets:
+    - Qwen: always-B 69.0 (118), always-S 74.0 (1,049), always-vote 76.5 (3,135), loop 76.3 (1,334), map 72.0 (558). The loop asked S on 295 items and took a vote on 136.
+    - MiMo: always-B 76.3 (423), always-S 78.8 (1,137), always-vote 80.3 (3,619), loop 78.4 (1,390), map 77.8 (845). The loop asked S on 110 items and took a vote on 21.
+  - **Primary tests:**
+    - Loop beats always-B. Qwen met: +7.3, 65 rescues against 21 regressions, Holm p < 0.0001. MiMo not met: +2.2, 30 against 17, Holm p 0.079.
+    - Loop not worse than always-S with fewer tokens. Not met for either student.
+      - Qwen's loop scored above always-S (+2.3, interval +0.2 to +4.5) but used 27% more tokens, mostly in round 3.
+      - MiMo's loop: −0.3 (−2.5 to +2.0), with 22% more tokens, because it pays for two B answers.
+    - K top 5 beats K top 2. Qwen met: +7.1 token-F1 (+3.3 to +11.1), Holm p 0.0005. MiMo not met: K top 5 scored lower, −3.9 (−7.6 to −0.2).
+  - **Knowledge**, token-F1 under v3 (B / K top 2 / K top 5 / O): Qwen 15.9 / 55.2 / 62.3 / 62.1; MiMo 23.9 / 64.2 / 60.3 / 73.5. Qwen's K top 5 equals its own-clause ceiling.
+  - **Maps.** The point maps of MC-95 and MC-103 did not carry over. On the two dataset cells where a map said B, S did better: Qwen on VM14K (+4.0) and MiMo on VMLU (+2.0).)
 
 ## 3. Router-critic design check (10/11–17/11)
 
