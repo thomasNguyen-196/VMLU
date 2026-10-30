@@ -1,0 +1,65 @@
+{
+ "map_id": "weakness-map-v1",
+ "protocol_id": "vmlu-diagnostic-weakness-map",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-loop",
+ "purpose": "Phase 2 of the router loop: measure, for an API student, which fix helps on which dataset, on the items where Qwen3.5-9B already answered B and S twice (MC-95), so the two models' maps compare item by item.",
+ "items": {
+  "source": "calibration_items of data/diagnostic_router_v3/heldout_v3.json (MC-95)",
+  "source_manifest_self_sha256": "e4780be9850f14797cff81a67e40181ab99fc377f83349812d635e0038f370e7",
+  "dataset_counts": {
+   "bidlqa-train": 60,
+   "vi-multimodel-v1-vmlu-valid": 60,
+   "vm14k-4-options": 60
+  }
+ },
+ "arms": {
+  "every_item": ["B-r1", "B-r2", "S-r1"],
+  "reading_items": ["Q-r1"]
+ },
+ "student": {
+  "profile_id": "mimo-v2-6-flash",
+  "model_id": "mimo-v2.6-flash",
+  "provider": "OpenCode Go",
+  "endpoint_host": "opencode.ai",
+  "api_protocol": "openai-chat-completions",
+  "stream": false,
+  "system_prompt": "Answer the user's question.",
+  "max_completion_tokens": 20000,
+  "timeout_seconds": 300,
+  "sdk_retries": 0,
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 6000000,
+  "model_identity": "mimo"
+ },
+ "reference": {
+  "model": "Qwen3.5-9B-65K (MC-95)",
+  "scores": "all_res/diagnostic_router_v3/heldout/qwen3-5-9b-65k-prospective/scores.jsonl",
+  "scores_sha256": "9624af66c5f02f2a41080810f9396b588773e9d9eb4d8fd9bd98cca71a51f52e",
+  "arms": ["B-r1", "B-r2", "S-r1"]
+ },
+ "analysis": {
+  "plan_id": "weakness-map-v1",
+  "metric": {
+   "multiple_choice": "accuracy",
+   "reading": "token_f1"
+  },
+  "right_threshold_reading_token_f1": 0.5,
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7
+  },
+  "point_map": {
+   "rule": "per dataset, the arm with the highest draw-1 mean; B unless a fix beats B-r1 by at least tie_points",
+   "tie_points": 1.0
+  },
+  "reliable_map": {
+   "rule": "per dataset, the fix with the largest mean paired gain over B-r1 among those whose 95% bootstrap interval lies above zero; otherwise B"
+  }
+ }
+}

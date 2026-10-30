@@ -37,6 +37,10 @@
 
 ## 2. Weakness map per model (5/11–10/11)
 
+- [ ] 2.0 (added 2026-10-30, pulled forward at the owner's request; the owner chose MiMo V2.6 Flash) MC-103: MiMo V2.6 Flash's weakness map on the 180 MC-95 calibration items (VMLU valid, VM14K and ViBidLQA train, 60 each).
+  - **Arms.** B twice and S once on every item, and Q once on ViBidLQA: 600 attempts on the direct OpenCode Go chat-completions route. The prompts are MC-95's byte for byte.
+  - **Analysis.** It compares MiMo, dataset by dataset, with Qwen's logged B-r1, B-r2 and S-r1 on the same items: arm means, fix gains against B-r1, rescue and damage counts, noise, the rule loop, the point and reliable maps, and the interaction.
+  - **Verify.** The offline preflight passes every gate with `endpoint_calls=0`, `test_diagnostic_weakness_map` passes, and a synthetic end-to-end analysis matches the registered report keys.
 - [ ] 2.1 Design the calibration set: about 60 fresh items per dataset (VMLU, VM14K, ViBidLQA), disjoint from every earlier router set and from the planned evaluation items. Verify that a manifest test proves disjointness.
 - [ ] 2.2 Register and run calibration for Qwen3.5-9B-65K on the IEC endpoint (openvpn3 `member-shared-tcp`, in-tunnel DNS): B twice plus E0–E4 and E7 once each. Verify that every attempt is complete with one response model, and record the run in its card.
 - [ ] 2.3 Register and run the same calibration for each chosen API student, with the model id and endpoint recorded per card. Verify the same way, plus the budget guard.

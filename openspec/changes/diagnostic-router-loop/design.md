@@ -77,6 +77,10 @@ All three choices are registered, and Phase 3 may tighten them only on calibrati
 - For each student: about 60 fresh calibration items per dataset (VMLU, VM14K, ViBidLQA), each run with B twice and every menu item once.
 - The map records, per dataset and per cause group, the rescue rate and the damage rate of each enhancement, plus its cost.
 - The map is frozen per model. A new model joins by running this calibration only; the loop itself does not change.
+- **First map, MiMo V2.6 Flash (MC-103), decided 2026-10-30.** The first map does not use fresh items. It uses the 180 calibration items of MC-95, where Qwen's B and S answers are already logged, so the two models compare item by item without new Qwen requests.
+  - **Arms.** B twice and S once on every item, and Q once on ViBidLQA. The other menu items wait until a map shows a need.
+  - **Two maps per model.** The point map takes the best draw-1 arm, with a 1.0-point margin in favour of B. The reliable map takes a fix only when its gain's 95% interval lies above zero.
+  - **Later evaluation.** Fresh items stay reserved for evaluation.
 
 ### 7. Evaluation (Phase 4)
 - **Items:** about 300 fresh items per dataset per student, disjoint from calibration. Legal MC, Vi-SQuAD and Vi-DROP are reported as exploratory on their used items.
@@ -129,6 +133,6 @@ All three choices are registered, and Phase 3 may tighten them only on calibrati
 ## Decisions pending the owner (Phase 0)
 
 1. **Router-critic model:** decided 2026-10-30: Muse Spark 1.3 for now. The owner asked for near-term results first and left the other decisions for later.
-2. **Student models:** Qwen3.5-9B plus MiMo V2.6 Flash, and optionally a third, after checking quotas.
+2. **Student models:** Qwen3.5-9B plus MiMo V2.6 Flash, and optionally a third, after checking quotas. Decided 2026-10-30: MiMo V2.6 Flash is the first API student (owner's choice); its map is MC-103. A third student remains open.
 3. **Monthly API budget.**
 4. **Escalation (E8):** a menu item, or only the "router alone" baseline.
