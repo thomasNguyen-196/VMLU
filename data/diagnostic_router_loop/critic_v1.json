@@ -1,0 +1,52 @@
+{
+ "critic_id": "muse-critic-reading-v1",
+ "protocol_id": "vmlu-diagnostic-router-critic",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-loop",
+ "purpose": "Design check of the router-critic on reading items: Muse Spark 1.3 reads the passage, the question and Qwen3.5-9B's first answer, judges the answer by meaning and prescribes a fix; the loop is replayed with Qwen's logged answers, so no student request is sent.",
+ "items": {
+  "datasets": ["vi-multimodel-v1-vi-drop-200", "vi-multimodel-v1-vi-squad-200"],
+  "dataset_counts": {"vi-multimodel-v1-vi-drop-200": 188, "vi-multimodel-v1-vi-squad-200": 188},
+  "source": "the wide reading items of the menu set (MC-97), which hold Qwen's B, S and Q answers on two draws each (MC-90 to MC-92, MC-97)",
+  "judged_answer": "the scored prediction of Qwen's B-r1 attempt (MC-90)",
+  "calls_per_item": 1
+ },
+ "prompt": {
+  "template": "Bạn là người kiểm tra câu trả lời đọc hiểu của một mô hình nhỏ. Đọc đoạn văn, câu hỏi và câu trả lời của mô hình bên dưới, rồi đánh giá câu trả lời theo nghĩa: nó có trả lời đúng điều được hỏi, dựa trên đoạn văn, không thiếu và không thừa ý chính không. Câu trả lời đúng nghĩa nhưng diễn đạt khác đoạn văn vẫn là đúng.\n\nĐoạn văn:\n<<PASSAGE>>\n\nCâu hỏi: <<QUESTION>>\n\nCâu trả lời của mô hình: <<ANSWER>>\n\nNếu câu trả lời sai hoặc bạn không chắc, chọn một cách để mô hình làm lại:\n- giu: giữ nguyên câu trả lời, vì làm lại theo cách nào cũng không giúp;\n- suy_luan: yêu cầu mô hình suy luận từng bước rồi mới trả lời, hợp với câu cần tính toán, đếm, so sánh hay ghép nhiều dữ kiện;\n- trich_dan: yêu cầu mô hình chép nguyên văn phần đoạn văn trả lời câu hỏi rồi rút ra cụm ngắn nhất, hợp với câu tra cứu một chi tiết có sẵn trong đoạn văn.\n\nKết thúc bằng đúng ba dòng sau, không viết gì sau chúng:\nĐánh giá: <dung|sai|khong_chac>\nNguyên nhân: <tinh_toan|tim_sai_cho|dien_dat|khac|khong_co>\nCách sửa: <giu|suy_luan|trich_dan>",
+  "placeholders": ["<<PASSAGE>>", "<<QUESTION>>", "<<ANSWER>>"],
+  "verdicts": ["dung", "sai", "khong_chac"],
+  "causes": ["tinh_toan", "tim_sai_cho", "dien_dat", "khac", "khong_co"],
+  "fixes": {"giu": "B", "suy_luan": "S", "trich_dan": "Q"},
+  "parse": "the last `Đánh giá:`, `Nguyên nhân:` and `Cách sửa:` labels in the visible response (case- and accent-insensitive label, backticks and asterisks around the id ignored); an id outside its list, or a missing label, is unrecognised; format_ok when the three labels are the last three non-empty lines"
+ },
+ "route": {
+  "profile_id": "muse-spark-1-3-contributor",
+  "endpoint_host": "opencode.ai",
+  "model_id": "muse-spark-1.3-contributor",
+  "api_protocol": "openai-responses",
+  "stream": false,
+  "system_prompt": null,
+  "temperature": "omitted (provider default)",
+  "reasoning_effort": "omitted (provider default)",
+  "max_output_tokens": 4096,
+  "timeout_seconds": 300,
+  "sdk_retries": 0,
+  "session_header": "x-opencode-session",
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 2000000,
+  "credential": "the local OpenCode auth store, through run_vi_multimodel_eval._resolve_model; never written to outputs"
+ },
+ "replay": {
+  "primary_policy": "critic loop: when the verdict is sai, take the logged draw-1 answer of the prescribed arm (giu -> B-r1, suy_luan -> S-r1, trich_dan -> Q-r1); a verdict of dung or khong_chac, or an unrecognised output, keeps B-r1",
+  "comparator": "rule loop: keep B-r1 when B-r1 and B-r2 agree under normalized-answer-v1, otherwise take S-r1",
+  "student_requests": "none: every student answer is a logged MC-90 to MC-92 or MC-97 attempt"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-router-critic-v1",
+  "metric": "token-F1 of the selected draw-1 answer (exact match reported beside it)",
+  "primary": "critic loop against rule loop over the 376 items: mean per-item difference with a percentile bootstrap interval (2,000 resamples, seed 7) and a two-sided sign-flip p-value (20,000 resamples, seed 7)",
+  "reading_rule": {"min_gain_points": 1.0, "alpha": 0.05, "rule": "the critic goes on to held-out reading items when the critic loop beats the rule loop by at least 1.0 token-F1 point with p < 0.05; otherwise the reading critic stops at the design stage"},
+  "descriptive": "per dataset: always-B, always-S, always-Q, rule loop, critic loop, the variant that treats khong_chac as sai, Muse alone (MC-80/81 logged answers), the free proxy 'Muse's logged answer differs from B -> S', and the per-item bound over B, S and Q on draw 1; the critic's verdict against B-r1's correctness (token-F1 >= 0.5 counts as correct; exact match beside it); the prescription's rescue and damage rates; verdict, cause and fix distributions; format compliance; Muse and Qwen tokens per item"
+ }
+}
