@@ -7,8 +7,8 @@ import unittest
 from pathlib import Path
 
 from code_benchmark import vi_multimodel as v1
-from code_benchmark.build_benchmark_reports import (card_index, comments_for, reading_means, reading_v3_rows, row,
-                                                    signature, validate, vbench_scores)
+from code_benchmark.build_benchmark_reports import (card_index, comments_for, reading_means, reading_v3_rows,
+                                                    redact_hosts, row, signature, validate, vbench_scores)
 from code_benchmark.score_vi_multimodel import clustered_mean_interval
 
 
@@ -126,6 +126,17 @@ class TestReadingV3Rows(unittest.TestCase):
         rows = [self.scored("Hà Nội", "Hà Nội", "1")]
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(reading_v3_rows(Path(tmp), self.report(rows), {}), [])
+
+
+class TestPublishedHosts(unittest.TestCase):
+    def test_internal_endpoint_hosts_are_redacted_at_any_depth(self):
+        data = {"fields": {"provider": "IEC internal endpoint · openai-completions · llmapi.iec",
+                           "history": "Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — node offline"},
+                "notes": ["proxy 127.0.0.1:8799 → llmapi.iec", "9ROUTER / CMC · localhost:20128"], "n": 3}
+        self.assertEqual(redact_hosts(data), {
+            "fields": {"provider": "IEC internal endpoint · openai-completions · IEC (host ẩn)",
+                       "history": "Qwen3.5-9B-65K @ IEC (host ẩn) — node offline"},
+            "notes": ["proxy 127.0.0.1:8799 → IEC (host ẩn)", "9ROUTER / CMC · localhost:20128"], "n": 3})
 
 
 if __name__ == "__main__": unittest.main()

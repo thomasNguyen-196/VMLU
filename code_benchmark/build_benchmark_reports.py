@@ -30,6 +30,9 @@ except ImportError:
 ROOT = Path(__file__).resolve().parents[1]
 SCORE_CSV = "docs/research/vi-multimodel-all-results-2026-10-09.csv"
 UNKNOWN = "Chưa ghi nhận trong artifact/card"
+# Internal endpoint hosts never reach the published reports (web/data, web/public, docs/research).
+INTERNAL_HOST = re.compile(r"(?:https?://)?llmapi\.iec(?:-uit\.com)?(?:/v1)?", re.IGNORECASE)
+INTERNAL_HOST_LABEL = "IEC (host ẩn)"
 PROFILES = ("muse-spark-1-3-contributor", "mimo-v2-6-flash", "mimo-v2-5", "qwen3-5-9b-65k")
 FIELD_LABELS = {
     "date": "Thời gian chạy", "harness": "Harness / phiên bản / mode", "provider": "Provider / API / route",
@@ -2300,6 +2303,17 @@ def mimo26_direct_reports(root: Path) -> list[dict]:
                        "Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 156 câu không parse được/blank trong mẫu chấm."]}]
 
 
+def redact_hosts(value: object) -> object:
+    """The same value with every internal endpoint host replaced by INTERNAL_HOST_LABEL, at any depth."""
+    if isinstance(value, str):
+        return INTERNAL_HOST.sub(INTERNAL_HOST_LABEL, value)
+    if isinstance(value, list):
+        return [redact_hosts(item) for item in value]
+    if isinstance(value, dict):
+        return {key: redact_hosts(item) for key, item in value.items()}
+    return value
+
+
 def reading_means(rows: list[dict]) -> dict[str, float]:
     """EM and token-F1 in points, with the arithmetic of score_vi_multimodel's reading summary."""
     n = len(rows)
@@ -2381,9 +2395,10 @@ def build(root: Path = ROOT) -> dict:
         report["benchmarks"] += v3_rows
         report["notes"] = list(dict.fromkeys(report["notes"] + ([V3_NOTE] if v3_rows else [])))
         validate(report)
-    return {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(), "field_labels": FIELD_LABELS,
+    data = {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(), "field_labels": FIELD_LABELS,
             "metric_labels": METRIC_LABELS, "reports": reports,
             "run_summaries": [*muse12_vmlu_run_summaries(root), omp_full_tools_run_summary, muse12_full_tools_run_summary, qwen_full_tools_run_summary, mimo_full_tools_run_summary]}
+    return redact_hosts(data)  # type: ignore[return-value]
 
 
 def markdown(data: dict) -> str:
@@ -2408,6 +2423,8 @@ def markdown(data: dict) -> str:
 
 
 def write_outputs(data: dict, root: Path) -> None:
+    if INTERNAL_HOST.search(json.dumps(data, ensure_ascii=False)):
+        raise SystemExit("Error: an internal endpoint host would be published; redact it first")
     targets = {"web/data/benchmark-reports.json": json.dumps(data, ensure_ascii=False, indent=2) + "\n",
                "docs/research/benchmark-condition-reports.md": markdown(data)}
     for path, content in targets.items():

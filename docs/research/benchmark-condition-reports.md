@@ -77,7 +77,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-06T11:46:17.908628+00:00 → 2026-10-07T02:16:01.328946+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 0.0; hiệu lực theo metadata 0.0; profile/model config |
 | Thinking / reasoning level | off; reasoning tắt; effort không ghim mức low/medium/high |
 | Seed | gửi 42 |
@@ -98,7 +98,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-10T07:26:55.637344+00:00 → 2026-10-10T07:51:18.852650+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 1.0; hiệu lực theo metadata 1.0; explicit 1.0; nominally matched to OpenCode Go |
 | Thinking / reasoning level | auto; reasoning bật; effort không ghim mức low/medium/high |
 | Seed | không gửi; seed sample và seed inference là hai cấu hình riêng |
@@ -315,7 +315,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-06T11:12:03.634259+00:00 → 2026-10-06T11:34:54.806623+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 0.0; hiệu lực theo metadata 0.0; profile/model config |
 | Thinking / reasoning level | off; reasoning tắt; effort không ghim mức low/medium/high |
 | Seed | gửi 42 |
@@ -469,7 +469,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-09T05:56:56.797747+00:00 → 2026-10-09T07:38:27.837216+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 1.0; hiệu lực theo metadata 1.0; explicit 1.0; matched to V2 Go provider effective temperature |
 | Thinking / reasoning level | auto; reasoning bật; effort không ghim mức low/medium/high |
 | Seed | không gửi; seed sample và seed inference là hai cấu hình riêng |
@@ -1378,7 +1378,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1400,7 +1400,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-19 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1422,7 +1422,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-19 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1444,7 +1444,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 (12:54–12:58 +07; khối ghi nhận bổ sung 2026-09-22) |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1466,7 +1466,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1488,7 +1488,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1510,7 +1510,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1532,7 +1532,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1554,7 +1554,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-21 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1644,7 +1644,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-08-31 (báo cáo 2026-09-03) |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 (OpenAI-compatible) |
+| Provider / API / route | IEC (host ẩn) (OpenAI-compatible) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | User prompt không yêu cầu CoT; native thinking/effort chưa ghi nhận |
 | Seed | 42 theo runner |
@@ -1666,7 +1666,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-04 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | User prompt không yêu cầu CoT; native thinking/effort chưa ghi nhận |
 | Seed | 42 theo runner |
@@ -1688,7 +1688,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09 (ngày chấm lại: 2026-09-12) |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | User prompt không yêu cầu CoT; native thinking/effort chưa ghi nhận |
 | Seed | 42 theo runner |
@@ -1802,7 +1802,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1825,7 +1825,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1848,7 +1848,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1871,7 +1871,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1925,7 +1925,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo card/runner; hiệu lực tùy API |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 gửi theo card/runner |
@@ -1977,7 +1977,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | 2026-09-26 |
 | Harness / phiên bản / mode | omp v18.2.7 · -p --mode json · PI_CODING_AGENT_DIR=.omp-iec (config + provider cô lập, mọi modelRoles ghim về 1 model) |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 requested theo card; hiệu lực chưa xác minh vì OMP từng bỏ temperature (MC-29) |
 | Thinking / reasoning level | --thinking off theo condition MC-15/22; mức reasoning nội bộ không có telemetry độc lập |
 | Seed | OMP không gửi seed; seed 42 trong card không đảm bảo được truyền |
@@ -2547,7 +2547,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo card/runner; hiệu lực tùy API |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 gửi theo card/runner |
@@ -2600,7 +2600,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OMP JSON; snapshot lịch sử ghi v18.2.7, version riêng từng run chưa ghi đầy đủ |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 ghim proxy (MC-29+) |
 | Thinking / reasoning level | Level thinking chính xác chưa ghi lại trong artifact; reasoning native không ghim (xem card) |
 | Seed | OMP không gửi seed; seed 42 trong card không đảm bảo được truyền |
@@ -2669,7 +2669,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | Retry / recovery | Chưa ghi nhận trong artifact/card |
 | Gold / cách chấm | Chưa ghi nhận trong artifact/card |
 | Model / quantization | Qwen3.5-9B-65K; Chưa ghi nhận trong artifact/card |
-| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → llmapi.iec, --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
+| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → IEC (host ẩn), --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
 | recorded:4_o | F5 --tools none --system-prompt minimal · F7 --tools none (giữ system prompt của omp) · F8 --tools all (giữ system prompt của omp) · T65‑r2 lặp lại y hệt T65 |
 
 ### Benchmark
@@ -2713,7 +2713,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | Retry / recovery | Chưa ghi nhận trong artifact/card |
 | Gold / cách chấm | Chưa ghi nhận trong artifact/card |
 | Model / quantization | Qwen3.5-9B-65K; Chưa ghi nhận trong artifact/card |
-| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → llmapi.iec, --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
+| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → IEC (host ẩn), --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
 | recorded:4_o | F5 --tools none --system-prompt minimal · F7 --tools none (giữ system prompt của omp) · F8 --tools all (giữ system prompt của omp) · T65‑r2 lặp lại y hệt T65 |
 
 ### Benchmark
@@ -2757,7 +2757,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | Retry / recovery | Chưa ghi nhận trong artifact/card |
 | Gold / cách chấm | Chưa ghi nhận trong artifact/card |
 | Model / quantization | Qwen3.5-9B-65K; Chưa ghi nhận trong artifact/card |
-| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → llmapi.iec, --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
+| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → IEC (host ẩn), --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
 | recorded:4_o | F5 --tools none --system-prompt minimal · F7 --tools none (giữ system prompt của omp) · F8 --tools all (giữ system prompt của omp) · T65‑r2 lặp lại y hệt T65 |
 
 ### Benchmark
