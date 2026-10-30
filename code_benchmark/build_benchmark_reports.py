@@ -17,10 +17,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 try:
+    from code_benchmark import vi_reading_v3
     from code_benchmark.migrate_results_to_mongo import MIGRATION_PLAN, runner_config
+    from code_benchmark.score_vi_multimodel import clustered_mean_interval
     from code_benchmark.seed_registries import MODELS
 except ImportError:
+    import vi_reading_v3
     from migrate_results_to_mongo import MIGRATION_PLAN, runner_config
+    from score_vi_multimodel import clustered_mean_interval
     from seed_registries import MODELS
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,7 +43,13 @@ METRIC_LABELS = dict([
     ("char_f1", "Char-F1"), ("valid_rate", "Schema validity"), ("agreement", "Agreement với arm A"),
     ("function_exact", "Function + arguments exact"),
     ("server_macro", "Server macro (domain mean)"),
+    ("em_v3", "EM · v3 (bỏ dấu Markdown, chấm lại sau)"), ("token_f1_v3", "Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau)"),
 ])
+# vi-reading-v3 beside the registered vi-reading-v2 metrics (openspec diagnostic-router-loop, decision 10).
+V3_METRICS = {"em": "em_v3", "token_f1": "token_f1_v3"}  # nosec B105 — metric names, not an auth token
+V3_NOTE = ("EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi "
+           "câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 "
+           "(v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.")
 
 
 def read_json(root: Path, path: str) -> dict:
@@ -961,7 +971,7 @@ def muse12_omp_full_tools_report(root: Path) -> tuple[dict, dict]:
     recovery3 = read_json(root, f"{base}/recovery.json")
     tool_attempt_paths = [f"{parent_base}/attempts.jsonl", f"{parent_base}/recovery_mc87_r2/attempts.jsonl", f"{base}/attempts.jsonl"]
     web_search_usage = _omp_web_search_usage(root, tool_attempt_paths)
-    runner_snapshot_path = "code_benchmark/run_muse12_omp_mc87.py"
+    runner_snapshot_path = f"{parent_base}/runner-snapshots/run_muse12_omp_mc87.{condition_meta['runner_sha256']}.py"
     runner_snapshot = root / runner_snapshot_path
     if (not runner_snapshot.is_file()
             or hashlib.sha256(runner_snapshot.read_bytes()).hexdigest() != condition_meta["runner_sha256"]):
@@ -1227,7 +1237,7 @@ def qwen_omp_full_tools_report(root: Path) -> tuple[dict, dict]:
     vmlu_summary = read_json(root, f"{vmlu_dir}/summary.json")
     tool_attempt_paths = [f"{base}/attempts.jsonl"]
     web_search_usage = _omp_web_search_usage(root, tool_attempt_paths)
-    runner_snapshot_path = "code_benchmark/run_qwen_omp_mc88.py"
+    runner_snapshot_path = f"{base}/runner-snapshots/run_qwen_omp_mc88.{condition_meta['runner_sha256']}.py"
     runner_snapshot = root / runner_snapshot_path
     if (not runner_snapshot.is_file()
             or hashlib.sha256(runner_snapshot.read_bytes()).hexdigest() != condition_meta["runner_sha256"]):
@@ -1480,7 +1490,7 @@ def mimo26_omp_full_tools_report(root: Path) -> tuple[dict, dict]:
         f"{parent_base}/recovery_mc89_r2/attempts.jsonl",
     ]
     web_search_usage = _omp_web_search_usage(root, tool_attempt_paths)
-    runner_snapshot_path = "code_benchmark/run_mimo26_omp_mc89.py"
+    runner_snapshot_path = f"{parent_base}/runner-snapshots/run_mimo26_omp_mc89.{condition_meta['runner_sha256']}.py"
     runner_snapshot = root / runner_snapshot_path
     if (not runner_snapshot.is_file()
             or hashlib.sha256(runner_snapshot.read_bytes()).hexdigest() != condition_meta["runner_sha256"]):
@@ -2290,6 +2300,57 @@ def mimo26_direct_reports(root: Path) -> list[dict]:
                        "Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 156 câu không parse được/blank trong mẫu chấm."]}]
 
 
+def reading_means(rows: list[dict]) -> dict[str, float]:
+    """EM and token-F1 in points, with the arithmetic of score_vi_multimodel's reading summary."""
+    n = len(rows)
+    return {"em": round(100 * sum(int(r["em"]) for r in rows) / n, 2),
+            "token_f1": round(100 * (sum(float(r["token_f1"]) for r in rows) / n), 2)}
+
+
+def reading_scores_path(root: Path, score: dict, condition: dict) -> str | None:
+    """The scored rows behind a vi-reading-v2 score: <prefix>scores.jsonl beside its <prefix>summary.json, else the
+    scores.jsonl of the condition's run folder. None for scores without per-item rows (the Reading-400 history)."""
+    candidates = []
+    if score["source"].endswith("summary.json"):
+        candidates.append(score["source"].removesuffix("summary.json") + "scores.jsonl")
+    candidates += [str(Path(entry["path"]).parent / "scores.jsonl") for entry in condition["sources"]
+                   if entry["label"] == "Run metadata"]
+    return next((path for path in candidates if (root / path).is_file()), None)
+
+
+def reading_v3_rows(root: Path, report: dict, cache: dict[str, list[dict]]) -> list[dict]:
+    """em_v3 / token_f1_v3 beside every dataset-level vi-reading-v2 score, from the same scored rows.
+
+    Fails closed unless the rows reproduce the reported v2 score, n and CI95, so a v3 number can only sit next to
+    the v2 number it re-scores."""
+    conditions = {condition["id"]: condition for condition in report["conditions"]}
+    added = []
+    for score in report["benchmarks"]:
+        if score["level"] != "dataset" or score["metric"] not in V3_METRICS:
+            continue
+        path = reading_scores_path(root, score, conditions[score["condition_id"]])
+        if path is None:
+            continue
+        if path not in cache:
+            cache[path] = [json.loads(line) for line in (root / path).read_text(encoding="utf-8").splitlines()
+                           if line.strip()]
+        rows = [r for r in cache[path] if r.get("dataset_id") == score["dataset_id"] and "token_f1" in r
+                and not str(r.get("replicate_id", "")).startswith("repeat-")]
+        if not rows:
+            continue
+        metric = score["metric"]
+        ci = clustered_mean_interval(rows, value_key=metric, cluster_key="passage_id")
+        if (len(rows) != score["n"] or reading_means(rows)[metric] != score["score"]
+                or (score["ci_low"] is not None and [score["ci_low"], score["ci_high"]] != list(ci or []))):
+            raise SystemExit(f"Error: {path} does not reproduce {score['condition_id']} {score['dataset_id']} {metric}")
+        rescored = [vi_reading_v3.rescore_row(r) for r in rows]
+        ci_v3 = clustered_mean_interval(rescored, value_key=metric, cluster_key="passage_id")
+        added.append(row(score["condition_id"], score["dataset_id"], score["dataset"], V3_METRICS[metric],
+                         reading_means(rescored)[metric], n=score["n"], ci=list(ci_v3) if ci_v3 else None,
+                         gold=score["gold"], truncated=score["truncated"], source_path=path))
+    return added
+
+
 def build(root: Path = ROOT) -> dict:
     records = read_csv(root, SCORE_CSV); cards = card_index(root)
     omp_full_tools_report, omp_full_tools_run_summary = muse13_omp_full_tools_report(root)
@@ -2314,8 +2375,11 @@ def build(root: Path = ROOT) -> dict:
         *legacy_direct_reports(root, cards),
         *legacy_harness_reports(root, cards, read_json(root, "web/public/benchmark-data.json")["harness"]),
     ]
+    scored_rows: dict[str, list[dict]] = {}
     for report in reports:
-        report["notes"] = list(dict.fromkeys(report["notes"]))
+        v3_rows = reading_v3_rows(root, report, scored_rows)
+        report["benchmarks"] += v3_rows
+        report["notes"] = list(dict.fromkeys(report["notes"] + ([V3_NOTE] if v3_rows else [])))
         validate(report)
     return {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(), "field_labels": FIELD_LABELS,
             "metric_labels": METRIC_LABELS, "reports": reports,

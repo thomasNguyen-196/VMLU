@@ -1,11 +1,15 @@
 """Guard against publishing comparisons across unknown controls or withheld gold."""
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from code_benchmark.build_benchmark_reports import card_index, comments_for, row, signature, validate, vbench_scores
+from code_benchmark import vi_multimodel as v1
+from code_benchmark.build_benchmark_reports import (card_index, comments_for, reading_means, reading_v3_rows, row,
+                                                    signature, validate, vbench_scores)
+from code_benchmark.score_vi_multimodel import clustered_mean_interval
 
 
 class TestReportComparability(unittest.TestCase):
@@ -88,6 +92,40 @@ class TestReportComparability(unittest.TestCase):
         self.assertFalse(any("chênh" in c for c in comments_for(report)))
         conditions[1]["comparison_group"] = "g"; scores[1]["n"] = 200
         self.assertFalse(any("chênh" in c for c in comments_for(report)))
+
+
+class TestReadingV3Rows(unittest.TestCase):
+    """v3 rows sit beside the v2 score they re-score and fail closed on any other file."""
+
+    def scored(self, answer: str, gold: str, item: str) -> dict:
+        return {"dataset_id": "d", "item_id": item, "replicate_id": "main-000", "passage_id": f"p{item}",
+                "gold_answer": gold, "raw_response": answer, **v1.score_vi_reading(v1.extract_final_answer(answer), gold)}
+
+    def report(self, rows: list[dict], *, n: int | None = None) -> dict:
+        means = reading_means(rows)
+        ci = clustered_mean_interval(rows, value_key="token_f1", cluster_key="passage_id")
+        source = "run/summary.json"
+        return {"conditions": [{"id": "c", "sources": [{"path": "run/run.json", "label": "Run metadata"}]}],
+                "benchmarks": [row("c", "d", "D", "token_f1", means["token_f1"], n=n or len(rows), ci=list(ci), source_path=source),
+                               row("c", "d", "D", "em", means["em"], n=n or len(rows), source_path=source),
+                               row("c", "d", "D", "accuracy", 50, n=len(rows), source_path=source)]}
+
+    def test_v3_rows_rescore_bolded_answers_and_keep_v2(self):
+        rows = [self.scored("**từ 20% đến 30%**", "từ 20% đến 30%", "1"), self.scored("Hà Nội", "Hà Nội", "2")]
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "run").mkdir()
+            (Path(tmp) / "run/scores.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows), encoding="utf-8")
+            added = {r["metric"]: r for r in reading_v3_rows(Path(tmp), self.report(rows), {})}
+            self.assertEqual(set(added), {"em_v3", "token_f1_v3"})
+            self.assertEqual((added["em_v3"]["score"], added["token_f1_v3"]["score"]), (100.0, 100.0))
+            self.assertEqual(added["token_f1_v3"]["source"], "run/scores.jsonl")
+            with self.assertRaises(SystemExit):
+                reading_v3_rows(Path(tmp), self.report(rows, n=3), {})
+
+    def test_scores_without_per_item_rows_get_no_v3(self):
+        rows = [self.scored("Hà Nội", "Hà Nội", "1")]
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(reading_v3_rows(Path(tmp), self.report(rows), {}), [])
 
 
 if __name__ == "__main__": unittest.main()

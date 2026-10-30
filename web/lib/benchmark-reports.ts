@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export type ReportSurface = "v1" | "v2" | "history";
-export type ReportMetric = "accuracy" | "server_accuracy" | "server_macro" | "em" | "token_f1" | "char_f1" | "valid_rate" | "agreement" | "function_exact";
+export type ReportMetric = "accuracy" | "server_accuracy" | "server_macro" | "em" | "token_f1" | "char_f1" | "valid_rate" | "agreement" | "function_exact" | "em_v3" | "token_f1_v3";
 export interface ReportControls {
   profile_id: string;
   transport: "omp" | "direct";
@@ -132,7 +132,8 @@ export interface BenchmarkRunSummary {
   web_search?: WebSearchUsage;
 }
 
-const METRICS = new Set(["accuracy", "server_accuracy", "server_macro", "em", "token_f1", "char_f1", "valid_rate", "agreement", "function_exact"]);
+// em_v3 / token_f1_v3: vi-reading-v3 re-scores, post hoc, beside the registered v2 EM and token-F1.
+const METRICS = new Set(["accuracy", "server_accuracy", "server_macro", "em", "token_f1", "char_f1", "valid_rate", "agreement", "function_exact", "em_v3", "token_f1_v3"]);
 const CONDITION_FIELDS = ["harness", "provider", "temperature", "thinking", "seed", "tools", "prompt", "context", "session", "output_cap", "workers", "timeout", "retry", "gold", "identity", "date"];
 function object(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);

@@ -93,6 +93,11 @@
     - Muse Spark 1.3 (MC-53, MC-80, MC-86) and every Qwen run (MC-56, MC-72, MC-83, MC-88, MC-90 to MC-97) change by less than 0.1 point. MC-102's Muse reference, Muse Spark 1.3's MC-80/81 answers, is therefore unaffected.
   - **What it changes.** Under v2, cross-model reading comparisons understate Muse Spark 1.2 and MiMo. Under v3, Muse 1.2 direct (67.5) is level with Qwen direct (68.5, MC-83) instead of 17 points behind. The registered numbers stay; v3 is a sensitivity analysis beside them.)
 
+  (2026-10-30, at the owner's request, the web results show v3 beside v2.
+  - **`/table`.** It has an "EM · v3" and an "F1 · token · v3" table after each registered v2 table, in every condition group. `build_benchmark_reports.py` adds a v3 row next to every dataset-level vi-reading-v2 score, 92 rows over 38 run and dataset pairs. Each row is added only after the per-item rows reproduce the reported n, score and CI95; otherwise the build stops. The registered rows are unchanged.
+  - **Builder repair.** The builder had stopped running: the bandit annotations of 2026-10-25 (`0e4da97`) changed the bytes of the MC-87 to MC-89 runners, which no longer matched their frozen hashes. It now checks local snapshots of the frozen runners, restored byte for byte from git, as MC-86 already did. Apart from the v3 rows, the rebuilt reports equal the committed ones, except that the three runner source paths now point at those snapshots.
+  - **Not changed.** `/benchmark` reads MongoDB, which holds only Qwen runs scored by the Reading-400 scorer; none of their answers carries a mark. `/multimodel` still shows v2 only; there v3 moves MiMo V2.5 by about 3 points and the other three models by less than 1.)
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).

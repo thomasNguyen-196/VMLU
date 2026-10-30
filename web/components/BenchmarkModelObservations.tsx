@@ -11,8 +11,8 @@ export default function BenchmarkModelObservations({ group }: { group: MatrixGro
       hypothesis: "Có thể mạnh về kiến thức và tổng hợp bài đọc, nhưng kém hơn ở phân biệt quan hệ suy ra / mâu thuẫn / trung lập. Cách hiểu nhãn hoặc dữ liệu huấn luyện có thể ảnh hưởng; reasoning dài hơn chưa chắc khắc phục được.",
     },
     "muse12-vmlu-mc74-mc79": {
-      observed: `Trắc nghiệm mạnh: VMLU Test ${score("muse12-vmlu-mc74-mc79", "vmlu-test")}, Legal MC ${score("muse12-vmlu-mc74-mc79", "legal-mc")}. Bài đọc yếu hơn rõ rệt; Vi-DROP EM ${score("muse12-vmlu-mc74-mc79", "vi-drop", "em")} / token F1 ${score("muse12-vmlu-mc74-mc79", "vi-drop", "token_f1")}.`,
-      hypothesis: "Có thể có kiến thức tốt nhưng hạn chế ở đọc hiểu, tính toán hoặc tuân thủ đáp án ngắn. Câu trả lời dài, định dạng và parser cũng có thể làm mất điểm; cần xem response thô trước khi quy toàn bộ chênh lệch cho năng lực model.",
+      observed: `Trắc nghiệm mạnh: VMLU Test ${score("muse12-vmlu-mc74-mc79", "vmlu-test")}, Legal MC ${score("muse12-vmlu-mc74-mc79", "legal-mc")}. Theo bộ chấm v2, bài đọc thấp rõ rệt (Vi-DROP EM ${score("muse12-vmlu-mc74-mc79", "vi-drop", "em")} / token F1 ${score("muse12-vmlu-mc74-mc79", "vi-drop", "token_f1")}), phần lớn vì câu trả lời in đậm. Theo v3, token F1 Vi-SQuAD ${score("muse12-vmlu-mc74-mc79", "vi-squad", "token_f1_v3")} và ViBidLQA ${score("muse12-vmlu-mc74-mc79", "bidlqa-test", "token_f1_v3")} nằm trong khoảng của các model khác; chỉ Vi-DROP còn thấp rõ (${score("muse12-vmlu-mc74-mc79", "vi-drop", "token_f1_v3")}).`,
+      hypothesis: "Kiến thức tốt; điểm đọc v2 bị kéo thấp chủ yếu vì định dạng (in đậm bằng **), không phải vì đọc kém. Vi-DROP vẫn thấp sau khi bỏ in đậm, nên tính toán nhiều bước hoặc câu trả lời dài vẫn có thể là điểm yếu thật; cần xem response thô.",
     },
     "mimo-v2-6-flash": {
       observed: `VMLU Test ${score("mimo-v2-6-flash", "vmlu-test")}, Legal NLI ${score("mimo-v2-6-flash", "legal-nli")}. Vi-SQuAD và ViBidLQA cao hơn MiMo 2.5; Vi-DROP EM còn ${score("mimo-v2-6-flash", "vi-drop", "em")}.`,
@@ -45,7 +45,7 @@ export default function BenchmarkModelObservations({ group }: { group: MatrixGro
       <summary className="cursor-pointer font-semibold text-ink-2">Các yếu tố cần cân nhắc khi so sánh</summary>
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li><strong>Reasoning & tham số:</strong> thinking auto không cố định cùng mức reasoning giữa các provider; chưa đủ metadata về số tham số và quantization của các model khác để quy thứ hạng cho quy mô model.</li>
-        <li><strong>Metric & parser:</strong> EM/F1 phụ thuộc cách diễn đạt, trích xuất và đáp án tham chiếu; mức khớp từ vựng chưa xác nhận đúng về ngữ nghĩa.</li>
+        <li><strong>Metric & parser:</strong> EM/F1 phụ thuộc cách diễn đạt, trích xuất và đáp án tham chiếu; mức khớp từ vựng chưa xác nhận đúng về ngữ nghĩa. Bộ chấm v2 còn trừ điểm câu trả lời in đậm; bảng v3 bỏ dấu in đậm rồi chấm lại.</li>
         <li><strong>Harness & sampling:</strong> chưa tách được tác động riêng của OMP. Baseline API trực tiếp khác temperature, seed và metadata thinking; không thể suy ra chênh lệch chỉ do harness.</li>
         <li><strong>Provider & workers:</strong> workers chủ yếu ảnh hưởng throughput. VMLU Test Muse 1.2 ghép route CMC/OCG; chênh {score("muse12-vmlu-mc74-mc79", "vmlu-test")} so với {score("muse-spark-1-3-contributor", "vmlu-test")} chưa đủ kết luận 1.2 tốt hơn 1.3.</li>
       </ul>
