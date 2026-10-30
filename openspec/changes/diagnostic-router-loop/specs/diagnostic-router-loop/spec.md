@@ -52,6 +52,13 @@ Each student model's weakness map SHALL be built from a calibration run on items
 - **WHEN** an item appears in both the calibration set and the evaluation set of a student model
 - **THEN** the evaluation preflight fails
 
+### Requirement: The student writes every final answer
+Every enhancement in the loop SHALL keep the student under test as the author of the final answer. Routing an item to another model and taking that model's answer is not an enhancement of the student and SHALL NOT be reported as the loop's result.
+
+#### Scenario: Escalation proposed as a fix
+- **WHEN** a design sends an unsure item to a different model and takes its answer as final
+- **THEN** the design is not a loop for the student, and its result is not the student's
+
 ### Requirement: Markdown-aware reading scorer
 Reading arms of router-loop cards registered after 2026-10-30 SHALL be scored with `vi-reading-v3`: every `*` and `` ` `` is deleted from the response and the reference, then `vi-reading-v2` applies unchanged. These cards SHALL also report `vi-reading-v2` beside it. Results registered under `vi-reading-v2` SHALL NOT be rewritten.
 

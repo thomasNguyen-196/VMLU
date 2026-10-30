@@ -1,0 +1,86 @@
+{
+ "loop_id": "self-loop-v1",
+ "protocol_id": "vmlu-diagnostic-self-loop",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-loop (decision 11, task 2.6)",
+ "purpose": "Measure how much a student model improves when the loop gives it what it lacks, with the same model answering every round: evidence for knowledge questions, reasoning and repeated reasoning for multiple-choice questions it is unsure of.",
+ "items": {
+  "vmlu": {"dataset_id": "vmlu-mqa-dev", "source": "vmlu_mqa_v1.5/dev.jsonl", "selection": "all", "n": 303},
+  "vm14k": {"dataset_id": "vm14k-4-options", "selection": "lowest sha256(seed, dataset:item) among the four-option items outside the MC-95 manifest", "seed": 104, "n": 300},
+  "knowledge": {"dataset_id": "bidlqa-closed-book", "top5_dataset_id": "bidlqa-closed-book-top5", "selection": "lowest sha256(seed, dataset:item) among the K2 pool items (ViBidLQA train with a unique question, outside MC-95) that are outside the MC-96 manifest", "seed": 104, "pool": 1128, "n": 300}
+ },
+ "arms": {
+  "qwen": {"mc": ["B-r1", "S-r1", "S-r2", "S-r3"], "knowledge": ["B-r1", "K-r1", "O-r1"], "knowledge_top5": ["K-r1"]},
+  "mimo": {"mc": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"], "knowledge": ["B-r1", "K-r1", "O-r1"], "knowledge_top5": ["K-r1"]}
+ },
+ "arm_meaning": {
+  "B": "multiple choice: the frozen answer-letter prompt; knowledge: the closed-book prompt of K2 (the question only, no passage)",
+  "S": "the campaign's step-by-step prompt ending in a final-answer line",
+  "K": "the frozen reading prompt with retrieved clauses where the passage would be: the top 2 of the registered K2 BM25 ranking in dataset bidlqa-closed-book, the top 5 of the same ranking in dataset bidlqa-closed-book-top5",
+  "O": "the frozen reading prompt with the item's own clause (a ceiling, not deployable)"
+ },
+ "retrieval": {"config": "data/diagnostic_k2/retrieval_k2.json", "top_k": [2, 5], "query": "the question exactly as asked", "separator": "the registered K2 passage separator"},
+ "students": {
+  "qwen": {
+   "profile_id": "qwen3-5-9b-65k-prospective",
+   "route": "the campaign transport of data/diagnostic_prospective_v1/protocol.json (IEC endpoint, Responses API, temperature 1.0, 4,096 output tokens), for every arm except the multiple-choice B",
+   "probe": {"arms": "multiple-choice B-r1", "api_protocol": "openai-chat-completions", "messages": "the user prompt only", "temperature": 0.0, "seed": 42, "max_tokens": 4, "top_logprobs": 20, "confidence": "the probability of the parsed letter, renormalized over the letters the item offers (run_mc_calibration_eval.letter_probs and offered_letters); missing when fewer than two offered letters are visible, or when the option block cannot be read (an option broken across lines; two VM14K items)", "condition_source": "MC-43"},
+   "max_in_flight": 4,
+   "stop_after_timeouts": 4
+  },
+  "mimo": {
+   "profile_id": "mimo-v2-6-flash",
+   "model_id": "mimo-v2.6-flash",
+   "provider": "OpenCode Go",
+   "endpoint_host": "opencode.ai",
+   "api_protocol": "openai-chat-completions",
+   "stream": false,
+   "system_prompt": "Answer the user's question.",
+   "max_completion_tokens": 20000,
+   "timeout_seconds": 300,
+   "sdk_retries": 0,
+   "max_in_flight": 4,
+   "stop_after_timeouts": 4,
+   "budget_tokens": 6000000,
+   "model_identity": "mimo"
+  }
+ },
+ "loop": {
+  "qwen": {"round_1": "B-r1 with its confidence", "unsure": "confidence below the threshold, or missing", "threshold": 0.8},
+  "mimo": {"round_1": "B-r1 and B-r2", "unsure": "the two B answers differ or one is empty"},
+  "round_2": "S-r1. Qwen keeps B when S-r1 equals it; MiMo keeps S-r1 when it equals one of its B answers",
+  "round_3": "otherwise S-r2 and S-r3 are added and the majority of the three S answers is final; a tie goes to S-r1; an empty answer casts no vote",
+  "final_answer": "always the student's own answer"
+ },
+ "threshold_rule": {
+  "rule": "the smallest threshold on the grid 0.50, 0.55, ..., 0.95 whose two-round loop (B at temperature 0 kept when confident, otherwise S-r1) scores at least always-S minus 1.0 accuracy point on the design data",
+  "design_data": "the 660 VMLU valid items of MC-94 and MC-95: B at temperature 0 and its confidence from MC-43, S-r1 from MC-94 and MC-95",
+  "inputs_sha256": {
+   "all_res/ollama_result/Qwen3_5-9B-65K/mc_calibration_items_vmlu_mqa_all_gold_Qwen3_5-9B-65K-cal.csv": "eb78de71bfa9de6cb8060318fd32695442c096b66f827ef5500c6a413b30bcc8",
+   "all_res/diagnostic_router_v2/heldout/qwen3-5-9b-65k-prospective/scores.jsonl": "2bd68dfa918ac755dda6710c4a758991ee18de481707a0d1965b9a03ee33494d",
+   "all_res/diagnostic_router_v3/heldout/qwen3-5-9b-65k-prospective/scores.jsonl": "9624af66c5f02f2a41080810f9396b588773e9d9eb4d8fd9bd98cca71a51f52e"
+  },
+  "result": {"threshold": 0.8, "escalated_share": 45.9, "loop_accuracy": 79.39, "always_s_accuracy": 80.15}
+ },
+ "analysis": {
+  "plan_id": "self-loop-v1",
+  "alpha": 0.05,
+  "multiple_choice": {
+   "pooled": "VMLU dev and VM14K together (603 items); per dataset is descriptive",
+   "policies": {"always_B": "Qwen B-r1, MiMo B-r1", "always_S": "S-r1", "always_vote": "the majority of S-r1, S-r2 and S-r3, a tie to S-r1", "loop": "the registered loop", "map": "the point map of MC-95 and MC-103: Qwen VMLU S and VM14K B; MiMo VMLU B and VM14K S"},
+   "primary": [
+    {"id": "loop_beats_B", "test": "exact McNemar of the loop against always_B, two-sided, Holm over the two students", "met": "Holm p below alpha and the loop scores higher"},
+    {"id": "loop_not_worse_than_S", "test": "the mean paired difference loop minus always_S with a percentile bootstrap interval (2,000 resamples, seed 7)", "met": "the lower bound is above -1.0 point and the loop's mean reported tokens are below always_S's"}
+   ],
+   "tokens": "per item, the reported tokens of every request the policy's rounds use"
+  },
+  "knowledge": {
+   "score": "token-F1 under vi-reading-v3 (primary) with vi-reading-v2 and exact match beside",
+   "primary": [
+    {"id": "k5_beats_k2", "test": "mean paired token-F1 difference K top 5 minus K top 2 with a two-sided sign-flip p-value (20,000 resamples, seed 7), Holm over the two students", "met": "Holm p below alpha and K top 5 scores higher"}
+   ],
+   "descriptive": ["K top 5 as a share of O", "K top 2 as a share of O", "B, the question alone", "the rank of the own clause in the BM25 ranking: in the top 2, in the top 5, missed"]
+  },
+  "report_keys": ["plan_id", "card_id", "manifest_sha256", "scores_sha256", "multiple_choice", "knowledge", "primary", "cost"]
+ }
+}

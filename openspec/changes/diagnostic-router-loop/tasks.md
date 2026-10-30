@@ -98,6 +98,10 @@
   - **Builder repair.** The builder had stopped running: the bandit annotations of 2026-10-25 (`0e4da97`) changed the bytes of the MC-87 to MC-89 runners, which no longer matched their frozen hashes. It now checks local snapshots of the frozen runners, restored byte for byte from git, as MC-86 already did. Apart from the v3 rows, the rebuilt reports equal the committed ones, except that the three runner source paths now point at those snapshots.
   - **Not changed.** `/benchmark` reads MongoDB, which holds only Qwen runs scored by the Reading-400 scorer; none of their answers carries a mark. `/multimodel` still shows v2 only; there v3 moves MiMo V2.5 by about 3 points and the other three models by less than 1.)
 
+- [ ] 2.6 (added 2026-10-30, at the owner's request) MC-104: the self-improvement loop for Qwen3.5-9B and MiMo V2.6 Flash (decision 11). The student writes every final answer.
+  - **Build.** `diagnostic_self_loop` holds the items, prompts, the two frozen manifests, the loop rules and the threshold rule. `run_self_loop` runs Qwen's MC-43 probe and the campaign transport behind one gate, and MiMo on the MC-103 route. `analyze_self_loop` is the registered analysis.
+  - **Verify.** `test_diagnostic_self_loop`, `test_run_self_loop` and `test_analyze_self_loop` pass. The threshold is reproduced from its recorded inputs. The offline preflight passes every gate for both students with `endpoint_calls=0`.
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).

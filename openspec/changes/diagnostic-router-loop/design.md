@@ -126,6 +126,18 @@ All three choices are registered, and Phase 3 may tighten them only on calibrati
 - **From now on.** Router-loop cards registered after this decision name v3 as their reading scorer, so a weakness map reflects what a model answers rather than how it formats the answer. They report v2 beside it for comparison with earlier cards.
 - **Earlier runs, post hoc.** `analyze_reading_v3` re-scores MC-103's reading dataset with v3 and runs the weakness-map-v1 analysis on it. It also sets v2 against v3 for every registered run with reading answers: MC-53 to MC-56, MC-72, MC-73, MC-80, MC-83 to MC-97 and MC-103. It was decided after the MC-103 exploratory finding, so it is descriptive, not confirmatory.
 
+### 11. Self-improvement loop: the same model, the fix it lacks (decided 2026-10-30, MC-104)
+- **The owner's rule.** The loop measures and improves the student itself, so the student writes every final answer. Escalating unsure items to a stronger model was proposed and rejected: the final answer would be the stronger model's, which measures that model and drifts toward passing the test. E8 is therefore not a fix (pending decision 4).
+- **The fix follows the question type.** A knowledge question the student cannot answer from memory gets evidence, the cited clauses, not more reasoning. A multiple-choice question it is unsure of gets reasoning (S), and when S disagrees, two more S answers and a majority vote.
+- **Knowledge part.** 300 unused ViBidLQA train questions are asked without their own passage. The owner chose this set as legal knowledge questions; for this study only, that overrides the 2026-10-28 rule that a reading item keeps its passage. The arms are B (the question only), K with the top 2 and with the top 5 of the registered K2 BM25 ranking, and O (the own clause, a ceiling).
+  - Offline, on the 720 design items, a local dense model (Qwen3-Embedding 0.6B) ranked the own clause in the top 2 for 55% of questions against BM25's 78%, and fusing the two did not help. The 2026-10-27 K2.1 bake-off found the same with BGE-M3. BM25's top 5 holds the own clause for 89%.
+  - The knowledge fix therefore varies how many clauses are attached, not the retriever.
+- **Multiple-choice part.** The 303 VMLU dev items and 300 unused four-option VM14K items.
+  - Qwen's round 1 is the MC-43 probe: temperature 0, letter log-probabilities. Its confidence decides round 2 at threshold 0.80, fixed by a registered rule on design data (the smallest threshold whose two-round loop is within 1 point of always-S on the 660 VMLU valid items of MC-94 and MC-95).
+  - MiMo's route reports no log-probabilities, so its signal is two B answers that differ.
+- **Students.** Qwen3.5-9B on IEC and MiMo V2.6 Flash on OpenCode Go. The per-model maps of MC-95 and MC-103 are reported beside the loop.
+- **Primary tests.** The loop beats always-B (exact McNemar, Holm over the two students). The loop is no more than 1 point below always-S, with fewer tokens. K with the top 5 beats K with the top 2 on token-F1 under vi-reading-v3 (Holm over the two students).
+
 ## Risks / Trade-offs
 
 - [The critic is simply a better model, so the loop adds nothing over asking it] → "Router alone" is a required baseline, and cost is reported beside quality.
@@ -142,4 +154,4 @@ All three choices are registered, and Phase 3 may tighten them only on calibrati
 1. **Router-critic model:** decided 2026-10-30: Muse Spark 1.3 for now. The owner asked for near-term results first and left the other decisions for later.
 2. **Student models:** Qwen3.5-9B plus MiMo V2.6 Flash, and optionally a third, after checking quotas. Decided 2026-10-30: MiMo V2.6 Flash is the first API student (owner's choice); its map is MC-103. A third student remains open.
 3. **Monthly API budget.**
-4. **Escalation (E8):** a menu item, or only the "router alone" baseline.
+4. **Escalation (E8):** a menu item, or only the "router alone" baseline. Decided 2026-10-30: not a fix. The student writes every final answer (decision 11).
