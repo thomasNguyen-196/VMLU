@@ -52,6 +52,21 @@ Each student model's weakness map SHALL be built from a calibration run on items
 - **WHEN** an item appears in both the calibration set and the evaluation set of a student model
 - **THEN** the evaluation preflight fails
 
+### Requirement: Markdown-aware reading scorer
+Reading arms of router-loop cards registered after 2026-10-30 SHALL be scored with `vi-reading-v3`: every `*` and `` ` `` is deleted from the response and the reference, then `vi-reading-v2` applies unchanged. These cards SHALL also report `vi-reading-v2` beside it. Results registered under `vi-reading-v2` SHALL NOT be rewritten.
+
+#### Scenario: Bolded answer
+- **WHEN** a reading answer is the gold answer wrapped in `**`
+- **THEN** v3 gives exact match 1 and token-F1 1.0
+
+#### Scenario: Answer without marks
+- **WHEN** a reading answer contains no `*` and no `` ` ``
+- **THEN** v3 gives the same prediction, exact match and token-F1 as v2
+
+#### Scenario: Run registered under v2
+- **WHEN** v3 is applied to a run registered under v2
+- **THEN** the v3 results go to a separate report, and the run's scores, summaries and registered analyses stay unchanged
+
 ### Requirement: Pre-registered held-out evaluation
 The evaluation SHALL be pre-registered on items never used to design the loop or the router. Every student model SHALL be compared with:
 - always-B;

@@ -119,6 +119,13 @@ All three choices are registered, and Phase 3 may tighten them only on calibrati
 | 17/11–30/11 | 4 | Held-out evaluation card and run |
 | December | 5 | Learned router if triggered; writing; submission 12–15/12 |
 
+### 10. Reading scorer vi-reading-v3 (decided 2026-10-30, after MC-103)
+- **Problem.** `vi-reading-v2`, the frozen reading scorer, keeps Markdown marks on word tokens. A bolded answer (`**từ 20% đến 30%**`) loses token-F1 and exact match although its words are right. A bolded label followed by a line break (`**Trả lời:**`, then the answer) is read as an empty answer. MC-103 showed the problem: 29 of MiMo's 60 ViBidLQA B-r1 answers were bolded.
+- **Rule.** v3 deletes every `*` and `` ` `` from the response and from the reference, then applies v2 unchanged (`code_benchmark/vi_reading_v3.py`). No gold answer of the six reading sets contains either mark, and text without marks scores exactly as under v2.
+- **Compatibility.** v2 stays the scorer of every card registered with it. No registered number changes and no output file is rewritten; v3 results are reported beside v2 under their own name.
+- **From now on.** Router-loop cards registered after this decision name v3 as their reading scorer, so a weakness map reflects what a model answers rather than how it formats the answer. They report v2 beside it for comparison with earlier cards.
+- **Earlier runs, post hoc.** `analyze_reading_v3` re-scores MC-103's reading dataset with v3 and runs the weakness-map-v1 analysis on it. It also sets v2 against v3 for every registered run with reading answers: MC-53 to MC-56, MC-72, MC-73, MC-80, MC-83 to MC-97 and MC-103. It was decided after the MC-103 exploratory finding, so it is descriptive, not confirmatory.
+
 ## Risks / Trade-offs
 
 - [The critic is simply a better model, so the loop adds nothing over asking it] → "Router alone" is a required baseline, and cost is reported beside quality.

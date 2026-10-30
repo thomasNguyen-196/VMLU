@@ -73,6 +73,10 @@
 - [ ] 2.2 Register and run calibration for Qwen3.5-9B-65K on the IEC endpoint (openvpn3 `member-shared-tcp`, in-tunnel DNS): B twice plus E0–E4 and E7 once each. Verify that every attempt is complete with one response model, and record the run in its card.
 - [ ] 2.3 Register and run the same calibration for each chosen API student, with the model id and endpoint recorded per card. Verify the same way, plus the budget guard.
 - [ ] 2.4 Freeze one weakness map per model (rescue rate, damage rate and cost per enhancement, dataset and cause group). Verify that its SHA-256 is recorded and a test rejects a map built on evaluation items.
+- [x] 2.5 (added 2026-10-30, post hoc, at the owner's request) The reading scorer `vi-reading-v3` (decision 10) and a re-scoring of earlier runs with it.
+  - **Scorer.** `vi_reading_v3`: delete `*` and `` ` ``, then apply v2 unchanged.
+  - **Re-scoring.** `analyze_reading_v3` puts MC-103's reading dataset through the weakness-map-v1 analysis and sets v2 against v3 for every registered run with reading answers. It is descriptive, decided after the MC-103 exploratory finding.
+  - **Verify.** `test_vi_reading_v3` passes. The analysis checks that every stored score is the v2 score of its text and that the v2 blocks reproduce the registered MC-103 report.
 
 ## 3. Router-critic design check (10/11–17/11)
 
