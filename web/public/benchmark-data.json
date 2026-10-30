@@ -3897,11 +3897,11 @@
     "benchmark_name": "Harness arm — mỗi model so với chính nó",
     "date": "2026-09-26 → 2026-10-05",
     "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
-    "endpoint": "Qwen 28K: https://llmapi.iec-uit.com/v1, đã dừng · MiMo: https://opencode.ai/zen/go/v1 · Qwen 65K: http://llmapi.iec/v1, nội bộ qua VPN",
+    "endpoint": "Qwen 28K: IEC (host ẩn), đã dừng · MiMo: https://opencode.ai/zen/go/v1 · Qwen 65K: IEC (host ẩn), nội bộ qua VPN",
     "harness": "omp, Oh My Pi, v18.2.7",
     "condition": "Prompt giữ nguyên so với arm A của cùng model; seed 42; bộ chấm cố định. Arm A gọi trực tiếp ở temperature 0. Proxy ghim temperature 0 cho MiMo và Qwen-65K, đồng thời tắt reasoning cho MiMo. Sandbox đặt ngoài repo nên AGENTS.md không được nạp. Tham khảo MC-29 và MC-30.",
     "measurement_card": "MC-15…MC-48",
-    "measurement_card_hash": "18016b425fca1ef0c148e141402dfecb539992ae50e07d2f1e938afdbc5308a8",
+    "measurement_card_hash": "b563c05ac682021bc2ceb5bdee449c71351ebdb9e128374db52ed2b9565f9cbb",
     "scorer": "extract_answer cho trắc nghiệm; score_reading_eval.py cho EM và char-F1; bộ chấm giữ nguyên",
     "ladder": [
       {
