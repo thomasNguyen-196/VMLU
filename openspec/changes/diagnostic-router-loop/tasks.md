@@ -43,6 +43,32 @@
   - **Verify.** The offline preflight passes every gate with `endpoint_calls=0`, `test_diagnostic_weakness_map` passes, and a synthetic end-to-end analysis matches the registered report keys.
 
   (2026-10-30: config `afa923de…`, manifest `18ea6429…`, card MC-103; all four gates pass offline, 10 tests pass, and the synthetic analysis (Qwen's rows standing in for the student) matches the registered report keys. Qwen's reference map on these items, point / reliable: VMLU S / S, VM14K B / B, ViBidLQA S / B.)
+
+  (2026-10-30 11:06–11:51 +07, three launches; run record appended.
+  - **Launch 1** was rejected, with no answer received: it lacked the routing session header (4 × HTTP 400). Fixed in `608cd85`.
+  - **Launches 2 and 3** completed 600/600, with model id `mimo-v2.6-flash` throughout. The 3 attempts on VMLU item `04-0018` used the whole 20,000-token cap.
+  - **Cost.** 433,335 tokens, about USD 0.10 at list price.)
+
+  (2026-10-30, analysis run once, report SHA-256 `0a9a94a0…`, maps `15f10f79…`. Draw-1 means are B-r1, B-r2 and S-r1; each fix is compared with B-r1, with 95% bootstrap intervals.
+  - **VMLU valid (accuracy, 60 items):**
+    - MiMo: 80.0, 78.3 and 76.7. S −3.3 (−15.0 to +8.3); 5 rescued, 7 damaged.
+    - Qwen: 60.0, 66.7 and 75.0. S +15.0 (+3.3 to +26.7; p 0.037).
+    - Interaction −18.3 (−35.0 to −1.7; p 0.053). Maps, point / reliable: MiMo B / B, Qwen S / S.
+  - **VM14K (accuracy):**
+    - MiMo: 78.3, 80.0 and 83.3. S +5.0 (−3.3 to +15.0).
+    - Qwen: 76.7, 73.3 and 70.0. S −6.7 (−20.0 to +6.7).
+    - Interaction +11.7 (−3.3 to +26.7; p 0.21). Maps: MiMo S / B, Qwen B / B.
+  - **ViBidLQA train (token-F1):**
+    - MiMo: 58.5, 61.9 and 79.5, with Q-r1 75.1. S +21.0 (+13.1 to +29.5); Q +16.6 (+8.2 to +26.0).
+    - Qwen: 59.1, 58.5 and 66.8. S +7.7 (−0.5 to +16.0; p 0.07).
+    - Interaction +13.3 (+3.0 to +23.7; p 0.020). Maps: MiMo S / S, Qwen S / B.
+  - **The maps differ:** the point maps on VMLU and VM14K, the reliable maps on ViBidLQA and VMLU.
+  - **Rule loop (descriptive):** MiMo 83.3, 86.7 and 78.8; Qwen 65.0, 76.7 and 64.2 (VMLU, VM14K, ViBidLQA).
+  - **Noise:** MiMo's two B draws agree on 47, 49 and 17 of 60 items.
+
+  The following are exploratory: they were found after seeing the data and are not results.
+  - **Markdown on ViBidLQA.** 29 of MiMo's 60 ViBidLQA B-r1 answers are bolded with `**`. The frozen tokenizer keeps the asterisks on the first and last word, so a bolded answer that matches the gold word for word scores below 1. With the asterisks removed, MiMo's B-r1 rises to 72.0 and S's gain falls to +7.5 (+1.9 to +13.7), the same size as Qwen's. Most of the ViBidLQA interaction is therefore format, not reasoning.
+  - **VMLU.** The VMLU contrast compares letters only and is not affected. There, S helps the non-thinking Qwen and does not help MiMo, which thinks by default.)
 - [ ] 2.1 Design the calibration set: about 60 fresh items per dataset (VMLU, VM14K, ViBidLQA), disjoint from every earlier router set and from the planned evaluation items. Verify that a manifest test proves disjointness.
 - [ ] 2.2 Register and run calibration for Qwen3.5-9B-65K on the IEC endpoint (openvpn3 `member-shared-tcp`, in-tunnel DNS): B twice plus E0–E4 and E7 once each. Verify that every attempt is complete with one response model, and record the run in its card.
 - [ ] 2.3 Register and run the same calibration for each chosen API student, with the model id and endpoint recorded per card. Verify the same way, plus the budget guard.
