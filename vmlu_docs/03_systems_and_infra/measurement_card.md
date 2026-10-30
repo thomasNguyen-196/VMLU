@@ -2796,3 +2796,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 4 requests in flight; breaker after 4 consecutive network failures; halt on an authentication error or a changed response model |
 | `details` | `docs/measurement_cards/MC-102-diagnostic-router-critic.md` |
 | `outputs` | `all_res/diagnostic_router_loop/critic/muse-spark-1-3-contributor/`; no upload |
+
+## MC-103 — MiMo V2.6 Flash (OpenCode Go) / weakness map / B twice, S and Q on the 180 MC-95 calibration items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-103` |
+| `status` | Preregistered 2026-10-30 (+07), before benchmark-item requests of this card |
+| `scope` | The 180 calibration items of MC-95 (VMLU valid 60, VM14K 60, ViBidLQA train 60), where Qwen3.5-9B's B and S answers are logged. MiMo answers B twice and S once on every item, and Q once on the ViBidLQA items, with MC-95's prompts byte for byte and MC-97's Q builder: 600 attempts. The registered analysis builds MiMo's weakness map per dataset and compares it with Qwen's on the same items. Descriptive; no rule decides |
+| `harness / tools` | Direct HTTP API, no harness, no tools; chat-completions API, non-streaming |
+| `model / route` | MiMo V2.6 Flash (`mimo-v2.6-flash`) on the direct OpenCode Go route (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | Temperature, reasoning effort and seed omitted (provider defaults, thinking mode); system prompt `Answer the user's question.`; `max_completion_tokens=20000`; 300 s timeout; no SDK retries; budget guard 6,000,000 reported tokens |
+| `workers / scheduler` | At most 4 requests in flight; breaker after 4 consecutive network failures; halt on an authentication error, a model id without `mimo`, or a model id change |
+| `details` | `docs/measurement_cards/MC-103-diagnostic-weakness-map-mimo.md` |
+| `outputs` | `all_res/diagnostic_router_loop/weakness_map/mimo-v2-6-flash/`; no upload |

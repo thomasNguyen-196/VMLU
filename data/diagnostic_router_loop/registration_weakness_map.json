@@ -1,0 +1,30 @@
+{
+ "status": "weakness map registered",
+ "card_ids": {
+  "weakness_map": "MC-103"
+ },
+ "card_files": {
+  "weakness_map": "docs/measurement_cards/MC-103-diagnostic-weakness-map-mimo.md"
+ },
+ "registered_on": {
+  "weakness_map": "2026-10-30"
+ },
+ "frozen": {
+  "weakness_config_sha256": "afa923ded912218e3ad518cd4350f53593c8c14646643ef5ad98dbd4f7ab7e60",
+  "manifest_sha256": "18ea6429f093976d1185573f5f4b30701cad9255e54b927e38584c4e46518623"
+ },
+ "analysis": {
+  "plan_id": "weakness-map-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "by_dataset",
+   "maps",
+   "distributions",
+   "cost"
+  ]
+ }
+}
