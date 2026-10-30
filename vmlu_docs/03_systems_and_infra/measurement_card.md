@@ -2782,3 +2782,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-100 |
 | `details` | `docs/measurement_cards/MC-101-diagnostic-legal-retrieval.md` |
 | `outputs` | `all_res/diagnostic_legal_retrieval/run/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-102 — Muse Spark 1.3 (OpenCode Go) / router-critic design check / judging Qwen3.5-9B's logged first answers on 376 Vi-DROP and Vi-SQuAD items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-102` |
+| `status` | Preregistered 2026-10-30 (+07), before benchmark-item requests of this card |
+| `scope` | The 376 Vi-DROP (188) and Vi-SQuAD (188) items of the menu set. One critic call per item: Muse reads the passage, the question and Qwen's logged B-r1 answer (MC-90), judges it by meaning and prescribes keep, S or Q on three closed lines. The loop is replayed with Qwen's logged draw-1 answers (B, S, Q), so no student request is sent and no gold is sent. Primary: critic loop against the rule loop (B twice, S on disagreement) on token-F1, with a registered reading rule. Design-stage check, not held-out |
+| `harness / tools` | Direct HTTP API, no harness, no tools; OpenAI Responses API, non-streaming |
+| `model / route` | Muse Spark 1.3 Contributor (`muse-spark-1.3-contributor`) on the direct OpenCode Go route (host `opencode.ai`), as MC-98; credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | Temperature and reasoning effort omitted (provider defaults); `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 2,000,000 reported tokens (expected about 1.2 million) |
+| `workers / scheduler` | At most 4 requests in flight; breaker after 4 consecutive network failures; halt on an authentication error or a changed response model |
+| `details` | `docs/measurement_cards/MC-102-diagnostic-router-critic.md` |
+| `outputs` | `all_res/diagnostic_router_loop/critic/muse-spark-1-3-contributor/`; no upload |

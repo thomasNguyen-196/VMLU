@@ -1,0 +1,32 @@
+{
+ "status": "critic registered",
+ "card_ids": {
+  "critic": "MC-102"
+ },
+ "card_files": {
+  "critic": "docs/measurement_cards/MC-102-diagnostic-router-critic.md"
+ },
+ "registered_on": {
+  "critic": "2026-10-30"
+ },
+ "frozen": {
+  "critic_config_sha256": "a08b5dadbd94bdaa13068efab27abccc35550940f2c807b3cad55349d3f9e8da",
+  "manifest_sha256": "8a13231a6b3e6e10cb72863e50db562b6d8e040cb9bffffc50ebbacdf0f2dd65"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-router-critic-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "critic_sha256",
+   "primary",
+   "reading_rule",
+   "by_dataset",
+   "detector",
+   "prescription",
+   "distributions",
+   "cost"
+  ]
+ }
+}

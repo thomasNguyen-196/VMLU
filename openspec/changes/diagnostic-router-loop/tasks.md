@@ -44,7 +44,7 @@
 
 ## 3. Router-critic design check (10/11–17/11)
 
-- [ ] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).
+- [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).
 
   (2026-10-30: config `a08b5dad…`, manifest `8a13231a…`, card MC-102; the synthetic end-to-end analysis matches the registered report keys. Draw-1 references on the 376 items, token-F1: always-B 72.3, always-S 82.6, rule loop 82.2, Muse alone 82.4, per-item bound 90.4.)
 - [ ] 3.1 Implement the critic client with the closed output (verdict, cause, prescription, rationale), its prompt template and the leak check. Verify with mocked-transport tests: malformed or leaking outputs fall back to the rule loop.
