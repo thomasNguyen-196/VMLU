@@ -1,0 +1,1794 @@
+{
+ "schema_version": 1,
+ "generated_at": "2026-10-30T08:26:27.457285+00:00",
+ "alpha": 0.05,
+ "experiments": [
+  {
+   "id": "mc-90-92",
+   "cards": "MC-90, MC-91, MC-92",
+   "title": "B và S trên tập wide",
+   "question": "Bảo Qwen suy luận từng bước (S) có hơn hỏi thẳng (B) không?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "1.239 câu wide, mỗi cách hỏi hai lượt; dùng để thiết kế router",
+   "status": "not_met",
+   "verdict": "Trong một lượt, S hơn B ở đọc hiểu, còn ở trắc nghiệm luật thì không. Phép thử đã đăng ký \"S hơn B ổn định qua hai lượt\" không đạt, nên chưa gọi được là hơn có hệ thống.",
+   "tables": [
+    {
+     "title": "Điểm của lượt đầu",
+     "columns": [
+      {
+       "id": "mc",
+       "label": "Legal MC + Legal NLI",
+       "metric": "Tỷ lệ đúng",
+       "n": 272
+      },
+      {
+       "id": "reading",
+       "label": "ViBidLQA, Vi-DROP, Vi-SQuAD",
+       "metric": "EM",
+       "n": 967
+      }
+     ],
+     "rows": [
+      {
+       "id": "B",
+       "label": "B: hỏi thẳng",
+       "role": "baseline",
+       "cells": {
+        "mc": {
+         "score": 88.6,
+         "ci": null,
+         "tokens": null
+        },
+        "reading": {
+         "score": 38.99,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "S",
+       "label": "S: suy luận từng bước",
+       "role": "candidate",
+       "cells": {
+        "mc": {
+         "score": 86.03,
+         "ci": null,
+         "tokens": null
+        },
+        "reading": {
+         "score": 42.92,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "S so với B, đọc hiểu, một lượt",
+     "diff": 3.93,
+     "ci": [
+      0.94,
+      7.05
+     ],
+     "p": 0.015393815947984403,
+     "p_kind": "McNemar, Holm",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "S so với B, trắc nghiệm luật, một lượt",
+     "diff": -2.57,
+     "ci": [
+      -6.62,
+      1.84
+     ],
+     "p": 0.296206368599087,
+     "p_kind": "McNemar, Holm",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "S hơn B ổn định qua hai lượt, đọc hiểu (MC-92)",
+     "diff": null,
+     "ci": null,
+     "p": 0.14826706975424214,
+     "p_kind": "dấu, Holm",
+     "note": "S thắng ở cả hai lượt 62 câu, B thắng ở cả hai lượt 40 câu",
+     "primary": true
+    },
+    {
+     "label": "S hơn B ổn định qua hai lượt, trắc nghiệm luật (MC-92)",
+     "diff": null,
+     "ci": null,
+     "p": 1.0,
+     "p_kind": "dấu, Holm",
+     "note": "S thắng ở cả hai lượt 5 câu, B thắng ở cả hai lượt 7 câu",
+     "primary": true
+    }
+   ],
+   "notes": [
+    "Tỷ lệ đúng của đọc hiểu tính bằng EM (khớp hoàn toàn), theo protocol của chiến dịch."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective/analysis/report.json",
+     "sha256": "33de45e434b0efcd744d50d520cd7a2fb7569b8b5ae264eef536e840070777ed"
+    },
+    {
+     "path": "all_res/diagnostic_prospective/wide-supplements/wide-s-r2/qwen3-5-9b-65k-prospective/analysis/s_noise_report.json",
+     "sha256": "586e928692accadc5e75efd2944098c9894f60c180b3222548de1fd9871b5555"
+    }
+   ]
+  },
+  {
+   "id": "mc-93",
+   "cards": "MC-93",
+   "title": "Router v1 trên core",
+   "question": "Luật viết tay \"câu Vi-DROP dùng S, còn lại dùng B\" có hơn một cách cố định không?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "60 câu core đã audit, đánh giá đúng một lần",
+   "status": "not_met",
+   "verdict": "Router đúng nhiều câu hơn cả luôn B và luôn S nhưng chưa đủ chắc: 60 câu quá ít để tách các cách.",
+   "tables": [
+    {
+     "title": "Kết quả",
+     "columns": [
+      {
+       "id": "core",
+       "label": "60 câu core (5 bộ)",
+       "metric": "Tỷ lệ đúng",
+       "n": 60
+      }
+     ],
+     "rows": [
+      {
+       "id": "router",
+       "label": "Router v1: Vi-DROP dùng S, còn lại B",
+       "role": "candidate",
+       "cells": {
+        "core": {
+         "score": 65.0,
+         "ci": [
+          52.36,
+          75.83
+         ],
+         "tokens": 483.2
+        }
+       }
+      },
+      {
+       "id": "always_B",
+       "label": "Luôn B",
+       "role": "baseline",
+       "cells": {
+        "core": {
+         "score": 60.0,
+         "ci": [
+          47.37,
+          71.43
+         ],
+         "tokens": 418.8
+        }
+       }
+      },
+      {
+       "id": "always_S",
+       "label": "Luôn S",
+       "role": "baseline",
+       "cells": {
+        "core": {
+         "score": 56.67,
+         "ci": [
+          44.1,
+          68.43
+         ],
+         "tokens": 982.5
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Router v1 so với luôn B",
+     "diff": 5.0,
+     "ci": null,
+     "p": 0.5,
+     "p_kind": "McNemar, Holm",
+     "note": "cứu 3 câu, làm hỏng 0 câu",
+     "primary": true
+    },
+    {
+     "label": "Router v1 so với luôn S",
+     "diff": 8.33,
+     "ci": null,
+     "p": 0.5,
+     "p_kind": "McNemar, Holm",
+     "note": "cứu 10 câu, làm hỏng 5 câu",
+     "primary": true
+    }
+   ],
+   "notes": [],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_prospective/core/qwen3-5-9b-65k-prospective/analysis/router_report.json",
+     "sha256": "3f83bd6251d75099051b91c68151a3839fae4cdd0006622ad5139ce4fb9571ca"
+    }
+   ]
+  },
+  {
+   "id": "mc-94",
+   "cards": "MC-94",
+   "title": "Router v2 trên câu mới",
+   "question": "Thêm tín hiệu \"hỏi B hai lần, lệch thì chuyển sang S\" có làm router tốt hơn không?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "600 câu chưa router nào thấy; phép thử chính là trắc nghiệm, vòng 1",
+   "status": "partial",
+   "verdict": "Router v2 hơn luôn B rõ ràng, tốn khoảng một nửa token so với luôn S, nhưng vẫn kém luôn S trên VMLU.",
+   "tables": [
+    {
+     "title": "Kết quả vòng 1",
+     "columns": [
+      {
+       "id": "vmlu",
+       "label": "VMLU valid",
+       "metric": "Tỷ lệ đúng",
+       "n": 300
+      },
+      {
+       "id": "bidlqa",
+       "label": "ViBidLQA val",
+       "metric": "Token-F1",
+       "n": 300
+      }
+     ],
+     "rows": [
+      {
+       "id": "v2",
+       "label": "Router v2: hỏi B hai lần, lệch thì S",
+       "role": "candidate",
+       "cells": {
+        "vmlu": {
+         "score": 76.67,
+         "ci": [
+          71.56,
+          81.1
+         ],
+         "tokens": 606.6
+        },
+        "bidlqa": {
+         "score": 67.84,
+         "ci": null,
+         "tokens": 2273.9
+        }
+       }
+      },
+      {
+       "id": "always_B",
+       "label": "Luôn B (= router v1 trên tập này)",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 68.33,
+         "ci": [
+          62.87,
+          73.34
+         ],
+         "tokens": 135.8
+        },
+        "bidlqa": {
+         "score": 61.6,
+         "ci": null,
+         "tokens": 810.0
+        }
+       }
+      },
+      {
+       "id": "always_S",
+       "label": "Luôn S",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 80.0,
+         "ci": [
+          75.11,
+          84.13
+         ],
+         "tokens": 1046.0
+        },
+        "bidlqa": {
+         "score": 67.84,
+         "ci": null,
+         "tokens": 1116.8
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Router v2 so với luôn B, VMLU",
+     "diff": 8.33,
+     "ci": null,
+     "p": 0.000692002280629822,
+     "p_kind": "McNemar, Holm",
+     "note": "",
+     "primary": true
+    },
+    {
+     "label": "Router v2 so với luôn S, VMLU",
+     "diff": -3.33,
+     "ci": null,
+     "p": 0.07551869750022888,
+     "p_kind": "McNemar, Holm",
+     "note": "",
+     "primary": true
+    }
+   ],
+   "notes": [
+    "Tỷ lệ câu chuyển sang S: VMLU 27%, ViBidLQA 57%."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_router_v2/heldout/qwen3-5-9b-65k-prospective/analysis/router_v2_report.json",
+     "sha256": "38530e7aee20d003571468436c77b04a7bead46901c187b1a4feb9ea88edfd54"
+    }
+   ]
+  },
+  {
+   "id": "mc-95",
+   "cards": "MC-95",
+   "title": "Router v3 trên câu mới thứ hai",
+   "question": "Để router tự chọn cách tốt nhất cho mỗi bộ từ 60 câu hiệu chỉnh có được không?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "1.080 câu chưa router nào thấy (60 câu hiệu chỉnh + 300 câu kiểm tra mỗi bộ)",
+   "status": "not_met",
+   "verdict": "Không hơn router v2 và kém luôn S. 60 câu hiệu chỉnh chọn sai cách cho VM14K: hai cách chỉ chênh nhau vài điểm thì 60 câu không đủ để tách.",
+   "tables": [
+    {
+     "title": "Kết quả vòng 1 (300 câu kiểm tra mỗi bộ)",
+     "columns": [
+      {
+       "id": "vmlu",
+       "label": "VMLU valid",
+       "metric": "Tỷ lệ đúng",
+       "n": 300
+      },
+      {
+       "id": "vm14k",
+       "label": "VM14K",
+       "metric": "Tỷ lệ đúng",
+       "n": 300
+      },
+      {
+       "id": "mc",
+       "label": "Trắc nghiệm gộp",
+       "metric": "Tỷ lệ đúng",
+       "n": 600
+      },
+      {
+       "id": "bidlqa",
+       "label": "ViBidLQA train",
+       "metric": "Token-F1",
+       "n": 300
+      }
+     ],
+     "rows": [
+      {
+       "id": "v3",
+       "label": "Router v3: tự chọn cách cho mỗi bộ",
+       "role": "candidate",
+       "cells": {
+        "vmlu": {
+         "score": 81.33,
+         "ci": null,
+         "tokens": 1002.7
+        },
+        "vm14k": {
+         "score": 54.33,
+         "ci": null,
+         "tokens": 124.1
+        },
+        "mc": {
+         "score": 67.83,
+         "ci": [
+          63.99,
+          71.45
+         ],
+         "tokens": 563.4
+        },
+        "bidlqa": {
+         "score": 66.52,
+         "ci": null,
+         "tokens": 1190.0
+        }
+       }
+      },
+      {
+       "id": "v2",
+       "label": "Router v2",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 76.67,
+         "ci": null,
+         "tokens": 643.1
+        },
+        "vm14k": {
+         "score": 61.67,
+         "ci": null,
+         "tokens": 750.3
+        },
+        "mc": {
+         "score": 69.17,
+         "ci": [
+          65.36,
+          72.73
+         ],
+         "tokens": 696.7
+        },
+        "bidlqa": {
+         "score": 66.96,
+         "ci": null,
+         "tokens": 2370.8
+        }
+       }
+      },
+      {
+       "id": "always_B",
+       "label": "Luôn B",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 70.0,
+         "ci": null,
+         "tokens": 134.4
+        },
+        "vm14k": {
+         "score": 54.33,
+         "ci": null,
+         "tokens": 124.1
+        },
+        "mc": {
+         "score": 62.17,
+         "ci": [
+          58.22,
+          65.96
+         ],
+         "tokens": 129.2
+        },
+        "bidlqa": {
+         "score": 66.5,
+         "ci": null,
+         "tokens": 861.5
+        }
+       }
+      },
+      {
+       "id": "always_S",
+       "label": "Luôn S",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 81.33,
+         "ci": null,
+         "tokens": 1002.7
+        },
+        "vm14k": {
+         "score": 61.33,
+         "ci": null,
+         "tokens": 1131.2
+        },
+        "mc": {
+         "score": 71.33,
+         "ci": [
+          67.59,
+          74.81
+         ],
+         "tokens": 1066.9
+        },
+        "bidlqa": {
+         "score": 66.52,
+         "ci": null,
+         "tokens": 1190.0
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Router v3 so với router v2, trắc nghiệm gộp",
+     "diff": -1.33,
+     "ci": null,
+     "p": 0.4282070357175808,
+     "p_kind": "McNemar, Holm",
+     "note": "",
+     "primary": true
+    },
+    {
+     "label": "Router v3 so với luôn S, trắc nghiệm gộp",
+     "diff": -3.5,
+     "ci": null,
+     "p": 0.0628362204676922,
+     "p_kind": "McNemar, Holm",
+     "note": "",
+     "primary": true
+    }
+   ],
+   "notes": [
+    "Hiệu chỉnh vòng 1 chọn: VMLU valid → luôn S, VM14K → luôn B, ViBidLQA train → luôn S."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_router_v3/heldout/qwen3-5-9b-65k-prospective/analysis/router_v3_report.json",
+     "sha256": "42b4e6edc4ddba69241411d6a2b5bdad9baf959ab7edc3678ab6fe35d855f596"
+    }
+   ]
+  },
+  {
+   "id": "mc-96",
+   "cards": "MC-96",
+   "title": "K2: tự tìm đoạn văn bằng BM25",
+   "question": "Bỏ đoạn văn gốc, để BM25 tự tìm 2 đoạn: trả lời được đến đâu, và router có giúp không?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "360 câu ViBidLQA train (60 hiệu chỉnh + 300 kiểm tra)",
+   "status": "not_met",
+   "verdict": "Khi BM25 tìm trúng, trả lời tốt ngang có đoạn gốc; khi tìm trượt thì tụt mạnh. Router không hơn luôn K hay luôn KS mà tốn nhiều token hơn.",
+   "tables": [
+    {
+     "title": "Kết quả vòng 1",
+     "columns": [
+      {
+       "id": "bidlqa",
+       "label": "ViBidLQA train, không kèm đoạn văn gốc",
+       "metric": "Token-F1",
+       "n": 300
+      }
+     ],
+     "rows": [
+      {
+       "id": "router",
+       "label": "Router: hỏi K hai lần, lệch thì KS",
+       "role": "candidate",
+       "cells": {
+        "bidlqa": {
+         "score": 62.02,
+         "ci": [
+          57.57,
+          66.42
+         ],
+         "tokens": 3946.1
+        }
+       }
+      },
+      {
+       "id": "always_K",
+       "label": "Luôn K: 2 đoạn BM25 tự tìm",
+       "role": "baseline",
+       "cells": {
+        "bidlqa": {
+         "score": 59.66,
+         "ci": [
+          55.4,
+          63.66
+         ],
+         "tokens": 1442.5
+        }
+       }
+      },
+      {
+       "id": "always_KS",
+       "label": "Luôn KS: K và suy luận từng bước",
+       "role": "baseline",
+       "cells": {
+        "bidlqa": {
+         "score": 61.02,
+         "ci": [
+          56.7,
+          65.33
+         ],
+         "tokens": 1920.2
+        }
+       }
+      },
+      {
+       "id": "always_B",
+       "label": "B không kèm đoạn văn",
+       "role": "baseline",
+       "cells": {
+        "bidlqa": {
+         "score": 14.47,
+         "ci": [
+          12.17,
+          16.77
+         ],
+         "tokens": 161.4
+        }
+       }
+      },
+      {
+       "id": "O",
+       "label": "O: đoạn văn gốc (trần)",
+       "role": "ceiling",
+       "cells": {
+        "bidlqa": {
+         "score": 66.6,
+         "ci": [
+          62.67,
+          70.37
+         ],
+         "tokens": 867.6
+        }
+       }
+      }
+     ],
+     "note": ""
+    },
+    {
+     "title": "Theo kết quả tìm kiếm",
+     "columns": [
+      {
+       "id": "own_passage_in_top_2",
+       "label": "BM25 tìm trúng đoạn gốc",
+       "metric": "Token-F1",
+       "n": 231
+      },
+      {
+       "id": "own_passage_missed",
+       "label": "BM25 tìm trượt",
+       "metric": "Token-F1",
+       "n": 69
+      }
+     ],
+     "rows": [
+      {
+       "id": "always_K",
+       "label": "Luôn K: 2 đoạn BM25 tự tìm",
+       "role": "baseline",
+       "cells": {
+        "own_passage_in_top_2": {
+         "score": 67.91,
+         "ci": null,
+         "tokens": null
+        },
+        "own_passage_missed": {
+         "score": 32.05,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_KS",
+       "label": "Luôn KS: K và suy luận từng bước",
+       "role": "baseline",
+       "cells": {
+        "own_passage_in_top_2": {
+         "score": 68.13,
+         "ci": null,
+         "tokens": null
+        },
+        "own_passage_missed": {
+         "score": 37.24,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_B",
+       "label": "B không kèm đoạn văn",
+       "role": "baseline",
+       "cells": {
+        "own_passage_in_top_2": {
+         "score": 14.36,
+         "ci": null,
+         "tokens": null
+        },
+        "own_passage_missed": {
+         "score": 14.85,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "O",
+       "label": "O: đoạn văn gốc (trần)",
+       "role": "ceiling",
+       "cells": {
+        "own_passage_in_top_2": {
+         "score": 67.94,
+         "ci": null,
+         "tokens": null
+        },
+        "own_passage_missed": {
+         "score": 62.08,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Router so với luôn K",
+     "diff": 2.37,
+     "ci": null,
+     "p": 0.15079246037698116,
+     "p_kind": "đổi dấu, Holm",
+     "note": "",
+     "primary": true
+    },
+    {
+     "label": "Router so với luôn KS",
+     "diff": 1.0,
+     "ci": null,
+     "p": 0.29973501324933755,
+     "p_kind": "đổi dấu, Holm",
+     "note": "",
+     "primary": true
+    }
+   ],
+   "notes": [],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_k2/heldout/qwen3-5-9b-65k-prospective/analysis/k2_report.json",
+     "sha256": "680ff49e8771c13f870159d73c8d1eeb21fd6f22a771658c17a1a293cb52bbb4"
+    }
+   ]
+  },
+  {
+   "id": "mc-97",
+   "cards": "MC-97",
+   "title": "Cách hỏi Q (trích rồi đáp)",
+   "question": "Bắt model trích câu trong đoạn văn trước rồi mới trả lời (Q) có tốt hơn B hay S không?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "967 câu đọc hiểu của wide, dùng để thiết kế",
+   "status": "descriptive",
+   "verdict": "Q không là cách tốt nhất ở bộ nào. Cách cố định tốt nhất mỗi bộ: Vi-SQuAD B, Vi-DROP S, ViBidLQA test S.",
+   "tables": [
+    {
+     "title": "Token-F1 theo bộ",
+     "columns": [
+      {
+       "id": "squad",
+       "label": "Vi-SQuAD",
+       "metric": "Token-F1",
+       "n": 188
+      },
+      {
+       "id": "drop",
+       "label": "Vi-DROP",
+       "metric": "Token-F1",
+       "n": 188
+      },
+      {
+       "id": "bidlqa",
+       "label": "ViBidLQA test",
+       "metric": "Token-F1",
+       "n": 591
+      },
+      {
+       "id": "pooled",
+       "label": "Gộp",
+       "metric": "Token-F1",
+       "n": 967
+      }
+     ],
+     "rows": [
+      {
+       "id": "B",
+       "label": "B: hỏi thẳng",
+       "role": "baseline",
+       "cells": {
+        "squad": {
+         "score": 92.79,
+         "ci": null,
+         "tokens": 443.7
+        },
+        "drop": {
+         "score": 54.54,
+         "ci": null,
+         "tokens": 327.1
+        },
+        "bidlqa": {
+         "score": 64.63,
+         "ci": null,
+         "tokens": 813.5
+        },
+        "pooled": {
+         "score": 68.14,
+         "ci": null,
+         "tokens": 647.0
+        }
+       }
+      },
+      {
+       "id": "Q",
+       "label": "Q: trích câu trong đoạn rồi đáp",
+       "role": "candidate",
+       "cells": {
+        "squad": {
+         "score": 89.52,
+         "ci": null,
+         "tokens": 573.0
+        },
+        "drop": {
+         "score": 54.61,
+         "ci": null,
+         "tokens": 484.6
+        },
+        "bidlqa": {
+         "score": 62.67,
+         "ci": null,
+         "tokens": 994.0
+        },
+        "pooled": {
+         "score": 66.33,
+         "ci": null,
+         "tokens": 813.1
+        }
+       }
+      },
+      {
+       "id": "S",
+       "label": "S: suy luận từng bước",
+       "role": "baseline",
+       "cells": {
+        "squad": {
+         "score": 89.25,
+         "ci": null,
+         "tokens": 679.4
+        },
+        "drop": {
+         "score": 75.91,
+         "ci": null,
+         "tokens": 764.8
+        },
+        "bidlqa": {
+         "score": 65.88,
+         "ci": null,
+         "tokens": 1155.1
+        },
+        "pooled": {
+         "score": 72.37,
+         "ci": null,
+         "tokens": 986.8
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Q so với B, Vi-SQuAD",
+     "diff": -3.27,
+     "ci": null,
+     "p": null,
+     "p_kind": "",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Q so với S, Vi-SQuAD",
+     "diff": 0.27,
+     "ci": null,
+     "p": null,
+     "p_kind": "",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Q so với B, Vi-DROP",
+     "diff": 0.07,
+     "ci": null,
+     "p": null,
+     "p_kind": "",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Q so với S, Vi-DROP",
+     "diff": -21.3,
+     "ci": null,
+     "p": null,
+     "p_kind": "",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Q so với B, ViBidLQA test",
+     "diff": -1.96,
+     "ci": null,
+     "p": null,
+     "p_kind": "",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Q so với S, ViBidLQA test",
+     "diff": -3.21,
+     "ci": null,
+     "p": null,
+     "p_kind": "",
+     "note": "",
+     "primary": false
+    }
+   ],
+   "notes": [],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_llm_router/menu/qwen3-5-9b-65k-prospective/analysis/menu_report.json",
+     "sha256": "6dba658d04d8ad904f4c067dbadccc1adfc6312857ca682f65f2cfd066287731"
+    }
+   ]
+  },
+  {
+   "id": "mc-98",
+   "cards": "MC-98",
+   "title": "Router LLM (Muse Spark 1.3)",
+   "question": "Một LLM mạnh hơn đọc đoạn văn và câu hỏi rồi chọn cách hỏi cho Qwen có tốt hơn không?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "591 câu ViBidLQA dùng để thiết kế",
+   "status": "not_met",
+   "verdict": "Router Muse chỉ ngang luôn S và ngang cách chia bằng từ khóa, nên không đạt quy tắc ghi trước (hơn luôn S ít nhất 1 điểm) và dừng ở bước thiết kế.",
+   "tables": [
+    {
+     "title": "Token-F1",
+     "columns": [
+      {
+       "id": "bidlqa",
+       "label": "ViBidLQA test (câu thiết kế)",
+       "metric": "Token-F1",
+       "n": 591
+      }
+     ],
+     "rows": [
+      {
+       "id": "muse_grouping",
+       "label": "Router Muse: đọc đoạn văn và câu hỏi, chia 6 nhóm",
+       "role": "candidate",
+       "cells": {
+        "bidlqa": {
+         "score": 66.16,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "keyword_grouping",
+       "label": "Chia nhóm bằng từ khóa",
+       "role": "baseline",
+       "cells": {
+        "bidlqa": {
+         "score": 66.25,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_S",
+       "label": "Luôn S",
+       "role": "baseline",
+       "cells": {
+        "bidlqa": {
+         "score": 65.88,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_B",
+       "label": "Luôn B",
+       "role": "baseline",
+       "cells": {
+        "bidlqa": {
+         "score": 64.63,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_Q",
+       "label": "Luôn Q",
+       "role": "baseline",
+       "cells": {
+        "bidlqa": {
+         "score": 62.67,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "per_item_bound",
+       "label": "Trần: chọn đúng cách cho từng câu",
+       "role": "ceiling",
+       "cells": {
+        "bidlqa": {
+         "score": 67.38,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Router Muse so với luôn S",
+     "diff": 0.28,
+     "ci": [
+      -1.11,
+      1.69
+     ],
+     "p": 0.6977151142442878,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": true
+    },
+    {
+     "label": "Router Muse so với chia bằng từ khóa",
+     "diff": -0.09,
+     "ci": [
+      -1.1,
+      0.93
+     ],
+     "p": 0.8694565271736413,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": true
+    }
+   ],
+   "notes": [
+    "Mỗi câu, router tốn thêm khoảng 3079 token của Muse."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_llm_router/labels/muse-spark-1-3-contributor/analysis/router_labels_report.json",
+     "sha256": "e206594c3ff290f3125ab602e62fec03ec699a30d84e6e7a539d95dc2d69fa40"
+    }
+   ]
+  },
+  {
+   "id": "mc-100",
+   "cards": "MC-100",
+   "title": "Legal MC: đưa sẵn đúng điều luật",
+   "question": "Nếu đưa sẵn đúng điều luật, Qwen có sửa được câu từng sai mà không làm hỏng câu đang đúng?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "56 câu Legal MC có nhãn điều luật",
+   "status": "met",
+   "verdict": "Đạt: ở các câu từng sai, đúng điều luật tăng tỷ lệ đúng lên rất nhiều, và không làm hại câu vốn đúng. Thiếu điều luật là nguyên nhân thật của phần lớn lỗi.",
+   "tables": [
+    {
+     "title": "Kết quả",
+     "columns": [
+      {
+       "id": "wrong",
+       "label": "Câu Qwen từng sai",
+       "metric": "Tỷ lệ đúng",
+       "n": 23
+      },
+      {
+       "id": "right",
+       "label": "Câu Qwen vốn đúng",
+       "metric": "Tỷ lệ đúng",
+       "n": 25
+      }
+     ],
+     "rows": [
+      {
+       "id": "B",
+       "label": "B: hỏi như cũ, không kèm luật",
+       "role": "baseline",
+       "cells": {
+        "wrong": {
+         "score": 36.96,
+         "ci": null,
+         "tokens": null
+        },
+        "right": {
+         "score": 94.0,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "O",
+       "label": "O: kèm đúng điều luật",
+       "role": "candidate",
+       "cells": {
+        "wrong": {
+         "score": 82.61,
+         "ci": null,
+         "tokens": null
+        },
+        "right": {
+         "score": 96.0,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "O so với B, câu từng sai",
+     "diff": 45.65,
+     "ci": [
+      26.09,
+      63.04
+     ],
+     "p": 0.00044997750112494374,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": true
+    },
+    {
+     "label": "O so với B, câu vốn đúng",
+     "diff": 2.0,
+     "ci": [
+      -4.0,
+      10.0
+     ],
+     "p": 1.0,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": true
+    }
+   ],
+   "notes": [
+    "O là trần: điều luật do người và AI chọn sẵn, chưa dùng được ngoài thực tế."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_legal_oracle/run/qwen3-5-9b-65k-prospective/analysis/legal_oracle_report.json",
+     "sha256": "f0ac91f01661d1e9c0e8eed5ed055a7c28f4e6d5db3f6b89499a473f6bec3665"
+    }
+   ]
+  },
+  {
+   "id": "mc-101",
+   "cards": "MC-101",
+   "title": "Legal MC: tự tìm điều luật",
+   "question": "Để BM25 tự tìm điều luật trong kho luật rồi đưa vào câu hỏi: \"luôn tra luật\" có hơn \"luôn hỏi như cũ\"?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "134 câu Legal MC",
+   "status": "not_met",
+   "verdict": "Không đạt: trên cả bộ, tra luật ngang hỏi như cũ. K có giúp ở nhóm câu từng sai nhưng chỉ lấy lại một phần nhỏ phần lợi của O, và làm hỏng chút ít ở câu vốn đúng. Legal MC giữ B.",
+   "tables": [
+    {
+     "title": "Kết quả",
+     "columns": [
+      {
+       "id": "all",
+       "label": "Cả bộ Legal MC",
+       "metric": "Tỷ lệ đúng",
+       "n": 134
+      },
+      {
+       "id": "wrong",
+       "label": "Câu từng sai (nhóm MC-100)",
+       "metric": "Tỷ lệ đúng",
+       "n": 23
+      },
+      {
+       "id": "outside",
+       "label": "Câu ngoài MC-100",
+       "metric": "Tỷ lệ đúng",
+       "n": 78
+      }
+     ],
+     "rows": [
+      {
+       "id": "B",
+       "label": "B: hỏi như cũ",
+       "role": "baseline",
+       "cells": {
+        "all": {
+         "score": 84.33,
+         "ci": null,
+         "tokens": null
+        },
+        "wrong": {
+         "score": 32.61,
+         "ci": null,
+         "tokens": null
+        },
+        "outside": {
+         "score": 96.15,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "K",
+       "label": "K: kèm 2 điều luật BM25 tự tìm",
+       "role": "candidate",
+       "cells": {
+        "all": {
+         "score": 84.7,
+         "ci": null,
+         "tokens": null
+        },
+        "wrong": {
+         "score": 52.17,
+         "ci": null,
+         "tokens": null
+        },
+        "outside": {
+         "score": 95.51,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "O",
+       "label": "O: kèm đúng điều luật (trần)",
+       "role": "ceiling",
+       "cells": {
+        "wrong": {
+         "score": 84.78,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "K so với B, cả bộ",
+     "diff": 0.37,
+     "ci": [
+      -5.22,
+      5.6
+     ],
+     "p": 1.0,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": true
+    },
+    {
+     "label": "K so với B, câu từng sai",
+     "diff": 19.57,
+     "ci": [
+      4.35,
+      36.96
+     ],
+     "p": 0.061246937653117346,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": false
+    }
+   ],
+   "notes": [
+    "Ở nhóm câu từng sai, K giữ lại 38% phần lợi của O."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_legal_retrieval/run/qwen3-5-9b-65k-prospective/analysis/legal_retrieval_report.json",
+     "sha256": "98c085335c5c2456f0a36d5ebcbae303976e75eb9d1780100aa277e7808da76a"
+    }
+   ]
+  },
+  {
+   "id": "mc-102",
+   "cards": "MC-102",
+   "title": "Muse chấm câu trả lời của Qwen",
+   "question": "Một LLM mạnh hơn chấm câu trả lời đầu tiên của Qwen rồi chọn cách sửa: có hơn vòng lặp đơn giản?",
+   "student": "Qwen3.5-9B-65K (IEC)",
+   "items": "376 câu Vi-DROP và Vi-SQuAD dùng để thiết kế; phát lại bằng câu trả lời đã lưu",
+   "status": "not_met",
+   "verdict": "Không đạt: hơn vòng lặp đơn giản khoảng 1 điểm nhưng chưa chắc. Muse bắt được nhiều câu sai ở Vi-DROP, nhưng ở đó luôn S cũng đạt cùng mức; ở Vi-SQuAD Muse báo nhầm nhiều hơn số câu bắt được.",
+   "tables": [
+    {
+     "title": "Token-F1",
+     "columns": [
+      {
+       "id": "drop",
+       "label": "Vi-DROP",
+       "metric": "Token-F1",
+       "n": 188
+      },
+      {
+       "id": "squad",
+       "label": "Vi-SQuAD",
+       "metric": "Token-F1",
+       "n": 188
+      },
+      {
+       "id": "pooled",
+       "label": "Gộp",
+       "metric": "Token-F1",
+       "n": 376
+      }
+     ],
+     "rows": [
+      {
+       "id": "critic_loop",
+       "label": "Vòng lặp có Muse chấm câu trả lời",
+       "role": "candidate",
+       "cells": {
+        "drop": {
+         "score": 75.78,
+         "ci": null,
+         "tokens": null
+        },
+        "squad": {
+         "score": 90.7,
+         "ci": null,
+         "tokens": null
+        },
+        "pooled": {
+         "score": 83.24,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "rule_loop",
+       "label": "Vòng lặp đơn giản: B hai lần, lệch thì S",
+       "role": "baseline",
+       "cells": {
+        "drop": {
+         "score": 70.27,
+         "ci": null,
+         "tokens": null
+        },
+        "squad": {
+         "score": 94.03,
+         "ci": null,
+         "tokens": null
+        },
+        "pooled": {
+         "score": 82.15,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_B",
+       "label": "Luôn B",
+       "role": "baseline",
+       "cells": {
+        "drop": {
+         "score": 52.44,
+         "ci": null,
+         "tokens": null
+        },
+        "squad": {
+         "score": 92.23,
+         "ci": null,
+         "tokens": null
+        },
+        "pooled": {
+         "score": 72.34,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_S",
+       "label": "Luôn S",
+       "role": "baseline",
+       "cells": {
+        "drop": {
+         "score": 75.99,
+         "ci": null,
+         "tokens": null
+        },
+        "squad": {
+         "score": 89.13,
+         "ci": null,
+         "tokens": null
+        },
+        "pooled": {
+         "score": 82.56,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "always_Q",
+       "label": "Luôn Q",
+       "role": "baseline",
+       "cells": {
+        "drop": {
+         "score": 55.75,
+         "ci": null,
+         "tokens": null
+        },
+        "squad": {
+         "score": 89.37,
+         "ci": null,
+         "tokens": null
+        },
+        "pooled": {
+         "score": 72.56,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "muse_alone",
+       "label": "Muse tự trả lời (MC-80/81, tham khảo)",
+       "role": "reference",
+       "cells": {
+        "drop": {
+         "score": 73.41,
+         "ci": null,
+         "tokens": null
+        },
+        "squad": {
+         "score": 91.3,
+         "ci": null,
+         "tokens": null
+        },
+        "pooled": {
+         "score": 82.35,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "bound",
+       "label": "Trần: chọn đúng cách cho từng câu",
+       "role": "ceiling",
+       "cells": {
+        "drop": {
+         "score": 84.01,
+         "ci": null,
+         "tokens": null
+        },
+        "squad": {
+         "score": 96.86,
+         "ci": null,
+         "tokens": null
+        },
+        "pooled": {
+         "score": 90.44,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Vòng lặp có Muse chấm so với vòng lặp đơn giản",
+     "diff": 1.09,
+     "ci": [
+      -1.44,
+      3.94
+     ],
+     "p": 0.4182790860456977,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": true
+    }
+   ],
+   "notes": [
+    "Muse bắt được 70/94 câu B sai (tỷ lệ bắt 74%, tỷ lệ báo đúng 80%)."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_router_loop/critic/muse-spark-1-3-contributor/analysis/router_critic_report.json",
+     "sha256": "8fe42d10e762e26491e067f0da44e22afc118e725bb4e2a3a4f37b93fc3d683c"
+    }
+   ]
+  },
+  {
+   "id": "mc-103",
+   "cards": "MC-103",
+   "title": "Bản đồ điểm yếu: MiMo so với Qwen",
+   "question": "Cách sửa giúp được Qwen có giúp được một model khác (MiMo V2.6 Flash, tự suy nghĩ) không?",
+   "student": "MiMo V2.6 Flash (OpenCode Go), so với Qwen3.5-9B trên cùng câu",
+   "items": "180 câu hiệu chỉnh của MC-95 (60 mỗi bộ)",
+   "status": "descriptive",
+   "verdict": "Ở VMLU, S giúp Qwen nhiều nhưng không giúp MiMo, vì MiMo vốn tự suy nghĩ. Ở ViBidLQA, khác biệt ban đầu chủ yếu do MiMo in đậm câu trả lời; chấm lại bằng v3 thì S giúp hai model như nhau.",
+   "tables": [
+    {
+     "title": "Điểm lượt đầu",
+     "columns": [
+      {
+       "id": "vmlu",
+       "label": "VMLU valid",
+       "metric": "Tỷ lệ đúng",
+       "n": 60
+      },
+      {
+       "id": "vm14k",
+       "label": "VM14K",
+       "metric": "Tỷ lệ đúng",
+       "n": 60
+      },
+      {
+       "id": "bidlqa",
+       "label": "ViBidLQA train (bộ chấm v2)",
+       "metric": "Token-F1",
+       "n": 60
+      },
+      {
+       "id": "bidlqa_v3",
+       "label": "ViBidLQA train (bộ chấm v3, chấm lại sau)",
+       "metric": "Token-F1",
+       "n": 60
+      }
+     ],
+     "rows": [
+      {
+       "id": "student-B1",
+       "label": "MiMo V2.6 Flash · B",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 80.0,
+         "ci": null,
+         "tokens": null
+        },
+        "vm14k": {
+         "score": 78.33,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa": {
+         "score": 58.53,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa_v3": {
+         "score": 72.03,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "student-S1",
+       "label": "MiMo V2.6 Flash · S",
+       "role": "candidate",
+       "cells": {
+        "vmlu": {
+         "score": 76.67,
+         "ci": null,
+         "tokens": null
+        },
+        "vm14k": {
+         "score": 83.33,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa": {
+         "score": 79.5,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa_v3": {
+         "score": 79.5,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "student-rule_loop",
+       "label": "MiMo V2.6 Flash · vòng lặp đơn giản",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 83.33,
+         "ci": null,
+         "tokens": null
+        },
+        "vm14k": {
+         "score": 86.67,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa": {
+         "score": 78.77,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa_v3": {
+         "score": 79.8,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "reference-B1",
+       "label": "Qwen3.5-9B · B",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 60.0,
+         "ci": null,
+         "tokens": null
+        },
+        "vm14k": {
+         "score": 76.67,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa": {
+         "score": 59.08,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa_v3": {
+         "score": 59.08,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "reference-S1",
+       "label": "Qwen3.5-9B · S",
+       "role": "candidate",
+       "cells": {
+        "vmlu": {
+         "score": 75.0,
+         "ci": null,
+         "tokens": null
+        },
+        "vm14k": {
+         "score": 70.0,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa": {
+         "score": 66.77,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa_v3": {
+         "score": 66.77,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      },
+      {
+       "id": "reference-rule_loop",
+       "label": "Qwen3.5-9B · vòng lặp đơn giản",
+       "role": "baseline",
+       "cells": {
+        "vmlu": {
+         "score": 65.0,
+         "ci": null,
+         "tokens": null
+        },
+        "vm14k": {
+         "score": 76.67,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa": {
+         "score": 64.22,
+         "ci": null,
+         "tokens": null
+        },
+        "bidlqa_v3": {
+         "score": 64.22,
+         "ci": null,
+         "tokens": null
+        }
+       }
+      }
+     ],
+     "note": ""
+    }
+   ],
+   "tests": [
+    {
+     "label": "Tương tác: lợi của S ở MiMo trừ lợi của S ở Qwen, VMLU valid",
+     "diff": -18.33,
+     "ci": [
+      -35.0,
+      -1.67
+     ],
+     "p": 0.05289735513224339,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Tương tác: lợi của S ở MiMo trừ lợi của S ở Qwen, VM14K",
+     "diff": 11.67,
+     "ci": [
+      -3.33,
+      26.67
+     ],
+     "p": 0.21013949302534873,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Tương tác: lợi của S ở MiMo trừ lợi của S ở Qwen, ViBidLQA train (bộ chấm v2)",
+     "diff": 13.29,
+     "ci": [
+      2.96,
+      23.73
+     ],
+     "p": 0.019949002549872506,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": false
+    },
+    {
+     "label": "Tương tác, ViBidLQA train (bộ chấm v3, chấm lại sau)",
+     "diff": -0.21,
+     "ci": [
+      -9.63,
+      9.3
+     ],
+     "p": 0.9656517174141293,
+     "p_kind": "đổi dấu",
+     "note": "",
+     "primary": false
+    }
+   ],
+   "notes": [
+    "Bản đồ (điểm / chắc chắn): MiMo: VMLU valid B / B, VM14K S / B, ViBidLQA S / S; Qwen: VMLU valid S / S, VM14K B / B, ViBidLQA S / B.",
+    "Vòng lặp đơn giản: hỏi B hai lần, nếu hai câu trả lời khác nhau thì dùng S."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_router_loop/weakness_map/mimo-v2-6-flash/analysis/weakness_map_report.json",
+     "sha256": "0a9a94a01bc4d130d7f756a0c8dea7e41f195dce34768f4c56f3514b738bbee1"
+    },
+    {
+     "path": "all_res/diagnostic_router_loop/reading_v3/reading_v3_report.json",
+     "sha256": "3ddf1732cd49aed1193cfda32ca7dd663ba1e0f8362fcfb3bccee6f7a809f6f7"
+    }
+   ]
+  }
+ ]
+}

@@ -2,6 +2,8 @@ import Link from "next/link";
 import SiteNav from "@/components/SiteNav.tsx";
 import BenchmarkModelObservations from "@/components/BenchmarkModelObservations.tsx";
 import BenchmarkComparisonSection from "@/components/BenchmarkComparisonSection.tsx";
+import { RouterResultsView } from "@/components/RouterResultsView.tsx";
+import type { RouterResults } from "@/lib/router-results.ts";
 import { buildBenchmarkComparison } from "@/lib/benchmark-comparison.ts";
 import type { BenchmarkMatrixView, MatrixGroup, MetricMatrix } from "@/lib/benchmark-matrix.ts";
 import { columnMaximum, selectMatrixGroup } from "@/lib/benchmark-matrix.ts";
@@ -126,12 +128,19 @@ function WebSearchSection({ summaries }: { summaries: BenchmarkRunSummary[] }) {
   </section>;
 }
 
-/** `?condition=comparison` shows the cross-condition summary on its own; every other value shows one condition. */
+/** `?condition=comparison` shows the cross-condition summary on its own, `?condition=router` the router and diagnosis
+ *  experiments; every other value shows one condition. */
 const COMPARISON_VIEW = "comparison";
+export const ROUTER_VIEW = "router";
 
-export function BenchmarkMatrixPage({ view, requested }: { view: BenchmarkMatrixView; requested?: string }) {
+export function BenchmarkMatrixPage({ view, requested, router }: {
+  view: BenchmarkMatrixView;
+  requested?: string;
+  router?: { results: RouterResults | null; error: string | null };
+}) {
   const showComparison = requested === COMPARISON_VIEW;
-  const group = showComparison ? null : selectMatrixGroup(view, requested);
+  const showRouter = requested === ROUTER_VIEW;
+  const group = showComparison || showRouter ? null : selectMatrixGroup(view, requested);
   const observationGroup = group?.kind === "omp-no-tools" ? group : undefined;
   const webSearchSummaries = group?.kind === "omp-full-tools"
     ? view.runSummaries.filter((summary) => group.conditions.some((condition) => condition.id === summary.id) && summary.web_search)
@@ -141,10 +150,10 @@ export function BenchmarkMatrixPage({ view, requested }: { view: BenchmarkMatrix
     <div className="grid items-start gap-7 lg:grid-cols-[225px_minmax(0,1fr)]">
       <aside aria-label="Condition panel" className="rounded-xl border border-hair bg-paper p-3 lg:sticky lg:top-5"><h2 className="px-2 py-1 text-[12px] font-semibold">Điều kiện đo</h2><nav className="mt-2 space-y-2">{view.groups.map((entry) => <Link key={entry.id} href={`/table?condition=${entry.id}`} scroll={false} aria-current={group?.id === entry.id ? "page" : undefined} className={entryClass(group?.id === entry.id)}><span className="block text-[12.5px] font-semibold">{entry.label}</span><span className="mt-1 block text-[10.5px] leading-relaxed text-ink-3">{entry.detail}</span></Link>)}</nav>
         {view.directReason ? <div data-direct-skipped className="mt-3 border-t border-hair px-2 pt-3"><p className="text-[12px] font-medium text-ink-2">API trực tiếp · tạm bỏ qua</p><p className="mt-1 text-[10.5px] leading-relaxed text-ink-3">Chưa xác minh được nhóm model có cùng thinking và output budget.</p></div> : null}
-        <div className="mt-3 border-t border-hair pt-3"><Link href={`/table?condition=${COMPARISON_VIEW}`} scroll={false} aria-current={showComparison ? "page" : undefined} className={entryClass(showComparison)}><span className="block text-[12.5px] font-semibold">Tổng kết 3 chế độ</span><span className="mt-1 block text-[10.5px] leading-relaxed text-ink-3">Cùng model, đặt cạnh nhau giữa ba condition</span></Link></div>
+        <div className="mt-3 space-y-2 border-t border-hair pt-3"><Link href={`/table?condition=${COMPARISON_VIEW}`} scroll={false} aria-current={showComparison ? "page" : undefined} className={entryClass(showComparison)}><span className="block text-[12.5px] font-semibold">Tổng kết 3 chế độ</span><span className="mt-1 block text-[10.5px] leading-relaxed text-ink-3">Cùng model, đặt cạnh nhau giữa ba condition</span></Link><Link href={`/table?condition=${ROUTER_VIEW}`} scroll={false} aria-current={showRouter ? "page" : undefined} className={entryClass(showRouter)}><span className="block text-[12.5px] font-semibold">Router và chẩn đoán</span><span className="mt-1 block text-[10.5px] leading-relaxed text-ink-3">MC-90 – MC-103: chọn cách hỏi cho từng câu</span></Link></div>
         {group ? <nav aria-label="Các bảng metric" className="mt-4 flex flex-wrap border-t border-hair pt-3 text-[11.5px] lg:block"><p className="mb-1 basis-full px-2 text-[10.5px] text-ink-3">BẢNG TRONG CONDITION</p>{group.matrices.map((matrix) => <a key={matrix.metric} href={`#${matrix.metric}`} className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">{matrix.title}</a>)}{webSearchSummaries.length ? <a href="#web-search" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">Web search</a> : null}<a href="#confidence" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">CI95</a><a href="#notes" className="inline-flex rounded px-2 py-1.5 text-ink-2 hover:bg-card lg:flex">Note & nguồn</a></nav> : null}
       </aside>
-      <div className="min-w-0">{showComparison ? <BenchmarkComparisonSection comparison={buildBenchmarkComparison(view.groups)} /> : group ? <><section className="mb-7"><div className="flex flex-wrap items-center gap-2"><h2 className="font-disp text-[19px] font-semibold">{group.label}</h2><span className="rounded-full border border-hair bg-card px-2.5 py-1 text-[10.5px] text-ink-2">{group.detail}</span></div><p className="mt-2 text-[12px] leading-relaxed text-ink-3">{group.models.length} model · {group.matrices.length} metric · ô trống là chưa có kết quả trong condition này.</p><ConditionDetails group={group} runSummaries={view.runSummaries} /><WebSearchSection summaries={webSearchSummaries} /></section>
+      <div className="min-w-0">{showRouter ? <RouterResultsView results={router?.results ?? null} error={router?.error ?? null} /> : showComparison ? <BenchmarkComparisonSection comparison={buildBenchmarkComparison(view.groups)} /> : group ? <><section className="mb-7"><div className="flex flex-wrap items-center gap-2"><h2 className="font-disp text-[19px] font-semibold">{group.label}</h2><span className="rounded-full border border-hair bg-card px-2.5 py-1 text-[10.5px] text-ink-2">{group.detail}</span></div><p className="mt-2 text-[12px] leading-relaxed text-ink-3">{group.models.length} model · {group.matrices.length} metric · ô trống là chưa có kết quả trong condition này.</p><ConditionDetails group={group} runSummaries={view.runSummaries} /><WebSearchSection summaries={webSearchSummaries} /></section>
         {observationGroup ? <BenchmarkModelObservations group={observationGroup} /> : null}
         <div className="space-y-9">{group.matrices.map((matrix) => <MetricTable key={matrix.metric} group={group} matrix={matrix} />)}</div>
         <section id="confidence" className="mt-10 scroll-mt-5 border-t border-hair pt-6"><p className="mb-5 text-[12px] leading-relaxed text-ink-3">CI95 được trình bày riêng cho từng metric. MC dùng Wilson; các bài đọc dùng bootstrap theo passage. CI95 của VMLU Test chưa được server công bố.</p><div className="space-y-9">{group.matrices.map((matrix) => <MetricTable key={matrix.metric} group={group} matrix={matrix} confidence />)}</div></section>
