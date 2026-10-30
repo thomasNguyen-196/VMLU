@@ -122,6 +122,8 @@ class TestRequest(unittest.TestCase):
         self.assertEqual(client.kwargs["max_completion_tokens"], STUDENT["max_completion_tokens"])
         self.assertNotIn("temperature", client.kwargs)
         self.assertEqual(client.kwargs["messages"][0], {"role": "system", "content": STUDENT["system_prompt"]})
+        self.assertEqual(client.kwargs["extra_headers"], {rwm.SESSION_HEADER: rwm.session_id(self.item.run_key)})
+        self.assertNotEqual(rwm.session_id("d:7:B-r1"), rwm.session_id("d:7:B-r2"))
 
     def test_truncated_tool_calls_errors_and_drift(self):
         self.assertEqual(self.send(("length", "mimo-v2.6-flash", None))[0]["status"], "complete")

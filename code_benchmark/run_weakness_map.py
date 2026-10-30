@@ -6,7 +6,8 @@ From the repo root:
 
 MiMo V2.6 Flash answers the 600 attempts of data/diagnostic_router_loop/weakness_manifest_v1.json: the 180 MC-95
 calibration items, with B twice and S once on each, and Q once on the ViBidLQA items. Requests go to the direct OpenCode
-Go chat-completions route, with the credential resolved from the local OpenCode auth store and never written out. The
+Go chat-completions route, with the credential resolved from the local OpenCode auth store and never written out. Each
+attempt carries its own `x-opencode-session` header, which the route requires (as MC-98 and MC-102). The
 shared engine of the direct campaigns (run_muse13_direct_mc80.execute) schedules the attempts and keeps attempts.jsonl;
 the frozen per-arm scorer then scores the run. `--execute` fails closed unless:
 * the MC-103 heading and detail card exist;
@@ -47,8 +48,14 @@ ROOT = dp.ROOT
 OUTPUT_ROOT = ROOT / "all_res" / "diagnostic_router_loop" / wm.PHASE
 FROZEN_KEYS = ("weakness_config_sha256", "manifest_sha256")
 COMPLETE_FINISHES = frozenset({"stop", "length", "content_filter"})
+SESSION_HEADER = "x-opencode-session"
 Gate = pr.Gate
 base = pr.base
+
+
+def session_id(run_key: str) -> str:
+    """One routing session per attempt, so B's two draws of an item never share one."""
+    return f"vmlu-mc103-{v1.sha256_bytes(run_key.encode('utf-8'))[:16]}"
 
 
 def load_registration(path: Path = wm.REGISTRATION_PATH) -> dict[str, Any]:
@@ -162,7 +169,7 @@ def make_request(student: dict[str, Any], card_id: str, guard: pr.BudgetGuard, o
                 model=base.MODEL,
                 messages=[{"role": "system", "content": student["system_prompt"]},
                           {"role": "user", "content": item.prompt}],
-                max_completion_tokens=cap, stream=False,
+                max_completion_tokens=cap, stream=False, extra_headers={SESSION_HEADER: session_id(item.run_key)},
             )
             if not response.choices:
                 raise ValueError("no_choices")
