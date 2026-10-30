@@ -47,6 +47,25 @@
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).
 
   (2026-10-30: config `a08b5dad…`, manifest `8a13231a…`, card MC-102; the synthetic end-to-end analysis matches the registered report keys. Draw-1 references on the 376 items, token-F1: always-B 72.3, always-S 82.6, rule loop 82.2, Muse alone 82.4, per-item bound 90.4.)
+
+  (2026-10-30 10:10–10:29 +07, one launch at the owner's go-ahead: 376/376 complete, the registered model id in every row, 834,002 Muse tokens. Nine responses hit the 4,096-token cap and one came back empty; none of the ten has a verdict, so each keeps B-r1. Run record appended.)
+
+  (2026-10-30, analysis run once, report SHA-256 `8fe42d10…`.
+  - **Primary, 376 items, token-F1:** critic loop 83.2, rule loop 82.2, +1.1 points (95% bootstrap −1.4 to +3.9; sign-flip p = 0.42); 38 items better, 37 worse, 301 equal. **Reading rule not met: the reading critic stops at the design stage.**
+  - **Vi-DROP:** always-B 52.4, always-S 76.0, rule loop 70.3, critic loop 75.8, Muse alone 73.4, Muse-answer proxy 77.3, bound 84.0.
+  - **Vi-SQuAD:** always-B 92.2, always-S 89.1, rule loop 94.0, critic loop 90.7, Muse alone 91.3, Muse-answer proxy 93.0, bound 96.9.
+  - **Detector** (B-r1 counts as wrong when its token-F1 is below 0.5):
+    - Vi-DROP: 69 of 85 wrong answers caught, with 6 false flags (recall 81%, precision 92%).
+    - Vi-SQuAD: 1 of 9 wrong answers caught, with 11 false flags (recall 11%, precision 8%).
+  - **Prescriptions on `sai`:** `suy_luan` 77 (56 rescued, 3 damaged), `trich_dan` 6 (1 rescued, 3 damaged), `giu` 4. Muse never answered `khong_chac`, so that variant equals the critic loop.
+  - **Cost per item:** Muse 2,218 tokens; Qwen 579 in the critic loop against 1,044 in the rule loop.
+
+  On Vi-DROP, where Qwen errs often (mostly counting and arithmetic), Muse is a good judge and prescribes S, but always-S scores the same without a critic. On Vi-SQuAD, where Qwen is already right 95% of the time, Muse's false flags outnumber its catches, and Q damages correct answers. Muse alone reads no better than Qwen with S (82.4 against 82.6), so it has no edge when judging lookup answers.
+
+  The following are exploratory: they were chosen after seeing the data, on the same items, and are not results.
+  - The fixed per-dataset rule (Vi-DROP → S, Vi-SQuAD → B) scores 84.1.
+  - The critic used on Vi-DROP only scores 84.0.
+  - The critic consulted only when B-r1 and B-r2 disagree scores 79.5.)
 - [ ] 3.1 Implement the critic client with the closed output (verdict, cause, prescription, rationale), its prompt template and the leak check. Verify with mocked-transport tests: malformed or leaking outputs fall back to the rule loop.
 - [ ] 3.2 Write the design-check reading rule before data, run the critic on the calibration items of every student (critic model and endpoint recorded) and score it offline. Report:
   - verdict recall and precision against gold;
