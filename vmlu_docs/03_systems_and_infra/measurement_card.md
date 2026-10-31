@@ -2824,3 +2824,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 4 requests in flight per student; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
 | `details` | `docs/measurement_cards/MC-104-diagnostic-self-loop.md` |
 | `outputs` | `all_res/diagnostic_router_loop/self_loop/`; no upload |
+
+## MC-105 — Qwen3.5-9B-65K (IEC) and MiMo V2.6 Flash (OpenCode Go) / self-improvement loop on the /table suite / before and after on 2,043 main-v1 items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-105` |
+| `status` | Preregistered 2026-10-31 (+07), before benchmark-item requests of this card |
+| `scope` | The 2,043 items of the six main-v1 datasets with local gold, as /table shows them (VMLU valid 744, Legal MC 146, Legal NLI 150, Vi-SQuAD 200, Vi-DROP 200, ViBidLQA test 603), for each of two students. The before is the within-run B with the frozen /table prompt; the after is MC-104's loop, replayed from the logged answers, and the student writes every final answer. Reading answers B twice and uses router v2's agreement. Primary: loop against B in each of 12 student and dataset cells, Holm over the 12. Not held-out: earlier router cards used these items |
+| `harness / tools` | Direct HTTP API, no harness, no tools |
+| `model / route` | Qwen3.5-9B-65K on the IEC endpoint with the campaign transport (Responses API); its multiple-choice B is the MC-43 chat-completions probe with letter log-probabilities. MiMo V2.6 Flash (`mimo-v2.6-flash`) on the direct OpenCode Go route of MC-103. Credentials are never written to outputs |
+| `sampling / limits` | Qwen: temperature 1.0 and 4,096 output tokens; the probe at temperature 0, seed 42, 4 tokens, top 20 log-probabilities. MiMo: provider defaults, `max_completion_tokens=20000`. Both: 300 s timeout, no SDK retries; budget guards of 10,000,000 reported tokens each |
+| `workers / scheduler` | At most 4 requests in flight for Qwen and 6 for MiMo; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-105-diagnostic-table-loop.md` |
+| `outputs` | `all_res/diagnostic_router_loop/table_loop/`; no upload |

@@ -1,0 +1,33 @@
+{
+ "status": "table loop registered",
+ "card_ids": {
+  "table_loop": "MC-105"
+ },
+ "card_files": {
+  "table_loop": "docs/measurement_cards/MC-105-diagnostic-table-loop.md"
+ },
+ "registered_on": {
+  "table_loop": "2026-10-31"
+ },
+ "frozen": {
+  "config_sha256": "1c955756db4f26c70f46953e98c612ed0fc0028cf33e5a414776f8cc47cb2611",
+  "manifest_sha256": {
+   "qwen": "5a4e4e76c3c3949a898edf7b81e75a2d4f54f0ff6ff8ccf95b41668ba81cb9b0",
+   "mimo": "b9fddd9480db40e56bd54a3a8fd7eac2b969d9254e6e6aab86db6c3531644f3b"
+  }
+ },
+ "analysis": {
+  "plan_id": "table-loop-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "datasets",
+   "primary",
+   "vmlu_dev",
+   "cost"
+  ]
+ }
+}

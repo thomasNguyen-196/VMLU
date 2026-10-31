@@ -121,6 +121,8 @@
   - **Build.** `diagnostic_table_loop` holds the items (checked row by row against the frozen main-v1 manifest), the prompts, the two frozen manifests and the loop rules, including the reading rule. `run_table_loop` sends MC-104's requests. `analyze_table_loop` is the registered analysis.
   - **Verify.** `test_diagnostic_table_loop`, `test_run_table_loop` and `test_analyze_table_loop` pass. Multiple choice gives MC-104's answers on every input. Every B prompt is the /table prompt. The offline preflight passes every gate for both students with `endpoint_calls=0`.
 
+  (2026-10-31: configuration `1c955756…`, manifests Qwen `5a4e4e76…` (9,175 attempts) and MiMo `b9fddd94…` (10,215), card MC-105. Both preflights pass all four gates offline, and 15 tests pass. Every probed multiple-choice prompt shows its option letters.)
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).
