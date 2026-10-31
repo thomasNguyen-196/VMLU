@@ -117,6 +117,10 @@
   - **Knowledge**, token-F1 under v3 (B / K top 2 / K top 5 / O): Qwen 15.9 / 55.2 / 62.3 / 62.1; MiMo 23.9 / 64.2 / 60.3 / 73.5. Qwen's K top 5 equals its own-clause ceiling.
   - **Maps.** The point maps of MC-95 and MC-103 did not carry over. On the two dataset cells where a map said B, S did better: Qwen on VM14K (+4.0) and MiMo on VMLU (+2.0).)
 
+- [ ] 2.7 (added 2026-10-31, at the owner's request) MC-105: before and after on the /table suite (decision 12). The loop of MC-104, for the same two students, on the six main-v1 datasets with local gold.
+  - **Build.** `diagnostic_table_loop` holds the items (checked row by row against the frozen main-v1 manifest), the prompts, the two frozen manifests and the loop rules, including the reading rule. `run_table_loop` sends MC-104's requests. `analyze_table_loop` is the registered analysis.
+  - **Verify.** `test_diagnostic_table_loop`, `test_run_table_loop` and `test_analyze_table_loop` pass. Multiple choice gives MC-104's answers on every input. Every B prompt is the /table prompt. The offline preflight passes every gate for both students with `endpoint_calls=0`.
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).

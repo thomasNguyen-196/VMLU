@@ -138,6 +138,13 @@ All three choices are registered, and Phase 3 may tighten them only on calibrati
 - **Students.** Qwen3.5-9B on IEC and MiMo V2.6 Flash on OpenCode Go. The per-model maps of MC-95 and MC-103 are reported beside the loop.
 - **Primary tests.** The loop beats always-B (exact McNemar, Holm over the two students). The loop is no more than 1 point below always-S, with fewer tokens. K with the top 5 beats K with the top 2 on token-F1 under vi-reading-v3 (Holm over the two students).
 
+### 12. Before and after on the /table suite (decided 2026-10-31, MC-105)
+- **The owner's request.** Compare before and after on the datasets /table shows, so the loop's effect reads against the familiar benchmark numbers. The owner chose the six main-v1 datasets with local gold (VMLU valid, Legal MC, Legal NLI, Vi-SQuAD, Vi-DROP, ViBidLQA test; 2,043 items). VMLU test, scored only by vmlu.ai, was left out. The VMLU dev row is MC-104's.
+- **Before and after in one run.** B is the before, with the frozen main-v1 prompt byte for byte, on the same route and settings as the loop. The loop of MC-104 is the after. The numbers /table publishes (MC-83, MC-85) sit beside as a reference only, because their route and settings differ (for example, MC-83 allowed 20,000 output tokens).
+- **Reading.** A free-text answer has no letter to probe. Both students therefore answer B twice, and router v2's normalized-answer-v1 (MC-94) decides agreement, applied to the vi-reading-v3 prediction. Otherwise the rounds are those of MiMo's multiple-choice loop.
+- **Not held-out.** Earlier router cards used 660 of the 744 VMLU valid items, which include the threshold's design data, and every item of the other five datasets (MC-90 to MC-93). The before and after here describe the benchmark numbers; the held-out evidence remains MC-104.
+- **Primary test.** In each of the 12 student and dataset cells, the loop against always-B: exact McNemar for multiple choice, sign-flip on token-F1 for reading, Holm over the 12.
+
 ## Risks / Trade-offs
 
 - [The critic is simply a better model, so the loop adds nothing over asking it] → "Router alone" is a required baseline, and cost is reported beside quality.
