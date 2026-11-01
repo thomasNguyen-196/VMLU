@@ -126,7 +126,7 @@
   (2026-11-01: both runs complete except two MiMo attempts that never returned, scored as no answer by amendment 1 (`a156879`, decided by the owner before the analysis). The analysis was run once, report SHA-256 `388ef842…`; the run record is appended to the MC-105 card. Not held-out: these items designed the router.
   - **Before → after (loop), with always-S beside.** Accuracy for multiple choice; token-F1 under v3 for reading.
     - Qwen: VMLU valid 69.9 → 82.0 (S 80.4); Legal MC 91.1 → 87.0 (S 82.9); Legal NLI 90.7 → 89.3 (S 83.3); Vi-SQuAD 89.7 → 90.0 (S 89.8); Vi-DROP 54.3 → 69.7 (S 75.4); ViBidLQA test 65.0 → 69.7 (S 67.6).
-    - MiMo: VMLU valid 77.8 → 83.2 (S 82.4); Legal MC 91.8 → 92.5 (S 91.8); Legal NLI 89.3 → 88.7 (S 89.3); Vi-SQuAD 89.0 → 91.3 (S 90.6); Vi-DROP 54.0 → 76.0 (S 77.6); ViBidLQA test 72.9 → 78.1 (S 76.6).
+    - MiMo: VMLU valid 77.8 → 83.2 (S 82.4); Legal MC 91.8 → 92.5 (S 91.8); Legal NLI 89.3 → 88.7 (S 89.3); Vi-SQuAD 88.9 → 91.3 (S 90.6); Vi-DROP 54.0 → 76.0 (S 77.6); ViBidLQA test 72.9 → 78.1 (S 76.6).
   - **Primary, Holm over 12.** Met in 6 cells: VMLU valid, Vi-DROP and ViBidLQA test, for both students (all Holm p ≤ 0.0005). Not met on Legal MC, Legal NLI and Vi-SQuAD. On Qwen's Legal MC the loop scored 4.1 points below B (2 rescues, 8 regressions; Holm p 0.55), because S is 8 points worse than B there.
   - **Against always-S.** The loop is above S on VMLU valid, Legal MC, Legal NLI and ViBidLQA test for Qwen, and below S on Vi-DROP (−5.8, −10.4 to −1.3). On Vi-DROP, two agreeing B answers are often agreeing wrong answers, and the loop keeps them.
   - **VMLU dev (MC-104).** Qwen 73.6 → 80.5; MiMo 81.9 → 83.8.)
