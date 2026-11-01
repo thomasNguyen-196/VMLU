@@ -30,7 +30,8 @@ class TestBuild(unittest.TestCase):
         status = {experiment["cards"]: experiment["status"] for experiment in data["experiments"]}
         self.assertEqual(status, {"MC-90, MC-91, MC-92": "not_met", "MC-93": "not_met", "MC-94": "partial",
                                   "MC-95": "not_met", "MC-96": "not_met", "MC-97": "descriptive", "MC-98": "not_met",
-                                  "MC-100": "met", "MC-101": "not_met", "MC-102": "not_met", "MC-103": "descriptive"})
+                                  "MC-100": "met", "MC-101": "not_met", "MC-102": "not_met", "MC-103": "descriptive",
+                                  "MC-104": "partial", "MC-105": "partial"})
         for experiment in data["experiments"]:
             self.assertTrue(experiment["sources"])
             self.assertTrue(all(len(source["sha256"]) == 64 for source in experiment["sources"]))

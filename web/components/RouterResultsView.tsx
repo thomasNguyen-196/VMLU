@@ -28,7 +28,7 @@ function ResultTable({ table }: { table: RouterTable }) {
   return <figure className="mt-4">
     <figcaption className="mb-2 text-[12.5px] font-semibold text-ink-2">{table.title}</figcaption>
     <div className="overflow-x-auto rounded-xl border border-hair bg-card">
-      <table className="w-full border-collapse text-[12px]" style={{ minWidth: 260 + table.columns.length * 130 }}>
+      <table className="w-full border-collapse text-[12px]" style={{ minWidth: 240 + table.columns.length * 112 }}>
         <thead><tr className="border-b border-hair bg-paper text-ink-2">
           <th scope="col" className="min-w-60 px-4 py-2.5 text-left font-semibold">Cách chọn</th>
           {table.columns.map((column) => <th key={column.id} scope="col" className="min-w-28 px-3 py-2.5 text-right font-semibold"><span className="block text-ink">{column.label}</span><span className="mt-0.5 block text-[10px] font-normal text-ink-3">{column.metric} · {fmtInt(column.n)} câu</span></th>)}
@@ -90,7 +90,7 @@ export function RouterResultsView({ results, error }: { results: RouterResults |
     return <p role="alert" className="rounded-xl border border-reject/40 bg-reject-soft p-4 text-[13px] text-reject">Không đọc được dữ liệu router: {error ?? "chưa có file data/router-results.json"}.</p>;
   }
   return <section aria-labelledby="router-title">
-    <h2 id="router-title" className="font-disp text-[21px] font-semibold">Router và chẩn đoán (MC-90 – MC-103)</h2>
+    <h2 id="router-title" className="font-disp text-[21px] font-semibold">Router và chẩn đoán (MC-90 – MC-105)</h2>
     <p className="mt-1 max-w-4xl text-[12.5px] leading-relaxed text-ink-2">Các thí nghiệm tìm cách hỏi model tốt hơn cho từng câu. Mỗi thí nghiệm chạy trên một tập câu riêng nên có bảng riêng; không so điểm giữa hai thí nghiệm khác nhau. Mọi con số lấy từ báo cáo phân tích đã đăng ký của từng thẻ đo.</p>
     <p className="mt-2 max-w-4xl text-[11.5px] leading-relaxed text-ink-3">B: hỏi thẳng · S: suy luận từng bước · Q: trích câu trong đoạn văn rồi đáp · K: kèm bằng chứng do BM25 tự tìm · O: kèm sẵn đúng bằng chứng, chỉ để đo trần. CI95 là khoảng tin cậy 95%; p dưới {fmtNum(results.alpha)} nghĩa là khác biệt khó xảy ra do may rủi. Dòng in đậm là cách đang được thử.</p>
     <div className="mt-4 overflow-x-auto rounded-xl border border-hair bg-card">

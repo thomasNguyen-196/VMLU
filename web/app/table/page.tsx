@@ -7,7 +7,7 @@ import { loadRouterResults, type RouterResults } from "@/lib/router-results.ts";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Bảng benchmark · model × dataset",
-  description: "Bảng Accuracy, EM, F1 và CI95 riêng, theo condition OMP/no tools/temp 1/auto; API trực tiếp chỉ ghép khi cấu hình tương đương. Kèm các thí nghiệm router và chẩn đoán MC-90 – MC-103.",
+  description: "Bảng Accuracy, EM, F1 và CI95 riêng, theo condition OMP/no tools/temp 1/auto; API trực tiếp chỉ ghép khi cấu hình tương đương. Kèm các thí nghiệm router và chẩn đoán MC-90 – MC-105.",
 };
 
 /** The router view reads its own blob; a missing or invalid one shows the error in that view and leaves the others up. */

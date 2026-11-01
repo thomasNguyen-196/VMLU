@@ -1,4 +1,4 @@
-"""Publish the router and diagnosis experiments (MC-90 to MC-103) for the /table page.
+"""Publish the router and diagnosis experiments (MC-90 to MC-105) for the /table page.
 
 NO NUMBER IS TYPED HERE. Every score, interval and p-value is read from the registered analysis report of its card
 (under the gitignored all_res/), and each report's SHA-256 is published beside the numbers it gave. The wording
@@ -41,7 +41,16 @@ REPORTS = {
     "critic": "all_res/diagnostic_router_loop/critic/muse-spark-1-3-contributor/analysis/router_critic_report.json",
     "weakness": "all_res/diagnostic_router_loop/weakness_map/mimo-v2-6-flash/analysis/weakness_map_report.json",
     "reading_v3": "all_res/diagnostic_router_loop/reading_v3/reading_v3_report.json",
+    "self_loop": "all_res/diagnostic_router_loop/self_loop/analysis/self_loop_report.json",
+    "table_loop": "all_res/diagnostic_router_loop/table_loop/analysis/table_loop_report.json",
 }
+SELF_LOOP_MANIFEST = "data/diagnostic_router_loop/self_loop_manifest_qwen_v1.json"
+STUDENTS = (("qwen", "Qwen3.5-9B"), ("mimo", "MiMo V2.6 Flash"))
+LOOP_POLICIES = (("always_B", "Trước: hỏi thẳng (B)", "baseline"), ("loop", "Sau: vòng tự sửa", "candidate"),
+                 ("always_S", "Luôn S", "baseline"), ("always_vote", "Bỏ phiếu: 3 lần S", "baseline"))
+TABLE_DATASETS = {"vi-multimodel-v1-vmlu-valid": "VMLU valid", "vi-multimodel-v1-legal-mc-146": "Legal MC",
+                  "vi-multimodel-v1-legal-nli-150": "Legal NLI", "vi-multimodel-v1-vi-squad-200": "Vi-SQuAD",
+                  "vi-multimodel-v1-vi-drop-200": "Vi-DROP", "vi-multimodel-v1-bidlqa-test": "ViBidLQA test"}
 ARM_LABELS = {"always_B": "luôn B", "always_S": "luôn S", "v2_cascade": "router v2", "B": "B", "S": "S", "Q": "Q"}
 
 
@@ -467,8 +476,138 @@ def weakness_map(src: Sources) -> dict[str, Any]:
             "sources": src.refs("weakness", "reading_v3")}
 
 
+def overall(flags: list[bool]) -> str:
+    return "met" if all(flags) else "partial" if any(flags) else "not_met"
+
+
+def fmt(value: float) -> str:
+    """A score as the page prints it: one decimal, decimal comma."""
+    return f"{value:.1f}".replace(".", ",")
+
+
+def self_loop(src: Sources) -> dict[str, Any]:
+    report = src("self_loop")
+    expect("MC-104", report, card_id="MC-104", plan_id="self-loop-v1")
+    counts = json.loads((src.root / SELF_LOOP_MANIFEST).read_text(encoding="utf-8"))["dataset_counts"]
+    keys = (("vmlu-mqa-dev", "vmlu", "VMLU dev"), ("vm14k-4-options", "vm14k", "VM14K"))
+    tables = []
+    for student, model in STUDENTS:
+        mc = report["multiple_choice"][student]
+        columns = [column(short, label, "Tỷ lệ đúng", counts[key]) for key, short, label in keys]
+        columns.append(column("pooled", "Gộp", "Tỷ lệ đúng", mc["n"]))
+        rows = [row(name, label, role, {**{short: cell(mc["by_dataset"][key][name]["accuracy"],
+                                                       tokens=mc["by_dataset"][key][name]["mean_tokens"])
+                                           for key, short, _ in keys},
+                                        "pooled": cell(mc["pooled"][name]["accuracy"],
+                                                       tokens=mc["pooled"][name]["mean_tokens"])})
+                for name, label, role in LOOP_POLICIES]
+        tables.append(table(f"{model} · trắc nghiệm, câu chưa router nào dùng", columns, rows,
+                            "Dưới mỗi điểm là số token trung bình mỗi câu; vòng tự sửa trả cho mọi lượt hỏi nó dùng."))
+    know = report["knowledge"]
+    columns = [column(student, model, "Token-F1 (v3)", know[student]["n"]) for student, model in STUDENTS]
+    arms = (("B", "Chỉ câu hỏi (B)", "baseline"), ("K2", "Kèm 2 khoản luật BM25 tìm", "baseline"),
+            ("K5", "Kèm 5 khoản luật BM25 tìm", "candidate"), ("O", "Kèm đúng khoản gốc (trần)", "ceiling"))
+    rows = [row(arm, label, role, {student: cell(know[student]["means"][arm]["token_f1"],
+                                                 tokens=know[student]["means"][arm]["mean_tokens"])
+                                   for student, _ in STUDENTS}) for arm, label, role in arms]
+    tables.append(table("Câu hỏi luật không kèm đoạn văn (ViBidLQA train chưa dùng)", columns, rows))
+    def gain(student: str) -> float:
+        """Loop minus always-B in points, from the paired counts rather than two rounded percentages."""
+        mc = report["multiple_choice"][student]
+        return 100 * (mc["loop_vs_B"]["rescues"] - mc["loop_vs_B"]["regressions"]) / mc["n"]
+
+    tests, flags = [], []
+    for student, model in STUDENTS:
+        mc, primary = report["multiple_choice"][student], report["primary"][student]
+        pooled = mc["pooled"]
+        tests.append(test(f"{model}: vòng tự sửa so với hỏi thẳng (gộp)", diff=gain(student),
+                          p=primary["loop_beats_B"]["p_holm"], p_kind="McNemar, Holm", primary=True,
+                          note=f"sửa đúng {mc['loop_vs_B']['rescues']} câu, làm sai {mc['loop_vs_B']['regressions']} câu"))
+        tests.append(test(f"{model}: vòng tự sửa so với luôn S (cần không kém quá 1 điểm và ít token hơn)",
+                          diff=mc["loop_vs_S"]["mean_points"], ci=mc["loop_vs_S"]["ci95_points"], primary=True,
+                          note=f"token: vòng lặp {fmt(pooled['loop']['mean_tokens'])}, luôn S "
+                               f"{fmt(pooled['always_S']['mean_tokens'])}"))
+        k5 = know[student]["k5_vs_k2"]
+        tests.append(test(f"{model}: kèm 5 khoản so với 2 khoản", diff=k5["mean_points"], ci=k5["ci95_points"],
+                          p=primary["k5_beats_k2"]["p_holm"], p_kind="đổi dấu, Holm", primary=True))
+        flags += [primary[name]["met"] for name in ("loop_beats_B", "loop_not_worse_than_S", "k5_beats_k2")]
+    qwen = report["multiple_choice"]["qwen"]["pooled"]
+    k5_mimo = know["mimo"]["k5_vs_k2"]["mean_points"]
+    return {"id": "mc-104", "cards": "MC-104", "title": "Vòng tự sửa của chính model, trên câu mới",
+            "question": ("Để chính model tự sửa (hỏi thẳng; không chắc thì suy luận; còn lệch thì bỏ phiếu), và kèm "
+                         "điều luật cho câu hỏi kiến thức: model có tốt hơn khi tự trả lời thẳng không?"),
+            "student": "Qwen3.5-9B (IEC) và MiMo V2.6 Flash (OpenCode Go); model tự viết mọi câu trả lời cuối",
+            "items": "903 câu chưa router nào dùng: VMLU dev 303, VM14K 300, 300 câu ViBidLQA train hỏi không kèm đoạn văn",
+            "status": settle("MC-104", overall(flags), "partial"),
+            "verdict": (f"Đạt một phần. Với Qwen, vòng tự sửa nâng trắc nghiệm từ {fmt(qwen['always_B']['accuracy'])}% lên "
+                        f"{fmt(qwen['loop']['accuracy'])}%; với MiMo chỉ thêm {fmt(gain('mimo'))} điểm, chưa chắc. Vòng lặp tốn token "
+                        f"hơn luôn S nên không đạt điều kiện rẻ hơn. Kèm 5 khoản luật hơn 2 khoản ở Qwen nhưng "
+                        f"{'kém hơn' if k5_mimo < 0 else 'không hơn rõ'} ở MiMo."),
+            "tables": tables, "tests": tests,
+            "notes": ["Vòng tự sửa được tính lại từ các câu trả lời đã ghi: mỗi câu được hỏi đủ mọi lượt, rồi chỉ tính "
+                      "điểm và token của những lượt vòng lặp thật sự dùng.",
+                      "Qwen \"không chắc\" khi xác suất của chữ cái nó chọn dưới 0,80; MiMo \"không chắc\" khi hai lần hỏi "
+                      "thẳng ra khác nhau."],
+            "sources": src.refs("self_loop")}
+
+
+def table_loop(src: Sources) -> dict[str, Any]:
+    report = src("table_loop")
+    expect("MC-105", report, card_id="MC-105", plan_id="table-loop-v1")
+    if list(report["datasets"]["qwen"]) != list(TABLE_DATASETS):
+        raise _fail("MC-105: the report's datasets differ from the published columns")
+    counts = json.loads((src.root / SELF_LOOP_MANIFEST).read_text(encoding="utf-8"))["dataset_counts"]
+    tables, tests, met = [], [], {}
+    for student, model in STUDENTS:
+        blocks, dev = report["datasets"][student], report["vmlu_dev"][student]
+        columns = [column(key, label, "Tỷ lệ đúng" if blocks[key]["task"] == "multiple_choice" else "Token-F1 (v3)",
+                          blocks[key]["n"]) for key, label in TABLE_DATASETS.items()]
+        columns.append(column("vmlu-dev", "VMLU dev (MC-104)", "Tỷ lệ đúng", counts["vmlu-mqa-dev"]))
+        rows = []
+        for name, label, role in LOOP_POLICIES:
+            cells = {key: cell(blocks[key]["policies"][name][blocks[key]["metric"]],
+                               tokens=blocks[key]["policies"][name]["mean_tokens"]) for key in TABLE_DATASETS}
+            cells["vmlu-dev"] = cell(dev["policies"][name]["accuracy"], tokens=dev["policies"][name]["mean_tokens"])
+            rows.append(row(name, label, role, cells))
+        reference = {key: cell(blocks[key]["table_reference"]["accuracy" if blocks[key]["task"] == "multiple_choice"
+                                                              else "token_f1_v3"]) for key in TABLE_DATASETS}
+        reference["vmlu-dev"] = cell(dev["table_reference"]["accuracy"])
+        rows.append(row("table", "Số /table hiện có (MC-83 / MC-85, cài đặt khác)", "reference", reference))
+        tables.append(table(f"{model} · before / after trên các bộ của /table", columns, rows,
+                            "Trắc nghiệm: tỷ lệ đúng; đọc hiểu: token-F1 theo bộ chấm v3. Dưới mỗi điểm là số token "
+                            "trung bình mỗi câu."))
+        for key, label in TABLE_DATASETS.items():
+            primary = report["primary"][f"{student}:{key}"]
+            kind = "McNemar, Holm 12 ô" if blocks[key]["task"] == "multiple_choice" else "đổi dấu, Holm 12 ô"
+            tests.append(test(f"{model} · {label}: sau so với trước", diff=primary["loop_minus_B_points"],
+                              p=primary["p_holm"], p_kind=kind, primary=True))
+            met[(student, key)] = primary["met"]
+    both = [label for key, label in TABLE_DATASETS.items() if all(met[(student, key)] for student, _ in STUDENTS)]
+    neither = [label for key, label in TABLE_DATASETS.items() if not any(met[(student, key)] for student, _ in STUDENTS)]
+    if len(both) + len(neither) != len(TABLE_DATASETS):
+        raise _fail("MC-105: the published wording assumes each dataset is met for both students or for neither")
+    legal = report["datasets"]["qwen"]["vi-multimodel-v1-legal-mc-146"]["policies"]
+    return {"id": "mc-105", "cards": "MC-105", "title": "Before / after trên các bộ của /table",
+            "question": "Trên đúng các bộ /table đang hiển thị, vòng tự sửa của MC-104 đổi điểm của từng model ra sao?",
+            "student": "Qwen3.5-9B (IEC) và MiMo V2.6 Flash (OpenCode Go); model tự viết mọi câu trả lời cuối",
+            "items": "2.043 câu của 6 bộ main-v1 có đáp án, cùng câu và prompt với /table; không phải câu mới",
+            "status": settle("MC-105", overall(list(met.values())), "partial"),
+            "verdict": (f"Sau tốt hơn trước ở {sum(met.values())}/{len(met)} ô: {', '.join(both)}, ở cả hai model. Ở "
+                        f"{', '.join(neither)} vòng lặp không giúp; với Qwen ở Legal MC còn kém hỏi thẳng "
+                        f"{fmt(legal['always_B']['accuracy'] - legal['loop']['accuracy'])} điểm, vì suy luận từng bước "
+                        f"kém hỏi thẳng ở đó."),
+            "tables": tables, "tests": tests,
+            "notes": ["Trước là câu trả lời thẳng trong cùng lượt chạy, với prompt giống hệt /table; số /table hiện có đo "
+                      "với cài đặt khác nên chỉ để tham khảo.",
+                      "Không phải câu mới: các bộ này đã dùng để thiết kế router (MC-90 – MC-95). Bằng chứng trên câu mới "
+                      "là MC-104.",
+                      "Sửa đổi 1 (quyết định trước khi phân tích): 2 lượt hỏi thẳng của MiMo ở câu VMLU 04-0018 không trả "
+                      "lời trong 300 giây sau 5 lần gửi, nên được chấm là không trả lời."],
+            "sources": src.refs("table_loop", "self_loop")}
+
+
 EXPERIMENTS = (wide, core, router_v2, router_v3, k2, menu, muse_router, legal_oracle, legal_retrieval, critic,
-               weakness_map)
+               weakness_map, self_loop, table_loop)
 
 
 def validate(data: dict[str, Any]) -> None:

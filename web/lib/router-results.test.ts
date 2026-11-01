@@ -8,9 +8,15 @@ describe("router results", () => {
   test("the published blob parses and keeps the registered verdicts", () => {
     const data = parseRouterResults(raw());
     expect(data.experiments.map((experiment) => experiment.cards)).toEqual(
-      ["MC-90, MC-91, MC-92", "MC-93", "MC-94", "MC-95", "MC-96", "MC-97", "MC-98", "MC-100", "MC-101", "MC-102", "MC-103"]);
+      ["MC-90, MC-91, MC-92", "MC-93", "MC-94", "MC-95", "MC-96", "MC-97", "MC-98", "MC-100", "MC-101", "MC-102", "MC-103",
+        "MC-104", "MC-105"]);
     const status = Object.fromEntries(data.experiments.map((experiment) => [experiment.cards, experiment.status]));
-    expect([status["MC-94"], status["MC-100"], status["MC-102"], status["MC-103"]]).toEqual(["partial", "met", "not_met", "descriptive"]);
+    expect([status["MC-94"], status["MC-100"], status["MC-102"], status["MC-103"], status["MC-104"], status["MC-105"]])
+      .toEqual(["partial", "met", "not_met", "descriptive", "partial", "partial"]);
+    const table = data.experiments.find((experiment) => experiment.id === "mc-105")!;
+    expect(table.tables.map((block) => block.rows.map((row) => row.id))).toEqual(
+      [["always_B", "loop", "always_S", "always_vote", "table"], ["always_B", "loop", "always_S", "always_vote", "table"]]);
+    expect(table.tests.filter((entry) => entry.primary)).toHaveLength(12);
     const v2 = data.experiments.find((experiment) => experiment.id === "mc-94")!.tables[0].rows.find((row) => row.id === "v2")!;
     expect(v2.cells.vmlu.score).toBe(76.67);
     expect(data.experiments.every((experiment) => experiment.sources.every((source) => source.path.startsWith("all_res/")))).toBe(true);
