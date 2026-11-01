@@ -11,12 +11,20 @@ Oracle evidence SHALL be stored as one record per item containing, for each prov
 - **WHEN** an oracle record includes the gold option letter or a reviewer rationale
 - **THEN** validation fails and the record is not usable
 
-### Requirement: Eligibility by input insufficiency
-Evidence arms SHALL apply only to items of datasets declared eligible by the campaign protocol (version 1: Legal MC) whose audited input-evidence sufficiency is insufficient. The runner SHALL reject evidence for any other item.
+### Requirement: Eligibility by input insufficiency and valid gold
+Evidence arms SHALL apply only to items of datasets declared eligible by the campaign protocol (version 1: Legal MC) whose audited input-evidence sufficiency is insufficient. The runner SHALL reject evidence for any other item. For the core registration, evidence records SHALL be built from the adjudicated audit and only for eligible anchors whose adjudicated gold validity is valid. When both oracle and retrieved evidence are supplied, they SHALL cover the same items, so that arms O, K and KS run on the same anchors.
 
 #### Scenario: Open-book item
 - **WHEN** an evidence record names a reading item whose prompt already contains its passage
 - **THEN** validation fails with the item key
+
+#### Scenario: Suspect gold gets no evidence arm
+- **WHEN** a Legal MC anchor has insufficient input evidence but adjudicated gold validity `suspect`
+- **THEN** no evidence record is built for it and it keeps arms B and S only
+
+#### Scenario: Oracle and retrieved evidence differ in coverage
+- **WHEN** the core manifest is built with oracle evidence for an anchor that has no retrieved evidence
+- **THEN** manifest construction fails and names the anchor
 
 ### Requirement: Versioned corpus and retrieval trace
 A retrieval corpus SHALL be a versioned, hashed set of documents with provenance, and SHALL NOT contain benchmark answers, model outputs or annotation gold. Every K and KS attempt SHALL record the retrieval configuration hash, the ranked document and chunk identifiers, their scores and the exact text injected.

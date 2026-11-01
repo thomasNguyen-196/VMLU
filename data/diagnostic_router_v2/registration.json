@@ -1,0 +1,55 @@
+{
+  "status": "heldout registered",
+  "card_ids": {
+    "heldout": "MC-94"
+  },
+  "card_files": {
+    "heldout": "docs/measurement_cards/MC-94-diagnostic-router-v2-heldout.md"
+  },
+  "registered_on": {
+    "heldout": "2026-10-27"
+  },
+  "frozen": {
+    "heldout_protocol_sha256": "8944d367f72952d6edb7f336ce8bbbc8a5f5b341489f70830c455210bf6f5379",
+    "campaign_protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+    "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
+    "manifest_sha256": "c933f94e026765dd3bec18ae608dc0743f909bc5e5685203af036da55155ea44"
+  },
+  "router": {
+    "rule_file": "data/diagnostic_router_v2/router_v2.json",
+    "rule_id": "router-v2b-drop-cascade",
+    "rule_sha256": "0585b9a8980f6b906c2abdbcf69652ee7e8f1c51cca24697f9826d2e4ee26b3a",
+    "chosen_from": [
+      "data/diagnostic_router_v2/router_candidates/v2a-cascade.json",
+      "data/diagnostic_router_v2/router_candidates/v2b-drop-cascade.json"
+    ],
+    "report_keys": [
+      "plan_id",
+      "rule_id",
+      "rule_sha256",
+      "manifest_sha256",
+      "v1_equals_always_B",
+      "primary_family",
+      "primary_rotation",
+      "families"
+    ]
+  },
+  "heldout": {
+    "operational": {
+      "max_in_flight": 4,
+      "stop_after_timeouts": 4
+    },
+    "plan_id": "diagnostic-router-v2-heldout-v1",
+    "primary_family": "mc",
+    "primary_rotation": 1,
+    "families": {
+      "mc": [
+        "vi-multimodel-v1-vmlu-valid"
+      ],
+      "reading": [
+        "bidlqa-val"
+      ]
+    }
+  },
+  "note": "MC-94 is the single evaluation of router v2 on items no router has seen (openspec change diagnostic-router-v2). The v1 artifacts and cards MC-90 to MC-93 are not changed."
+}

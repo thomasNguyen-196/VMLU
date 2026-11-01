@@ -9,6 +9,7 @@ import json
 import math
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace as N
 
@@ -89,6 +90,15 @@ class TestPacket(unittest.TestCase):
         self.assertNotEqual(by_stratum, sorted(by_stratum))  # the order carries no stratum information
         self.assertEqual(self.build(), (units, key, design))  # same seed, same packet
         self.assertNotEqual(self.build(seed=7)[0], units)
+
+    def test_the_heldout_packet_reviews_only_the_exact_match_discordance(self):
+        records = population()
+        units, key, design = sr.build_packet(records, sizes=sr.heldout_sizes(records))
+        # MC-94: the 4 rescues (B answer reviewed) and 3 regressions (S answer reviewed); nothing both-inexact
+        self.assertEqual(Counter((k["stratum"], k["arm"]) for k in key), {("R", "B"): 4, ("G", "S"): 3})
+        self.assertEqual(len(units), 7)
+        self.assertEqual(design["population"], {"C": 5, "G": 3, "R": 4, "W_hi:bidlqa": 10, "W_hi:drop": 3, "W_lo": 6})
+        self.assertEqual(design["sampled"], {"G": 3, "R": 4, "W_hi:bidlqa": 0, "W_hi:drop": 0, "W_lo": 0})
 
     def test_the_exact_answer_of_a_discordant_item_is_not_shown(self):
         units, key, _ = self.build()

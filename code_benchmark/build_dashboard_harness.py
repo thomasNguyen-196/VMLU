@@ -1174,9 +1174,10 @@ def build_block(results_dir: Path, arms: list = ARMS) -> dict:
         "benchmark_name": "Harness arm — mỗi model so với chính nó",
         "date": "2026-09-26 → 2026-10-05",
         "model_id": "Qwen3.5-9B-28K · MiMo V2.5 · Qwen3.5-9B-65K",
-        "endpoint": ("Qwen 28K: https://llmapi.iec-uit.com/v1, đã dừng · "
+        # Internal IEC hosts are not published; the route names stay.
+        "endpoint": ("Qwen 28K: IEC (host ẩn), đã dừng · "
                      "MiMo: https://opencode.ai/zen/go/v1 · "
-                     "Qwen 65K: http://llmapi.iec/v1, nội bộ qua VPN"),
+                     "Qwen 65K: IEC (host ẩn), nội bộ qua VPN"),
         "harness": "omp, Oh My Pi, v18.2.7",
         "condition": ("Prompt giữ nguyên so với arm A của cùng model; seed 42; bộ chấm cố định. "
                       "Arm A gọi trực tiếp ở temperature 0. Proxy ghim temperature 0 cho MiMo và "
@@ -1423,8 +1424,9 @@ def main() -> None:
     args = ap.parse_args()
 
     block = build_block(args.results_dir)
-    args.html_out.write_text(render_html(block), encoding="utf-8")
-    print(f"wrote {args.html_out}")
+    if not args.no_html:
+        args.html_out.write_text(render_html(block), encoding="utf-8")
+        print(f"wrote {args.html_out}")
 
     if not args.dashboard.exists():
         raise SystemExit(f"Error: {args.dashboard} not found — refusing to create a blob "

@@ -1,0 +1,77 @@
+{
+  "router_id": "muse-router-v1",
+  "protocol_id": "vmlu-diagnostic-llm-router-labels",
+  "protocol_version": 1,
+  "change": "openspec/changes/diagnostic-llm-router",
+  "purpose": "Design-stage check of the LLM router (MC-98). Muse Spark 1.3 reads the passage and the question of each of the 591 ViBidLQA design items once and returns one group from a closed list. Each group is then mapped to B, Q or S from the student model's draws (MC-90 to MC-92 and MC-97), and the Muse grouping is compared with always-S and with a frozen keyword grouping. No student-model request is sent.",
+  "items": {
+    "dataset": "vi-multimodel-v1-bidlqa-test",
+    "source": "The 591 ViBidLQA test items of the menu set (data/diagnostic_llm_router/menu_q_v1.json), in manifest order. The passage and the question come from the item's frozen main-v1 reading prompt.",
+    "calls_per_item": 1
+  },
+  "groups": [
+    {"id": "so_hieu", "definition": "câu hỏi hỏi số hiệu hoặc tên của một điều, khoản, điểm, chương, mục, hoặc tên một văn bản (ví dụ: \"khoản nào\", \"Điều mấy\", \"văn bản nào quy định\"); đáp án thường nằm ở phần tiêu đề hoặc phần dẫn của đoạn văn."},
+    {"id": "tinh_toan", "definition": "đáp án phải tính, đếm, so sánh hoặc kết hợp nhiều con số hay sự kiện trong đoạn văn, không có sẵn nguyên văn."},
+    {"id": "toan_bo", "definition": "câu hỏi hỏi đầy đủ một danh sách, tất cả các trường hợp hoặc toàn bộ nội dung của một quy định."},
+    {"id": "mot_phan", "definition": "đoạn văn nêu nhiều mục, nhiều trường hợp hoặc một quy định dài, còn câu hỏi chỉ hỏi một mục, một trường hợp hoặc một phần trong đó."},
+    {"id": "dieu_kien", "definition": "câu hỏi hỏi điều kiện, trường hợp, thời điểm áp dụng hoặc hệ quả, và cần đối chiếu nhiều vế của đoạn văn."},
+    {"id": "tra_cuu", "definition": "đáp án là một cụm ngắn có sẵn nguyên văn trong một câu của đoạn văn, như một chủ thể, một thời hạn, một con số được nêu sẵn hoặc một định nghĩa."}
+  ],
+  "prompt": {
+    "template": "Bạn là bộ phân loại câu hỏi đọc hiểu. Đọc đoạn văn và câu hỏi bên dưới, rồi xếp câu hỏi vào đúng một nhóm trong danh sách. Không trả lời câu hỏi.\n\nCác nhóm (nếu câu hỏi khớp nhiều nhóm, chọn nhóm đứng trước trong danh sách):\n<<GROUPS>>\n\nĐoạn văn:\n<<PASSAGE>>\n\nCâu hỏi: <<QUESTION>>\n\nDòng cuối cùng phải đúng một dòng có dạng `Nhóm: <tên nhóm>`, với tên nhóm là một trong: <<GROUP_IDS>>. Không viết gì sau dòng đó.",
+    "group_line": "- <<ID>>: <<DEFINITION>>",
+    "group_ids_separator": ", ",
+    "parse": "The last `Nhóm: <id>` label in the visible response (case-insensitive, backticks and asterisks around the id ignored). An id outside the list, or no label, is unrecognised. format_ok is true when that label is on the last non-empty line."
+  },
+  "route": {
+    "profile_id": "muse-spark-1-3-contributor",
+    "endpoint_host": "opencode.ai",
+    "model_id": "muse-spark-1.3-contributor",
+    "api_protocol": "openai-responses",
+    "stream": false,
+    "system_prompt": null,
+    "temperature": "omitted (provider default)",
+    "reasoning_effort": "omitted (provider default)",
+    "max_output_tokens": 4096,
+    "timeout_seconds": 300,
+    "sdk_retries": 0,
+    "session_header": "x-opencode-session",
+    "max_in_flight": 4,
+    "stop_after_timeouts": 4,
+    "budget_tokens": 3000000,
+    "credential": "the local OpenCode auth store, through run_vi_multimodel_eval._resolve_model; never written to outputs"
+  },
+  "mapping": {
+    "arms": ["B", "Q", "S"],
+    "score": "mean token-F1",
+    "fit": "cross-draw: each group's arm is chosen on the mean token-F1 of one draw of its items and scored on the other draw, both ways, averaged per item",
+    "tie": "within 1e-12, the more thorough arm in the order B < Q < S",
+    "min_group_items": 20,
+    "fallback_arm": "S",
+    "fallback_reason": "S has the best mean token-F1 over all design items (72.4 pooled, 65.9 on ViBidLQA); groups under the minimum size and unrecognised router outputs take it"
+  },
+  "keyword_comparator": {
+    "note": "Written from the MC-97 design draws before any router request, and frozen here. Applied in order to the question after NFC, case folding and whitespace collapse; the first match wins.",
+    "groups": [
+      {"id": "so_dieu_khoan", "pattern": "(điều|khoản|điểm|chương|mục)\\s+(nào|mấy|số mấy|bao nhiêu)|(ở|tại|thuộc|trong) (điều|khoản) nào|quy định (ở|tại) đâu"},
+      {"id": "tinh_dem", "pattern": "bao nhiêu|mấy |tổng|chênh lệch|nhiều hơn|ít hơn|hơn bao|lâu hơn|cách nhau"},
+      {"id": "dinh_nghia", "pattern": "là gì|được hiểu là|nghĩa là|là như thế nào"},
+      {"id": "danh_sach", "pattern": "(những|các)\\s+\\S+(\\s+\\S+)?\\s+nào|gồm (những )?(gì|nội dung gì)|bao gồm"},
+      {"id": "dieu_kien", "pattern": "trường hợp nào|khi nào|điều kiện"},
+      {"id": "chu_the", "pattern": "\\bai\\b|cơ quan nào|chủ thể nào|đơn vị nào|người nào|tổ chức nào|bên nào"}
+    ],
+    "fallback": "khac"
+  },
+  "analysis": {
+    "plan_id": "diagnostic-router-labels-v1",
+    "outputs": [
+      "the distribution of Muse groups, unrecognised outputs and format compliance",
+      "per Muse group: items, the mean token-F1 of B, Q and S over both draws, and the arm chosen on each draw",
+      "routing scores on the 591 items, all cross-draw: the Muse grouping, the keyword grouping, always-B, always-Q and always-S, and the per-item bound (choose each item's arm on one draw, score the other)",
+      "paired per-item differences of the Muse grouping against always-S and against the keyword grouping: mean with a percentile bootstrap interval (2,000 resamples, seed 7) and a two-sided sign-flip p-value (20,000 resamples, seed 7), descriptive because the items are design data",
+      "a table of Muse groups against keyword groups",
+      "router cost: mean input, output and reasoning tokens per call, and latency"
+    ],
+    "reading_rule": "The Muse router is called promising when its cross-draw routing score on the 591 items exceeds always-S by at least 1.0 token-F1 point and exceeds the keyword grouping. Otherwise the router line stops at the design stage."
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "protocol_id": "vmlu-diagnostic-k2-heldout",
+  "protocol_version": 1,
+  "change": "openspec/changes/diagnostic-k2-retrieval",
+  "purpose": "Single evaluation of K2: ViBidLQA train questions asked without their passage, answered closed book (B), with the two BM25 passages of a frozen ViBidLQA passage corpus (K), with the same passages and the S reasoning prompt (KS), and with the question's own passage (O, ceiling), two draws each, under the conditions of the prospective campaign (MC-93); 60 calibration and 300 test items for the K2 calibration procedure.",
+  "parent": {
+    "campaign_protocol": "data/diagnostic_prospective_v1/protocol.json",
+    "prompt_templates": "data/diagnostic_prospective_v1/prompt_templates_v1.json",
+    "retrieval_config": "data/diagnostic_k2/retrieval_k2.json",
+    "calibration_procedure": "data/diagnostic_k2/procedure_k2.json",
+    "excluded_manifest": "data/diagnostic_router_v3/heldout_v3.json",
+    "mirrored_blocks": [
+      "model",
+      "transport",
+      "scoring",
+      "budget"
+    ]
+  },
+  "datasets": [
+    "bidlqa-train-retrieval"
+  ],
+  "sampling": {
+    "bidlqa-train-retrieval": {
+      "source": "v_legal_slsp/bidlqa/ViBidLQA_train.jsonl (sha256 pinned): items whose question appears once across the train, val and test splits, without the ViBidLQA train items of MC-95 (1,488 remain); ids BIDLQA-TR-<source line>",
+      "n": 360,
+      "calibration": 60,
+      "seed": 42,
+      "strata": "none",
+      "rule": "the items with the lowest sha256(seed + tab + dataset:item); the 60 lowest-ranked are the calibration items"
+    }
+  },
+  "phases": {
+    "heldout": {
+      "item_source": "fresh-heldout",
+      "arms": [
+        "B",
+        "K",
+        "KS",
+        "O"
+      ],
+      "replicates": 2,
+      "requires_inference_ready": false
+    }
+  },
+  "prompts": {
+    "closed_book": {
+      "head": "Trả lời câu hỏi sau bằng một cụm từ hoặc số ngắn gọn.\n\n",
+      "question": "Câu hỏi: ",
+      "tail": "\nTrả lời: "
+    },
+    "B": "closed book: head + question label + question + tail",
+    "K": "the frozen main-v1 reading prompt (build_reading_prompt) with the two retrieved passages, in rank order and joined by the retrieval configuration's separator, in the passage slot",
+    "KS": "the frozen S reading prompt (s_reading_head of the campaign templates) on the same two passages",
+    "O": "the frozen main-v1 reading prompt with the item's own passage (the ViBidLQA prompt of MC-95); a ceiling, never deployable"
+  },
+  "model": {
+    "requested_id": "Qwen3.5-9B-65K",
+    "profile_id": "qwen3-5-9b-65k-prospective",
+    "provider": "IEC internal endpoint",
+    "endpoint_host": "llmapi.iec",
+    "endpoint_path": "/v1",
+    "self_reported_id": "/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf",
+    "self_reported_on": "2026-10-22"
+  },
+  "transport": {
+    "api_protocol": "openai-responses",
+    "stream": true,
+    "temperature": 1.0,
+    "seed": null,
+    "reasoning_effort": null,
+    "system_prompt": "Answer the user's question.",
+    "gateway_header": {
+      "x-9router-token-saver": "off"
+    },
+    "sdk_retries": 0,
+    "timeout_seconds": 300,
+    "shards": 4,
+    "lanes": 3,
+    "max_output_tokens": 4096
+  },
+  "scoring": {
+    "final_segment_rule_id": "diagnostic-final-segment-v1",
+    "reading_correct_metric": "em",
+    "semantic_audit_candidate_token_f1": 0.8
+  },
+  "budget": {
+    "item_cap_output_tokens": 4096,
+    "campaign_cap_tokens": 5000000,
+    "campaign_cap_scope": "per run: each phase keeps its own guard, started from the usage already recorded in its own output",
+    "usage_policy": "unknown_not_zero",
+    "currency": null
+  },
+  "analysis": {
+    "plan_id": "diagnostic-k2-heldout-v1",
+    "primary_rotation": 1,
+    "rotations": {
+      "1": "first K draw answers, second K draw is the probe's second answer; first draws of B, KS and O",
+      "2": "second K draw answers, first K draw is the probe's second answer; second draws of B, KS and O (replication, calibration included)"
+    },
+    "calibration": "per rotation, the procedure scores always-B, always-K, the K cascade and always-KS on the 60 calibration items and keeps the best (ties to the more thorough); the choice is emitted as a rule of the closed grammar that routes the 300 test items; calibration items are never test items",
+    "item_outcome": "single draw, as deployment answers",
+    "tests": "primary rotation: the router against always-K and against always-KS on per-item token-F1, two-sided paired sign-flip test with 20,000 Monte Carlo resamples (seed 7), Holm over the two; the confirmatory claim is this pair",
+    "intervals": "mean token-F1 with a 95% percentile bootstrap (2,000 resamples, seed 7); exact match with a Wilson 95% interval",
+    "cost": "mean reported total tokens per test item, both K answers included whenever the probe ran; the calibration cost (B, K twice and KS per calibration item) is reported apart",
+    "descriptive": "always-B (closed book) and O (own passage) as floor and ceiling; per rotation the calibration scores, choice, the best candidate on the test items in hindsight and the regret; retrieval hits (own passage at rank 1, in the top 2) and K, KS and O token-F1 on hits and misses; items whose exact match differs between the router and always-K or always-KS, for an optional AI-assisted semantic review"
+  }
+}

@@ -1,0 +1,127 @@
+{
+ "loop_id": "table-loop-v1",
+ "protocol_id": "vmlu-diagnostic-table-loop",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-loop, decision 12",
+ "purpose": "Before and after on the benchmark suite that /table shows: for each student, the within-run B answer (before) and the self-improvement loop of MC-104 (after), on the six main-v1 datasets with local gold. The student writes every final answer. These items were used to design the router (MC-90 to MC-95), so the comparison is descriptive of the familiar benchmark numbers, not held-out evidence; the held-out evidence is MC-104.",
+ "items": {
+  "source": "the frozen vi-multimodel main-v1 manifest data/vi_multimodel_v1/main_v1.json, the items and prompts of the /table runs",
+  "main_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+  "datasets": {
+   "vi-multimodel-v1-vmlu-valid": 744,
+   "vi-multimodel-v1-legal-mc-146": 146,
+   "vi-multimodel-v1-legal-nli-150": 150,
+   "vi-multimodel-v1-vi-squad-200": 200,
+   "vi-multimodel-v1-vi-drop-200": 200,
+   "vi-multimodel-v1-bidlqa-test": 603
+  },
+  "families": {
+   "multiple_choice": ["vi-multimodel-v1-vmlu-valid", "vi-multimodel-v1-legal-mc-146", "vi-multimodel-v1-legal-nli-150"],
+   "reading": ["vi-multimodel-v1-vi-squad-200", "vi-multimodel-v1-vi-drop-200", "vi-multimodel-v1-bidlqa-test"]
+  },
+  "vmlu_dev": "the VMLU dev row is MC-104's (same loop, same students); it is reported beside, not re-run"
+ },
+ "arms": {
+  "qwen": {
+   "multiple_choice": ["B-r1", "S-r1", "S-r2", "S-r3"],
+   "reading": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"]
+  },
+  "mimo": {
+   "multiple_choice": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"],
+   "reading": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"]
+  }
+ },
+ "arm_meaning": {
+  "B": "the frozen main-v1 prompt, byte for byte the prompt of the /table runs",
+  "S": "the campaign step-by-step template of data/diagnostic_prospective_v1/prompt_templates_v1.json, as in MC-90 to MC-104"
+ },
+ "students": {
+  "qwen": {
+   "profile_id": "qwen3-5-9b-65k-prospective",
+   "route": "the campaign transport of data/diagnostic_prospective_v1/protocol.json (IEC endpoint, Responses API, temperature 1.0, 4,096 output tokens), for every arm except the multiple-choice B",
+   "probe": {
+    "arms": "multiple-choice B-r1",
+    "api_protocol": "openai-chat-completions",
+    "messages": "the user prompt only",
+    "temperature": 0.0,
+    "seed": 42,
+    "max_tokens": 4,
+    "top_logprobs": 20,
+    "confidence": "the probability of the parsed letter, renormalized over the letters the item offers (run_mc_calibration_eval.letter_probs and offered_letters); missing when fewer than two offered letters are visible or the option block cannot be read",
+    "condition_source": "MC-43, as in MC-104"
+   },
+   "max_in_flight": 4,
+   "stop_after_timeouts": 4,
+   "budget_tokens": 10000000
+  },
+  "mimo": {
+   "profile_id": "mimo-v2-6-flash",
+   "model_id": "mimo-v2.6-flash",
+   "provider": "OpenCode Go",
+   "endpoint_host": "opencode.ai",
+   "api_protocol": "openai-chat-completions",
+   "stream": false,
+   "system_prompt": "Answer the user's question.",
+   "max_completion_tokens": 20000,
+   "timeout_seconds": 300,
+   "sdk_retries": 0,
+   "max_in_flight": 6,
+   "stop_after_timeouts": 4,
+   "budget_tokens": 10000000,
+   "model_identity": "mimo"
+  }
+ },
+ "loop": {
+  "agreement": "router v2's normalized-answer-v1 (diagnostic_router.answers_agree): both parsed answers non-empty and equal; multiple choice compares the letter, reading the exact-match normalization of the vi-reading-v3 prediction",
+  "multiple_choice": {
+   "qwen": "MC-104: round 1 keeps B-r1 when its probe confidence is at least 0.80; round 2 keeps B-r1 when S-r1 agrees with it; round 3 takes the majority of S-r1 to S-r3",
+   "mimo": "MC-104: round 1 keeps B-r1 when B-r1 and B-r2 agree; round 2 keeps S-r1 when it agrees with one of them; round 3 takes the majority of S-r1 to S-r3",
+   "threshold": 0.8,
+   "threshold_source": "MC-104's registered rule on 660 VMLU valid items of MC-94 and MC-95, which are among this card's VMLU valid items"
+  },
+  "reading": "both students: round 1 keeps B-r1 when B-r1 and B-r2 agree; round 2 keeps S-r1 when it agrees with one of them; round 3 takes the majority of S-r1 to S-r3 by normalized answer, a tie to the earliest, the earliest attempt of the winning answer final; an empty answer casts no vote, and with no answer S-r1 is final",
+  "final_answer": "always one of the student's own logged answers"
+ },
+ "reference": {
+  "table_conditions": {"qwen": "qwen-direct-mc83-main", "mimo": "mimo26-direct-mc85-main"},
+  "table_vmlu_dev_conditions": {"qwen": "qwen-direct-mc83-vmlu", "mimo": "mimo26-direct-mc85-vmlu"},
+  "source": "web/data/benchmark-reports.json, the published /table numbers (MC-83, MC-85); different route and settings, so a reference only",
+  "vmlu_dev_report": "all_res/diagnostic_router_loop/self_loop/analysis/self_loop_report.json (MC-104)"
+ },
+ "analysis": {
+  "plan_id": "table-loop-v1",
+  "alpha": 0.05,
+  "score": "multiple choice: accuracy by the frozen letter parser; reading: token-F1 under vi-reading-v3 (primary), exact match beside, vi-reading-v2 beside both",
+  "policies": {
+   "always_B": "B-r1, the before",
+   "always_S": "S-r1",
+   "always_vote": "the majority of S-r1 to S-r3 as in round 3",
+   "loop": "the registered loop, the after"
+  },
+  "primary": {
+   "id": "loop_beats_B",
+   "unit": "each student and dataset, 12 tests",
+   "test": "multiple choice: exact two-sided McNemar of the loop against always_B; reading: the mean paired token-F1 difference with a two-sided sign-flip p-value (20,000 resamples, seed 7)",
+   "correction": "Holm over the 12 tests",
+   "met": "Holm p below alpha and the loop scores higher"
+  },
+  "descriptive": [
+   "loop minus always_S and always_vote minus always_S, mean paired difference with a percentile bootstrap interval (2,000 resamples, seed 7)",
+   "mean reported tokens per item of each policy; the loop pays for every request its rounds use, two B answers in round 1 except Qwen's multiple choice",
+   "the rounds the loop used",
+   "the /table number of MC-83 and MC-85 beside each dataset",
+   "MC-104's VMLU dev row beside the six datasets"
+  ],
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "datasets",
+   "primary",
+   "vmlu_dev",
+   "cost"
+  ]
+ }
+}

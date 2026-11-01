@@ -1,0 +1,39 @@
+{
+  "protocol_id": "vmlu-diagnostic-llm-router",
+  "protocol_version": 1,
+  "change": "openspec/changes/diagnostic-llm-router",
+  "purpose": "Design run of the LLM router (MC-97). The new reading arm Q (quote, then answer) answers the 967 reading items of the wide phase (ViBidLQA test 591, Vi-DROP 188, Vi-SQuAD 188) twice, under the conditions of the prospective campaign, so that B, S and Q each have two draws on every design item. The router, which later reads the passage and the question and returns one group, is designed from these draws.",
+  "parent": {
+    "campaign_protocol": "data/diagnostic_prospective_v1/protocol.json",
+    "source_manifest": "data/diagnostic_prospective_v1/wide_v1.json",
+    "inherited_blocks": ["model", "transport", "scoring", "budget"],
+    "inheritance": "The four blocks are read from the campaign protocol, whose SHA-256 the manifest records. They are not copied here."
+  },
+  "datasets": ["vi-multimodel-v1-bidlqa-test", "vi-multimodel-v1-vi-drop-200", "vi-multimodel-v1-vi-squad-200"],
+  "items": "Every wide-phase item of these datasets: the B-r1 rows of wide_v1.json, in manifest order. The item's frozen main-v1 reading prompt, which is its MC-90 B prompt, supplies the passage and the question.",
+  "phases": {
+    "menu": {"arms": ["Q"], "replicates": 2}
+  },
+  "prompts": {
+    "Q": {
+      "head": "Đọc đoạn văn dưới đây và trả lời câu hỏi. Trước hết, chép nguyên văn câu hoặc vế câu trong đoạn văn trả lời trực tiếp câu hỏi vào một dòng có dạng `Trích dẫn: <phần chép nguyên văn>`. Sau đó, từ phần trích dẫn, lấy ra cụm từ hoặc số ngắn nhất trả lời đúng điều được hỏi; không thêm tên văn bản, số điều, số khoản hay lời giải thích nếu câu hỏi không hỏi tới. Dòng cuối cùng phải đúng một dòng có dạng `Trả lời: <cụm từ hoặc số đó>`, không dùng định dạng markdown và không viết thêm gì sau dòng đó.\n\n",
+      "question": "\n\nCâu hỏi: ",
+      "tail": "\n"
+    },
+    "layout": "Q = head + the passage of the frozen reading prompt + question label + question + tail, the layout of the S reading prompt. No gold is sent.",
+    "scoring": "From the text after the last final-answer label, as S on reading (scoring_source raw_last_label), with the frozen V1 reading scorer: exact match and token-F1."
+  },
+  "analysis": {
+    "plan_id": "diagnostic-menu-q-v1",
+    "kind": "Descriptive design analysis. No confirmatory test.",
+    "comparators": "B and S of the wide phase: B-r1 and S-r1 (MC-90), B-r2 (MC-91) and S-r2 (MC-92), on the same items.",
+    "outputs": [
+      "per dataset and arm: mean token-F1 and exact match over the two draws, and mean reported tokens per attempt",
+      "per item: the arm with the highest mean token-F1 over its two draws, and whether the winner of draw 1 wins again on draw 2",
+      "best-of-arms bounds: choose on draw 1 and score draw 2 (and the reverse), and choose and score on the same draws",
+      "the best fixed arm per dataset",
+      "failure types of each arm: over-long, partial, near, wrong and mixed answers, with the token-F1 each loses"
+    ],
+    "use": "The groups that the router returns, and the arm each group maps to, are written from these draws and registered before any router request (a later card)."
+  }
+}

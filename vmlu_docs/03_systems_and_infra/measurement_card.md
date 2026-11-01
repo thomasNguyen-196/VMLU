@@ -2656,3 +2656,185 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures; both limits belong to this card's frozen condition |
 | `details` | `docs/measurement_cards/MC-92-diagnostic-prospective-wide-s-replicate.md` |
 | `outputs` | `all_res/diagnostic_prospective/wide-supplements/wide-s-r2/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-93 — Qwen3.5-9B-65K (IEC) / diagnostic prospective core / B, S, O, K, KS on the 60 audit anchors and router v1
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-93` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | The 60 audit anchors of the locked pilot (12 each: Legal MC, Legal NLI, Vi-SQuAD, Vi-DROP, ViBidLQA); arms B and S on all 60, arms O, K and KS on the 8 evidence anchors (Legal MC, adjudicated input insufficient and gold valid); 3 replicates; 432 attempts. Router v1 (`router_v1.json`, SHA-256 `8140c13e…`: Vi-DROP to S, everything else to B) is evaluated once on these anchors against always-B, always-S and the best fixed arm S |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096` for every arm; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 0.5 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a circuit breaker that pauses the run after 4 consecutive network failures, as MC-91 and MC-92 |
+| `details` | `docs/measurement_cards/MC-93-diagnostic-prospective-core.md` |
+| `outputs` | `all_res/diagnostic_prospective/core/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-94 — Qwen3.5-9B-65K (IEC) / router v2 held-out test / B and S on 600 items no router has seen
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-94` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | 300 VMLU valid items (by category) and 300 ViBidLQA val items (seed 42), never used to design or evaluate a router; arms B and S with two draws each; 2,400 attempts. Single evaluation of router v2 (`router_v2.json`, SHA-256 `0585b9a8…`: Vi-DROP to S, otherwise B answers twice and the item goes to S when the two answers differ) against always-B and always-S; multiple choice is the primary family |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 2 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-93 |
+| `details` | `docs/measurement_cards/MC-94-diagnostic-router-v2-heldout.md` |
+| `outputs` | `all_res/diagnostic_router_v2/heldout/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-95 — Qwen3.5-9B-65K (IEC) / router v3 held-out test / B and S on 1,080 items no router has seen
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-95` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | 360 VMLU valid items outside MC-94 (by category), 360 VM14K four-option items (by category) and 360 ViBidLQA train items (seed 42), each split into 60 calibration and 300 test items, never used to design or evaluate a router; arms B and S with two draws each; 4,320 attempts. Single evaluation of router v3, the calibration procedure `procedure_v3.json` (SHA-256 `470d28a4…`: per dataset, the best of always-B, the v2 cascade and always-S on the calibration items, accuracy for multiple choice and mean token-F1 for reading), against the frozen v2 rule, always-B and always-S; multiple choice is the primary family |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90, MC-93 and MC-94: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 3 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-94 |
+| `details` | `docs/measurement_cards/MC-95-diagnostic-router-v3-heldout.md` |
+| `outputs` | `all_res/diagnostic_router_v3/heldout/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-96 — Qwen3.5-9B-65K (IEC) / K2 retrieval test / B, K, KS and O on 360 ViBidLQA questions without their passage
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-96` |
+| `status` | Preregistered 2026-10-27 (+07), before benchmark-item requests of this card |
+| `scope` | 360 ViBidLQA train questions not used by MC-95, asked without their passage (dataset `bidlqa-train-retrieval`, seed 42), split into 60 calibration and 300 test items; arms B (closed book), K (the two BM25 passages of the frozen 863-passage ViBidLQA corpus in the reading prompt), KS (the same passages, S reading prompt) and O (the own passage, a ceiling), two draws each; 2,880 attempts. Single evaluation of the K2 calibration procedure `procedure_k2.json` (SHA-256 `e7f2daa7…`: the best of always-B, always-K, the K cascade and always-KS by mean token-F1 on the calibration items, ties to the more thorough) against always-K and always-KS |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-95: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 3 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-95 |
+| `details` | `docs/measurement_cards/MC-96-diagnostic-k2-retrieval.md` |
+| `outputs` | `all_res/diagnostic_k2/heldout/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-97 — Qwen3.5-9B-65K (IEC) / LLM router design run / arm Q ("trích rồi đáp") on the 967 wide reading items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-97` |
+| `status` | Preregistered 2026-10-28 (+07), before benchmark-item requests of this card |
+| `scope` | The 967 reading items of the wide phase (ViBidLQA test 591, Vi-DROP 188, Vi-SQuAD 188; the B-r1 rows of `wide_v1.json`), each answered twice with the new reading arm Q: the model copies the part of the passage that answers, then gives the shortest answering phrase on a final `Trả lời:` line; 1,934 attempts. Design run of the LLM router (openspec change `diagnostic-llm-router`): with B and S of MC-90 to MC-92, every design item has two draws of B, S and Q. Descriptive analysis only |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-96: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected about 1.6 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-96 |
+| `details` | `docs/measurement_cards/MC-97-diagnostic-quote-arm-wide.md` |
+| `outputs` | `all_res/diagnostic_llm_router/menu/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-98 — Muse Spark 1.3 (OpenCode Go) / LLM router design check / one group per ViBidLQA design item
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-98` |
+| `status` | Preregistered 2026-10-28 (+07), before benchmark-item requests of this card |
+| `scope` | The 591 ViBidLQA test items of the menu set (wide phase), one router call each: Muse Spark 1.3 reads the item's passage and question and returns one group from the closed list of six in `data/diagnostic_llm_router/router_v1.json`. No student-model request is sent. Each group is mapped to B, Q or S from the student draws of MC-90 to MC-92 and MC-97 (chosen on one draw, scored on the other), and the Muse grouping is compared with always-S and with a frozen keyword grouping. Descriptive design-stage check with a registered reading rule |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, not streamed |
+| `model / route` | Muse Spark 1.3 Contributor (`muse-spark-1.3-contributor`) on the direct OpenCode Go route of MC-86; credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | Temperature, seed and reasoning effort not sent (provider defaults); no system prompt; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 3,000,000 reported tokens (expected about 1 million) |
+| `workers / scheduler` | At most 4 requests in flight; the run halts on 4 consecutive network failures, a changed response model id, an authentication error or the budget guard |
+| `details` | `docs/measurement_cards/MC-98-diagnostic-llm-router-design-check.md` |
+| `outputs` | `all_res/diagnostic_llm_router/labels/muse-spark-1-3-contributor/`; no upload |
+
+## MC-99 — Jev 1.13 Free (OpenCode console) / router signals: pre-hoc question signals and post-hoc answer checks on the 967 wide reading items, plus an offline logprob cascade on VMLU
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-99` |
+| `status` | Preregistered 2026-10-28 (+07), before benchmark-item requests of this card |
+| `scope` | The 967 wide reading items of the menu set (ViBidLQA test 591, Vi-DROP 188, Vi-SQuAD 188). J1: one pre-hoc request per item (passage and question; the six MC-98 groups as a Choice, seven yes/no statements). J2: two post-hoc requests per item (passage, question and the scored B answer of MC-90 or MC-91; four yes/no statements about that answer). 2,901 requests in all, no student-model request, no gold sent. J3 is offline: the MC-43/44 temperature-0 letter confidence against the B and S draws of MC-94 and MC-95 on 660 VMLU items. Descriptive design-stage study with a registered reading rule |
+| `harness / tools` | Direct HTTP API, no harness, no tools; TypeSafe System One request format (`state` and typed `questions`) |
+| `model / route` | Jev 1.13 Free (`jev-1.13-free`) on the OpenCode console System One endpoint (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | No sampling parameters exist for this model; 120 s timeout; the run halts on any response with non-free billing or a non-zero reported cost |
+| `workers / scheduler` | At most 2 requests in flight; 429 and 5xx re-sent after Retry-After (30 s without one), at most 5 times, recorded; the run halts on 4 consecutive network failures, a changed response model, an authentication error or non-free billing |
+| `details` | `docs/measurement_cards/MC-99-diagnostic-router-signals.md` |
+| `outputs` | `all_res/diagnostic_router_signals/jev/jev-1.13-free/`; no upload |
+
+## MC-100 — Qwen3.5-9B-65K (IEC) / Legal MC oracle test / B and O (the governing provision) on 56 Legal MC items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-100` |
+| `status` | Preregistered 2026-10-29 (+07), before benchmark-item requests of this card |
+| `scope` | 56 Legal MC items of the wide phase: stratum `wrong`, all 28 items B missed on at least one of its MC-90 and MC-91 draws; stratum `right`, 28 of the 106 items B answered correctly on both, in fixed hash order. Arms B (the frozen main-v1 MC prompt) and O (the item's governing provisions in the campaign evidence block, then the same prompt; 53 items), two draws each: 218 attempts. Provisions located by four Claude agents blind to the stratum, extracted verbatim by code from stored hethongphapluat.com pages and labelled against the gold; 14 labels reviewed by the project owner (AI-assisted). Evidence `oracle_evidence_v1.jsonl` SHA-256 `367632d7…`. Ceiling test with a registered reading rule and a descriptive gold check |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-96: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected under 0.5 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-96 |
+| `details` | `docs/measurement_cards/MC-100-diagnostic-legal-oracle.md` |
+| `outputs` | `all_res/diagnostic_legal_oracle/run/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-101 — Qwen3.5-9B-65K (IEC) / Legal MC retrieval test / B, K (two BM25 units from a question-based legal corpus) and O on the 134 wide Legal MC items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-101` |
+| `status` | Preregistered 2026-10-29 (+07), before benchmark-item requests of this card |
+| `scope` | The 134 Legal MC items of the wide phase (the MC-100 pool). Arms B (the frozen main-v1 MC prompt), K (the campaign evidence block with the item's top 2 BM25 units, then the same prompt) and O (MC-100's oracle provisions, then the same prompt; 53 items), two draws each: 642 attempts. Corpus `vi-legal-corpus-lmc-v1`: 303 hethongphapluat.com documents chosen by four Claude agents from the question stems only (no options, no gold), 24,265 units read verbatim by code (SHA-256 `66e4a349…`); BM25 with the corpus v0 settings, untuned; K evidence `97d058b2…`. Before registration, hit@2 against the MC-100 oracle articles was 40 of 53. Primary test: always-K against always-B over the 134 items, with a registered reading rule for the Legal MC route |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-100: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 5,000,000 reported tokens for this run (expected under 1 million) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-100 |
+| `details` | `docs/measurement_cards/MC-101-diagnostic-legal-retrieval.md` |
+| `outputs` | `all_res/diagnostic_legal_retrieval/run/qwen3-5-9b-65k-prospective/`; no upload |
+
+## MC-102 — Muse Spark 1.3 (OpenCode Go) / router-critic design check / judging Qwen3.5-9B's logged first answers on 376 Vi-DROP and Vi-SQuAD items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-102` |
+| `status` | Preregistered 2026-10-30 (+07), before benchmark-item requests of this card |
+| `scope` | The 376 Vi-DROP (188) and Vi-SQuAD (188) items of the menu set. One critic call per item: Muse reads the passage, the question and Qwen's logged B-r1 answer (MC-90), judges it by meaning and prescribes keep, S or Q on three closed lines. The loop is replayed with Qwen's logged draw-1 answers (B, S, Q), so no student request is sent and no gold is sent. Primary: critic loop against the rule loop (B twice, S on disagreement) on token-F1, with a registered reading rule. Design-stage check, not held-out |
+| `harness / tools` | Direct HTTP API, no harness, no tools; OpenAI Responses API, non-streaming |
+| `model / route` | Muse Spark 1.3 Contributor (`muse-spark-1.3-contributor`) on the direct OpenCode Go route (host `opencode.ai`), as MC-98; credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | Temperature and reasoning effort omitted (provider defaults); `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 2,000,000 reported tokens (expected about 1.2 million) |
+| `workers / scheduler` | At most 4 requests in flight; breaker after 4 consecutive network failures; halt on an authentication error or a changed response model |
+| `details` | `docs/measurement_cards/MC-102-diagnostic-router-critic.md` |
+| `outputs` | `all_res/diagnostic_router_loop/critic/muse-spark-1-3-contributor/`; no upload |
+
+## MC-103 — MiMo V2.6 Flash (OpenCode Go) / weakness map / B twice, S and Q on the 180 MC-95 calibration items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-103` |
+| `status` | Preregistered 2026-10-30 (+07), before benchmark-item requests of this card |
+| `scope` | The 180 calibration items of MC-95 (VMLU valid 60, VM14K 60, ViBidLQA train 60), where Qwen3.5-9B's B and S answers are logged. MiMo answers B twice and S once on every item, and Q once on the ViBidLQA items, with MC-95's prompts byte for byte and MC-97's Q builder: 600 attempts. The registered analysis builds MiMo's weakness map per dataset and compares it with Qwen's on the same items. Descriptive; no rule decides |
+| `harness / tools` | Direct HTTP API, no harness, no tools; chat-completions API, non-streaming |
+| `model / route` | MiMo V2.6 Flash (`mimo-v2.6-flash`) on the direct OpenCode Go route (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | Temperature, reasoning effort and seed omitted (provider defaults, thinking mode); system prompt `Answer the user's question.`; `max_completion_tokens=20000`; 300 s timeout; no SDK retries; budget guard 6,000,000 reported tokens |
+| `workers / scheduler` | At most 4 requests in flight; breaker after 4 consecutive network failures; halt on an authentication error, a model id without `mimo`, or a model id change |
+| `details` | `docs/measurement_cards/MC-103-diagnostic-weakness-map-mimo.md` |
+| `outputs` | `all_res/diagnostic_router_loop/weakness_map/mimo-v2-6-flash/`; no upload |
+
+## MC-104 — Qwen3.5-9B-65K (IEC) and MiMo V2.6 Flash (OpenCode Go) / self-improvement loop / evidence for knowledge questions and gated reasoning for multiple choice on 903 unused items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-104` |
+| `status` | Preregistered 2026-10-30 (+07), before benchmark-item requests of this card |
+| `scope` | 903 items no router has used, for each of two students: 300 ViBidLQA train questions asked without their own passage (arms B, K with the top 2 and the top 5 BM25 clauses, O), the 303 VMLU dev items and 300 unused VM14K items (B and three S answers). The loop (B; S when unsure; a majority of three S answers when S disagrees) is replayed from the logged answers; the student writes every final answer. Primary: loop against always-B and always-S, and K top 5 against K top 2 |
+| `harness / tools` | Direct HTTP API, no harness, no tools |
+| `model / route` | Qwen3.5-9B-65K on the IEC endpoint with the campaign transport (Responses API); its multiple-choice B is the MC-43 chat-completions probe with letter log-probabilities. MiMo V2.6 Flash (`mimo-v2.6-flash`) on the direct OpenCode Go route of MC-103. Credentials are never written to outputs |
+| `sampling / limits` | Qwen: temperature 1.0 and 4,096 output tokens; the probe at temperature 0, seed 42, 4 tokens, top 20 log-probabilities. MiMo: provider defaults, `max_completion_tokens=20000`. Both: 300 s timeout, no SDK retries; budget guards of 5,000,000 (Qwen) and 6,000,000 (MiMo) reported tokens |
+| `workers / scheduler` | At most 4 requests in flight per student; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-104-diagnostic-self-loop.md` |
+| `outputs` | `all_res/diagnostic_router_loop/self_loop/`; no upload |
+
+## MC-105 — Qwen3.5-9B-65K (IEC) and MiMo V2.6 Flash (OpenCode Go) / self-improvement loop on the /table suite / before and after on 2,043 main-v1 items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-105` |
+| `status` | Preregistered 2026-10-31 (+07), before benchmark-item requests of this card |
+| `scope` | The 2,043 items of the six main-v1 datasets with local gold, as /table shows them (VMLU valid 744, Legal MC 146, Legal NLI 150, Vi-SQuAD 200, Vi-DROP 200, ViBidLQA test 603), for each of two students. The before is the within-run B with the frozen /table prompt; the after is MC-104's loop, replayed from the logged answers, and the student writes every final answer. Reading answers B twice and uses router v2's agreement. Primary: loop against B in each of 12 student and dataset cells, Holm over the 12. Not held-out: earlier router cards used these items |
+| `harness / tools` | Direct HTTP API, no harness, no tools |
+| `model / route` | Qwen3.5-9B-65K on the IEC endpoint with the campaign transport (Responses API); its multiple-choice B is the MC-43 chat-completions probe with letter log-probabilities. MiMo V2.6 Flash (`mimo-v2.6-flash`) on the direct OpenCode Go route of MC-103. Credentials are never written to outputs |
+| `sampling / limits` | Qwen: temperature 1.0 and 4,096 output tokens; the probe at temperature 0, seed 42, 4 tokens, top 20 log-probabilities. MiMo: provider defaults, `max_completion_tokens=20000`. Both: 300 s timeout, no SDK retries; budget guards of 10,000,000 reported tokens each |
+| `workers / scheduler` | At most 4 requests in flight for Qwen and 6 for MiMo; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-105-diagnostic-table-loop.md` |
+| `outputs` | `all_res/diagnostic_router_loop/table_loop/`; no upload |

@@ -25,11 +25,14 @@ Written and tested before any prospective data exist. The plan is fixed in the c
   noise floor. It never replaces the registered S-versus-B analysis of MC-90;
 * wide supplement MC-92 (a second S draw of every item): `s_noise_reference` adds the sampling noise of S itself,
   a comparison of how often B and S change their result between two draws, the items one arm wins in both draws,
-  the S-versus-B effect over two draws per arm and the oracle ceiling over each arm's own two draws.
+  the S-versus-B effect over two draws per arm and the oracle ceiling over each arm's own two draws;
+* core, design Decision 12: `recovery_by_hypothesis` groups the anchors by adjudicated hypothesis, reports the
+  rescues and regressions per arm and lists contrast candidates for a reviewer; it never upgrades a hypothesis.
 
 Usage: .venv/bin/python -m code_benchmark.analyze_diagnostic_prospective --scores <scores.jsonl> --phase core
        ... --phase wide --scores <MC-90 scores.jsonl> --noise-scores <MC-91 scores.jsonl> --noise-out <json>
        ... --s-noise-scores <MC-92 scores.jsonl> --s-noise-out <json>   (needs --noise-scores)
+       ... --phase core --diagnosis <anchor_diagnosis_v1.jsonl> --diagnosis-out <json>
 """
 from __future__ import annotations
 
@@ -664,6 +667,81 @@ def format_s_noise_report(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+# ---------------------------------------------------------------- recovery by diagnostic hypothesis (core, Decision 12)
+
+HYPOTHESIS_PLAN_ID = "diagnostic-prospective-recovery-by-hypothesis-v1"
+HYPOTHESIS_REPORT_KEYS = ("plan_id", "anchor_diagnosis_sha256", "descriptive", "audited_answers", "groups",
+                          "contrast_candidates", "not_reproduced")
+# Matched contrasts the core arms provide for a recorded hypothesis: (arm, its baseline, required input sufficiency).
+MATCHED_CONTRASTS = {"reasoning_gap": ("S", "B", "sufficient"),
+                     "reading_representation_gap": ("S", "B", "sufficient"),
+                     "external_evidence_gap": ("O", "B", "insufficient")}
+
+
+def _candidate(key: str, record: dict[str, Any], label: str, contrast: str) -> dict[str, Any]:
+    return {"item_key": key, "label": label, "contrast": contrast,
+            "hypothesis_recorded": label in record["diagnostic_labels"],
+            "status": record["hypothesis_status"].get(label)}
+
+
+def recovery_by_hypothesis(rows: Iterable[dict[str, Any]], diagnosis: dict[str, dict[str, Any]],
+                           diagnosis_sha256: str) -> dict[str, Any]:
+    """Descriptive recovery per adjudicated hypothesis on core, plus contrast candidates for a reviewer. The audit
+    judged the historical B answer, so an issue anchor whose new B majority is correct is reported as not
+    reproduced. Nothing here changes a hypothesis status: a candidate becomes contrast_supported only through the
+    audit's contrast records."""
+    groups = group_attempts(rows)
+    outcomes = {pair: item_outcome(attempts)[0] for pair, attempts in groups.items()}
+    missing = sorted(key for key in diagnosis if (BASELINE, key) not in outcomes)
+    if missing:
+        raise SystemExit(f"Error: no B attempt for anchors {missing[:3]} ({len(missing)} in all)")
+    arms = [arm for arm in dp.ARMS if arm != BASELINE and any(a == arm for (a, _) in outcomes)]
+    members: dict[str, list[str]] = defaultdict(list)
+    for key, record in diagnosis.items():
+        if record["diagnostic_outcome"] != "issue_observed":
+            members[record["diagnostic_outcome"]].append(key)
+        elif not record["diagnostic_labels"]:
+            members["issue_without_hypothesis"].append(key)
+        for label in record["diagnostic_labels"]:
+            members[label].append(key)
+    report_groups = {}
+    for name, keys in sorted(members.items()):
+        per_arm = {}
+        for arm in arms:
+            paired = [key for key in keys if (arm, key) in outcomes]
+            if paired:
+                per_arm[arm] = {"paired": len(paired),
+                                "rescues": sum(not outcomes[(BASELINE, k)] and outcomes[(arm, k)] for k in paired),
+                                "regressions": sum(outcomes[(BASELINE, k)] and not outcomes[(arm, k)] for k in paired)}
+        report_groups[name] = {
+            "anchors": len(keys), "b_majority_incorrect": sum(not outcomes[(BASELINE, k)] for k in keys),
+            "not_reproduced": sum(diagnosis[k]["diagnostic_outcome"] == "issue_observed" and outcomes[(BASELINE, k)]
+                                  for k in keys),
+            "arms": per_arm,
+            "no_arm_correct": sum(not any(outcomes.get((arm, k), False) for arm in (BASELINE, *arms)) for k in keys),
+            "items": sorted(keys)}
+    candidates = []
+    for key, record in sorted(diagnosis.items()):
+        if record["diagnostic_outcome"] != "issue_observed":
+            continue
+        for label in record["diagnostic_labels"]:
+            if label not in MATCHED_CONTRASTS:
+                continue
+            arm, base, sufficiency = MATCHED_CONTRASTS[label]
+            if (record["input_evidence_sufficiency"] == sufficiency and (arm, key) in outcomes
+                    and outcomes[(arm, key)] and not outcomes[(base, key)]):
+                candidates.append(_candidate(key, record, label, f"{arm} correct where {base} is incorrect"))
+        if outcomes.get(("O", key)) and outcomes.get(("K", key)) is False:
+            candidates.append(_candidate(key, record, "retrieval_gap", "K incorrect where O is correct"))
+        if len({attempt_correct(a) for a in groups[(BASELINE, key)]}) > 1:
+            candidates.append(_candidate(key, record, "run_instability", "B replicates disagree"))
+    return {"plan_id": HYPOTHESIS_PLAN_ID, "anchor_diagnosis_sha256": diagnosis_sha256, "descriptive": True,
+            "audited_answers": "historical MC-72 B outputs; the groups set them against the new core arms",
+            "groups": report_groups, "contrast_candidates": candidates,
+            "not_reproduced": sorted(key for key, record in diagnosis.items()
+                                     if record["diagnostic_outcome"] == "issue_observed" and outcomes[(BASELINE, key)])}
+
+
 def format_report(report: dict[str, Any]) -> str:
     def pct(x):
         return "-" if x is None else f"{100 * x:.1f}%"
@@ -718,11 +796,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--s-noise-scores", type=Path,
                         help="scores.jsonl of the S-replicate supplement (MC-92); needs --noise-scores (the second B draw)")
     parser.add_argument("--s-noise-out", type=Path, help="write the S-replicate report as JSON")
+    parser.add_argument("--diagnosis", type=Path,
+                        help="core: anchor_diagnosis_v1.jsonl; adds the recovery-by-hypothesis analysis")
+    parser.add_argument("--diagnosis-out", type=Path, help="write the recovery-by-hypothesis report as JSON")
     args = parser.parse_args(argv)
     if args.noise_scores and args.phase != "wide":
         parser.error("--noise-scores applies to the wide phase (supplement wide-b-r2)")
     if args.s_noise_scores and not (args.noise_scores and args.phase == "wide"):
         parser.error("--s-noise-scores applies to the wide phase and needs --noise-scores")
+    if args.diagnosis and args.phase != "core":
+        parser.error("--diagnosis applies to the core phase (the audit anchors)")
     rows = [json.loads(line) for line in args.scores.read_text(encoding="utf-8").splitlines() if line.strip()]
     report = analyze(rows, phase=args.phase)
     print(format_report(report))
@@ -738,6 +821,16 @@ def main(argv: list[str] | None = None) -> int:
             print("\n" + format_s_noise_report(s_noise))
             if args.s_noise_out:
                 args.s_noise_out.write_text(json.dumps(s_noise, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if args.diagnosis:
+        diagnosis, digest = dp.load_anchor_diagnosis(args.diagnosis)
+        by_hypothesis = recovery_by_hypothesis(rows, diagnosis, digest)
+        for name, group in by_hypothesis["groups"].items():
+            arms = ", ".join(f"{arm} +{v['rescues']}/-{v['regressions']}" for arm, v in group["arms"].items())
+            print(f"{name}: {group['anchors']} anchors, B incorrect {group['b_majority_incorrect']}, "
+                  f"not reproduced {group['not_reproduced']}, no arm correct {group['no_arm_correct']}; {arms}")
+        print(f"contrast candidates for a reviewer: {len(by_hypothesis['contrast_candidates'])}")
+        if args.diagnosis_out:
+            args.diagnosis_out.write_text(json.dumps(by_hypothesis, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.out:
         args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.discordant_out:

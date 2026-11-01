@@ -1,5 +1,7 @@
 """Blind, AI-assisted semantic review of the reading answers behind the MC-90 exact-match discordance
-(openspec change: diagnostic-prospective-campaign, tasks 12.x).
+(openspec change: diagnostic-prospective-campaign, tasks 12.x), reused for the router v2 held-out run (MC-94,
+openspec change diagnostic-router-v2): there the packet holds only the items whose exact match differs between B
+and S (strata R and G, censuses), as the held-out analysis registered.
 
 Exact match counts a paraphrase or an added qualifier as wrong, so the EM rescues and regressions of S against B can
 overstate or understate the real change. This module (1) builds a seeded, blind review packet, (2) reads the labels
@@ -16,6 +18,7 @@ Design, fixed before any label exists:
   in shuffled order.
 
   .venv/bin/python -m code_benchmark.diagnostic_semantic_review build --run-dir <MC-90 run dir> --out-dir <dir>
+  .venv/bin/python -m code_benchmark.diagnostic_semantic_review build --heldout   # MC-94, R and G only
   .venv/bin/python -m code_benchmark.diagnostic_semantic_review aggregate --out-dir <dir> --labels A.jsonl B.jsonl \\
       [--adjudicated C.jsonl]
 """
@@ -30,15 +33,19 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from code_benchmark import diagnostic_heldout as dh
     from code_benchmark import vi_multimodel as v1
 except ImportError:  # executed from code_benchmark/
+    import diagnostic_heldout as dh
     import vi_multimodel as v1
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RUN_DIR = ROOT / "all_res" / "diagnostic_prospective" / "wide" / "qwen3-5-9b-65k-prospective"
+HELDOUT_RUN_DIR = ROOT / "all_res" / "diagnostic_router_v2" / "heldout" / "qwen3-5-9b-65k-prospective"
 SEED = 42
 F1_SPLIT = 0.5
 SAMPLE_SIZES = {"W_hi:bidlqa": 70, "W_lo": 30}  # every other non-C stratum is taken whole
+HELDOUT_STRATA = ("R", "G")  # MC-94: the exact-match discordance of the first draw pair, nothing sampled
 BATCH_UNITS = 126
 CANDIDATE_CHARS = 500
 LABELS = ("correct", "partial", "incorrect")
@@ -129,6 +136,11 @@ def choose(strata: dict[str, list[dict[str, Any]]], seed: int, sizes: dict[str, 
     return chosen
 
 
+def heldout_sizes(records: list[dict[str, Any]]) -> dict[str, int]:
+    """Sample size 0 for every stratum outside HELDOUT_STRATA, so only the discordant items are reviewed."""
+    return {name: 0 for name in {stratum_of(record) for record in records} if name not in HELDOUT_STRATA}
+
+
 def candidate_text(text: str) -> str:
     text = " ".join(text.split())
     return text if len(text) <= CANDIDATE_CHARS else text[:CANDIDATE_CHARS].rstrip() + " …"
@@ -169,11 +181,15 @@ def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 
 
-def build(run_dir: Path, out_dir: Path, seed: int = SEED) -> dict[str, Any]:
+def build(run_dir: Path, out_dir: Path, seed: int = SEED, *, heldout: bool = False) -> dict[str, Any]:
     scores_path = run_dir / "scores.jsonl"
     rows = [json.loads(line) for line in scores_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    records = reading_records(rows, v1.rebuild_items("main"))
-    units, key, design = build_packet(records, seed=seed)
+    if heldout:
+        records = reading_records(rows, {item.run_key: item for item in dh.sample_items(dh.load_protocol())})
+        units, key, design = build_packet(records, seed=seed, sizes=heldout_sizes(records))
+    else:
+        records = reading_records(rows, v1.rebuild_items("main"))
+        units, key, design = build_packet(records, seed=seed)
     design["scores_sha256"] = v1.sha256_file(scores_path)
     out_dir.mkdir(parents=True, exist_ok=True)
     write_jsonl(out_dir / "packet.jsonl", units)
@@ -329,16 +345,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     b = sub.add_parser("build", help="write the blind packet, the key and the batches")
-    b.add_argument("--run-dir", type=Path, default=DEFAULT_RUN_DIR)
+    b.add_argument("--run-dir", type=Path, default=None, help=f"default: {DEFAULT_RUN_DIR} (with --heldout: {HELDOUT_RUN_DIR})")
     b.add_argument("--out-dir", type=Path, default=None)
     b.add_argument("--seed", type=int, default=SEED)
+    b.add_argument("--heldout", action="store_true", help="the router v2 held-out run: discordant reading items only")
     a = sub.add_parser("aggregate", help="unblind the labels and estimate the semantic effect")
     a.add_argument("--out-dir", type=Path, required=True)
     a.add_argument("--labels", type=Path, nargs=2, required=True, metavar=("A", "B"))
     a.add_argument("--adjudicated", type=Path, default=None)
     args = parser.parse_args(argv)
     if args.command == "build":
-        design = build(args.run_dir, args.out_dir or args.run_dir / "semantic_review", args.seed)
+        run_dir = args.run_dir or (HELDOUT_RUN_DIR if args.heldout else DEFAULT_RUN_DIR)
+        design = build(run_dir, args.out_dir or run_dir / "semantic_review", args.seed, heldout=args.heldout)
         print(json.dumps({k: design[k] for k in ("population", "sampled", "units", "batches")}, ensure_ascii=False))
         return 0
     report = aggregate(args.out_dir, args.labels, args.adjudicated)

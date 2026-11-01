@@ -27,7 +27,7 @@ The runner SHALL send no request unless `--execute` is passed. Without it the ru
 - **THEN** it prints the item, arm and attempt counts, reports `endpoint_calls=0` and performs no network access
 
 ### Requirement: Fail-closed execution gates
-With `--execute` the runner SHALL refuse to start unless all of these hold: the campaign's measurement-card heading exists in `measurement_card.md` and its detail card file exists; the configured endpoint root host and model id equal those named by the card; the manifest, prompt-template and evidence hashes equal the frozen values; and, for the `core` phase, the diagnostic readiness report states `inference_ready` true.
+With `--execute` the runner SHALL refuse to start unless all of these hold: the campaign's measurement-card heading exists in `measurement_card.md` and its detail card file exists; the configured endpoint root host and model id equal those named by the card; the manifest, prompt-template and evidence hashes equal the frozen values; and, for the `core` phase, the diagnostic readiness report states `inference_ready` true and the router rule file exists with the SHA-256 recorded in the core registration entry. The prospective controls are resolved in `data/diagnostic_v1/readiness_controls_v1.json`, which names the SHA-256 of `data/diagnostic_v1/protocol.json` and resolves exactly the controls that file leaves unset; `protocol.json` is never edited for them, because its hash binds the pilot.
 
 #### Scenario: Unregistered campaign cannot run
 - **WHEN** `--execute` is passed and the card heading is absent from `measurement_card.md`
@@ -36,6 +36,14 @@ With `--execute` the runner SHALL refuse to start unless all of these hold: the 
 #### Scenario: Core waits for the audit
 - **WHEN** `--execute` is passed for `core` while `inference_ready` is false
 - **THEN** the runner exits before any request and lists the readiness blockers
+
+#### Scenario: Controls written for another protocol
+- **WHEN** the controls file names a protocol SHA-256 other than that of `data/diagnostic_v1/protocol.json`, or leaves a control without a value
+- **THEN** the readiness gate fails naming the problem and no core request is sent
+
+#### Scenario: Core waits for a frozen router rule
+- **WHEN** `--execute` is passed for `core` and the router rule file is missing or its SHA-256 differs from the core registration entry
+- **THEN** the runner exits before any request and states which gate failed
 
 ### Requirement: Frozen condition and resumable runs
 The runner SHALL write a `condition.json` before the first request containing model, endpoint host, transport, sampling, caps, prompt-template, manifest, evidence, scorer and runner hashes. A resumed run SHALL proceed only when every inference setting is unchanged. Completed attempts, including truncated or unparsed ones, SHALL NOT be retried automatically.
@@ -95,3 +103,23 @@ A supplement SHALL re-run arms of an already registered phase under further repl
 #### Scenario: Registered limits cannot be loosened
 - **WHEN** a supplement registers a cap of four simultaneous requests and a launch asks for another value, or a resume would change the registered limits
 - **THEN** the launch or the resume is refused
+
+### Requirement: Campaign outputs as diagnostic ledger sources
+Each completed campaign run SHALL be declared in the diagnostic source registry as its own source with adapter `campaign-arms-v1`. The entry SHALL name the run's phase, its supplement or none, its manifest and the parent manifest with their hashes, and, for core, its evidence files.
+
+A ledger SHALL be published only when all of these hold:
+
+- A fresh build of the phase or supplement from frozen inputs reproduces the registered manifest.
+- Every prediction carries the manifest prompt hash, and the prompt that was sent hashes to it.
+- K and KS rows carry the retrieval trace that the evidence file gives.
+- Re-scoring with the campaign scorer reproduces every score row and every per-arm dataset summary.
+
+The ledger SHALL keep one row per expected observation, with its arm.
+
+#### Scenario: Evidence differs from the run's
+- **WHEN** the oracle or retrieved evidence file no longer gives the evidence the core manifest was built with
+- **THEN** the phase cannot be rebuilt and no ledger is published
+
+#### Scenario: Changed format count
+- **WHEN** a supplied per-arm summary reports a format-compliance count that the campaign scorer does not reproduce
+- **THEN** publication fails, and the error names the arm and the dataset

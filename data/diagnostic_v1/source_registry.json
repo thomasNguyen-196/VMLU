@@ -41,6 +41,98 @@
         "vi-multimodel-v1-vi-drop-200",
         "vi-multimodel-v1-bidlqa-test"
       ]
+    },
+    {
+      "source_run_id": "qwen-mc90-wide",
+      "family": "diagnostic-prospective-v1",
+      "model_identity": "Qwen3.5-9B-65K",
+      "run_dir": "all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective",
+      "manifest_path": "data/diagnostic_prospective_v1/wide_v1.json",
+      "parent_manifest_path": "data/vi_multimodel_v1/main_v1.json",
+      "expected_manifest_sha256": "d5f022d63d641ceb635882537f914c6e7e9df17a1695649f0dd6b67432e5c297",
+      "expected_parent_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+      "expected_n": 2478,
+      "measurement_card_id": "MC-90",
+      "adapter": "campaign-arms-v1",
+      "phase": "wide",
+      "supplement_id": null,
+      "datasets": [
+        "vi-multimodel-v1-legal-mc-146",
+        "vi-multimodel-v1-legal-nli-150",
+        "vi-multimodel-v1-vi-squad-200",
+        "vi-multimodel-v1-vi-drop-200",
+        "vi-multimodel-v1-bidlqa-test"
+      ]
+    },
+    {
+      "source_run_id": "qwen-mc91-wide-b-r2",
+      "family": "diagnostic-prospective-v1",
+      "model_identity": "Qwen3.5-9B-65K",
+      "run_dir": "all_res/diagnostic_prospective/wide-supplements/wide-b-r2/qwen3-5-9b-65k-prospective",
+      "manifest_path": "data/diagnostic_prospective_v1/wide-b-r2_v1.json",
+      "parent_manifest_path": "data/vi_multimodel_v1/main_v1.json",
+      "expected_manifest_sha256": "cca8d250a6864294b353f4ca90edf0e826b5f3647e413e4d52b70339215c3986",
+      "expected_parent_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+      "expected_n": 1239,
+      "measurement_card_id": "MC-91",
+      "adapter": "campaign-arms-v1",
+      "phase": "wide",
+      "supplement_id": "wide-b-r2",
+      "datasets": [
+        "vi-multimodel-v1-legal-mc-146",
+        "vi-multimodel-v1-legal-nli-150",
+        "vi-multimodel-v1-vi-squad-200",
+        "vi-multimodel-v1-vi-drop-200",
+        "vi-multimodel-v1-bidlqa-test"
+      ]
+    },
+    {
+      "source_run_id": "qwen-mc92-wide-s-r2",
+      "family": "diagnostic-prospective-v1",
+      "model_identity": "Qwen3.5-9B-65K",
+      "run_dir": "all_res/diagnostic_prospective/wide-supplements/wide-s-r2/qwen3-5-9b-65k-prospective",
+      "manifest_path": "data/diagnostic_prospective_v1/wide-s-r2_v1.json",
+      "parent_manifest_path": "data/vi_multimodel_v1/main_v1.json",
+      "expected_manifest_sha256": "015dc198842e896648b82994916800e7611cbe6eecfc2f30a1eda664100bb8fa",
+      "expected_parent_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+      "expected_n": 1239,
+      "measurement_card_id": "MC-92",
+      "adapter": "campaign-arms-v1",
+      "phase": "wide",
+      "supplement_id": "wide-s-r2",
+      "datasets": [
+        "vi-multimodel-v1-legal-mc-146",
+        "vi-multimodel-v1-legal-nli-150",
+        "vi-multimodel-v1-vi-squad-200",
+        "vi-multimodel-v1-vi-drop-200",
+        "vi-multimodel-v1-bidlqa-test"
+      ]
+    },
+    {
+      "source_run_id": "qwen-mc93-core",
+      "family": "diagnostic-prospective-v1",
+      "model_identity": "Qwen3.5-9B-65K",
+      "run_dir": "all_res/diagnostic_prospective/core/qwen3-5-9b-65k-prospective",
+      "manifest_path": "all_res/diagnostic_prospective/core/qwen3-5-9b-65k-prospective/source_manifest.json",
+      "parent_manifest_path": "data/vi_multimodel_v1/main_v1.json",
+      "expected_manifest_sha256": "c00bc988d61711a18a5a348c0d34cc6bb8e373c9feacde9af8447616aa823d54",
+      "expected_parent_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+      "expected_n": 432,
+      "measurement_card_id": "MC-93",
+      "adapter": "campaign-arms-v1",
+      "phase": "core",
+      "supplement_id": null,
+      "evidence": {
+        "O": "all_res/diagnostic_prospective/oracle/oracle_evidence_v1.jsonl",
+        "K": "all_res/diagnostic_prospective/retrieval/retrieved_evidence_v1.jsonl"
+      },
+      "datasets": [
+        "vi-multimodel-v1-legal-mc-146",
+        "vi-multimodel-v1-legal-nli-150",
+        "vi-multimodel-v1-vi-squad-200",
+        "vi-multimodel-v1-vi-drop-200",
+        "vi-multimodel-v1-bidlqa-test"
+      ]
     }
   ]
 }

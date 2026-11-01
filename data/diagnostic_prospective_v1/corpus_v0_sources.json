@@ -1,0 +1,33 @@
+{
+  "corpus_id": "vi-legal-corpus-v0",
+  "version": 0,
+  "created": "2026-10-26",
+  "unit": "article",
+  "source_site": "hethongphapluat.com",
+  "selection_rule": "cited: every document the adjudicated pilot audit cites for an evidence anchor (design Decision 11); cited_other: documents the audit cites for the pilot's other Legal MC anchors, which have no evidence arm; predecessor: for each cited document, the instrument it replaced, when the source site carries it. The list was fixed before any retrieval query was run.",
+  "source_note": "All pages come from one secondary source so that one parser applies; the official portals did not serve parseable full text to the build machine. Each page is kept with its SHA-256 and retrieval time.",
+  "documents": [
+    {"doc_id": "168/2024/NĐ-CP", "role": "cited", "title": "Nghị định 168/2024/NĐ-CP quy định xử phạt vi phạm hành chính về trật tự, an toàn giao thông trong lĩnh vực giao thông đường bộ; trừ điểm, phục hồi điểm giấy phép lái xe", "url": "https://hethongphapluat.com/nghi-dinh-168-2024-nd-cp-quy-dinh-xu-phat-vi-pham-hanh-chinh-ve-trat-tu-an-toan-giao-thong-trong-linh-vuc-giao-thong-duong-bo-tru-diem-phuc-hoi-diem-giay-phep-lai-xe.html"},
+    {"doc_id": "101/2015/QH13", "role": "cited", "title": "Bộ luật Tố tụng hình sự 2015", "url": "https://hethongphapluat.com/bo-luat-to-tung-hinh-su-2015.html"},
+    {"doc_id": "71/2024/NĐ-CP", "role": "cited", "title": "Nghị định 71/2024/NĐ-CP quy định về giá đất", "url": "https://hethongphapluat.com/nghi-dinh-71-2024-nd-cp-quy-dinh-ve-gia-dat.html"},
+    {"doc_id": "79/2024/TT-BCA", "role": "cited", "title": "Thông tư 79/2024/TT-BCA quy định về cấp, thu hồi chứng nhận đăng ký xe, biển số xe cơ giới, xe máy chuyên dùng", "url": "https://hethongphapluat.com/thong-tu-79-2024-tt-bca-quy-dinh-ve-cap-thu-hoi-chung-nhan-dang-ky-xe-bien-so-xe-co-gioi-xe-may-chuyen-dung-do-bo-truong-bo-cong-an-ban-hanh.html"},
+    {"doc_id": "31/2024/QH15", "role": "cited", "title": "Luật Đất đai 2024", "url": "https://hethongphapluat.com/luat-dat-dai-2024.html"},
+    {"doc_id": "76/2018/NĐ-CP", "role": "cited", "title": "Nghị định 76/2018/NĐ-CP quy định chi tiết và hướng dẫn thi hành một số điều của Luật Chuyển giao công nghệ", "url": "https://hethongphapluat.com/nghi-dinh-76-2018-nd-cp-huong-dan-luat-chuyen-giao-cong-nghe.html"},
+    {"doc_id": "41/2024/QH15", "role": "cited", "title": "Luật Bảo hiểm xã hội 2024", "url": "https://hethongphapluat.com/luat-bao-hiem-xa-hoi-2024.html"},
+    {"doc_id": "73/2024/NĐ-CP", "role": "cited", "title": "Nghị định 73/2024/NĐ-CP quy định mức lương cơ sở và chế độ tiền thưởng đối với cán bộ, công chức, viên chức và lực lượng vũ trang", "url": "https://hethongphapluat.com/nghi-dinh-73-2024-nd-cp-quy-dinh-muc-luong-co-so-va-che-do-tien-thuong-doi-voi-can-bo-cong-chuc-va-luc-luong-vu-trang.html"},
+    {"doc_id": "01/2021/NĐ-CP", "role": "cited", "title": "Nghị định 01/2021/NĐ-CP về đăng ký doanh nghiệp", "url": "https://hethongphapluat.com/nghi-dinh-01-2021-nd-cp-ve-dang-ky-doanh-nghiep.html"},
+    {"doc_id": "54/2019/QH14", "role": "cited_other", "title": "Luật Chứng khoán 2019", "url": "https://hethongphapluat.com/luat-chung-khoan-2019.html"},
+    {"doc_id": "36/2024/QH15", "role": "cited_other", "title": "Luật Trật tự, an toàn giao thông đường bộ 2024", "url": "https://hethongphapluat.com/luat-trat-tu-an-toan-giao-thong-duong-bo-2024.html"},
+    {"doc_id": "100/2019/NĐ-CP", "role": "predecessor", "predecessor_of": "168/2024/NĐ-CP", "title": "Nghị định 100/2019/NĐ-CP quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt", "url": "https://hethongphapluat.com/nghi-dinh-100-2019-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-giao-thong-duong-bo-va-duong-sat.html"},
+    {"doc_id": "19/2003/QH11", "role": "predecessor", "predecessor_of": "101/2015/QH13", "title": "Bộ luật Tố tụng hình sự 2003", "url": "https://hethongphapluat.com/bo-luat-to-tung-hinh-su-2003.html"},
+    {"doc_id": "44/2014/NĐ-CP", "role": "predecessor", "predecessor_of": "71/2024/NĐ-CP", "title": "Nghị định 44/2014/NĐ-CP quy định về giá đất", "url": "https://hethongphapluat.com/nghi-dinh-44-2014-nd-cp-quy-dinh-ve-gia-dat.html"},
+    {"doc_id": "24/2023/TT-BCA", "role": "predecessor", "predecessor_of": "79/2024/TT-BCA", "title": "Thông tư 24/2023/TT-BCA quy định về cấp, thu hồi đăng ký, biển số xe cơ giới", "url": "https://hethongphapluat.com/thong-tu-24-2023-tt-bca-quy-dinh-ve-cap-thu-hoi-dang-ky-bien-so-xe-co-gioi-do-bo-truong-bo-cong-an-ban-hanh.html"},
+    {"doc_id": "45/2013/QH13", "role": "predecessor", "predecessor_of": "31/2024/QH15", "title": "Luật Đất đai 2013", "url": "https://hethongphapluat.com/luat-dat-dai-2013.html"},
+    {"doc_id": "133/2008/NĐ-CP", "role": "predecessor", "predecessor_of": "76/2018/NĐ-CP", "title": "Nghị định 133/2008/NĐ-CP quy định chi tiết thi hành một số điều của Luật Chuyển giao công nghệ", "url": "https://hethongphapluat.com/nghi-dinh-133-2008-nd-cp-huong-dan-luat-chuyen-giao-cong-nghe.html"},
+    {"doc_id": "58/2014/QH13", "role": "predecessor", "predecessor_of": "41/2024/QH15", "title": "Luật Bảo hiểm xã hội 2014", "url": "https://hethongphapluat.com/luat-bao-hiem-xa-hoi-2014.html"},
+    {"doc_id": "78/2015/NĐ-CP", "role": "predecessor", "predecessor_of": "01/2021/NĐ-CP", "title": "Nghị định 78/2015/NĐ-CP về đăng ký doanh nghiệp", "url": "https://hethongphapluat.com/nghi-dinh-78-2015-nd-cp-ve-dang-ky-doanh-nghiep.html"}
+  ],
+  "omitted": [
+    {"doc_id": "24/2023/NĐ-CP", "predecessor_of": "73/2024/NĐ-CP", "reason": "the source site carries no full text of it"}
+  ]
+}

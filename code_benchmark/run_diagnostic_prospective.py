@@ -2,15 +2,19 @@
 
 From the repo root:
   .venv/bin/python -m code_benchmark.run_diagnostic_prospective --phase wide
-  .venv/bin/python -m code_benchmark.run_diagnostic_prospective --phase core --oracle-evidence <jsonl>
+  .venv/bin/python -m code_benchmark.run_diagnostic_prospective --phase core --oracle-evidence <jsonl> \
+      [--retrieved-evidence <jsonl>]
   .venv/bin/python -m code_benchmark.run_diagnostic_prospective --phase wide --execute [--resume] [--tunnel-dns 172.16.30.1]
 
 The default is an offline preflight: inputs, hashes, counts and gates are reported and
 `endpoint_calls=0` is printed. `--execute` fails closed unless the measurement card is
 pre-registered (registration.json + measurement_card.md) and, for core, diagnostic readiness
-reports inference_ready. The engine, condition freeze and resume rules are those of MC-80/82/83;
-completed attempts, including truncated or unparsed ones, are never retried automatically.
-Retrieved-evidence arms (K, KS) appear only once a retrieval artifact exists (task 7.3).
+reports inference_ready and the router rule and cue lexicon on disk carry the SHA-256 values of the
+registration's router entry (design Decision 11). The engine, condition freeze and resume rules are
+those of MC-80/82/83; completed attempts, including truncated or unparsed ones, are never retried
+automatically.
+Arms K and KS appear with --retrieved-evidence (corpus v0 records, task 7.3); each of their rows carries the
+retrieval trace: corpus and configuration hashes, the ranked chunks with their scores and the evidence-block hash.
 
 Operational options, off by default so that the registered condition is what runs. Every launch is appended
 to <output>/operator_events.jsonl with the options used and the runner hash:
@@ -39,11 +43,13 @@ from openai import OpenAI
 try:
     from code_benchmark import diagnostic
     from code_benchmark import diagnostic_prospective as dp
+    from code_benchmark import diagnostic_router as router
     from code_benchmark import run_muse13_direct_mc80 as base
     from code_benchmark import vi_multimodel as v1
 except ImportError:  # executed from code_benchmark/
     import diagnostic
     import diagnostic_prospective as dp
+    import diagnostic_router as router
     import run_muse13_direct_mc80 as base
     import vi_multimodel as v1
 
@@ -94,10 +100,33 @@ def evaluate_gates(phase: str, protocol: dict[str, Any], manifest: dict[str, Any
                       f"host={endpoint.hostname} model={env.get('OPENAI_MODEL')} (card expects "
                       f"{model['endpoint_host']} / {model['requested_id']})"))
     if protocol["phases"][phase]["requires_inference_ready"]:
-        report = (readiness or (lambda: diagnostic.readiness_report(audit_dir=PILOT_DIR)))()
+        controls = diagnostic.CONTROLS_PATH if diagnostic.CONTROLS_PATH.is_file() else None
+        try:
+            report = (readiness or (lambda: diagnostic.readiness_report(audit_dir=PILOT_DIR, controls_path=controls)))()
+        except diagnostic.DiagnosticError as exc:
+            report = {"inference_ready": False, "inference_blockers": [str(exc)]}
         blockers = "; ".join(report.get("inference_blockers", []))[:300]
-        gates.append(Gate("inference_ready", bool(report.get("inference_ready")), blockers or "ready"))
+        gates.append(Gate("inference_ready", bool(report.get("inference_ready")),
+                          blockers or f"ready (controls sha256 {str(report.get('controls_sha256'))[:12]})"))
+    if phase == "core":
+        gates.append(router_gate(protocol, registration, root))
     return gates
+
+
+def router_gate(protocol: dict[str, Any], registration: dict[str, Any], root: Path = ROOT) -> Gate:
+    """The rule the core run is evaluated with is frozen before the first core request (design Decision 11)."""
+    entry = registration.get("router")
+    if not isinstance(entry, dict):
+        return Gate("router_rule", False, "the registration has no router entry")
+    try:
+        lexicon, lexicon_sha256 = router.load_lexicon(root / router.LEXICON_PATH.relative_to(ROOT))
+        rule, rule_sha256 = router.load_rule(root / router.RULE_PATH.relative_to(ROOT), protocol["datasets"], lexicon)
+    except SystemExit as exc:
+        return Gate("router_rule", False, str(exc))
+    differing = [name for name, actual in (("rule", rule_sha256), ("cue_lexicon", lexicon_sha256))
+                 if entry.get(f"{name}_sha256") != actual]
+    return Gate("router_rule", not differing, f"{rule['router_id']} as registered" if not differing
+                else f"{differing} differ from the registered sha256")
 
 
 # ---------------------------------------------------------------- process-local DNS shim
@@ -193,16 +222,6 @@ class OutageGuard:
                 self.consecutive += 1
 
 
-def reported_tokens(row: dict[str, Any]) -> int | None:
-    total = row.get("total_tokens")
-    if isinstance(total, int):
-        return total
-    prompt, completion = row.get("prompt_tokens"), row.get("completion_tokens")
-    if isinstance(prompt, int) and isinstance(completion, int):
-        return prompt + completion
-    return None
-
-
 def existing_usage(output: Path) -> int:
     """Tokens already spent by completed attempts of an interrupted run (latest row per run key)."""
     path = output / "attempts.jsonl"
@@ -213,12 +232,14 @@ def existing_usage(output: Path) -> int:
         if line.strip():
             row = json.loads(line)
             latest[row["run_key"]] = row
-    return sum(reported_tokens(row) or 0 for row in latest.values() if row.get("status") == "complete")
+    return sum(dp.reported_tokens(row) or 0 for row in latest.values() if row.get("status") == "complete")
 
 
 def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: BudgetGuard, *,
-                 outage: OutageGuard | None = None, max_in_flight: int | None = None):
+                 outage: OutageGuard | None = None, max_in_flight: int | None = None,
+                 retrieval_traces: dict[str, dict[str, Any]] | None = None):
     transport = protocol["transport"]
+    retrieval_traces = retrieval_traces or {}
     expected_model = protocol["model"]["self_reported_id"]
     outage = outage or OutageGuard(0)
     gate = threading.BoundedSemaphore(max_in_flight) if max_in_flight else None
@@ -236,6 +257,8 @@ def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: Budg
             "raw_prompt": item.prompt, "raw_response": "", "temperature_sent": transport["temperature"],
             "reasoning_effort_sent": None, "seed_sent": None, "max_tokens": cap, "started_at": base.now(),
         }
+        if row["arm"] in dp.RETRIEVAL_ARMS:
+            row["retrieval"] = retrieval_traces[row["item_key"]]
         for blocked, error_type in ((guard.exhausted(), "budget_cap"), (outage.tripped(), "endpoint_unresponsive"),
                                     (gate is not None and halt.is_set(), "halted_before_send")):
             if blocked:
@@ -304,7 +327,7 @@ def make_request(protocol: dict[str, Any], phase: str, card_id: str, guard: Budg
                     row["stream_close_error"] = type(exc).__name__
         row.update({"latency_s": round(time.monotonic() - start, 4), "finished_at": base.now()})
         if row["status"] == "complete":
-            guard.add(reported_tokens(row))
+            guard.add(dp.reported_tokens(row))
         elif not row.get("fatal"):
             row["retry_wait_seconds"] = 60 if row.get("http_status") == 429 else 30 if row.get("http_status") == 503 else 5
         outage.record(row)
@@ -343,12 +366,15 @@ def supplement_registration_view(registration: dict[str, Any], supplement: dict[
 
 def build_condition(phase: str, protocol: dict[str, Any], manifest: dict[str, Any], registration: dict[str, Any],
                     endpoint: str, templates_version: str, runner_path: Path, *,
-                    supplement: dict[str, Any] | None = None) -> dict[str, Any]:
+                    supplement: dict[str, Any] | None = None,
+                    retrieval: dict[str, str] | None = None) -> dict[str, Any]:
     transport, model = protocol["transport"], protocol["model"]
-    extra = {}
+    extra: dict[str, Any] = {}
     if supplement is not None:  # a registered supplement freezes its own operational limits with the condition
         extra = {"supplement_id": supplement["supplement_id"], "supplement_design": manifest["supplement_design"],
                  "operational": supplement.get("operational") or {}}
+    if retrieval is not None:  # only a run with arms K and KS has a corpus and a retrieval configuration
+        extra["retrieval"] = retrieval
     return {**extra,
         "protocol_id": dp.PROTOCOL_ID, "protocol_version": 1, "phase": phase,
         "measurement_card_id": registration["card_ids"][phase],
@@ -415,7 +441,8 @@ def make_score_callback(phase: str, card_id: str, supplement_id: str | None = No
 
 
 def configure_engine(protocol: dict[str, Any], phase: str, card_id: str, guard: BudgetGuard, *,
-                     outage: OutageGuard | None = None, max_in_flight: int | None = None) -> None:
+                     outage: OutageGuard | None = None, max_in_flight: int | None = None,
+                     retrieval_traces: dict[str, dict[str, Any]] | None = None) -> None:
     transport = protocol["transport"]
     if (base.SHARDS, base.LANES) != (transport["shards"], transport["lanes"]):
         raise SystemExit("Error: engine shard/lane constants differ from the campaign protocol")
@@ -423,7 +450,8 @@ def configure_engine(protocol: dict[str, Any], phase: str, card_id: str, guard: 
     base.PROFILE = protocol["model"]["profile_id"]
     base.PROTOCOL = dp.PROTOCOL_ID
     base.CARD_ID = card_id
-    base.request = make_request(protocol, phase, card_id, guard, outage=outage, max_in_flight=max_in_flight)
+    base.request = make_request(protocol, phase, card_id, guard, outage=outage, max_in_flight=max_in_flight,
+                                retrieval_traces=retrieval_traces)
 
 
 def record_launch(output: Path, phase: str, *, resume: bool, max_in_flight: int | None,
@@ -459,6 +487,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--phase", choices=dp.PHASES, required=True)
     parser.add_argument("--oracle-evidence", type=Path, help="oracle evidence JSONL for arm O (core only)")
+    parser.add_argument("--retrieved-evidence", type=Path,
+                        help="retrieved-evidence JSONL for arms K and KS (core only)")
     parser.add_argument("--execute", action="store_true", help="send requests (otherwise offline preflight only)")
     parser.add_argument("--resume", action="store_true", help="resume only unfinished technical requests")
     parser.add_argument("--tunnel-dns", default=None,
@@ -474,13 +504,14 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.resume and not args.execute:
         parser.error("--resume requires --execute")
-    if args.supplement and args.oracle_evidence:
-        parser.error("--oracle-evidence cannot be combined with --supplement")
+    for flag in ("oracle_evidence", "retrieved_evidence"):
+        if getattr(args, flag) and args.supplement:
+            parser.error(f"--{flag.replace('_', '-')} cannot be combined with --supplement")
+        if getattr(args, flag) and args.phase != "core":
+            parser.error(f"--{flag.replace('_', '-')} applies to the core phase only")
     for flag in ("max_in_flight", "stop_after_timeouts"):
         if getattr(args, flag) is not None and getattr(args, flag) < 1:
             parser.error(f"--{flag.replace('_', '-')} must be a positive integer")
-    if args.oracle_evidence and args.phase != "core":
-        parser.error("--oracle-evidence applies to the core phase only")
 
     protocol = dp.load_protocol()
     templates = dp.load_templates()
@@ -489,18 +520,33 @@ def main(argv: list[str] | None = None) -> int:
     if supplement and supplement["base_phase"] != args.phase:
         parser.error(f"supplement {args.supplement} belongs to phase {supplement['base_phase']}, not {args.phase}")
     registered = supplement_registration_view(registration, supplement, args.phase) if supplement else registration
-    operational = (supplement or {}).get("operational") or {}
-    for flag in ("max_in_flight", "stop_after_timeouts"):  # registered limits are part of the supplement's condition
+    # registered limits (a supplement's, or the core entry's) apply by default and other values are refused
+    operational = ((supplement or {}).get("operational") if supplement
+                   else (registration.get(args.phase) or {}).get("operational")) or {}
+    for flag in ("max_in_flight", "stop_after_timeouts"):
         value = getattr(args, flag)
         if value is not None and operational.get(flag) not in (None, value):
             parser.error(f"--{flag.replace('_', '-')} {value} differs from the {operational[flag]} registered "
-                         f"for supplement {args.supplement}")
+                         f"for {args.supplement or args.phase}")
         if value is None:
             setattr(args, flag, operational.get(flag))
     evidence_by_arm: dict[str, dict[str, list[dict[str, Any]]]] = {}
     main_items = v1.rebuild_items(protocol["parent"]["manifest_phase"])
     if args.oracle_evidence:
         evidence_by_arm["O"] = dp.load_oracle_evidence(args.oracle_evidence, protocol, main_items)
+    traces: dict[str, dict[str, Any]] = {}
+    retrieval = None
+    if args.retrieved_evidence:
+        evidence_by_arm["K"], traces = dp.load_retrieved_evidence(args.retrieved_evidence, protocol, main_items)
+        if not traces:
+            parser.error(f"--retrieved-evidence {args.retrieved_evidence} holds no records")
+        for key, trace in traces.items():
+            block = dp.render_evidence_block(evidence_by_arm["K"][key], templates)
+            trace["evidence_block_sha256"] = v1.sha256_bytes(block.encode("utf-8"))
+        first = next(iter(traces.values()))
+        retrieval = {"corpus_sha256": first["corpus_sha256"],
+                     "retrieval_config_sha256": first["retrieval_config_sha256"],
+                     "records_sha256": v1.sha256_file(args.retrieved_evidence)}
     manifest, rebuilt = dp.build_manifest(args.phase, evidence_by_arm=evidence_by_arm, main_items=main_items,
                                           supplement=supplement)
     items = dp.verify_manifest_rows(manifest, rebuilt)
@@ -524,11 +570,11 @@ def main(argv: list[str] | None = None) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     condition = reconcile_resume(
         output, build_condition(args.phase, protocol, manifest, registered, endpoint, templates["version"],
-                                Path(__file__), supplement=supplement), args.resume)
+                                Path(__file__), supplement=supplement, retrieval=retrieval), args.resume)
     guard = BudgetGuard(protocol["budget"]["campaign_cap_tokens"], existing_usage(output))
     transport = protocol["transport"]
     configure_engine(protocol, args.phase, card_id, guard, outage=OutageGuard(args.stop_after_timeouts or 0),
-                     max_in_flight=args.max_in_flight)
+                     max_in_flight=args.max_in_flight, retrieval_traces=traces)
     record_launch(output, args.phase, resume=args.resume, max_in_flight=args.max_in_flight,
                   stop_after_timeouts=args.stop_after_timeouts, note=args.note,
                   lanes=transport["shards"] * transport["lanes"],

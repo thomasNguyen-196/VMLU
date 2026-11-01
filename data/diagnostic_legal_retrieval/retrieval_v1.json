@@ -1,0 +1,17 @@
+{
+  "retrieval_id": "bm25-article-v1",
+  "corpus_id": "vi-legal-corpus-lmc-v1",
+  "unit": "article",
+  "unit_split": "articles over 6,000 characters are split into parts at line boundaries (protocol corpus.unit)",
+  "query": "mc_body",
+  "query_note": "the item's question and options exactly as the frozen B prompt carries them, without its instruction head and answer tail; no gold, label or arm outcome",
+  "normalization": "Unicode NFC, lower case",
+  "tokens": "maximal runs of Unicode word characters (Vietnamese syllables and numbers)",
+  "bigrams": true,
+  "bm25": {"k1": 1.2, "b": 0.75, "idf": "ln(1 + (N - df + 0.5) / (df + 0.5))", "query_terms": "each distinct query token counts once"},
+  "top_k": 2,
+  "ranking_kept": 3,
+  "tie_break": "corpus order",
+  "truncation": "none; units are at most about 6,000 characters",
+  "fixed_on": "2026-10-29, before any retrieval query: the bm25-article-v0 settings of corpus v0, untuned, with top_k 2 (the evidence budget of arm O)"
+}

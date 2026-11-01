@@ -10,12 +10,24 @@ describe("current matrix eligibility and source selection", () => {
     const view = buildBenchmarkMatrix(data());
     expect(view.groups.map((group) => group.id)).toEqual(["omp-no-tools", "omp-full-tools", "direct-default"]);
     expect(view.groups[0].models).toHaveLength(5);
-    expect(view.groups[0].matrices.map((matrix) => matrix.metric)).toEqual(["accuracy", "em", "token_f1"]);
+    expect(view.groups[0].matrices.map((matrix) => matrix.metric)).toEqual(["accuracy", "em", "em_v3", "token_f1", "token_f1_v3"]);
     const cards = view.groups[0].conditions.map((condition) => condition.card);
     expect(cards).not.toContain("MC-56"); expect(cards).not.toContain("MC-71"); expect(cards).not.toContain("MC-49");
     expect(view.directReason).toBe("");
     expect(selectMatrixGroup(view, "direct-qwen65k")?.id).toBe("omp-no-tools");
     expect(view.groups.find((group) => group.id === "direct-default")!.models.some((entry) => entry.id === "qwen3-5-9b-65k-direct-20k")).toBe(true);
+  });
+  test("v3 tables sit beside the registered v2 tables and carry the re-scored reading points", () => {
+    const group = buildBenchmarkMatrix(data()).groups.find((entry) => entry.id === "omp-no-tools")!;
+    const cell = (metric: string, dataset: string, model: string) =>
+      group.matrices.find((matrix) => matrix.metric === metric)!.columns.find((column) => column.id === dataset)!.cells[model];
+    // Muse 1.2 (MC-73) bolds its answers: v2 penalises the marks, v3 removes them before scoring.
+    expect(cell("token_f1", "vi-drop", "muse12-vmlu-mc74-mc79").score.score).toBe(19.45);
+    expect(cell("token_f1_v3", "vi-drop", "muse12-vmlu-mc74-mc79").score.score).toBe(37.98);
+    // Muse 1.3 writes no marks, so its v3 point equals its v2 point.
+    expect(cell("token_f1_v3", "vi-squad", "muse-spark-1-3-contributor").score.score)
+      .toBe(cell("token_f1", "vi-squad", "muse-spark-1-3-contributor").score.score);
+    expect(group.notes.some((note) => note.includes("vi-reading-v3"))).toBe(true);
   });
   test("full tools retains Muse, Qwen and MiMo arms with recovery provenance without ranking server grades", () => {
     const reports = data();

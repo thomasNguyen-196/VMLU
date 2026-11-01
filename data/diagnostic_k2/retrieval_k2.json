@@ -1,0 +1,21 @@
+{
+  "retrieval_id": "bm25-passage-k2",
+  "corpus_id": "vibidlqa-passages-v1",
+  "corpus": "the unique passages of the pinned ViBidLQA train, val and test sources, unique after NFC, case folding and whitespace collapse; a passage's id is the SHA-256 of its normalized text, the corpus is in id order, and a passage's text is its first raw form in the order train, val, test",
+  "unit": "passage",
+  "query": "question",
+  "query_note": "the question exactly as the item asks it; no passage, gold answer, label or arm outcome",
+  "normalization": "Unicode NFC, lower case",
+  "tokens": "maximal runs of Unicode word characters (Vietnamese syllables and numbers)",
+  "bigrams": true,
+  "bm25": {
+    "k1": 1.2,
+    "b": 0.75,
+    "idf": "ln(1 + (N - df + 0.5) / (df + 0.5))",
+    "query_terms": "each distinct query token counts once"
+  },
+  "top_k": 2,
+  "tie_break": "corpus order",
+  "passage_separator": "\n\n",
+  "fixed_on": "2026-10-27, after the exploratory K2.1 bake-off on the 1,928 ViBidLQA train questions (this BM25: own passage at rank 1 for 64.7%, in the top 2 for 78.1%); the project owner chose it over BGE-M3, a BM25 + BGE-M3 hybrid and a reranker"
+}

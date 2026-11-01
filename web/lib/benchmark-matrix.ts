@@ -2,7 +2,7 @@
 import type { BenchmarkReports, BenchmarkRunSummary, EvaluationReport, ReportCondition, ReportScore } from "./benchmark-reports.ts";
 import { fmtNum, fmtPct } from "./format.ts";
 
-export type MatrixMetric = "accuracy" | "em" | "token_f1" | "char_f1";
+export type MatrixMetric = "accuracy" | "em" | "em_v3" | "token_f1" | "token_f1_v3" | "char_f1";
 export interface MatrixModel { id: string; name: string; provider: string }
 export interface MatrixCell { score: ReportScore; condition: ReportCondition; reportId: string; rankEligible?: boolean }
 export interface MatrixColumn {
@@ -27,8 +27,10 @@ export interface MatrixGroup {
 export interface BenchmarkMatrixView { groups: MatrixGroup[]; generatedAt: string; directReason: string; runSummaries: BenchmarkRunSummary[] }
 
 const MODEL_ORDER = ["muse-spark-1-3-contributor", "muse-spark-1-3-contributor-omp-full-tools-mc86", "muse12-vmlu-mc74-mc79", "muse-spark-1-2-contributor-omp-full-tools-mc87", "qwen3-5-9b-65k-omp-full-tools-mc88", "mimo-v2-6-flash-omp-full-tools-mc89", "mimo-v2-6-flash", "mimo-v2-5", "qwen3-5-9b-65k"];
-const METRICS: MatrixMetric[] = ["accuracy", "em", "token_f1", "char_f1"];
-const LABELS: Record<MatrixMetric, string> = { accuracy: "Accuracy", em: "EM", token_f1: "F1 · token", char_f1: "F1 · character" };
+// Each v3 table sits right after the registered v2 table it re-scores.
+const METRICS: MatrixMetric[] = ["accuracy", "em", "em_v3", "token_f1", "token_f1_v3", "char_f1"];
+const LABELS: Record<MatrixMetric, string> = { accuracy: "Accuracy", em: "EM", em_v3: "EM · v3 (bỏ in đậm)", token_f1: "F1 · token", token_f1_v3: "F1 · token · v3 (bỏ in đậm)", char_f1: "F1 · character" };
+const V3_NOTE = "Bảng EM · v3 và F1 · token · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2. Số đăng ký vẫn là bảng EM và F1 · token (v2). V2 trừ điểm câu trả lời in đậm dù đúng chữ, nên điểm bài đọc của Muse Spark 1.2 và MiMo bị kéo thấp; Muse Spark 1.3 và Qwen gần như không đổi.";
 const DATASETS: Record<string, { id: string; label: string; order: number }> = {
   "vi-multimodel-v1-vmlu-valid": { id: "vmlu-valid", label: "VMLU Valid", order: 1 },
   "vi-multimodel-v2-vmlu-valid": { id: "vmlu-valid", label: "VMLU Valid", order: 1 },
@@ -92,13 +94,14 @@ export function matrixComments(metric: MatrixMetric, columns: MatrixColumn[]): {
       comment += ` Tuy nhiên, thứ hạng thay đổi ở ${exception.column.label}, nơi ${exception.rows[0].name} đạt ${fmtPct(exception.rows[0].score.score)}${formerLeader ? `, cao hơn ${fmtPct(formerLeader.score.score)} của ${best.name}` : " và đứng đầu nhóm đã chạy"}.`;
     }
     else comment += " Ưu thế này mô tả kết quả trắc nghiệm trong cấu hình đang chọn, gồm cả hiểu câu hỏi, kiến thức và suy luận.";
-  } else if (metric === "em") {
+  } else if (metric === "em" || metric === "em_v3") {
     const sameLeader = complete.every((column) => ranked(column)[0].name === best.name);
     comment = `${best.name} ${sameLeader ? "dẫn đầu trên toàn bộ các tập đọc đã chạy" : `nổi bật nhất ở ${prominent.column.label}`}, với khoảng cách lớn nhất tại ${prominent.column.label}: ${fmtPct(best.score.score)} so với ${fmtPct(second.score.score)} của ${second.name}. EM cho thấy mức khớp nguyên văn với đáp án tham chiếu; cách diễn đạt khác vẫn có thể bị chấm không khớp.`;
   } else {
     const close = gaps[gaps.length - 1];
     comment = `${best.name} giữ lợi thế ở ${prominent.column.label}, nhưng khoảng cách thu hẹp rõ tại ${close.column.label}: ${close.rows[1].name} đạt ${fmtPct(close.rows[1].score.score)}, gần mức ${fmtPct(close.rows[0].score.score)} của ${close.rows[0].name}. F1 phản ánh mức chồng lấp từ vựng, chưa xác nhận câu trả lời đúng về ngữ nghĩa.`;
   }
+  if (metric === "em_v3" || metric === "token_f1_v3") comment += " Bảng này chấm lại sau bằng vi-reading-v3 (bỏ dấu in đậm rồi chấm như v2); số đăng ký nằm ở bảng v2 ngay trên.";
   const measured = gaps.filter((entry) => entry.rows[0].score.ci_low !== null && entry.rows[1].score.ci_low !== null);
   const overlapping = [...measured].reverse().find((entry) => overlaps(entry.rows[0].score, entry.rows[1].score));
   const ciComment = overlapping
@@ -358,6 +361,10 @@ export function buildBenchmarkMatrix(data: BenchmarkReports): BenchmarkMatrixVie
   for (const entries of directGroups.values()) {
     const group = createGroup(`direct-${index++}`, "direct", entries);
     if (group) groups.push(group);
+  }
+  for (const group of groups) {
+    if (group.matrices.some((matrix) => matrix.metric === "em_v3" || matrix.metric === "token_f1_v3")
+        && !group.notes.some((note) => note.includes("vi-reading-v3"))) group.notes = [...group.notes, V3_NOTE];
   }
   return { groups, generatedAt: data.generated_at, directReason: groups.some((group) => group.kind === "direct") ? "" : "Tạm bỏ qua: chưa có ít nhất hai model với cùng temperature, thinking và output budget được xác minh trên cùng dataset. Thinking của một số run cũ thiếu metadata; Legal MC dùng cap 4 và 512 token ở hai model non-thinking.", runSummaries: data.run_summaries };
 }

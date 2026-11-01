@@ -38,6 +38,9 @@ def _main_available() -> bool:
 MAIN_OK = _main_available()
 PILOT_OK = (dp.ROOT / "all_res/diagnostic_v1/pilot-review-v4/pilot.jsonl").is_file()
 DATA_OK = MAIN_OK and PILOT_OK
+ORACLE_RECORDS = dp.ROOT / "all_res/diagnostic_prospective/oracle/oracle_evidence_v1.jsonl"
+RETRIEVED_RECORDS = dp.ROOT / "all_res/diagnostic_prospective/retrieval/retrieved_evidence_v1.jsonl"
+CORE_OK = DATA_OK and ORACLE_RECORDS.is_file() and RETRIEVED_RECORDS.is_file()
 TEMPLATES = dp.load_templates()
 PROTOCOL = dp.load_protocol()
 MC_DATASET = "vi-multimodel-v1-legal-mc-146"
@@ -261,6 +264,63 @@ class TestEvidenceContract(unittest.TestCase):
             self.load(self.record, self.record)
 
 
+class TestOracleRecords(unittest.TestCase):
+    """Task 7.1: which anchors get oracle evidence (design Decision 11) and how drafted provisions become records."""
+
+    def setUp(self):
+        self.export = "b" * 64
+
+        def row(item_id, sufficiency="insufficient", gold="valid", dataset=MC_DATASET):
+            return {"observation_key": f"qwen-mc72|{dataset}:{item_id}:main-000", "annotator_id": "reviewer-a",
+                    "review_source_sha256": self.export, "input_evidence_sufficiency": sufficiency,
+                    "gold_validity": gold}
+
+        text = "1. Mức phạt tiền được quy định như sau:\na) Phạt cảnh cáo;"
+
+        def provision(item_id, **extra):
+            return {"item_id": item_id, "doc_id": "168/2024/NĐ-CP", "doc_title": "Nghị định 168/2024/NĐ-CP",
+                    "article_heading": "Điều 6", "locator": "Điều 6 khoản 1 điểm a (kèm câu dẫn của khoản)",
+                    "text": text, "text_sha256": v1.sha256_bytes(text.encode("utf-8")), "source_ref": "test",
+                    "leak": False, **extra}
+
+        self.rows = [row("T1"), row("T2", gold="suspect"), row("T3", sufficiency="sufficient"),
+                     row("T4", sufficiency="unassessable"), row("R1", dataset=RD_DATASET)]
+        self.provision = provision
+        self.provisions = [provision("T1"), provision("T2")]
+
+    def test_only_insufficient_anchors_with_valid_gold_get_a_record(self):
+        records, excluded = dp.oracle_records(self.rows, self.provisions, PROTOCOL)
+        self.assertEqual([r["item_id"] for r in records], ["T1"])
+        self.assertEqual(set(records[0]), set(dp.ORACLE_KEYS))
+        self.assertEqual(set(records[0]["provisions"][0]), set(dp.PROVISION_KEYS))
+        self.assertEqual(records[0]["provisions"][0]["locator"], "Điều 6 khoản 1 điểm a")
+        self.assertEqual((records[0]["reviewer_id"], records[0]["review_export_sha256"]), ("reviewer-a", self.export))
+        self.assertEqual(excluded, {f"{MC_DATASET}:T2": "gold_validity=suspect",
+                                    f"{MC_DATASET}:T3": "input_evidence_sufficiency=sufficient",
+                                    f"{MC_DATASET}:T4": "input_evidence_sufficiency=unassessable"})
+
+    def test_built_records_load_through_the_runner_loader(self):
+        records, _ = dp.oracle_records(self.rows, self.provisions, PROTOCOL)
+        main_items = {make_item(item_id="T1").run_key: make_item(item_id="T1")}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "oracle.jsonl"
+            path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records), encoding="utf-8")
+            self.assertEqual(list(dp.load_oracle_evidence(path, PROTOCOL, main_items)), [f"{MC_DATASET}:T1"])
+
+    def test_gaps_fail_closed(self):
+        cases = {
+            "no drafted provision": (self.rows, [self.provision("T2")]),
+            "provisional": (self.rows, [self.provision("T1", provisional=True)]),
+            "not an anchor": (self.rows, self.provisions + [self.provision("T9")]),
+            "exactly one imported review export": (self.rows + [{**self.rows[0], "annotator_id": "reviewer-b"}],
+                                                   self.provisions),
+        }
+        for reason, (rows, provisions) in cases.items():
+            with self.subTest(reason), self.assertRaises(SystemExit) as caught:
+                dp.oracle_records(rows, provisions, PROTOCOL)
+            self.assertIn(reason, str(caught.exception))
+
+
 class TestArmScoring(unittest.TestCase):
     def setUp(self):
         self.mc, self.rd = make_item("multiple_choice", "T1", gold="C"), make_item("reading", "T2", gold="1998")
@@ -373,6 +433,19 @@ class TestManifests(unittest.TestCase):
         self.assertTrue(oracle.prompt.endswith(dp.MC_TAIL))
         self.assertIn("O", manifest["evidence_sha256"])
 
+    def test_oracle_and_retrieved_evidence_must_cover_the_same_anchors(self):
+        first, second = [r["item_id"] for r in self.core["items"]
+                         if r["dataset_id"] == MC_DATASET and r["replicate_id"] == "B-r1"][:2]
+        text = "Điều 6. Quy định thử."
+        provisions = [{"doc_id": "d", "doc_title": "Văn bản thử", "locator": "Điều 6", "text": text,
+                       "text_sha256": v1.sha256_bytes(text.encode()), "source_ref": "test"}]
+        oracle = {f"{MC_DATASET}:{first}": provisions}
+        with self.assertRaises(SystemExit) as caught:
+            dp.build_manifest("core", evidence_by_arm={"O": oracle, "K": {f"{MC_DATASET}:{second}": provisions}})
+        self.assertIn("same items", str(caught.exception))
+        manifest, _ = dp.build_manifest("core", evidence_by_arm={"O": oracle, "K": dict(oracle)})
+        self.assertEqual(manifest["arm_counts"], {"B": 180, "K": 3, "KS": 3, "O": 3, "S": 180})
+
     def test_evidence_outside_the_phase_is_rejected(self):
         anchor = next(r for r in self.core["items"] if r["dataset_id"] == MC_DATASET)
         with self.assertRaises(SystemExit):
@@ -380,6 +453,24 @@ class TestManifests(unittest.TestCase):
 
 
 class TestRunner(unittest.TestCase):
+    LEXICON = {"lexicon_id": "test-lexicon", "groups": {"calculation_or_combination": {
+        "need": "compute", "targets": ["reasoning_gap"], "cues": [{"cue": "bao nhiêu", "gloss": "how many"}]}}}
+    RULE = {"router_id": "test-router", "conditions": [
+        {"arm": "S", "targets": ["reasoning_gap"], "when": {"question_cues": ["bao nhiêu"]}}],
+        "default": {"arm": "B", "targets": []}}
+
+    def setUp(self):
+        # a repo root holding the detail card and the frozen router rule and cue lexicon
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        (self.root / "measurement_card.md").write_text("## MC-901 — test\n", encoding="utf-8")
+        self.rule_path = self.root / runner.router.RULE_PATH.relative_to(dp.ROOT)
+        self.lexicon_path = self.root / runner.router.LEXICON_PATH.relative_to(dp.ROOT)
+        self.rule_path.parent.mkdir(parents=True)
+        self.rule_path.write_text(json.dumps(self.RULE, ensure_ascii=False), encoding="utf-8")
+        self.lexicon_path.write_text(json.dumps(self.LEXICON, ensure_ascii=False), encoding="utf-8")
+
     def manifest_stub(self):
         return {"campaign_protocol_sha256": "p" * 64, "prompt_templates_sha256": "t" * 64,
                 "manifest_sha256": "m" * 64, "evidence_sha256": {}}
@@ -387,12 +478,14 @@ class TestRunner(unittest.TestCase):
     def registration(self, phase="wide", card_file="measurement_card.md"):
         return {"card_ids": {phase: "MC-901"}, "card_files": {phase: card_file},
                 "frozen": {"protocol_sha256": "p" * 64, "prompt_templates_sha256": "t" * 64,
-                           "manifest_sha256": {phase: "m" * 64}, "evidence_sha256": {phase: {}}}}
+                           "manifest_sha256": {phase: "m" * 64}, "evidence_sha256": {phase: {}}},
+                "router": {"rule_sha256": v1.sha256_file(self.rule_path),
+                           "cue_lexicon_sha256": v1.sha256_file(self.lexicon_path)}}
 
     ENV = {"OPENAI_BASE_URL": "http://llmapi.iec/v1", "OPENAI_MODEL": "Qwen3.5-9B-65K", "OPENAI_API_KEY": "k"}
 
     def gates(self, phase="wide", **overrides):
-        args = dict(card_text="## MC-901 — test\n", readiness=lambda: {"inference_ready": True})
+        args = dict(card_text="## MC-901 — test\n", readiness=lambda: {"inference_ready": True}, root=self.root)
         args.update(overrides)
         manifest = overrides.pop("manifest", None) or self.manifest_stub()
         registration = args.pop("registration", None) or self.registration(phase)
@@ -415,6 +508,31 @@ class TestRunner(unittest.TestCase):
         self.assertFalse(core["inference_ready"].ok)
         self.assertIn("verified_endpoint", core["inference_ready"].detail)
         self.assertNotIn("inference_ready", self.gates("wide", readiness=pending))
+
+    def test_core_runs_only_with_the_registered_router_rule_and_lexicon(self):
+        self.assertEqual(self.gates("core")["router_rule"].detail, "test-router as registered")
+        self.assertNotIn("router_rule", self.gates("wide"))
+        unregistered = {key: value for key, value in self.registration("core").items() if key != "router"}
+        self.assertIn("no router entry", self.gates("core", registration=unregistered)["router_rule"].detail)
+        registered = self.registration("core")
+        frozen_rule, frozen_lexicon = self.rule_path.read_bytes(), self.lexicon_path.read_bytes()
+        self.rule_path.write_text(json.dumps({**self.RULE, "router_id": "edited"}), encoding="utf-8")
+        edited = self.gates("core", registration=registered)["router_rule"]
+        self.assertEqual((edited.ok, edited.detail), (False, "['rule'] differ from the registered sha256"))
+        self.rule_path.write_bytes(frozen_rule)
+        self.lexicon_path.write_text(json.dumps({**self.LEXICON, "lexicon_id": "edited"}), encoding="utf-8")
+        self.assertIn("['cue_lexicon']", self.gates("core", registration=registered)["router_rule"].detail)
+        self.lexicon_path.write_bytes(frozen_lexicon)
+        self.rule_path.unlink()
+        missing = self.gates("core", registration=registered)["router_rule"]
+        self.assertFalse(missing.ok)
+        self.assertIn("cannot read router rule", missing.detail)
+
+    def test_core_refuses_limits_other_than_its_registered_ones(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), self.assertRaises(SystemExit):
+            runner.main(["--phase", "core", "--max-in-flight", "8"])
+        self.assertIn("differs from the 4 registered for core", err.getvalue())
 
     def test_hash_drift_and_wrong_endpoint_block_execution(self):
         drifted = {**self.manifest_stub(), "prompt_templates_sha256": "x" * 64}
@@ -533,6 +651,32 @@ class TestRunner(unittest.TestCase):
         self.assertEqual([r["error_type"] for r in rows], ["model_identity_drift", "halted_before_send", "halted_before_send"])
         self.assertEqual(len(client.calls), 1)
 
+    def test_retrieval_arms_carry_their_trace_and_the_other_arms_do_not(self):
+        trace = {"corpus_sha256": "c" * 64, "retrieval_config_sha256": "f" * 64, "query_sha256": "q" * 64,
+                 "ranking": [{"chunk_id": "d#dieu-1", "score": 1.5, "text_sha256": "t" * 64}],
+                 "evidence_block_sha256": "e" * 64}
+        with engine_configured("core", retrieval_traces={f"{MC_DATASET}:T1": trace}):
+            rows = {arm: runner.base.request(FakeClient(), dataclasses.replace(make_item(), replicate_id=f"{arm}-r1"),
+                                             0, 0) for arm in ("B", "K", "KS")}
+        self.assertNotIn("retrieval", rows["B"])
+        self.assertEqual((rows["K"]["retrieval"], rows["KS"]["retrieval"]), (trace, trace))
+
+    def test_condition_records_the_corpus_only_when_retrieval_arms_run(self):
+        manifest = {"manifest_sha256": "m" * 64, "parent_manifest_sha256": "a" * 64, "campaign_protocol_sha256": "p" * 64,
+                    "prompt_templates_sha256": "t" * 64, "evidence_sha256": {}, "pilot_content_sha256": "c" * 64,
+                    "dataset_counts": {}, "arm_counts": {"B": 1}}
+        view = {"card_ids": {"core": "MC-901"}, "card_files": {"core": "measurement_card.md"}}
+        args = ("core", PROTOCOL, manifest, view, "http://llmapi.iec/v1", "v1", Path(runner.__file__))
+        retrieval = {"corpus_sha256": "c" * 64, "retrieval_config_sha256": "f" * 64, "records_sha256": "r" * 64}
+        self.assertNotIn("retrieval", runner.build_condition(*args))
+        self.assertEqual(runner.build_condition(*args, retrieval=retrieval)["retrieval"], retrieval)
+
+    def test_cli_keeps_evidence_files_to_the_core_phase(self):
+        for flag in ("--oracle-evidence", "--retrieved-evidence"):
+            with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+                runner.main(["--phase", "wide", flag, "evidence.jsonl"])
+            self.assertEqual(caught.exception.code, 2)
+
     def test_cli_rejects_non_positive_operational_options(self):
         for flag in ("--max-in-flight", "--stop-after-timeouts"):
             with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
@@ -605,6 +749,22 @@ class TestRunner(unittest.TestCase):
         self.assertEqual(saved, manifest)  # the archived frozen file is the manifest the runner rebuilds
         self.assertEqual(len(dp.verify_manifest_rows(saved, rebuilt)), 2478)
         self.assertEqual((manifest["item_count"], manifest["arm_counts"]), (1239, {"B": 1239, "S": 1239}))
+
+    @unittest.skipUnless(CORE_OK, "the locked pilot, the main-v1 sources or the core evidence records are not available")
+    def test_committed_core_registration_matches_its_frozen_artifacts(self):
+        """MC-93: the core manifest rebuilt from the evidence records, the readiness controls, the router rule and the
+        cue lexicon pass every gate against the committed registration."""
+        protocol, registration = dp.load_protocol(), dp.load_registration()
+        main_items = v1.rebuild_items(protocol["parent"]["manifest_phase"])
+        evidence = {"O": dp.load_oracle_evidence(ORACLE_RECORDS, protocol, main_items),
+                    "K": dp.load_retrieved_evidence(RETRIEVED_RECORDS, protocol, main_items)[0]}
+        manifest, _ = dp.build_manifest("core", evidence_by_arm=evidence, main_items=main_items)
+        gates = {g.name: g for g in runner.evaluate_gates("core", protocol, manifest, registration, self.ENV)}
+        self.assertEqual({name: g.detail for name, g in gates.items() if not g.ok}, {})
+        self.assertEqual(set(gates), {"card_registered", "detail_card", "frozen_hashes", "endpoint_identity",
+                                      "inference_ready", "router_rule"})
+        self.assertEqual(manifest["arm_counts"], {"B": 180, "K": 24, "KS": 24, "O": 24, "S": 180})
+        self.assertEqual(set(evidence["O"]), set(registration["core"]["evidence_anchors"]))
 
 
 SUPPLEMENT_DESIGN = {"base_phase": "wide", "arms": ["B"], "first_replicate": 2, "replicates": 1}

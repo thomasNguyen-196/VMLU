@@ -41,9 +41,10 @@ describe("comparison across the three displayed tables", () => {
   test("separates EM and token F1 for the same reading dataset", () => {
     const comparison = buildBenchmarkComparison(view().groups);
     const squad = comparison.slices.filter((slice) => slice.datasetId === "vi-squad");
-    expect(squad.map((slice) => slice.metric)).toEqual(["em", "token_f1"]);
-    expect(squad[0].rows[0].cells["omp-no-tools"]?.score)
-      .not.toBe(squad[1].rows[0].cells["omp-no-tools"]?.score);
+    expect(squad.map((slice) => slice.metric)).toEqual(["em", "em_v3", "token_f1", "token_f1_v3"]);
+    const em = squad.find((slice) => slice.metric === "em")!;
+    const f1 = squad.find((slice) => slice.metric === "token_f1")!;
+    expect(em.rows[0].cells["omp-no-tools"]?.score).not.toBe(f1.rows[0].cells["omp-no-tools"]?.score);
   });
 
   test("shows zero scores and suppresses deltas for unmatched denominators or gold", () => {

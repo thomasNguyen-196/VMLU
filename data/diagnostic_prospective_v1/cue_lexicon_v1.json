@@ -1,0 +1,61 @@
+{
+  "lexicon_id": "cue-lexicon-v1",
+  "description": "Cue words a router condition may test (design Decision 12), grouped by the need they signal. A condition may use only cues of a group whose targets it shares. Legal NLI stems quote the provision itself, so legal-provision cues fire there although the input already holds it, and the Vi-SQuAD phrase 'định luật' (a law of physics) also matches 'luật': conditions pair the legal cues with the dataset feature.",
+  "match": "A cue matches as a whole word or phrase, never inside a longer word, in the question text after NFC normalisation, case folding and whitespace collapsing. The question is the text after 'Câu hỏi:' for reading items and the stem before the first option for multiple-choice items (diagnostic_router.cue_present).",
+  "written": "2026-10-27, before any cue-level outcome on wide was computed. Only the wording of the wide questions and the number of questions each cue matches were read; no score was read.",
+  "groups": {
+    "calculation_or_combination": {
+      "need": "The answer has to be computed or put together from several facts given in the input: counts, sums, differences, ratios, averages and durations, or comparisons and extremes across entities. This is the reasoning_gap of the audit taxonomy: the premises are present but combining or calculation fails.",
+      "targets": ["reasoning_gap"],
+      "cues": [
+        {"cue": "bao nhiêu", "gloss": "how many, how much"},
+        {"cue": "mấy", "gloss": "how many (also 'thứ mấy', which rank)"},
+        {"cue": "bao lâu", "gloss": "how long"},
+        {"cue": "tổng số", "gloss": "total number"},
+        {"cue": "tổng cộng", "gloss": "in total"},
+        {"cue": "tính tổng", "gloss": "compute the sum"},
+        {"cue": "chênh lệch", "gloss": "difference between two values"},
+        {"cue": "phần trăm", "gloss": "percent"},
+        {"cue": "tỷ lệ", "gloss": "rate, ratio"},
+        {"cue": "tỉ lệ", "gloss": "rate, ratio (spelling variant)"},
+        {"cue": "trung bình", "gloss": "average"},
+        {"cue": "so sánh", "gloss": "compare"},
+        {"cue": "hơn", "gloss": "comparative marker: more, less, higher ... than"},
+        {"cue": "cao nhất", "gloss": "highest"},
+        {"cue": "thấp nhất", "gloss": "lowest"},
+        {"cue": "lớn nhất", "gloss": "largest"},
+        {"cue": "nhỏ nhất", "gloss": "smallest"},
+        {"cue": "nhiều nhất", "gloss": "most"},
+        {"cue": "ít nhất", "gloss": "fewest (also 'at least' in legal text)"},
+        {"cue": "dài nhất", "gloss": "longest"},
+        {"cue": "ngắn nhất", "gloss": "shortest"},
+        {"cue": "sớm nhất", "gloss": "earliest"},
+        {"cue": "muộn nhất", "gloss": "latest"}
+      ]
+    },
+    "legal_provision_outside_input": {
+      "need": "The answer depends on a legal provision that the prompt does not contain, so the model has to recall it or be given it: external_evidence_gap when the input lacks it, parametric_knowledge_gap or parametric_knowledge_error when recall fails.",
+      "targets": ["external_evidence_gap", "parametric_knowledge_gap", "parametric_knowledge_error"],
+      "cues": [
+        {"cue": "quy định", "gloss": "provision, regulation ('theo quy định': as the law provides)"},
+        {"cue": "luật", "gloss": "law, code (also matches 'pháp luật', 'bộ luật')"},
+        {"cue": "nghị định", "gloss": "government decree"},
+        {"cue": "thông tư", "gloss": "ministerial circular"},
+        {"cue": "nghị quyết", "gloss": "resolution"},
+        {"cue": "hiện hành", "gloss": "currently in force"}
+      ]
+    }
+  },
+  "excluded": [
+    {"cue": "đầu tiên", "reason": "'first': in these questions mostly an attribute to look up ('vai diễn chính đầu tiên'), not an order to work out"},
+    {"cue": "cuối cùng", "reason": "'last': the same as 'đầu tiên' ('vua cuối cùng')"},
+    {"cue": "nhất", "reason": "bare superlative particle, also in 'duy nhất' (only), 'thống nhất' (unify), 'nhất định' (certain) and 'thứ nhất' (first); the superlatives are listed one by one instead"},
+    {"cue": "tổng", "reason": "also in 'tổng thống' (president), 'tổng hợp' and 'tổng cục'; the compounds are listed instead"},
+    {"cue": "cộng", "reason": "also in 'cộng hòa' (republic) and 'cộng đồng' (community)"},
+    {"cue": "trừ", "reason": "also in 'ngoại trừ' (except) and 'trừ điểm' (deduct licence points)"},
+    {"cue": "điều", "reason": "'article', but also in 'điều kiện' (condition) and 'điều gì' (what)"},
+    {"cue": "khoản", "reason": "'clause', but also 'khoản tiền' (an amount of money)"},
+    {"cue": "pháp luật", "reason": "already matched by 'luật'"},
+    {"cue": "bộ luật", "reason": "already matched by 'luật'"}
+  ]
+}

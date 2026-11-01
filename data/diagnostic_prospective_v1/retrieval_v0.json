@@ -1,0 +1,15 @@
+{
+  "retrieval_id": "bm25-article-v0",
+  "corpus_id": "vi-legal-corpus-v0",
+  "unit": "article",
+  "query": "mc_body",
+  "query_note": "the item's question and options exactly as the frozen B prompt carries them, without its instruction head and answer tail; no gold, label or arm outcome",
+  "normalization": "Unicode NFC, lower case",
+  "tokens": "maximal runs of Unicode word characters (Vietnamese syllables and numbers)",
+  "bigrams": true,
+  "bm25": {"k1": 1.2, "b": 0.75, "idf": "ln(1 + (N - df + 0.5) / (df + 0.5))", "query_terms": "each distinct query token counts once"},
+  "top_k": 3,
+  "tie_break": "corpus order",
+  "truncation": "none; the three longest corpus articles together fit the 65K-token context with room for the answer",
+  "fixed_on": "2026-10-26, before any retrieval query; k1 and b are the common BM25 defaults, not tuned"
+}

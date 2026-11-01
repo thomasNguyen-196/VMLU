@@ -1,0 +1,16 @@
+{
+  "procedure_id": "router-v3-calibrated",
+  "description": "Per dataset, B answers the calibration items twice and S once; always-B, the v2 cascade (S when the two parsed B answers differ) and always-S are scored on them (accuracy for multiple choice, mean token-F1 for reading); the highest score wins, an exact tie goes to fewer mean reported tokens, then to the order of the candidates. The choices are emitted as a rule of the closed router grammar.",
+  "candidates": ["always_B", "v2_cascade", "always_S"],
+  "calibration_items": 60,
+  "score": {
+    "multiple_choice": "accuracy",
+    "reading": "mean_token_f1"
+  },
+  "tie": ["fewer_mean_reported_tokens", "candidate_order"],
+  "probe": {
+    "arm": "B",
+    "samples": 2,
+    "agreement": "normalized-answer-v1"
+  }
+}

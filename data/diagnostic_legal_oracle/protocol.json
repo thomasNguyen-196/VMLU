@@ -1,0 +1,74 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-oracle",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-legal-oracle",
+ "purpose": "Does the provision that governs a Legal MC question, placed before the frozen MC prompt, fix the questions Qwen3.5-9B answers wrongly, and does it break the ones it answers correctly?",
+ "dataset": "vi-multimodel-v1-legal-mc-146",
+ "selection": {
+  "pool": "the Legal MC items of the wide phase, each answered by arm B on two draws: B-r1 of MC-90 and B-r2 of MC-91",
+  "sources": {
+   "B-r1": "all_res/diagnostic_prospective/wide/qwen3-5-9b-65k-prospective/scores.jsonl",
+   "B-r2": "all_res/diagnostic_prospective/wide-supplements/wide-b-r2/qwen3-5-9b-65k-prospective/scores.jsonl"
+  },
+  "pool_size": 134,
+  "wrong": "every pool item that B answered wrongly on at least one of the two draws",
+  "right": {
+   "from": "the pool items that B answered correctly on both draws",
+   "size": 28,
+   "order": "ascending SHA-256 of the UTF-8 string legal-oracle-v1|<item_id>"
+  }
+ },
+ "arms": {
+  "B": "the item's frozen main-v1 MC prompt, byte for byte",
+  "O": "the campaign evidence block with the item's oracle provisions, then the same frozen prompt (build_arm_prompt with arm O)"
+ },
+ "draws": 2,
+ "o_requires": "at least one provision, whatever its support label",
+ "templates": "data/diagnostic_prospective_v1/prompt_templates_v1.json",
+ "evidence": {
+  "source_site": "hethongphapluat.com",
+  "located_by": "four Claude agents, 14 items each in item-id order, blind to the stratum, from the exact prompt and the gold letter; locations only",
+  "unit": "a whole article, or its heading line and the named clauses when the article exceeds 6,000 characters; at most two provisions per item",
+  "text": "extracted by code, verbatim, from the stored page",
+  "reader": "articles as corpus v0 reads them (top-level article elements), except that a page breaking off inside its last article element keeps the articles closed before it, and an attached document without article elements (a Quy chế issued by a Quyết định) is read from the page text after its heading line, named in the location's `part`; named clauses must exist in the article",
+  "support_labels": [
+   "supports_gold",
+   "contradicts_gold",
+   "unclear",
+   "not_found"
+  ],
+  "review": {
+   "size": 14,
+   "order": "ascending SHA-256 of the UTF-8 string legal-oracle-review|<item_id>, among items with a provision",
+   "verdict": "the owner's label replaces the agent's on reviewed items",
+   "answers": "the owner also records, per reviewed item, the option the provision makes correct; the review file stays outside the repository and its SHA-256 is registered"
+  },
+  "max_article_chars": 6000,
+  "max_provisions": 2
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-oracle-v1",
+  "item_score": "mean correctness of an arm over its two draws",
+  "primary_set": "items whose final support label is supports_gold",
+  "comparison": "O against fresh B, per stratum",
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7,
+   "interval": "percentile 95%"
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7,
+   "sides": 2
+  },
+  "reading_rule": {
+   "wrong_min_gain_points": 20.0,
+   "right_max_loss_points": 10.0
+  },
+  "gold_check": "descriptive: on the reviewed items, the owner's option against the gold; on contradicts_gold items, each arm's answers that pick the gold's option, the owner's option or another"
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4
+ }
+}

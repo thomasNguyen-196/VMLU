@@ -1,0 +1,23 @@
+{
+  "procedure_id": "router-k2-calibrated",
+  "description": "On the K2 set, in one rotation, the 60 labelled calibration items score always-B (closed book), always-K (two retrieved passages), the K cascade (K answers twice; the item goes to KS when the two parsed answers differ under normalized-answer-v1, otherwise the first K answer stands) and always-KS by mean token-F1. The highest score wins; scores within equal_within count as equal, and a tie goes to the more thorough candidate, the later one in the list. The choice is emitted as a rule of the closed router grammar.",
+  "candidates": [
+    "always_B",
+    "always_K",
+    "k_cascade",
+    "always_KS"
+  ],
+  "calibration_items": 60,
+  "score": {
+    "reading": "mean_token_f1"
+  },
+  "tie": [
+    "more_thorough"
+  ],
+  "equal_within": 1e-12,
+  "probe": {
+    "arm": "K",
+    "samples": 2,
+    "agreement": "normalized-answer-v1"
+  }
+}

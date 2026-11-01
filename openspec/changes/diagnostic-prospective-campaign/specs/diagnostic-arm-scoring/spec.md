@@ -115,3 +115,14 @@ When a registered supplement provides a second draw of a reasoning arm for the i
 #### Scenario: Systematic effect
 - **WHEN** the reasoning arm is right in both draws and the baseline wrong in both on significantly more items than the reverse, after correction
 - **THEN** the report states a systematic effect for that family; otherwise it states that the result is not distinguishable from noise
+
+### Requirement: Recovery by diagnostic hypothesis
+For the core phase a separate registered analysis SHALL group the anchors by their adjudicated diagnostic hypotheses, an anchor with several hypotheses appearing in each of their groups, plus the groups no observed issue, unresolved, and issue observed with an empty hypothesis set. Per group it SHALL report the anchors, the anchors whose B majority is incorrect and, per arm present, the rescues, the regressions and the anchors that no arm answers correctly. It SHALL list contrast candidates, anchor-hypothesis pairs whose matched contrast points the expected way: S correct where B is incorrect for `reasoning_gap` or `reading_representation_gap` with sufficient input; O correct where B is incorrect for `external_evidence_gap` with insufficient input; K incorrect where O is correct for `retrieval_gap`; and B replicates that disagree for `run_instability`. An issue anchor whose B majority is correct SHALL be reported as not reproduced, because the audit judged the historical answer. The analysis SHALL NOT mark any hypothesis `contrast_supported`; that status is recorded only through the audit's contrast records. Every figure is descriptive, and the adjudicated labels are read from the anchor-diagnosis file whose SHA-256 is recorded in the core registration entry.
+
+#### Scenario: A candidate is not support
+- **WHEN** an anchor whose hypothesis is `reasoning_gap` and whose input is sufficient is incorrect under B and correct under S by majority
+- **THEN** the analysis lists the pair as a contrast candidate and the hypothesis keeps the status `hypothesis`
+
+#### Scenario: Historical failure not reproduced
+- **WHEN** an anchor audited as issue observed is correct under the new B by majority
+- **THEN** its group reports it as not reproduced and it is not counted as a rescue for any arm

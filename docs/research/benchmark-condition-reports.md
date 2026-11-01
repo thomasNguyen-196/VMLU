@@ -77,7 +77,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-06T11:46:17.908628+00:00 → 2026-10-07T02:16:01.328946+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 0.0; hiệu lực theo metadata 0.0; profile/model config |
 | Thinking / reasoning level | off; reasoning tắt; effort không ghim mức low/medium/high |
 | Seed | gửi 42 |
@@ -98,7 +98,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-10T07:26:55.637344+00:00 → 2026-10-10T07:51:18.852650+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 1.0; hiệu lực theo metadata 1.0; explicit 1.0; nominally matched to OpenCode Go |
 | Thinking / reasoning level | auto; reasoning bật; effort không ghim mức low/medium/high |
 | Seed | không gửi; seed sample và seed inference là hai cấu hình riêng |
@@ -177,6 +177,36 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | Qwen3.5-9B-65K / MC-72 | Legal NLI | Accuracy | 150 | 136 | 90.67 | 84.94 | 94.36 | — | — | — |
 | Qwen3.5-9B-65K / MC-72 | ViBidLQA test | EM | 603 | — | 25.54 | 22.19 | 28.96 | — | — | — |
 | Qwen3.5-9B-65K / MC-72 | ViBidLQA test | Token-F1 | 603 | — | 64.85 | 62.10 | 67.67 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-53 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 74.50 | 68.37 | 80.90 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-53 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 89.01 | 85.39 | 92.50 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-53 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 58.50 | 51.87 | 64.82 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-53 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 73.86 | 68.81 | 78.75 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-53 | ViBidLQA test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 50.25 | 46.14 | 54.30 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-53 | ViBidLQA test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 76.89 | 74.11 | 79.56 | — | — | — |
+| MiMo V2.6 Flash / MC-54 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 67.50 | 61.31 | 74.11 | — | — | — |
+| MiMo V2.6 Flash / MC-54 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 86.97 | 83.48 | 90.45 | — | — | — |
+| MiMo V2.6 Flash / MC-54 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 24.00 | 18.13 | 29.90 | — | — | — |
+| MiMo V2.6 Flash / MC-54 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 50.67 | 45.83 | 55.42 | — | — | — |
+| MiMo V2.6 Flash / MC-54 | ViBidLQA test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 39.47 | 35.29 | 43.34 | — | — | — |
+| MiMo V2.6 Flash / MC-54 | ViBidLQA test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 74.84 | 72.34 | 77.32 | — | — | — |
+| MiMo V2.5 / MC-55 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 61.00 | 54.36 | 67.98 | — | — | — |
+| MiMo V2.5 / MC-55 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 82.03 | 77.90 | 86.26 | — | — | — |
+| MiMo V2.5 / MC-55 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 25.50 | 19.21 | 31.61 | — | — | — |
+| MiMo V2.5 / MC-55 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 46.40 | 41.14 | 51.71 | — | — | — |
+| MiMo V2.5 / MC-55 | ViBidLQA test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 32.84 | 28.93 | 36.52 | — | — | — |
+| MiMo V2.5 / MC-55 | ViBidLQA test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 68.71 | 66.02 | 71.36 | — | — | — |
+| Qwen3.5-9B-65K / MC-56 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 80.00 | 74.60 | 85.50 | — | — | — |
+| Qwen3.5-9B-65K / MC-56 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 91.85 | 88.88 | 94.80 | — | — | — |
+| Qwen3.5-9B-65K / MC-56 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 50.50 | 43.88 | 57.29 | — | — | — |
+| Qwen3.5-9B-65K / MC-56 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 59.82 | 53.70 | 65.90 | — | — | — |
+| Qwen3.5-9B-65K / MC-56 | ViBidLQA test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 25.21 | 21.74 | 28.96 | — | — | — |
+| Qwen3.5-9B-65K / MC-56 | ViBidLQA test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 63.80 | 61.01 | 66.72 | — | — | — |
+| Qwen3.5-9B-65K / MC-72 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 74.50 | 68.14 | 81.00 | — | — | — |
+| Qwen3.5-9B-65K / MC-72 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 89.08 | 85.69 | 92.37 | — | — | — |
+| Qwen3.5-9B-65K / MC-72 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 47.50 | 40.39 | 54.64 | — | — | — |
+| Qwen3.5-9B-65K / MC-72 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 56.40 | 49.93 | 62.88 | — | — | — |
+| Qwen3.5-9B-65K / MC-72 | ViBidLQA test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 25.54 | 22.19 | 28.96 | — | — | — |
+| Qwen3.5-9B-65K / MC-72 | ViBidLQA test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 64.85 | 62.10 | 67.67 | — | — | — |
 
 ### Comment
 
@@ -208,6 +238,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 - MiMo V2.6 Flash · request complete: 2043; request expected: 2043; request errors cuối: 0; truncation tổng: 34. Truncation xuất hiện ở nhiều metric của cùng dataset không được cộng lặp.
 - MiMo V2.5 · request complete: 2043; request expected: 2043; request errors cuối: 0; truncation tổng: 32. Truncation xuất hiện ở nhiều metric của cùng dataset không được cộng lặp.
 - Qwen3.5-9B-65K · request complete: 2043; request expected: 2043; request errors cuối: 0; truncation tổng: 0. Truncation xuất hiện ở nhiều metric của cùng dataset không được cộng lặp.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Pilot V1 · diagnostics
 
@@ -284,7 +315,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-06T11:12:03.634259+00:00 → 2026-10-06T11:34:54.806623+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 0.0; hiệu lực theo metadata 0.0; profile/model config |
 | Thinking / reasoning level | off; reasoning tắt; effort không ghim mức low/medium/high |
 | Seed | gửi 42 |
@@ -331,6 +362,14 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | Qwen3.5-9B-65K / MC-57 | VMLU-dev pilot / Other | Accuracy | 14 | 9 | 64.29 | — | — | — | — | — |
 | Qwen3.5-9B-65K / MC-57 | VMLU-dev pilot / STEM | Accuracy | 37 | 33 | 89.19 | — | — | — | — | — |
 | Qwen3.5-9B-65K / MC-57 | VMLU-dev pilot / Social Science | Accuracy | 18 | 14 | 77.78 | — | — | — | — | — |
+| Muse Spark 1.3 Contributor / MC-49 | ViBidLQA-val pilot | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 45.00 | 33.77 | 56.25 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-49 | ViBidLQA-val pilot | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 77.43 | 70.76 | 83.59 | — | — | — |
+| MiMo V2.6 Flash / MC-50 | ViBidLQA-val pilot | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 43.75 | 32.10 | 54.55 | — | — | — |
+| MiMo V2.6 Flash / MC-50 | ViBidLQA-val pilot | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 76.58 | 70.02 | 82.92 | — | — | — |
+| MiMo V2.5 / MC-51 | ViBidLQA-val pilot | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 35.00 | 24.36 | 45.45 | — | — | — |
+| MiMo V2.5 / MC-51 | ViBidLQA-val pilot | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 67.30 | 60.26 | 74.01 | — | — | — |
+| Qwen3.5-9B-65K / MC-57 | ViBidLQA-val pilot | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 25.00 | 15.38 | 35.37 | — | — | — |
+| Qwen3.5-9B-65K / MC-57 | ViBidLQA-val pilot | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 80 | — | 66.97 | 59.76 | 73.96 | — | — | — |
 
 ### Comment
 
@@ -353,6 +392,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 - MiMo V2.6 Flash · request complete: 200; request expected: 200; request errors cuối: 0; truncation tổng: 9. Truncation xuất hiện ở nhiều metric của cùng dataset không được cộng lặp.
 - MiMo V2.5 · request complete: 200; request expected: 200; request errors cuối: 0; truncation tổng: 4. Truncation xuất hiện ở nhiều metric của cùng dataset không được cộng lặp.
 - Qwen3.5-9B-65K · request complete: 200; request expected: 200; request errors cuối: 0; truncation tổng: 0. Truncation xuất hiện ở nhiều metric của cùng dataset không được cộng lặp.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## VMLU V2 · Dev / Valid / Test server
 
@@ -429,7 +469,7 @@ So sánh theo cấu hình danh nghĩa; API và cách provider diễn giải auto
 | --- | --- |
 | Thời gian chạy | 2026-10-09T05:56:56.797747+00:00 → 2026-10-09T07:38:27.837216+00:00 |
 | Harness / phiên bản / mode | omp · omp/18.0.0 · mode json |
-| Provider / API / route | IEC internal endpoint · openai-completions · llmapi.iec |
+| Provider / API / route | IEC internal endpoint · openai-completions · IEC (host ẩn) |
 | Temperature gửi / hiệu lực | gửi 1.0; hiệu lực theo metadata 1.0; explicit 1.0; matched to V2 Go provider effective temperature |
 | Thinking / reasoning level | auto; reasoning bật; effort không ghim mức low/medium/high |
 | Seed | không gửi; seed sample và seed inference là hai cấu hình riêng |
@@ -696,6 +736,12 @@ MC-86: 12,033 Main/Dev/Test items, excluding the 146 Legal MC items covered by M
 | Muse Spark 1.3 Contributor / MC-86 / R2 | VMLU Test / Humanity | Server accuracy | — | — | 86.17 | — | — | — | — | — |
 | Muse Spark 1.3 Contributor / MC-86 / R2 | VMLU Test / Social Science | Server accuracy | — | — | 87.12 | — | — | — | — | — |
 | Muse Spark 1.3 Contributor / MC-86 / R2 | VMLU Test / Other | Server accuracy | — | — | 83.46 | — | — | — | — | — |
+| Muse Spark 1.3 Contributor / MC-86 / R2 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 73.50 | 67.33 | 79.70 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-86 / R2 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 89.37 | 86.10 | 92.64 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-86 / R2 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 59.50 | 52.85 | 66.15 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-86 / R2 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 75.00 | 69.85 | 79.85 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-86 / R2 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 51.08 | 47.19 | 55.12 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-86 / R2 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 77.91 | 75.32 | 80.44 | — | — | — |
 
 ### Comment
 
@@ -708,6 +754,7 @@ MC-86: 12,033 Main/Dev/Test items, excluding the 146 Legal MC items covered by M
 - R2 dùng timeout 600 giây cho 8 câu VMLU Test; các câu còn lại giữ timeout 300 giây của MC-86.
 - VMLU Test dùng server grade do người dùng cung cấp; không có per-item gold, số câu đúng hay CI95 để suy ra.
 - Web search được gọi 342 lượt; 342 lượt không có trạng thái kết quả trong attempt artifact cũ nên được giữ là chưa ghi nhận.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Muse Spark 1.2 Contributor · OMP full tools · MC-87/R3
 
@@ -754,6 +801,12 @@ MC-87: same 12,033-item scope as MC-86, excluding Legal MC 146; R2/R3 overlay re
 | Muse Spark 1.2 Contributor / MC-87 / R3 | VMLU Test / Humanity | Server accuracy | — | — | 86.98 | — | — | — | — | — |
 | Muse Spark 1.2 Contributor / MC-87 / R3 | VMLU Test / Social Science | Server accuracy | — | — | 87.60 | — | — | — | — | — |
 | Muse Spark 1.2 Contributor / MC-87 / R3 | VMLU Test / Other | Server accuracy | — | — | 83.92 | — | — | — | — | — |
+| Muse Spark 1.2 Contributor / MC-87 / R3 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 62.50 | 55.61 | 69.12 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-87 / R3 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 82.71 | 78.69 | 86.45 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-87 / R3 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 16.00 | 11.11 | 20.83 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-87 / R3 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 37.75 | 32.99 | 42.39 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-87 / R3 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 30.85 | 26.89 | 35.01 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-87 / R3 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 69.06 | 66.34 | 71.74 | — | — | — |
 
 ### Comment
 
@@ -765,6 +818,7 @@ MC-87: same 12,033-item scope as MC-86, excluding Legal MC 146; R2/R3 overlay re
 - OMP dùng full tool menu và OMP coding-agent system prompt mặc định; tool access không đồng nghĩa model gọi tool trên từng câu.
 - R2 thử lại 30 câu với 600 giây; R3 thử lại 4 câu còn lỗi với 900 giây. Kết quả cuối gồm 26 câu ở 600s, 4 câu ở 900s, còn lại 300s.
 - VMLU Test dùng server grade do người dùng cung cấp; không có per-item gold, số câu đúng hay CI95 để suy ra.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Qwen3.5-9B-65K (IEC) · OMP full tools · MC-88
 
@@ -811,6 +865,12 @@ MC-88: same 12,033-item scope as MC-86/R2 and MC-87; a single 900s pass without 
 | Qwen3.5-9B-65K (IEC) / MC-88 | VMLU Test / Humanity | Server accuracy | — | — | 52.64 | — | — | — | — | — |
 | Qwen3.5-9B-65K (IEC) / MC-88 | VMLU Test / Social Science | Server accuracy | — | — | 59.67 | — | — | — | — | — |
 | Qwen3.5-9B-65K (IEC) / MC-88 | VMLU Test / Other | Server accuracy | — | — | 50.25 | — | — | — | — | — |
+| Qwen3.5-9B-65K (IEC) / MC-88 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 63.00 | 56.12 | 69.85 | — | — | — |
+| Qwen3.5-9B-65K (IEC) / MC-88 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 82.99 | 78.95 | 86.97 | — | — | — |
+| Qwen3.5-9B-65K (IEC) / MC-88 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 42.50 | 36.04 | 49.51 | — | — | — |
+| Qwen3.5-9B-65K (IEC) / MC-88 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 53.98 | 48.01 | 60.36 | — | — | — |
+| Qwen3.5-9B-65K (IEC) / MC-88 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 21.23 | 17.93 | 24.56 | — | — | — |
+| Qwen3.5-9B-65K (IEC) / MC-88 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 59.65 | 56.92 | 62.57 | — | — | — |
 
 ### Comment
 
@@ -822,6 +882,7 @@ MC-88: same 12,033-item scope as MC-86/R2 and MC-87; a single 900s pass without 
 - OMP dùng full tool menu và OMP coding-agent system prompt mặc định; model trả lời trực tiếp gần như toàn bộ (3 tool call: 2 read, 1 write; không có web_search).
 - Toàn bộ 12.033 câu chạy ở 900 giây/item (user override; MC-86/87 gốc 300 giây) — giữ khác biệt này khi so sánh.
 - VMLU Test dùng server grade do người dùng cung cấp; không có per-item gold, số câu đúng hay CI95 để suy ra. 3 câu Test không trích xuất được đáp án nằm trong denominator.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## MiMo V2.6 Flash · OMP full tools · MC-89
 
@@ -868,6 +929,12 @@ MC-89: same 12,033-item scope as MC-86/87/88; parent 900 s, R1 1800 s, R2 per-gr
 | MiMo V2.6 Flash / MC-89 | VMLU Test / Humanity | Server accuracy | — | — | 75.09 | — | — | — | — | — |
 | MiMo V2.6 Flash / MC-89 | VMLU Test / Social Science | Server accuracy | — | — | 81.29 | — | — | — | — | — |
 | MiMo V2.6 Flash / MC-89 | VMLU Test / Other | Server accuracy | — | — | 73.23 | — | — | — | — | — |
+| MiMo V2.6 Flash / MC-89 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 60.50 | 53.81 | 67.34 | — | — | — |
+| MiMo V2.6 Flash / MC-89 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 83.23 | 79.41 | 86.90 | — | — | — |
+| MiMo V2.6 Flash / MC-89 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 26.00 | 20.30 | 32.16 | — | — | — |
+| MiMo V2.6 Flash / MC-89 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 52.33 | 47.56 | 57.14 | — | — | — |
+| MiMo V2.6 Flash / MC-89 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 35.32 | 31.24 | 39.28 | — | — | — |
+| MiMo V2.6 Flash / MC-89 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 71.05 | 68.17 | 73.83 | — | — | — |
 
 ### Comment
 
@@ -880,6 +947,7 @@ MC-89: same 12,033-item scope as MC-86/87/88; parent 900 s, R1 1800 s, R2 per-gr
 - Theo chỉ đạo 2026-10-21: câu không hoàn tất trong ngân sách 1.800 s bị đánh failed và ghi đáp án rỗng; 46 câu failed (45 ở Test) + 20 câu complete-nhưng-không-parse-được = 65 dòng rỗng trong submission, sẽ tính sai khi chấm server.
 - Một số câu đã hoàn tất nhưng chạy quá 1.800 s (7 câu) vẫn được giữ; danh sách nằm trong finalization.json.
 - 49 lỗi AttributeError của pass gốc là bug parser `_reasoning_tokens` (message dạng string); đã vá trong driver recovery.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Muse 1.2 · Legal và reading · MC-73
 
@@ -920,6 +988,12 @@ MC-73: 1,299 items, CMC route, 4 workers, OMP/no tools/temp 1/auto/seed omitted.
 | Muse Spark 1.2 Contributor / MC-73 | Vi-DROP | Token-F1 | 200 | — | 19.45 | 15.22 | 24.02 | — | — | — |
 | Muse Spark 1.2 Contributor / MC-73 | ViBidLQA Test | EM | 603 | — | 14.43 | 11.70 | 17.37 | — | — | — |
 | Muse Spark 1.2 Contributor / MC-73 | ViBidLQA Test | Token-F1 | 603 | — | 55.62 | 52.67 | 58.48 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 61.50 | 54.73 | 68.32 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 82.54 | 78.85 | 86.50 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 18.50 | 13.43 | 23.67 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 37.98 | 33.12 | 42.76 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 36.15 | 32.27 | 40.07 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-73 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 70.36 | 67.59 | 73.07 | — | — | — |
 
 ### Comment
 
@@ -928,6 +1002,7 @@ MC-73: 1,299 items, CMC route, 4 workers, OMP/no tools/temp 1/auto/seed omitted.
 ### Note
 
 - MC-73 timeout is 300 seconds/item; keep it explicit alongside the other models' controls.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Muse Spark 1.3 Contributor · API Direct
 
@@ -1017,6 +1092,12 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 | Muse Spark 1.3 Contributor / MC-82 | VMLU Test / stem | Server accuracy | — | — | 91.58 | — | — | — | — | — |
 | Muse Spark 1.3 Contributor / MC-82 | VMLU Test / other | Server accuracy | — | — | 84.29 | — | — | — | — | — |
 | Muse Spark 1.3 Contributor / MC-82 | VMLU Test / humanity | Server accuracy | — | — | 87.08 | — | — | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 69.50 | 63.13 | 76.12 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 86.11 | 82.25 | 89.99 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 61.50 | 54.68 | 68.10 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 76.31 | 71.11 | 81.28 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 50.75 | 46.66 | 54.76 | — | — | — |
+| Muse Spark 1.3 Contributor / MC-80 + MC-82 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 77.17 | 74.41 | 79.88 | — | — | — |
 
 ### Comment
 
@@ -1027,6 +1108,7 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 - Dev/Test: budget 20.000 tokens; Valid: 4.096; Legal/reading giữ budget gốc và 7 câu recovery 20.000.
 - Reasoning dùng mặc định provider; temperature gửi 1,0, hiệu lực upstream không công bố.
 - Test chỉ có phần trăm server; chưa có correct count hoặc CI95. Các câu không parse được giữ trong mẫu chấm.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Qwen3.5-9B-65K · API Direct · MC-83
 
@@ -1095,6 +1177,12 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 | Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test / social_science | Server accuracy | — | — | 69.54 | — | — | — | — | — |
 | Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test / stem | Server accuracy | — | — | 61.23 | — | — | — | — | — |
 | Qwen3.5-9B-65K · Q4_K_M / MC-83 | VMLU Test / other | Server accuracy | — | — | 59.03 | — | — | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 75.50 | 69.59 | 81.50 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 90.00 | 86.80 | 92.86 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 48.00 | 41.09 | 55.05 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 54.58 | 48.19 | 61.04 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 27.86 | 24.05 | 31.58 | — | — | — |
+| Qwen3.5-9B-65K · Q4_K_M / MC-83 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 66.01 | 63.14 | 68.89 | — | — | — |
 
 ### Comment
 
@@ -1105,6 +1193,7 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 - Qwen MC-83 dùng budget 20.000 tokens cho mọi dataset; weights Q4_K_M theo response model ID.
 - Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.
 - Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 2 câu không parse được trong mẫu chấm.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Muse Spark 1.2 Contributor · API Direct · MC-84
 
@@ -1173,6 +1262,12 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 | Muse Spark 1.2 Contributor / MC-84 | VMLU Test / humanity | Server accuracy | — | — | 86.38 | — | — | — | — | — |
 | Muse Spark 1.2 Contributor / MC-84 | VMLU Test / social_science | Server accuracy | — | — | 87.47 | — | — | — | — | — |
 | Muse Spark 1.2 Contributor / MC-84 | VMLU Test / other | Server accuracy | — | — | 83.36 | — | — | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 62.00 | 55.50 | 68.75 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 83.20 | 79.47 | 87.01 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 19.50 | 14.29 | 24.41 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 39.31 | 34.21 | 44.13 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 37.65 | 33.71 | 41.80 | — | — | — |
+| Muse Spark 1.2 Contributor / MC-84 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 71.66 | 68.82 | 74.43 | — | — | — |
 
 ### Comment
 
@@ -1183,6 +1278,7 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 - Muse Spark 1.2 MC-84 dùng budget 20.000 tokens cho mọi dataset; cố định một route model.
 - Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.
 - Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 10 câu không parse được trong mẫu chấm.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## MiMo V2.6 Flash · API Direct · MC-85
 
@@ -1251,6 +1347,12 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 | MiMo V2.6 Flash / MC-85 | VMLU Test / social_science | Server accuracy | — | — | 80.38 | — | — | — | — | — |
 | MiMo V2.6 Flash / MC-85 | VMLU Test / stem | Server accuracy | — | — | 82.39 | — | — | — | — | — |
 | MiMo V2.6 Flash / MC-85 | VMLU Test / humanity | Server accuracy | — | — | 73.62 | — | — | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-SQuAD | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 68.00 | 61.39 | 74.27 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-SQuAD | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 86.83 | 83.37 | 90.10 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-DROP | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 38.50 | 32.21 | 45.27 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | Vi-DROP | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 200 | — | 58.38 | 53.20 | 63.64 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | ViBidLQA Test | EM · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 45.44 | 41.10 | 49.75 | — | — | — |
+| MiMo V2.6 Flash / MC-85 | ViBidLQA Test | Token-F1 · v3 (bỏ dấu Markdown, chấm lại sau) | 603 | — | 75.63 | 73.10 | 78.15 | — | — | — |
 
 ### Comment
 
@@ -1262,6 +1364,7 @@ Kết quả direct trên VMLU, Legal và reading; điều kiện ghi riêng theo
 - Lịch chạy gồm fixed lanes rồi lane-work-stealing-v1; xem scheduler amendment, không coi toàn campaign đồng nhất scheduler.
 - Temperature gửi 1,0; reasoning mặc định, không ghim effort; tools/seed không gửi.
 - Test chỉ có phần trăm server, không suy ra correct count hoặc CI95; giữ 156 câu không parse được/blank trong mẫu chấm.
+- EM · v3 và Token-F1 · v3 được chấm lại sau khi đã xem dữ liệu, bằng vi-reading-v3: bỏ dấu * và backtick khỏi câu trả lời rồi chấm như v2 (openspec diagnostic-router-loop, quyết định 10). Số đăng ký vẫn là EM và Token-F1 (v2); v2 trừ điểm câu trả lời in đậm dù đúng chữ.
 
 ## Lịch sử · Qwen3.5-9B-28K · API trực tiếp
 
@@ -1275,7 +1378,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1297,7 +1400,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-19 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1319,7 +1422,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-19 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1341,7 +1444,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 (12:54–12:58 +07; khối ghi nhận bổ sung 2026-09-22) |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1363,7 +1466,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1385,7 +1488,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1407,7 +1510,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1429,7 +1532,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1451,7 +1554,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-21 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 theo runner |
@@ -1541,7 +1644,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-08-31 (báo cáo 2026-09-03) |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 (OpenAI-compatible) |
+| Provider / API / route | IEC (host ẩn) (OpenAI-compatible) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | User prompt không yêu cầu CoT; native thinking/effort chưa ghi nhận |
 | Seed | 42 theo runner |
@@ -1563,7 +1666,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09-04 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | User prompt không yêu cầu CoT; native thinking/effort chưa ghi nhận |
 | Seed | 42 theo runner |
@@ -1585,7 +1688,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | 2026-09 (ngày chấm lại: 2026-09-12) |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | User prompt không yêu cầu CoT; native thinking/effort chưa ghi nhận |
 | Seed | 42 theo runner |
@@ -1699,7 +1802,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1722,7 +1825,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1745,7 +1848,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1768,7 +1871,7 @@ Các condition và bộ câu cũ; không xếp hạng chéo với V1/V2 hoặc m
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo runner; không khẳng định endpoint deterministic |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 theo runner |
@@ -1822,7 +1925,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | 2026-09-20 |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo card/runner; hiệu lực tùy API |
 | Thinking / reasoning level | non-thinking backend theo MC-4; no-CoT trong user prompt |
 | Seed | 42 gửi theo card/runner |
@@ -1874,7 +1977,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | 2026-09-26 |
 | Harness / phiên bản / mode | omp v18.2.7 · -p --mode json · PI_CODING_AGENT_DIR=.omp-iec (config + provider cô lập, mọi modelRoles ghim về 1 model) |
-| Provider / API / route | https://llmapi.iec-uit.com/v1 |
+| Provider / API / route | IEC (host ẩn) |
 | Temperature gửi / hiệu lực | 0.0 requested theo card; hiệu lực chưa xác minh vì OMP từng bỏ temperature (MC-29) |
 | Thinking / reasoning level | --thinking off theo condition MC-15/22; mức reasoning nội bộ không có telemetry độc lập |
 | Seed | OMP không gửi seed; seed 42 trong card không đảm bảo được truyền |
@@ -2444,7 +2547,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OpenAI-compatible API trực tiếp; không qua agent harness |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 gửi theo card/runner; hiệu lực tùy API |
 | Thinking / reasoning level | Chưa ghi nhận trong artifact/card |
 | Seed | 42 gửi theo card/runner |
@@ -2497,7 +2600,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | --- | --- |
 | Thời gian chạy | Pre-register 2026-09-30 (card ghi xong trước mọi lần chạy); arm A 09:47–10:34 (+07); arm B bắt đầu 10:55, vbench_agentic + vbench_mc chạy nền có --resume |
 | Harness / phiên bản / mode | OMP JSON; snapshot lịch sử ghi v18.2.7, version riêng từng run chưa ghi đầy đủ |
-| Provider / API / route | Qwen3.5-9B-65K @ https://llmapi.iec-uit.com/v1 — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
+| Provider / API / route | Qwen3.5-9B-65K @ IEC (host ẩn) — model DUY NHẤT còn chạy (node 28K offline: HTTP 503 Compute Node 'RTX3060-8GB' is offline) |
 | Temperature gửi / hiệu lực | 0.0 ghim proxy (MC-29+) |
 | Thinking / reasoning level | Level thinking chính xác chưa ghi lại trong artifact; reasoning native không ghim (xem card) |
 | Seed | OMP không gửi seed; seed 42 trong card không đảm bảo được truyền |
@@ -2566,7 +2669,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | Retry / recovery | Chưa ghi nhận trong artifact/card |
 | Gold / cách chấm | Chưa ghi nhận trong artifact/card |
 | Model / quantization | Qwen3.5-9B-65K; Chưa ghi nhận trong artifact/card |
-| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → llmapi.iec, --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
+| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → IEC (host ẩn), --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
 | recorded:4_o | F5 --tools none --system-prompt minimal · F7 --tools none (giữ system prompt của omp) · F8 --tools all (giữ system prompt của omp) · T65‑r2 lặp lại y hệt T65 |
 
 ### Benchmark
@@ -2610,7 +2713,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | Retry / recovery | Chưa ghi nhận trong artifact/card |
 | Gold / cách chấm | Chưa ghi nhận trong artifact/card |
 | Model / quantization | Qwen3.5-9B-65K; Chưa ghi nhận trong artifact/card |
-| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → llmapi.iec, --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
+| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → IEC (host ẩn), --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
 | recorded:4_o | F5 --tools none --system-prompt minimal · F7 --tools none (giữ system prompt của omp) · F8 --tools all (giữ system prompt của omp) · T65‑r2 lặp lại y hệt T65 |
 
 ### Benchmark
@@ -2654,7 +2757,7 @@ Ablation so với arm A của chính model, trên dataset/n ghi ở từng dòng
 | Retry / recovery | Chưa ghi nhận trong artifact/card |
 | Gold / cách chấm | Chưa ghi nhận trong artifact/card |
 | Model / quantization | Qwen3.5-9B-65K; Chưa ghi nhận trong artifact/card |
-| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → llmapi.iec, --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
+| recorded:dieu_kien | Model Qwen3.5-9B-65K @ IEC. omp sạch: HOME=/tmp/fakehome, sandbox /tmp, --agent-dir .omp-qwen65k-pinned (temperature 0 ghim qua proxy 127.0.0.1:8799 → IEC (host ẩn), --pin temperature=0), --arm-a-slug Qwen3_5-9B-65K để so với arm A3 của chính model này, dataset legal_mc (146), workers 4 |
 | recorded:4_o | F5 --tools none --system-prompt minimal · F7 --tools none (giữ system prompt của omp) · F8 --tools all (giữ system prompt của omp) · T65‑r2 lặp lại y hệt T65 |
 
 ### Benchmark

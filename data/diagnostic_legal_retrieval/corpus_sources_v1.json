@@ -1,0 +1,3335 @@
+{
+ "corpus_id": "vi-legal-corpus-lmc-v1",
+ "version": 1,
+ "source_site": "hethongphapluat.com",
+ "selection_rule": "four Claude agents, about 34 items each in item-id order, from the question stems only: no options, no gold, no strata, no MC-100 file",
+ "roles": {
+  "topical": "up to 3 per item: documents that govern the question's subject, preferring the version in force",
+  "predecessor": "for a topical document, the instrument it replaced or amends, when the site carries it",
+  "distractor": "up to 5 per batch: documents of the same fields that govern other matters"
+ },
+ "documents": [
+  {
+   "doc_id": "33/2005/QH11",
+   "title": "Bộ luật Dân sự 2005",
+   "url": "https://hethongphapluat.com/bo-luat-dan-su-2005.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0005",
+    "LG-0082",
+    "LG-0087",
+    "LG-0089",
+    "LG-0099"
+   ],
+   "predecessor_of": [
+    "91/2015/QH13"
+   ]
+  },
+  {
+   "doc_id": "91/2015/QH13",
+   "title": "Bộ luật dân sự 2015",
+   "url": "https://hethongphapluat.com/bo-luat-dan-su-2015.html",
+   "role": "topical",
+   "items": [
+    "LG-0005",
+    "LG-0020",
+    "LG-0082",
+    "LG-0087",
+    "LG-0089",
+    "LG-0099"
+   ]
+  },
+  {
+   "doc_id": "15/1999/QH10",
+   "title": "Bộ Luật Hình sự 1999",
+   "url": "https://hethongphapluat.com/bo-luat-hinh-su-1999.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0097",
+    "LG-0133"
+   ],
+   "predecessor_of": [
+    "100/2015/QH13"
+   ]
+  },
+  {
+   "doc_id": "100/2015/QH13",
+   "title": "Bộ luật hình sự 2015",
+   "url": "https://hethongphapluat.com/bo-luat-hinh-su-2015.html",
+   "role": "topical",
+   "items": [
+    "LG-0075",
+    "LG-0097",
+    "LG-0133"
+   ],
+   "predecessor_of": [
+    "86/2025/QH15"
+   ]
+  },
+  {
+   "doc_id": "10/2012/QH13",
+   "title": "Bộ Luật lao động 2012",
+   "url": "https://hethongphapluat.com/bo-luat-lao-dong-2012.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0065",
+    "LG-0068"
+   ],
+   "predecessor_of": [
+    "45/2019/QH14"
+   ]
+  },
+  {
+   "doc_id": "45/2019/QH14",
+   "title": "Bộ luật Lao động 2019",
+   "url": "https://hethongphapluat.com/bo-luat-lao-dong-2019.html",
+   "role": "topical",
+   "items": [
+    "LG-0065",
+    "LG-0068"
+   ]
+  },
+  {
+   "doc_id": "24/2004/QH11",
+   "title": "Bộ luật Tố tụng dân sự 2004",
+   "url": "https://hethongphapluat.com/bo-luat-to-tung-dan-su-2004.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0026"
+   ],
+   "predecessor_of": [
+    "92/2015/QH13"
+   ]
+  },
+  {
+   "doc_id": "92/2015/QH13",
+   "title": "Bộ luật tố tụng dân sự 2015",
+   "url": "https://hethongphapluat.com/bo-luat-to-tung-dan-su-2015.html",
+   "role": "topical",
+   "items": [
+    "LG-0026"
+   ]
+  },
+  {
+   "doc_id": "19/2003/QH11",
+   "title": "Bộ luật Tố tụng Hình sự 2003",
+   "url": "https://hethongphapluat.com/bo-luat-to-tung-hinh-su-2003.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0015",
+    "LG-0016",
+    "LG-0100"
+   ],
+   "predecessor_of": [
+    "101/2015/QH13"
+   ]
+  },
+  {
+   "doc_id": "101/2015/QH13",
+   "title": "Bộ luật tố tụng hình sự 2015",
+   "url": "https://hethongphapluat.com/bo-luat-to-tung-hinh-su-2015.html",
+   "role": "topical",
+   "items": [
+    "LG-0015",
+    "LG-0016",
+    "LG-0052",
+    "LG-0100"
+   ]
+  },
+  {
+   "doc_id": "03/2021/TT-BKHCN",
+   "title": "Circular No. 03/2021/TT-BKHCN dated June 11, 2021 on management of Intellectual Property Development Program until 2030",
+   "url": "https://hethongphapluat.com/circular-no-03-2021-tt-bkhcn-dated-june-11-2021-on-management-of-intellectual-property-development-program-until-2030.html",
+   "role": "topical",
+   "items": [
+    "LG-0127"
+   ]
+  },
+  {
+   "doc_id": "17/2017/TT-BKHCN",
+   "title": "Circular No. 17/2017/TT-BKHCN dated December 29, 2017",
+   "url": "https://hethongphapluat.com/circular-no-17-2017-tt-bkhcn-dated-december-29-2017.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0127"
+   ],
+   "predecessor_of": [
+    "03/2021/TT-BKHCN"
+   ]
+  },
+  {
+   "doc_id": "35/2024/TT-BGTVT",
+   "title": "Thông tư 35/2024/TT-BGTVT quy định về đào tạo, sát hạch, cấp giấy phép lái xe; cấp, sử dụng giấy phép lái xe quốc tế; đào tạo, kiểm tra, cấp chứng chỉ bồi dưỡng kiến thức pháp luật về giao thông đường bộ",
+   "url": "https://hethongphapluat.com/du-thao-thong-tu-quy-dinh-ve-dao-tao-sat-hach-cap-giay-phep-lai-xe-cap-su-dung-giay-phep-lai-xe-quoc-te-kiem-tra-cap-chung-chi-boi-duong-kien-thuc-phap-luat-ve-giao-thong-duong-bo-do-bo-truong-bo-giao-thong-van-tai-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0040",
+    "LG-0069"
+   ]
+  },
+  {
+   "doc_id": "55/2010/QH12",
+   "title": "Luật an toàn thực phẩm 2010",
+   "url": "https://hethongphapluat.com/luat-an-toan-thuc-pham-2010.html",
+   "role": "topical",
+   "items": [
+    "LG-0104"
+   ]
+  },
+  {
+   "doc_id": "84/2015/QH13",
+   "title": "Luật an toàn, vệ sinh lao động 2015",
+   "url": "https://hethongphapluat.com/luat-an-toan-ve-sinh-lao-dong-2015.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "58/2014/QH13",
+   "title": "Luật Bảo hiểm xã hội 2014",
+   "url": "https://hethongphapluat.com/luat-bao-hiem-xa-hoi-2014.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0002",
+    "LG-0056",
+    "LG-0073",
+    "LG-0120",
+    "LG-0121",
+    "LG-0128"
+   ],
+   "predecessor_of": [
+    "41/2024/QH15"
+   ]
+  },
+  {
+   "doc_id": "41/2024/QH15",
+   "title": "Luật Bảo hiểm xã hội 2024",
+   "url": "https://hethongphapluat.com/luat-bao-hiem-xa-hoi-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0002",
+    "LG-0056",
+    "LG-0073",
+    "LG-0120",
+    "LG-0121",
+    "LG-0128"
+   ]
+  },
+  {
+   "doc_id": "55/2014/QH13",
+   "title": "Luật bảo vệ môi trường 2014",
+   "url": "https://hethongphapluat.com/luat-bao-ve-moi-truong-2014.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0146"
+   ],
+   "predecessor_of": [
+    "72/2020/QH14"
+   ]
+  },
+  {
+   "doc_id": "72/2020/QH14",
+   "title": "Luật Bảo vệ môi trường 2020",
+   "url": "https://hethongphapluat.com/luat-bao-ve-moi-truong-2020.html",
+   "role": "topical",
+   "items": [
+    "LG-0146"
+   ]
+  },
+  {
+   "doc_id": "41/2013/QH13",
+   "title": "Luật bảo vệ và kiểm dịch thực vật 2013",
+   "url": "https://hethongphapluat.com/luat-bao-ve-va-kiem-dich-thuc-vat-2013.html",
+   "role": "topical",
+   "items": [
+    "LG-0061",
+    "LG-0105"
+   ]
+  },
+  {
+   "doc_id": "47/2010/QH12",
+   "title": "Luật các tổ chức tín dụng 2010",
+   "url": "https://hethongphapluat.com/luat-cac-to-chuc-tin-dung-2010.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0037",
+    "LG-0080",
+    "LG-0102",
+    "LG-0113"
+   ],
+   "predecessor_of": [
+    "32/2024/QH15"
+   ]
+  },
+  {
+   "doc_id": "32/2024/QH15",
+   "title": "Luật Các tổ chức tín dụng 2024",
+   "url": "https://hethongphapluat.com/luat-cac-to-chuc-tin-dung-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0037",
+    "LG-0043",
+    "LG-0080",
+    "LG-0102",
+    "LG-0113"
+   ],
+   "predecessor_of": [
+    "158/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "26/2023/QH15",
+   "title": "Luật Căn cước 2023",
+   "url": "https://hethongphapluat.com/luat-can-cuoc-2023.html",
+   "role": "topical",
+   "items": [
+    "LG-0028",
+    "LG-0031"
+   ]
+  },
+  {
+   "doc_id": "59/2014/QH13",
+   "title": "Luật Căn cước công dân 2014",
+   "url": "https://hethongphapluat.com/luat-can-cuoc-cong-dan-2014.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0028",
+    "LG-0031"
+   ],
+   "predecessor_of": [
+    "26/2023/QH15"
+   ]
+  },
+  {
+   "doc_id": "23/2018/QH14",
+   "title": "Luật Cạnh tranh 2018",
+   "url": "https://hethongphapluat.com/luat-canh-tranh-2018.html",
+   "role": "topical",
+   "items": [
+    "LG-0106"
+   ]
+  },
+  {
+   "doc_id": "70/2006/QH11",
+   "title": "Luật Chứng khoán 2006",
+   "url": "https://hethongphapluat.com/luat-chung-khoan-2006.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0021",
+    "LG-0094",
+    "LG-0098",
+    "LG-0108",
+    "LG-0122",
+    "LG-0134",
+    "LG-0142"
+   ],
+   "predecessor_of": [
+    "54/2019/QH14"
+   ]
+  },
+  {
+   "doc_id": "54/2019/QH14",
+   "title": "Luật Chứng khoán 2019",
+   "url": "https://hethongphapluat.com/luat-chung-khoan-2019.html",
+   "role": "topical",
+   "items": [
+    "LG-0021",
+    "LG-0030",
+    "LG-0046",
+    "LG-0079",
+    "LG-0094",
+    "LG-0098",
+    "LG-0108",
+    "LG-0122",
+    "LG-0134",
+    "LG-0142"
+   ],
+   "predecessor_of": [
+    "56/2024/QH15"
+   ]
+  },
+  {
+   "doc_id": "80/2006/QH11",
+   "title": "Luật Chuyển giao công nghệ 2006",
+   "url": "https://hethongphapluat.com/luat-chuyen-giao-cong-nghe-2006.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0140"
+   ],
+   "predecessor_of": [
+    "07/2017/QH14"
+   ]
+  },
+  {
+   "doc_id": "07/2017/QH14",
+   "title": "Luật Chuyển giao công nghệ 2017",
+   "url": "https://hethongphapluat.com/luat-chuyen-giao-cong-nghe-2017.html",
+   "role": "topical",
+   "items": [
+    "LG-0140"
+   ]
+  },
+  {
+   "doc_id": "45/2013/QH13",
+   "title": "Luật đất đai 2013",
+   "url": "https://hethongphapluat.com/luat-dat-dai-2013.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0019",
+    "LG-0020",
+    "LG-0025",
+    "LG-0029",
+    "LG-0064",
+    "LG-0067",
+    "LG-0076",
+    "LG-0077",
+    "LG-0078",
+    "LG-0101",
+    "LG-0103"
+   ],
+   "predecessor_of": [
+    "31/2024/QH15"
+   ]
+  },
+  {
+   "doc_id": "31/2024/QH15",
+   "title": "Luật Đất đai 2024",
+   "url": "https://hethongphapluat.com/luat-dat-dai-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0019",
+    "LG-0020",
+    "LG-0025",
+    "LG-0029",
+    "LG-0048",
+    "LG-0050",
+    "LG-0064",
+    "LG-0067",
+    "LG-0076",
+    "LG-0077",
+    "LG-0078",
+    "LG-0101",
+    "LG-0103"
+   ],
+   "predecessor_of": [
+    "133/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "61/2020/QH14",
+   "title": "Luật Đầu tư 2020",
+   "url": "https://hethongphapluat.com/luat-dau-tu-2020.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0048"
+   ],
+   "predecessor_of": [
+    "09/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "68/2014/QH13",
+   "title": "Luật Doanh nghiệp 2014",
+   "url": "https://hethongphapluat.com/luat-doanh-nghiep-2014.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0084",
+    "LG-0106",
+    "LG-0118",
+    "LG-0141"
+   ],
+   "predecessor_of": [
+    "59/2020/QH14"
+   ]
+  },
+  {
+   "doc_id": "59/2020/QH14",
+   "title": "Luật Doanh nghiệp 2020",
+   "url": "https://hethongphapluat.com/luat-doanh-nghiep-2020.html",
+   "role": "topical",
+   "items": [
+    "LG-0084",
+    "LG-0106",
+    "LG-0118",
+    "LG-0141"
+   ]
+  },
+  {
+   "doc_id": "44/2005/QH11",
+   "title": "Luật du lịch 2005",
+   "url": "https://hethongphapluat.com/luat-du-lich-2005.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0024",
+    "LG-0145"
+   ],
+   "predecessor_of": [
+    "09/2017/QH14"
+   ]
+  },
+  {
+   "doc_id": "09/2017/QH14",
+   "title": "Luật Du lịch 2017",
+   "url": "https://hethongphapluat.com/luat-du-lich-2017.html",
+   "role": "topical",
+   "items": [
+    "LG-0024",
+    "LG-0145"
+   ]
+  },
+  {
+   "doc_id": "105/2016/QH13",
+   "title": "Luật Dược 2016",
+   "url": "https://hethongphapluat.com/luat-duoc-2016.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0114"
+   ],
+   "predecessor_of": [
+    "39/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "35/2024/QH15",
+   "title": "Luật Đường bộ 2024",
+   "url": "https://hethongphapluat.com/luat-duong-bo-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0082"
+   ]
+  },
+  {
+   "doc_id": "13/2012/QH13",
+   "title": "Luật giám định tư pháp 2012",
+   "url": "https://hethongphapluat.com/luat-giam-dinh-tu-phap-2012.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0023"
+   ],
+   "predecessor_of": [
+    "105/2025/QH15"
+   ]
+  },
+  {
+   "doc_id": "105/2025/QH15",
+   "title": "Luật Giám định tư pháp 2025",
+   "url": "https://hethongphapluat.com/luat-giam-dinh-tu-phap-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0023"
+   ]
+  },
+  {
+   "doc_id": "51/2005/QH11",
+   "title": "Luật Giao dịch điện tử 2005",
+   "url": "https://hethongphapluat.com/luat-giao-dich-dien-tu-2005.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0132"
+   ],
+   "predecessor_of": [
+    "20/2023/QH15"
+   ]
+  },
+  {
+   "doc_id": "20/2023/QH15",
+   "title": "Luật Giao dịch điện tử 2023",
+   "url": "https://hethongphapluat.com/luat-giao-dich-dien-tu-2023.html",
+   "role": "topical",
+   "items": [
+    "LG-0132"
+   ]
+  },
+  {
+   "doc_id": "23/2008/QH12",
+   "title": "Luật giao thông đường bộ 2008",
+   "url": "https://hethongphapluat.com/luat-giao-thong-duong-bo-2008.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0006",
+    "LG-0058",
+    "LG-0069",
+    "LG-0082",
+    "LG-0086",
+    "LG-0092",
+    "LG-0110",
+    "LG-0125",
+    "LG-0135"
+   ],
+   "predecessor_of": [
+    "35/2024/QH15",
+    "36/2024/QH15"
+   ]
+  },
+  {
+   "doc_id": "29/2001/QH10",
+   "title": "Luật Hải quan 2001",
+   "url": "https://hethongphapluat.com/luat-hai-quan-2001.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0009",
+    "LG-0088",
+    "LG-0096"
+   ],
+   "predecessor_of": [
+    "54/2014/QH13"
+   ]
+  },
+  {
+   "doc_id": "54/2014/QH13",
+   "title": "Luật Hải quan 2014",
+   "url": "https://hethongphapluat.com/luat-hai-quan-2014.html",
+   "role": "topical",
+   "items": [
+    "LG-0009",
+    "LG-0088",
+    "LG-0096"
+   ]
+  },
+  {
+   "doc_id": "52/2014/QH13",
+   "title": "Luật Hôn nhân và gia đình 2014",
+   "url": "https://hethongphapluat.com/luat-hon-nhan-va-gia-dinh-2014.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "03/2003/QH11",
+   "title": "Luật Kế toán 2003",
+   "url": "https://hethongphapluat.com/luat-ke-toan-2003.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0022"
+   ],
+   "predecessor_of": [
+    "88/2015/QH13"
+   ]
+  },
+  {
+   "doc_id": "88/2015/QH13",
+   "title": "Luật kế toán 2015",
+   "url": "https://hethongphapluat.com/luat-ke-toan-2015.html",
+   "role": "topical",
+   "items": [
+    "LG-0022",
+    "LG-0053"
+   ]
+  },
+  {
+   "doc_id": "15/2023/QH15",
+   "title": "Luật khám bệnh, chữa bệnh 2023",
+   "url": "https://hethongphapluat.com/luat-kham-benh-chua-benh-2023.html",
+   "role": "topical",
+   "items": [
+    "LG-0055",
+    "LG-0126"
+   ]
+  },
+  {
+   "doc_id": "40/2009/QH12",
+   "title": "Luật khám bệnh, chữa bệnh năm 2009",
+   "url": "https://hethongphapluat.com/luat-kham-benh-chua-benh-nam-2009.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0055"
+   ],
+   "predecessor_of": [
+    "15/2023/QH15"
+   ]
+  },
+  {
+   "doc_id": "67/2011/QH12",
+   "title": "Luật kiểm toán độc lập 2011",
+   "url": "https://hethongphapluat.com/luat-kiem-toan-doc-lap-2011.html",
+   "role": "topical",
+   "items": [
+    "LG-0060"
+   ]
+  },
+  {
+   "doc_id": "06/1997/QH10",
+   "title": "Luật Ngân hàng Nhà nước 1997",
+   "url": "https://hethongphapluat.com/luat-ngan-hang-nha-nuoc-1997.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0144"
+   ],
+   "predecessor_of": [
+    "46/2010/QH12"
+   ]
+  },
+  {
+   "doc_id": "46/2010/QH12",
+   "title": "Luật Ngân hàng Nhà nước Việt Nam 2010",
+   "url": "https://hethongphapluat.com/luat-ngan-hang-nha-nuoc-viet-nam-2010.html",
+   "role": "topical",
+   "items": [
+    "LG-0037",
+    "LG-0071",
+    "LG-0144"
+   ]
+  },
+  {
+   "doc_id": "73/2025/QH15",
+   "title": "Luật Nhà giáo 2025",
+   "url": "https://hethongphapluat.com/luat-nha-giao-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0070"
+   ]
+  },
+  {
+   "doc_id": "65/2014/QH13",
+   "title": "Luật Nhà ở 2014",
+   "url": "https://hethongphapluat.com/luat-nha-o-2014.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0091"
+   ],
+   "predecessor_of": [
+    "132/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "52/2010/QH12",
+   "title": "Luật nuôi con nuôi 2010",
+   "url": "https://hethongphapluat.com/luat-nuoi-con-nuoi-2010.html",
+   "role": "topical",
+   "items": [
+    "LG-0004"
+   ]
+  },
+  {
+   "doc_id": "73/2021/QH14",
+   "title": "Luật Phòng, chống ma túy 2021",
+   "url": "https://hethongphapluat.com/luat-phong-chong-ma-tuy-2021.html",
+   "role": "topical",
+   "items": [
+    "LG-0075",
+    "LG-0136"
+   ],
+   "predecessor_of": [
+    "120/2025/QH15"
+   ]
+  },
+  {
+   "doc_id": "120/2025/QH15",
+   "title": "Luật Phòng, chống ma túy 2025",
+   "url": "https://hethongphapluat.com/luat-phong-chong-ma-tuy-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0075"
+   ]
+  },
+  {
+   "doc_id": "05/2017/QH14",
+   "title": "Luật Quản lý ngoại thương 2017",
+   "url": "https://hethongphapluat.com/luat-quan-ly-ngoai-thuong-2017.html",
+   "role": "topical",
+   "items": [
+    "LG-0027",
+    "LG-0112"
+   ]
+  },
+  {
+   "doc_id": "38/2019/QH14",
+   "title": "Luật Quản lý thuế 2019",
+   "url": "https://hethongphapluat.com/luat-quan-ly-thue-2019.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0001",
+    "LG-0111",
+    "LG-0123"
+   ],
+   "predecessor_of": [
+    "108/2025/QH15"
+   ]
+  },
+  {
+   "doc_id": "108/2025/QH15",
+   "title": "Luật Quản lý thuế 2025",
+   "url": "https://hethongphapluat.com/luat-quan-ly-thue-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0001",
+    "LG-0111",
+    "LG-0123"
+   ]
+  },
+  {
+   "doc_id": "30/2009/QH12",
+   "title": "Luật Quy hoạch đô thị 2009",
+   "url": "https://hethongphapluat.com/luat-quy-hoach-do-thi-2009.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0131"
+   ],
+   "predecessor_of": [
+    "47/2024/QH15"
+   ]
+  },
+  {
+   "doc_id": "47/2024/QH15",
+   "title": "Luật Quy hoạch đô thị và nông thôn 2024",
+   "url": "https://hethongphapluat.com/luat-quy-hoach-do-thi-va-nong-thon-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0131"
+   ]
+  },
+  {
+   "doc_id": "50/2005/QH11",
+   "title": "Luật Sở hữu trí tuệ 2005",
+   "url": "https://hethongphapluat.com/luat-so-huu-tri-tue-2005.html",
+   "role": "topical",
+   "items": [
+    "LG-0034",
+    "LG-0038",
+    "LG-0047",
+    "LG-0116"
+   ],
+   "predecessor_of": [
+    "155/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "86/2025/QH15",
+   "title": "Luật sửa đổi Bộ luật Hình sự 2025",
+   "url": "https://hethongphapluat.com/luat-sua-doi-bo-luat-hinh-su-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0075",
+    "LG-0133"
+   ]
+  },
+  {
+   "doc_id": "56/2024/QH15",
+   "title": "Luật sửa đổi Luật Chứng khoán, Luật Kế toán, Luật Kiểm toán độc lập, Luật Ngân sách Nhà nước, Luật Quản lý, sử dụng tài sản công, Luật Quản lý thuế, Luật Thuế thu nhập cá nhân, Luật Dự trữ quốc gia, Luật Xử lý vi phạm hành chính 2024",
+   "url": "https://hethongphapluat.com/luat-sua-doi-luat-chung-khoan-luat-ke-toan-luat-kiem-toan-doc-lap-luat-ngan-sach-nha-nuoc-luat-quan-ly-su-dung-tai-san-cong-luat-quan-ly-thue-luat-thue-thu-nhap-ca-nhan-luat-du-tru-quoc-gia-luat-xu-ly-vi-pham-hanh-chinh-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0021",
+    "LG-0079",
+    "LG-0098"
+   ]
+  },
+  {
+   "doc_id": "77/2006/QH11",
+   "title": "Luật Thể dục, Thể thao 2006",
+   "url": "https://hethongphapluat.com/luat-the-duc-the-thao-2006.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0042"
+   ],
+   "predecessor_of": [
+    "64/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "26/2008/QH12",
+   "title": "Luật thi hành án dân sự 2008",
+   "url": "https://hethongphapluat.com/luat-thi-hanh-an-dan-su-2008.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0010",
+    "LG-0137"
+   ],
+   "predecessor_of": [
+    "106/2025/QH15"
+   ]
+  },
+  {
+   "doc_id": "106/2025/QH15",
+   "title": "Luật Thi hành án dân sự 2025",
+   "url": "https://hethongphapluat.com/luat-thi-hanh-an-dan-su-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0010",
+    "LG-0137"
+   ]
+  },
+  {
+   "doc_id": "41/2019/QH14",
+   "title": "Luật Thi hành án hình sự 2019",
+   "url": "https://hethongphapluat.com/luat-thi-hanh-an-hinh-su-2019.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0049"
+   ],
+   "predecessor_of": [
+    "127/2025/QH15"
+   ]
+  },
+  {
+   "doc_id": "127/2025/QH15",
+   "title": "Luật Thi hành án hình sự 2025",
+   "url": "https://hethongphapluat.com/luat-thi-hanh-an-hinh-su-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0049"
+   ]
+  },
+  {
+   "doc_id": "14/2008/QH12",
+   "title": "Luật Thuế thu nhập doanh nghiệp 2008",
+   "url": "https://hethongphapluat.com/luat-thue-thu-nhap-doanh-nghiep-2008.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0036",
+    "LG-0081"
+   ],
+   "predecessor_of": [
+    "67/2025/QH15"
+   ]
+  },
+  {
+   "doc_id": "67/2025/QH15",
+   "title": "Luật Thuế thu nhập doanh nghiệp 2025",
+   "url": "https://hethongphapluat.com/luat-thue-thu-nhap-doanh-nghiep-2025.html",
+   "role": "topical",
+   "items": [
+    "LG-0036",
+    "LG-0081"
+   ]
+  },
+  {
+   "doc_id": "62/2014/QH13",
+   "title": "Luật tổ chức Tòa án nhân dân 2014",
+   "url": "https://hethongphapluat.com/luat-to-chuc-toa-an-nhan-dan-2014.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0051"
+   ],
+   "predecessor_of": [
+    "34/2024/QH15"
+   ]
+  },
+  {
+   "doc_id": "34/2024/QH15",
+   "title": "Luật Tổ chức Tòa án nhân dân 2024",
+   "url": "https://hethongphapluat.com/luat-to-chuc-toa-an-nhan-dan-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0051"
+   ]
+  },
+  {
+   "doc_id": "36/2024/QH15",
+   "title": "Luật trật tự, an toàn giao thông đường bộ 2024",
+   "url": "https://hethongphapluat.com/luat-trat-tu-an-toan-giao-thong-duong-bo-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0006",
+    "LG-0032",
+    "LG-0058",
+    "LG-0069",
+    "LG-0086",
+    "LG-0092",
+    "LG-0110",
+    "LG-0125",
+    "LG-0135"
+   ]
+  },
+  {
+   "doc_id": "15/2012/QH13",
+   "title": "Luật xử lý vi phạm hành chính 2012",
+   "url": "https://hethongphapluat.com/luat-xu-ly-vi-pham-hanh-chinh-2012.html",
+   "role": "topical",
+   "items": [
+    "LG-0013",
+    "LG-0039",
+    "LG-0074"
+   ],
+   "predecessor_of": [
+    "63/VBHN-VPQH"
+   ]
+  },
+  {
+   "doc_id": "01/2021/NĐ-CP",
+   "title": "Nghị định 01/2021/NĐ-CP về đăng ký doanh nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-01-2021-nd-cp-ve-dang-ky-doanh-nghiep.html",
+   "role": "topical",
+   "items": [
+    "LG-0044",
+    "LG-0106",
+    "LG-0111",
+    "LG-0115",
+    "LG-0130",
+    "LG-0141"
+   ],
+   "predecessor_of": [
+    "168/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "08/2015/NĐ-CP",
+   "title": "Nghị định 08/2015/NĐ-CP Quy định chi tiết và biện pháp thi hành Luật Hải quan về thủ tục hải quan, kiểm tra, giám sát, kiểm soát hải quan",
+   "url": "https://hethongphapluat.com/nghi-dinh-08-2015-nd-cp-quy-dinh-chi-tiet-va-bien-phap-thi-hanh-luat-hai-quan-ve-thu-tuc-hai-quan-kiem-tra-giam-sat-kiem-soat-hai-quan.html",
+   "role": "topical",
+   "items": [
+    "LG-0009",
+    "LG-0088"
+   ]
+  },
+  {
+   "doc_id": "08/2022/NĐ-CP",
+   "title": "Nghị định 08/2022/NĐ-CP hướng dẫn Luật Bảo vệ môi trường",
+   "url": "https://hethongphapluat.com/nghi-dinh-08-2022-nd-cp-huong-dan-luat-bao-ve-moi-truong.html",
+   "role": "topical",
+   "items": [
+    "LG-0146"
+   ]
+  },
+  {
+   "doc_id": "10/2018/NĐ-CP",
+   "title": "Nghị định 10/2018/NĐ-CP hướng dẫn Luật Quản lý ngoại thương về biện pháp phòng vệ thương mại",
+   "url": "https://hethongphapluat.com/nghi-dinh-10-2018-nd-cp-huong-dan-luat-quan-ly-ngoai-thuong-ve-bien-phap-phong-ve-thuong-mai.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0027",
+    "LG-0112"
+   ],
+   "predecessor_of": [
+    "86/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "10/2020/NĐ-CP",
+   "title": "Nghị định 10/2020/NĐ-CP quy định về kinh doanh và điều kiện kinh doanh vận tải bằng xe ô tô",
+   "url": "https://hethongphapluat.com/nghi-dinh-10-2020-nd-cp-quy-dinh-ve-kinh-doanh-va-dieu-kien-kinh-doanh-van-tai-bang-xe-o-to.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0082"
+   ],
+   "predecessor_of": [
+    "158/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "100/2019/NĐ-CP",
+   "title": "Nghị định 100/2019/NĐ-CP quy định về xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt",
+   "url": "https://hethongphapluat.com/nghi-dinh-100-2019-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-giao-thong-duong-bo-va-duong-sat.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0006",
+    "LG-0011",
+    "LG-0032",
+    "LG-0058",
+    "LG-0069",
+    "LG-0086",
+    "LG-0092"
+   ],
+   "predecessor_of": [
+    "168/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "100/2024/NĐ-CP",
+   "title": "Nghị định 100/2024/NĐ-CP hướng dẫn Luật nhà ở về phát triển và quản lý nhà ở xã hội",
+   "url": "https://hethongphapluat.com/nghi-dinh-100-2024-nd-cp-huong-dan-luat-nha-o-ve-phat-trien-va-quan-ly-nha-o-xa-hoi.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "101/2012/NĐ-CP",
+   "title": "Nghị định 101/2012/NĐ-CP về thanh toán không dùng tiền mặt",
+   "url": "https://hethongphapluat.com/nghi-dinh-101-2012-nd-cp-ve-thanh-toan-khong-dung-tien-mat.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0085",
+    "LG-0113"
+   ],
+   "predecessor_of": [
+    "52/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "101/2024/NĐ-CP",
+   "title": "Nghị định 101/2024/NĐ-CP quy định về điều tra cơ bản đất đai; đăng ký, cấp giấy chứng nhận quyền sử dụng đất, quyền sở hữu tài sản gắn liền với đất và hệ thống thông tin đất đai",
+   "url": "https://hethongphapluat.com/nghi-dinh-101-2024-nd-cp-quy-dinh-ve-dieu-tra-co-ban-dat-dai-dang-ky-cap-giay-chung-nhan-quyen-su-dung-dat-quyen-so-huu-tai-san-gan-lien-voi-dat-va-he-thong-thong-tin-dat-dai.html",
+   "role": "topical",
+   "items": [
+    "LG-0067",
+    "LG-0091"
+   ]
+  },
+  {
+   "doc_id": "102/2017/NĐ-CP",
+   "title": "Nghị định 102/2017/NÐ-CP về đăng ký biện pháp bảo đảm",
+   "url": "https://hethongphapluat.com/nghi-dinh-102-2017-neth-cp-ve-dang-ky-bien-phap-bao-dam.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0099"
+   ],
+   "predecessor_of": [
+    "99/2022/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "102/2022/NĐ-CP",
+   "title": "Nghị định 102/2022/NĐ-CP quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Ngân hàng Nhà nước Việt Nam",
+   "url": "https://hethongphapluat.com/nghi-dinh-102-2022-nd-cp-quy-dinh-chuc-nang-nhiem-vu-quyen-han-va-co-cau-to-chuc-cua-ngan-hang-nha-nuoc-viet-nam.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0071"
+   ],
+   "predecessor_of": [
+    "26/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "102/2024/NĐ-CP",
+   "title": "Nghị định 102/2024/NĐ-CP hướng dẫn Luật Đất đai",
+   "url": "https://hethongphapluat.com/nghi-dinh-102-2024-nd-cp-huong-dan-luat-dat-dai.html",
+   "role": "topical",
+   "items": [
+    "LG-0012",
+    "LG-0019",
+    "LG-0025",
+    "LG-0029",
+    "LG-0048",
+    "LG-0050",
+    "LG-0078",
+    "LG-0095"
+   ]
+  },
+  {
+   "doc_id": "103/2006/NĐ-CP",
+   "title": "Nghị định 103/2006/NĐ-CP Hướng dẫn Luật Sở hữu trí tuệ về sở hữu công nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-103-2006-nd-cp-huong-dan-luat-so-huu-tri-tue-ve-so-huu-cong-nghiep.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0034",
+    "LG-0116"
+   ],
+   "predecessor_of": [
+    "65/2023/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "103/2024/NĐ-CP",
+   "title": "Nghị định 103/2024/NĐ-CP quy định về tiền sử dụng đất, tiền thuê đất",
+   "url": "https://hethongphapluat.com/nghi-dinh-103-2024-nd-cp-quy-dinh-ve-tien-su-dung-dat-tien-thue-dat.html",
+   "role": "topical",
+   "items": [
+    "LG-0077"
+   ]
+  },
+  {
+   "doc_id": "104/2024/NĐ-CP",
+   "title": "Nghị định 104/2024/NĐ-CP quy định về Quỹ phát triển đất",
+   "url": "https://hethongphapluat.com/nghi-dinh-104-2024-nd-cp-quy-dinh-ve-quy-phat-trien-dat.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "105/2006/NĐ-CP",
+   "title": "Nghị định 105/2006/NĐ-CP Hướng dẫn Luật Sở hữu trí tuệ về bảo vệ quyền sở hữu trí tuệ và quản lý nhà nước về sở hữu trí tuệ",
+   "url": "https://hethongphapluat.com/nghi-dinh-105-2006-nd-cp-huong-dan-luat-so-huu-tri-tue-ve-bao-ve-quyen-so-huu-tri-tue-va-quan-ly-nha-nuoc-ve-so-huu-tri-tue.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0047"
+   ],
+   "predecessor_of": [
+    "65/2023/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "105/2021/NĐ-CP",
+   "title": "Nghị định 105/2021/NĐ-CP hướng dẫn Luật Phòng, chống ma túy",
+   "url": "https://hethongphapluat.com/nghi-dinh-105-2021-nd-cp-huong-dan-luat-phong-chong-ma-tuy.html",
+   "role": "topical",
+   "items": [
+    "LG-0136"
+   ]
+  },
+  {
+   "doc_id": "109/2016/NĐ-CP",
+   "title": "Nghị định 109/2016/NĐ-CP quy định cấp chứng chỉ hành nghề đối với người hành nghề và cấp giấy phép hoạt động đối với cơ sở khám, chữa bệnh",
+   "url": "https://hethongphapluat.com/nghi-dinh-109-2016-nd-cp-quy-dinh-cap-chung-chi-hanh-nghe-doi-voi-nguoi-hanh-nghe-va-cap-giay-phep-hoat-dong-doi-voi-co-so-kham-chua-benh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0055"
+   ],
+   "predecessor_of": [
+    "96/2023/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "115/2015/NĐ-CP",
+   "title": "Nghị định 115/2015/NĐ-CP hướng dẫn Luật bảo hiểm xã hội về bảo hiểm xã hội bắt buộc",
+   "url": "https://hethongphapluat.com/nghi-dinh-115-2015-nd-cp-huong-dan-luat-bao-hiem-xa-hoi-ve-bao-hiem-xa-hoi-bat-buoc.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0002",
+    "LG-0120",
+    "LG-0128"
+   ],
+   "predecessor_of": [
+    "158/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "117/2020/NĐ-CP",
+   "title": "Nghị định 117/2020/NĐ-CP quy định về xử phạt vi phạm hành chính trong lĩnh vực y tế",
+   "url": "https://hethongphapluat.com/nghi-dinh-117-2020-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-y-te.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "118/2021/NĐ-CP",
+   "title": "Nghị định 118/2021/NĐ-CP hướng dẫn Luật Xử lý vi phạm hành chính",
+   "url": "https://hethongphapluat.com/nghi-dinh-118-2021-nd-cp-huong-dan-luat-xu-ly-vi-pham-hanh-chinh.html",
+   "role": "topical",
+   "items": [
+    "LG-0013",
+    "LG-0039"
+   ]
+  },
+  {
+   "doc_id": "12/2022/NĐ-CP",
+   "title": "Nghị định 12/2022/NĐ-CP về xử phạt vi phạm hành chính trong lĩnh vực lao động, bảo hiểm xã hội, người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng",
+   "url": "https://hethongphapluat.com/nghi-dinh-12-2022-nd-cp-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-lao-dong-bao-hiem-xa-hoi-nguoi-lao-dong-viet-nam-di-lam-viec-o-nuoc-ngoai-theo-hop-dong.html",
+   "role": "topical",
+   "items": [
+    "LG-0121"
+   ]
+  },
+  {
+   "doc_id": "122/2021/NĐ-CP",
+   "title": "Nghị định 122/2021/NĐ-CP quy định về xử phạt vi phạm hành chính trong lĩnh vực kế hoạch và đầu tư",
+   "url": "https://hethongphapluat.com/nghi-dinh-122-2021-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-ke-hoach-va-dau-tu.html",
+   "role": "topical",
+   "items": [
+    "LG-0115"
+   ]
+  },
+  {
+   "doc_id": "123/2020/NĐ-CP",
+   "title": "Nghị định 123/2020/NĐ-CP quy định về hóa đơn, chứng từ",
+   "url": "https://hethongphapluat.com/nghi-dinh-123-2020-nd-cp-quy-dinh-ve-hoa-don-chung-tu.html",
+   "role": "topical",
+   "items": [
+    "LG-0001"
+   ]
+  },
+  {
+   "doc_id": "123/2024/NĐ-CP",
+   "title": "Nghị định 123/2024/NĐ-CP quy định về xử phạt vi phạm hành chính trong lĩnh vực đất đai",
+   "url": "https://hethongphapluat.com/nghi-dinh-123-2024-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-dat-dai.html",
+   "role": "topical",
+   "items": [
+    "LG-0101"
+   ]
+  },
+  {
+   "doc_id": "125/2020/NĐ-CP",
+   "title": "Nghị định 125/2020/NĐ-CP quy định về xử phạt vi phạm hành chính về thuế, hóa đơn",
+   "url": "https://hethongphapluat.com/nghi-dinh-125-2020-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-ve-thue-hoa-don.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "126/2020/NĐ-CP",
+   "title": "Nghị định 126/2020/NĐ-CP về hướng dẫn Luật Quản lý thuế",
+   "url": "https://hethongphapluat.com/nghi-dinh-126-2020-nd-cp-ve-huong-dan-luat-quan-ly-thue.html",
+   "role": "topical",
+   "items": [
+    "LG-0109"
+   ]
+  },
+  {
+   "doc_id": "135/2021/NĐ-CP",
+   "title": "Nghị định 135/2021/NĐ-CP quy định về danh mục, việc quản lý, sử dụng phương tiện, thiết bị kỹ thuật nghiệp vụ và quy trình thu thập, sử dụng dữ liệu thu được từ phương tiện, thiết bị kỹ thuật do cá nhân, tổ chức cung cấp để phát hiện vi phạm hành chính",
+   "url": "https://hethongphapluat.com/nghi-dinh-135-2021-nd-cp-4ed4dc3da0f8320b60ecefd1a2a2d5ff.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0074"
+   ],
+   "predecessor_of": [
+    "61/2026/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "137/2024/NĐ-CP",
+   "title": "Nghị định 137/2024/NĐ-CP quy định về giao dịch điện tử của cơ quan Nhà nước và hệ thống thông tin phục vụ giao dịch điện tử",
+   "url": "https://hethongphapluat.com/nghi-dinh-137-2024-nd-cp-quy-dinh-ve-giao-dich-dien-tu-cua-co-quan-nha-nuoc-va-he-thong-thong-tin-phuc-vu-giao-dich-dien-tu.html",
+   "role": "topical",
+   "items": [
+    "LG-0132"
+   ]
+  },
+  {
+   "doc_id": "144/2021/NĐ-CP",
+   "title": "Nghị định 144/2021/NĐ-CP quy định về xử phạt vi phạm hành chính trong lĩnh vực an ninh, trật tự, an toàn xã hội; phòng, chống tệ nạn xã hội; phòng cháy, chữa cháy; cứu nạn, cứu hộ; phòng, chống bạo lực gia đình",
+   "url": "https://hethongphapluat.com/nghi-dinh-144-2021-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-an-ninh-trat-tu-an-toan-xa-hoi-phong-chong-te-nan-xa-hoi-phong-chay-chua-chay-cuu-nan-cuu-ho-phong-chong-bao-luc-gia-dinh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0031",
+    "LG-0075",
+    "LG-0097"
+   ],
+   "predecessor_of": [
+    "282/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "145/2020/NĐ-CP",
+   "title": "Nghị định 145/2020/NĐ-CP hướng dẫn Bộ luật Lao động về điều kiện lao động và quan hệ lao động",
+   "url": "https://hethongphapluat.com/nghi-dinh-145-2020-nd-cp-huong-dan-bo-luat-lao-dong-ve-dieu-kien-lao-dong-va-quan-he-lao-dong.html",
+   "role": "topical",
+   "items": [
+    "LG-0065",
+    "LG-0068"
+   ]
+  },
+  {
+   "doc_id": "15/2018/NĐ-CP",
+   "title": "Nghị định 15/2018/NĐ-CP hướng dẫn Luật an toàn thực phẩm",
+   "url": "https://hethongphapluat.com/nghi-dinh-15-2018-nd-cp-huong-dan-luat-an-toan-thuc-pham.html",
+   "role": "topical",
+   "items": [
+    "LG-0104"
+   ]
+  },
+  {
+   "doc_id": "151/2025/NĐ-CP",
+   "title": "Nghị định 151/2025/NĐ-CP quy định về phân định thẩm quyền của chính quyền địa phương 02 cấp, phân quyền, phân cấp trong lĩnh vực đất đai",
+   "url": "https://hethongphapluat.com/nghi-dinh-151-2025-nd-cp-quy-dinh-ve-phan-dinh-tham-quyen-cua-chinh-quyen-dia-phuong-02-cap-phan-quyen-phan-cap-trong-linh-vuc-dat-dai.html",
+   "role": "topical",
+   "items": [
+    "LG-0012",
+    "LG-0050",
+    "LG-0095"
+   ],
+   "predecessor_of": [
+    "50/VBHN-BNNMT"
+   ]
+  },
+  {
+   "doc_id": "153/2020/NĐ-CP",
+   "title": "Nghị định 153/2020/NĐ-CP quy định về chào bán, giao dịch trái phiếu doanh nghiệp riêng lẻ tại thị trường trong nước và chào bán trái phiếu doanh nghiệp ra thị trường quốc tế",
+   "url": "https://hethongphapluat.com/nghi-dinh-153-2020-nd-cp-quy-dinh-ve-chao-ban-giao-dich-trai-phieu-doanh-nghiep-rieng-le-tai-thi-truong-trong-nuoc-va-chao-ban-trai-phieu-doanh-nghiep-ra-thi-truong-quoc-te.html",
+   "role": "topical",
+   "items": [
+    "LG-0142"
+   ]
+  },
+  {
+   "doc_id": "155/2020/NĐ-CP",
+   "title": "Nghị định 155/2020/NĐ-CP hướng dẫn Luật Chứng khoán",
+   "url": "https://hethongphapluat.com/nghi-dinh-155-2020-nd-cp-huong-dan-luat-chung-khoan.html",
+   "role": "topical",
+   "items": [
+    "LG-0014",
+    "LG-0017",
+    "LG-0021",
+    "LG-0030",
+    "LG-0079",
+    "LG-0094",
+    "LG-0098",
+    "LG-0108",
+    "LG-0122",
+    "LG-0134"
+   ]
+  },
+  {
+   "doc_id": "156/2020/NĐ-CP",
+   "title": "Nghị định 156/2020/NĐ-CP quy định về xử phạt vi phạm hành chính trong lĩnh vực chứng khoán và thị trường chứng khoán",
+   "url": "https://hethongphapluat.com/nghi-dinh-156-2020-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-chung-khoan-va-thi-truong-chung-khoan.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "158/2020/NĐ-CP",
+   "title": "Nghị định 158/2020/NĐ-CP về chứng khoán phái sinh và thị trường chứng khoán phái sinh",
+   "url": "https://hethongphapluat.com/nghi-dinh-158-2020-nd-cp-ve-chung-khoan-phai-sinh-va-thi-truong-chung-khoan-phai-sinh.html",
+   "role": "topical",
+   "items": [
+    "LG-0094"
+   ]
+  },
+  {
+   "doc_id": "158/2024/NĐ-CP",
+   "title": "Nghị định 158/2024/NĐ-CP quy định về hoạt động vận tải đường bộ",
+   "url": "https://hethongphapluat.com/nghi-dinh-158-2024-nd-cp-quy-dinh-ve-hoat-dong-van-tai-duong-bo.html",
+   "role": "topical",
+   "items": [
+    "LG-0082"
+   ]
+  },
+  {
+   "doc_id": "158/2025/NĐ-CP",
+   "title": "Nghị định 158/2025/NĐ-CP hướng dẫn Luật Bảo hiểm xã hội về bảo hiểm xã hội bắt buộc",
+   "url": "https://hethongphapluat.com/nghi-dinh-158-2025-nd-cp-huong-dan-luat-bao-hiem-xa-hoi-ve-bao-hiem-xa-hoi-bat-buoc.html",
+   "role": "topical",
+   "items": [
+    "LG-0002",
+    "LG-0056",
+    "LG-0120",
+    "LG-0128"
+   ]
+  },
+  {
+   "doc_id": "160/2024/NĐ-CP",
+   "title": "Nghị định 160/2024/NĐ-CP quy định về hoạt động đào tạo và sát hạch lái xe",
+   "url": "https://hethongphapluat.com/nghi-dinh-160-2024-nd-cp-quy-dinh-ve-hoat-dong-dao-tao-va-sat-hach-lai-xe.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "163/2006/NĐ-CP",
+   "title": "Nghị định 163/2006/NĐ-CP về giao dịch bảo đảm",
+   "url": "https://hethongphapluat.com/nghi-dinh-163-2006-nd-cp-ve-giao-dich-bao-dam.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0020"
+   ],
+   "predecessor_of": [
+    "21/2021/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "163/2018/NĐ-CP",
+   "title": "Nghị định 163/2018/NĐ-CP quy định về phát hành trái phiếu doanh nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-163-2018-nd-cp-quy-dinh-ve-phat-hanh-trai-phieu-doanh-nghiep.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0142"
+   ],
+   "predecessor_of": [
+    "153/2020/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "163/2025/NĐ-CP",
+   "title": "Nghị định 163/2025/NĐ-CP hướng dẫn và biện pháp để tổ chức, thi hành Luật Dược",
+   "url": "https://hethongphapluat.com/nghi-dinh-163-2025-nd-cp-huong-dan-va-bien-phap-de-to-chuc-thi-hanh-luat-duoc.html",
+   "role": "topical",
+   "items": [
+    "LG-0114"
+   ]
+  },
+  {
+   "doc_id": "168/2017/NĐ-CP",
+   "title": "Nghị định 168/2017/NĐ-CP về hướng dẫn Luật Du lịch",
+   "url": "https://hethongphapluat.com/nghi-dinh-168-2017-nd-cp-ve-huong-dan-luat-du-lich.html",
+   "role": "topical",
+   "items": [
+    "LG-0145"
+   ]
+  },
+  {
+   "doc_id": "168/2024/NĐ-CP",
+   "title": "Nghị định 168/2024/NĐ-CP quy định xử phạt vi phạm hành chính về trật tự, an toàn giao thông trong lĩnh vực giao thông đường bộ; trừ điểm, phục hồi điểm Giấy phép lái xe",
+   "url": "https://hethongphapluat.com/nghi-dinh-168-2024-nd-cp-quy-dinh-xu-phat-vi-pham-hanh-chinh-ve-trat-tu-an-toan-giao-thong-trong-linh-vuc-giao-thong-duong-bo-tru-diem-phuc-hoi-diem-giay-phep-lai-xe.html",
+   "role": "topical",
+   "items": [
+    "LG-0006",
+    "LG-0011",
+    "LG-0032",
+    "LG-0058",
+    "LG-0069",
+    "LG-0086",
+    "LG-0092",
+    "LG-0110"
+   ]
+  },
+  {
+   "doc_id": "168/2025/NĐ-CP",
+   "title": "Nghị định 168/2025/NĐ-CP về đăng ký doanh nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-168-2025-nd-cp-ve-dang-ky-doanh-nghiep.html",
+   "role": "topical",
+   "items": [
+    "LG-0044",
+    "LG-0106",
+    "LG-0111",
+    "LG-0130",
+    "LG-0141"
+   ]
+  },
+  {
+   "doc_id": "170/2026/NĐ-CP",
+   "title": "Nghị định 170/2026/NĐ-CP hướng dẫn Luật Thi hành án hình sự",
+   "url": "https://hethongphapluat.com/nghi-dinh-170-2026-nd-cp-huong-dan-luat-thi-hanh-an-hinh-su.html",
+   "role": "topical",
+   "items": [
+    "LG-0049"
+   ]
+  },
+  {
+   "doc_id": "174/2016/NĐ-CP",
+   "title": "Nghị định 174/2016/NĐ-CP hướng dẫn Luật kế toán",
+   "url": "https://hethongphapluat.com/nghi-dinh-174-2016-nd-cp-huong-dan-luat-ke-toan.html",
+   "role": "topical",
+   "items": [
+    "LG-0022"
+   ]
+  },
+  {
+   "doc_id": "176/2024/NĐ-CP",
+   "title": "Nghị định 176/2024/NĐ-CP quy định quản lý, sử dụng kinh phí từ xử phạt vi phạm hành chính về trật tự, an toàn giao thông đường bộ và đấu giá biển số xe sau khi nộp vào ngân sách nhà nước",
+   "url": "https://hethongphapluat.com/nghi-dinh-176-2024-nd-cp-quy-dinh-quan-ly-su-dung-kinh-phi-tu-xu-phat-vi-pham-hanh-chinh-ve-trat-tu-an-toan-giao-thong-duong-bo-va-dau-gia-bien-so-xe-sau-khi-nop-vao-ngan-sach-nha-nuoc.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "178/2025/NĐ-CP",
+   "title": "Nghị định 178/2025/NĐ-CP hướng dẫn Luật Quy hoạch đô thị và nông thôn",
+   "url": "https://hethongphapluat.com/nghi-dinh-178-2025-nd-cp-huong-dan-luat-quy-hoach-do-thi-va-nong-thon.html",
+   "role": "topical",
+   "items": [
+    "LG-0131"
+   ]
+  },
+  {
+   "doc_id": "182/2026/NĐ-CP",
+   "title": "Nghị định 182/2026/NĐ-CP quy định chế độ phụ cấp ưu đãi theo nghề đối với nhà giáo, cán bộ quản lý cơ sở giáo dục và nhân sự hỗ trợ giáo dục công tác trong các cơ sở giáo dục công lập",
+   "url": "https://hethongphapluat.com/nghi-dinh-182-2026-nd-cp-quy-dinh-che-do-phu-cap-uu-dai-theo-nghe-doi-voi-nha-giao-can-bo-quan-ly-co-so-giao-duc-va-nhan-su-ho-tro-giao-duc-cong-tac-trong-cac-co-so-giao-duc-cong-lap.html",
+   "role": "topical",
+   "items": [
+    "LG-0070"
+   ]
+  },
+  {
+   "doc_id": "19/2011/NĐ-CP",
+   "title": "Nghị định 19/2011/NĐ-CP hướng dẫn Luật Nuôi con nuôi",
+   "url": "https://hethongphapluat.com/nghi-dinh-19-2011-nd-cp-huong-dan-luat-nuoi-con-nuoi.html",
+   "role": "topical",
+   "items": [
+    "LG-0004"
+   ]
+  },
+  {
+   "doc_id": "19/2015/NĐ-CP",
+   "title": "Nghị định 19/2015/NĐ-CP hướng dẫn Luật Bảo vệ môi trường",
+   "url": "https://hethongphapluat.com/nghi-dinh-19-2015-nd-cp-huong-dan-luat-bao-ve-moi-truong.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0146"
+   ],
+   "predecessor_of": [
+    "08/2022/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "21/2021/NĐ-CP",
+   "title": "Nghị định 21/2021/NĐ-CP hướng dẫn Bộ luật Dân sự về bảo đảm thực hiện nghĩa vụ",
+   "url": "https://hethongphapluat.com/nghi-dinh-21-2021-nd-cp-huong-dan-bo-luat-dan-su-ve-bao-dam-thuc-hien-nghia-vu.html",
+   "role": "topical",
+   "items": [
+    "LG-0020",
+    "LG-0099"
+   ]
+  },
+  {
+   "doc_id": "218/2013/NĐ-CP",
+   "title": "Nghị định 218/2013/NĐ-CP hướng dẫn thi hành Luật thuế thu nhập doanh nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-218-2013-nd-cp-huong-dan-thi-hanh-luat-thue-thu-nhap-doanh-nghiep.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0036",
+    "LG-0081"
+   ],
+   "predecessor_of": [
+    "320/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "226/2025/NĐ-CP",
+   "title": "Nghị định 226/2025/NĐ-CP sửa đổi các Nghị định hướng dẫn Luật Đất đai",
+   "url": "https://hethongphapluat.com/nghi-dinh-226-2025-nd-cp-sua-doi-cac-nghi-dinh-huong-dan-luat-dat-dai.html",
+   "role": "topical",
+   "items": [
+    "LG-0076",
+    "LG-0103"
+   ]
+  },
+  {
+   "doc_id": "230/2025/NĐ-CP",
+   "title": "Nghị định 230/2025/NĐ-CP quy định trường hợp khác được miễn, giảm tiền sử dụng đất, tiền thuê đất theo quy định tại khoản 2 Điều 157 Luật Đất đai 2024",
+   "url": "https://hethongphapluat.com/nghi-dinh-230-2025-nd-cp-quy-dinh-truong-hop-khac-duoc-mien-giam-tien-su-dung-dat-tien-thue-dat-theo-quy-dinh-tai-khoan-2-dieu-157-luat-dat-dai-nam-2024.html",
+   "role": "topical",
+   "items": [
+    "LG-0077"
+   ]
+  },
+  {
+   "doc_id": "238/2026/NĐ-CP",
+   "title": "Nghị định 238/2026/NĐ-CP sửa đổi Nghị định 168/2024/NĐ-CP quy định xử phạt vi phạm hành chính về trật tự, an toàn giao thông trong lĩnh vực giao thông đường bộ; trừ điểm, phục hồi điểm giấy phép lái xe",
+   "url": "https://hethongphapluat.com/nghi-dinh-238-2026-nd-cp-sua-doi-nghi-dinh-168-2024-nd-cp-quy-dinh-xu-phat-vi-pham-hanh-chinh-ve-trat-tu-an-toan-giao-thong-trong-linh-vuc-giao-thong-duong-bo-tru-diem-phuc-hoi-diem-giay-phep-lai-xe.html",
+   "role": "topical",
+   "items": [
+    "LG-0006",
+    "LG-0011",
+    "LG-0032",
+    "LG-0086"
+   ]
+  },
+  {
+   "doc_id": "25/2017/NĐ-CP",
+   "title": "Nghị định 25/2017/NĐ-CP về báo cáo tài chính nhà nước",
+   "url": "https://hethongphapluat.com/nghi-dinh-25-2017-nd-cp-ve-bao-cao-tai-chinh-nha-nuoc.html",
+   "role": "topical",
+   "items": [
+    "LG-0053"
+   ]
+  },
+  {
+   "doc_id": "252/2026/NĐ-CP",
+   "title": "Nghị định 252/2026/NĐ-CP hướng dẫn Luật Quản lý thuế",
+   "url": "https://hethongphapluat.com/nghi-dinh-252-2026-nd-cp-huong-dan-luat-quan-ly-thue.html",
+   "role": "topical",
+   "items": [
+    "LG-0109"
+   ]
+  },
+  {
+   "doc_id": "26/2025/NĐ-CP",
+   "title": "Nghị định 26/2025/NĐ-CP quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Ngân hàng Nhà nước Việt Nam",
+   "url": "https://hethongphapluat.com/nghi-dinh-26-2025-nd-cp-quy-dinh-chuc-nang-nhiem-vu-quyen-han-va-co-cau-to-chuc-cua-ngan-hang-nha-nuoc-viet-nam.html",
+   "role": "topical",
+   "items": [
+    "LG-0071"
+   ]
+  },
+  {
+   "doc_id": "28/2020/NĐ-CP",
+   "title": "Nghị định 28/2020/NĐ-CP quy định về xử phạt vi phạm hành chính trong lĩnh vực lao động, bảo hiểm xã hội, đưa người lao động Việt Nam đi làm việc ở nước ngoài theo hợp đồng",
+   "url": "https://hethongphapluat.com/nghi-dinh-28-2020-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-lao-dong-bao-hiem-xa-hoi-dua-nguoi-lao-dong-viet-nam-di-lam-viec-o-nuoc-ngoai-theo-hop-dong.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0121"
+   ],
+   "predecessor_of": [
+    "12/2022/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "282/2025/NĐ-CP",
+   "title": "Nghị định 282/2025/NĐ-CP quy định xử phạt vi phạm hành chính trong lĩnh vực an ninh, trật tự, an toàn xã hội; phòng, chống tệ nạn xã hội; phòng, chống bạo lực gia đình",
+   "url": "https://hethongphapluat.com/nghi-dinh-282-2025-nd-cp-quy-dinh-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-an-ninh-trat-tu-an-toan-xa-hoi-phong-chong-te-nan-xa-hoi-phong-chong-bao-luc-gia-dinh.html",
+   "role": "topical",
+   "items": [
+    "LG-0031",
+    "LG-0075",
+    "LG-0097"
+   ]
+  },
+  {
+   "doc_id": "320/2025/NĐ-CP",
+   "title": "Nghị định 320/2025/NĐ-CP hướng dẫn Luật Thuế thu nhập doanh nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-320-2025-nd-cp-huong-dan-luat-thue-thu-nhap-doanh-nghiep.html",
+   "role": "topical",
+   "items": [
+    "LG-0036",
+    "LG-0081"
+   ]
+  },
+  {
+   "doc_id": "340/2025/NĐ-CP",
+   "title": "Nghị định 340/2025/NĐ-CP quy định xử phạt vi phạm hành chính trong lĩnh vực tiền tệ và ngân hàng",
+   "url": "https://hethongphapluat.com/nghi-dinh-340-2025-nd-cp-quy-dinh-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-tien-te-va-ngan-hang.html",
+   "role": "topical",
+   "items": [
+    "LG-0037"
+   ]
+  },
+  {
+   "doc_id": "37/2010/NĐ-CP",
+   "title": "Nghị định 37/2010/NĐ-CP về lập, thẩm định, phê duyệt và quản lý quy hoạch đô thị",
+   "url": "https://hethongphapluat.com/nghi-dinh-37-2010-nd-cp-ve-lap-tham-dinh-phe-duyet-va-quan-ly-quy-hoach-do-thi.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0131"
+   ],
+   "predecessor_of": [
+    "178/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "38/2012/NĐ-CP",
+   "title": "Nghị định 38/2012/NĐ-CP hướng dẫn Luật an toàn thực phẩm",
+   "url": "https://hethongphapluat.com/nghi-dinh-38-2012-nd-cp-huong-dan-luat-an-toan-thuc-pham.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0104"
+   ],
+   "predecessor_of": [
+    "15/2018/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "40/2012/NĐ-CP",
+   "title": "Nghị định 40/2012/NĐ-CP về nghiệp vụ phát hành tiền; bảo quản, vận chuyển tài sản quý và giấy tờ có giá trong hệ thống Ngân hàng Nhà nước, tổ chức tín dụng và chi nhánh ngân hàng nước ngoài",
+   "url": "https://hethongphapluat.com/nghi-dinh-40-2012-nd-cp-ve-nghiep-vu-phat-hanh-tien-bao-quan-van-chuyen-tai-san-quy-va-giay-to-co-gia-trong-he-thong-ngan-hang-nha-nuoc-to-chuc-tin-dung-va-chi-nhanh-ngan-hang-nuoc-ngoai.html",
+   "role": "topical",
+   "items": [
+    "LG-0144"
+   ]
+  },
+  {
+   "doc_id": "42/2015/NĐ-CP",
+   "title": "Nghị định 42/2015/NĐ-CP về chứng khoán phái sinh và thị trường chứng khoán phái sinh",
+   "url": "https://hethongphapluat.com/nghi-dinh-42-2015-nd-cp-ve-chung-khoan-phai-sinh-va-thi-truong-chung-khoan-phai-sinh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0094"
+   ],
+   "predecessor_of": [
+    "158/2020/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "43/2014/NĐ-CP",
+   "title": "Nghị định 43/2014/NĐ-CP hướng dẫn thi hành Luật Đất đai",
+   "url": "https://hethongphapluat.com/nghi-dinh-43-2014-nd-cp-huong-dan-thi-hanh-luat-dat-dai.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0012",
+    "LG-0019",
+    "LG-0048",
+    "LG-0078",
+    "LG-0095"
+   ],
+   "predecessor_of": [
+    "102/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "44/2014/NĐ-CP",
+   "title": "Nghị định 44/2014/NĐ-CP quy định về giá đất",
+   "url": "https://hethongphapluat.com/nghi-dinh-44-2014-nd-cp-quy-dinh-ve-gia-dat.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0076",
+    "LG-0103"
+   ],
+   "predecessor_of": [
+    "71/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "46/2014/NĐ-CP",
+   "title": "Nghị định 46/2014/NĐ-CP về thu tiền thuê đất, thuê mặt nước",
+   "url": "https://hethongphapluat.com/nghi-dinh-46-2014-nd-cp-ve-thu-tien-thue-dat-thue-mat-nuoc.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0077"
+   ],
+   "predecessor_of": [
+    "103/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "47/2014/NĐ-CP",
+   "title": "Nghị định 47/2014/NĐ-CP về bồi thường, hỗ trợ, tái định cư khi Nhà nước thu hồi đất",
+   "url": "https://hethongphapluat.com/nghi-dinh-47-2014-nd-cp-ve-boi-thuong-ho-tro-tai-dinh-cu-khi-nha-nuoc-thu-hoi-dat.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0101"
+   ],
+   "predecessor_of": [
+    "88/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "51/2010/NĐ-CP",
+   "title": "Nghị định 51/2010/NĐ-CP quy định về hóa đơn bán hàng hóa, cung ứng dịch vụ",
+   "url": "https://hethongphapluat.com/nghi-dinh-51-2010-nd-cp-quy-dinh-ve-hoa-don-ban-hang-hoa-cung-ung-dich-vu.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0001"
+   ],
+   "predecessor_of": [
+    "123/2020/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "52/2024/NĐ-CP",
+   "title": "Nghị định 52/2024/NĐ-CP quy định về thanh toán không dùng tiền mặt",
+   "url": "https://hethongphapluat.com/nghi-dinh-52-2024-nd-cp-quy-dinh-ve-thanh-toan-khong-dung-tien-mat.html",
+   "role": "topical",
+   "items": [
+    "LG-0085",
+    "LG-0113"
+   ]
+  },
+  {
+   "doc_id": "54/2017/NĐ-CP",
+   "title": "Nghị định 54/2017/NĐ-CP hướng dẫn Luật dược do Chính phủ ban hành",
+   "url": "https://hethongphapluat.com/nghi-dinh-54-2017-nd-cp-huong-dan-luat-duoc-do-chinh-phu-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0114"
+   ],
+   "predecessor_of": [
+    "163/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "58/2009/NĐ-CP",
+   "title": "Nghị định 58/2009/NĐ-CP Hướng dẫn Luật Thi hành án dân sự về thủ tục thi hành án dân sự",
+   "url": "https://hethongphapluat.com/nghi-dinh-58-2009-nd-cp-huong-dan-luat-thi-hanh-an-dan-su-ve-thu-tuc-thi-hanh-an-dan-su.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0137"
+   ],
+   "predecessor_of": [
+    "62/2015/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "58/2012/NĐ-CP",
+   "title": "Nghị định 58/2012/NĐ-CP hướng dẫn Luật chứng khoán và Luật chứng khoán sửa đổi",
+   "url": "https://hethongphapluat.com/nghi-dinh-58-2012-nd-cp-huong-dan-luat-chung-khoan-va-luat-chung-khoan-sua-doi.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0079",
+    "LG-0094",
+    "LG-0098",
+    "LG-0108",
+    "LG-0122",
+    "LG-0134"
+   ],
+   "predecessor_of": [
+    "155/2020/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "61/2026/NĐ-CP",
+   "title": "Nghị định 61/2026/NĐ-CP quy định về danh mục, việc quản lý, sử dụng phương tiện, thiết bị kỹ thuật nghiệp vụ và quy trình thu thập, sử dụng dữ liệu thu được từ phương tiện, thiết bị kỹ thuật do cá nhân, tổ chức cung cấp để phát hiện vi phạm hành chính",
+   "url": "https://hethongphapluat.com/nghi-dinh-61-2026-nd-cp-quy-dinh-ve-danh-muc-viec-quan-ly-su-dung-phuong-tien-thiet-bi-ky-thuat-nghiep-vu-va-quy-trinh-thu-thap-su-dung-du-lieu-thu-duoc-tu-phuong-tien-thiet-bi-ky-thuat-do-ca-nhan-to-chuc-cung-cap-de-phat-hien-vi-pham-hanh-chinh.html",
+   "role": "topical",
+   "items": [
+    "LG-0074"
+   ]
+  },
+  {
+   "doc_id": "62/2015/NĐ-CP",
+   "title": "Nghị định 62/2015/NĐ-CP hướng dẫn Luật Thi hành án dân sự",
+   "url": "https://hethongphapluat.com/nghi-dinh-62-2015-nd-cp-huong-dan-luat-thi-hanh-an-dan-su.html",
+   "role": "topical",
+   "items": [
+    "LG-0010",
+    "LG-0137"
+   ]
+  },
+  {
+   "doc_id": "65/2022/NĐ-CP",
+   "title": "Nghị định 65/2022/NĐ-CP sửa đổi Nghị định 153/2020/NĐ-CP quy định về chào bán, giao dịch trái phiếu doanh nghiệp riêng lẻ tại thị trường trong nước và chào bán trái phiếu doanh nghiệp ra thị trường quốc tế",
+   "url": "https://hethongphapluat.com/nghi-dinh-65-2022-nd-cp-sua-doi-nghi-dinh-153-2020-nd-cp-quy-dinh-ve-chao-ban-giao-dich-trai-phieu-doanh-nghiep-rieng-le-tai-thi-truong-trong-nuoc-va-chao-ban-trai-phieu-doanh-nghiep-ra-thi-truong-quoc-te.html",
+   "role": "topical",
+   "items": [
+    "LG-0142"
+   ]
+  },
+  {
+   "doc_id": "65/2023/NĐ-CP",
+   "title": "Nghị định 65/2023/NĐ-CP hướng dẫn Luật Sở hữu trí tuệ về sở hữu công nghiệp, bảo vệ quyền sở hữu công nghiệp, quyền đối với giống cây trồng và quản lý Nhà nước về sở hữu trí tuệ",
+   "url": "https://hethongphapluat.com/nghi-dinh-65-2023-nd-cp-huong-dan-luat-so-huu-tri-tue-ve-so-huu-cong-nghiep-bao-ve-quyen-so-huu-cong-nghiep-quyen-doi-voi-giong-cay-trong-va-quan-ly-nha-nuoc-ve-so-huu-tri-tue.html",
+   "role": "topical",
+   "items": [
+    "LG-0034",
+    "LG-0047",
+    "LG-0116"
+   ]
+  },
+  {
+   "doc_id": "68/2016/NĐ-CP",
+   "title": "Nghị định 68/2016/NĐ-CP quy định về điều kiện kinh doanh hàng miễn thuế, kho bãi, địa điểm làm thủ tục hải quan, tập kết, kiểm tra, giám sát hải quan",
+   "url": "https://hethongphapluat.com/nghi-dinh-68-2016-nd-cp-quy-dinh-ve-dieu-kien-kinh-doanh-hang-mien-thue-kho-bai-dia-diem-lam-thu-tuc-hai-quan-tap-ket-kiem-tra-giam-sat-hai-quan.html",
+   "role": "topical",
+   "items": [
+    "LG-0009"
+   ]
+  },
+  {
+   "doc_id": "68/2026/NĐ-CP",
+   "title": "Nghị định 68/2026/NĐ-CP quy định về chính sách thuế và quản lý thuế đối với hộ kinh doanh, cá nhân kinh doanh",
+   "url": "https://hethongphapluat.com/nghi-dinh-68-2026-nd-cp-quy-dinh-ve-chinh-sach-thue-va-quan-ly-thue-doi-voi-ho-kinh-doanh-ca-nhan-kinh-doanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0123"
+   ]
+  },
+  {
+   "doc_id": "70/2024/NĐ-CP",
+   "title": "Nghị định 70/2024/NĐ-CP hướng dẫn Luật Căn cước",
+   "url": "https://hethongphapluat.com/nghi-dinh-70-2024-nd-cp-huong-dan-luat-can-cuoc.html",
+   "role": "topical",
+   "items": [
+    "LG-0028",
+    "LG-0031"
+   ]
+  },
+  {
+   "doc_id": "71/2024/NĐ-CP",
+   "title": "Nghị định 71/2024/NĐ-CP quy định về giá đất",
+   "url": "https://hethongphapluat.com/nghi-dinh-71-2024-nd-cp-quy-dinh-ve-gia-dat.html",
+   "role": "topical",
+   "items": [
+    "LG-0076",
+    "LG-0103"
+   ]
+  },
+  {
+   "doc_id": "76/2018/NĐ-CP",
+   "title": "Nghị định 76/2018/NĐ-CP hướng dẫn Luật Chuyển giao công nghệ",
+   "url": "https://hethongphapluat.com/nghi-dinh-76-2018-nd-cp-huong-dan-luat-chuyen-giao-cong-nghe.html",
+   "role": "topical",
+   "items": [
+    "LG-0140"
+   ]
+  },
+  {
+   "doc_id": "78/2002/NĐ-CP",
+   "title": "Nghị định 78/2002/NĐ-CP về tín dụng đối với người nghèo và các đối tượng chính sách khác",
+   "url": "https://hethongphapluat.com/nghi-dinh-78-2002-nd-cp-ve-tin-dung-doi-voi-nguoi-ngheo-va-cac-doi-tuong-chinh-sach-khac.html",
+   "role": "topical",
+   "items": [
+    "LG-0138"
+   ]
+  },
+  {
+   "doc_id": "78/2015/NĐ-CP",
+   "title": "Nghị định 78/2015/NĐ-CP về đăng ký doanh nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-78-2015-nd-cp-ve-dang-ky-doanh-nghiep.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0115"
+   ],
+   "predecessor_of": [
+    "01/2021/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "81/2013/NĐ-CP",
+   "title": "Nghị định 81/2013/NĐ-CP hướng dẫn và biện pháp thi hành Luật xử lý vi phạm hành chính",
+   "url": "https://hethongphapluat.com/nghi-dinh-81-2013-nd-cp-huong-dan-va-bien-phap-thi-hanh-luat-xu-ly-vi-pham-hanh-chinh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0013",
+    "LG-0039"
+   ],
+   "predecessor_of": [
+    "118/2021/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "83/2013/NĐ-CP",
+   "title": "Nghị định 83/2013/NĐ-CP hướng dẫn Luật quản lý thuế và Luật quản lý thuế sửa đổi",
+   "url": "https://hethongphapluat.com/nghi-dinh-83-2013-nd-cp-huong-dan-luat-quan-ly-thue-va-luat-quan-ly-thue-sua-doi.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0109"
+   ],
+   "predecessor_of": [
+    "126/2020/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "86/2025/NĐ-CP",
+   "title": "Nghị định 86/2025/NĐ-CP hướng dẫn Luật Quản lý ngoại thương về các biện pháp phòng vệ thương mại",
+   "url": "https://hethongphapluat.com/nghi-dinh-86-2025-nd-cp-huong-dan-luat-quan-ly-ngoai-thuong-ve-cac-bien-phap-phong-ve-thuong-mai.html",
+   "role": "topical",
+   "items": [
+    "LG-0027",
+    "LG-0112"
+   ]
+  },
+  {
+   "doc_id": "87/1998/NĐ-CP",
+   "title": "Nghị định 87/1998/NĐ-CP về việc phát hành, thu hồi và thay thế tiền giấy, tiền kim loại",
+   "url": "https://hethongphapluat.com/nghi-dinh-87-1998-nd-cp-ve-viec-phat-hanh-thu-hoi-va-thay-the-tien-giay-tien-kim-loai.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0144"
+   ],
+   "predecessor_of": [
+    "40/2012/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "88/2024/NĐ-CP",
+   "title": "Nghị định 88/2024/NĐ-CP về bồi thường, hỗ trợ, tái định cư khi Nhà nước thu hồi đất",
+   "url": "https://hethongphapluat.com/nghi-dinh-88-2024-nd-cp-ve-boi-thuong-ho-tro-tai-dinh-cu-khi-nha-nuoc-thu-hoi-dat.html",
+   "role": "topical",
+   "items": [
+    "LG-0101"
+   ]
+  },
+  {
+   "doc_id": "91/2019/NĐ-CP",
+   "title": "Nghị định 91/2019/NĐ-CP về xử phạt vi phạm hành chính trong lĩnh vực đất đai",
+   "url": "https://hethongphapluat.com/nghi-dinh-91-2019-nd-cp-ve-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-dat-dai.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0101"
+   ],
+   "predecessor_of": [
+    "123/2024/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "94/2025/NĐ-CP",
+   "title": "Nghị định 94/2025/NĐ-CP quy định về Cơ chế thử nghiệm có kiểm soát trong lĩnh vực ngân hàng",
+   "url": "https://hethongphapluat.com/nghi-dinh-94-2025-nd-cp-quy-dinh-ve-co-che-thu-nghiem-co-kiem-soat-trong-linh-vuc-ngan-hang.html",
+   "role": "topical",
+   "items": [
+    "LG-0066"
+   ]
+  },
+  {
+   "doc_id": "95/2024/NĐ-CP",
+   "title": "Nghị định 95/2024/NĐ-CP hướng dẫn Luật Nhà ở",
+   "url": "https://hethongphapluat.com/nghi-dinh-95-2024-nd-cp-huong-dan-luat-nha-o.html",
+   "role": "topical",
+   "items": [
+    "LG-0091"
+   ]
+  },
+  {
+   "doc_id": "96/2023/NĐ-CP",
+   "title": "Nghị định 96/2023/NĐ-CP hướng dẫn Luật Khám bệnh, chữa bệnh",
+   "url": "https://hethongphapluat.com/nghi-dinh-96-2023-nd-cp-huong-dan-luat-kham-benh-chua-benh.html",
+   "role": "topical",
+   "items": [
+    "LG-0055"
+   ]
+  },
+  {
+   "doc_id": "98/2020/NĐ-CP",
+   "title": "Nghị định 98/2020/NĐ-CP quy định về xử phạt vi phạm hành chính trong hoạt động thương mại, sản xuất, buôn bán hàng giả, hàng cấm và bảo vệ quyền lợi người tiêu dùng",
+   "url": "https://hethongphapluat.com/nghi-dinh-98-2020-nd-cp-quy-dinh-ve-xu-phat-vi-pham-hanh-chinh-trong-hoat-dong-thuong-mai-san-xuat-buon-ban-hang-gia-hang-cam-va-bao-ve-quyen-loi-nguoi-tieu-dung.html",
+   "role": "topical",
+   "items": [
+    "LG-0038",
+    "LG-0115"
+   ],
+   "predecessor_of": [
+    "03/VBHN-BCT"
+   ]
+  },
+  {
+   "doc_id": "99/2013/NĐ-CP",
+   "title": "Nghị định 99/2013/NĐ-CP Quy định xử phạt vi phạm hành chính trong lĩnh vực sở hữu công nghiệp",
+   "url": "https://hethongphapluat.com/nghi-dinh-99-2013-nd-cp-quy-dinh-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-so-huu-cong-nghiep.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0038",
+    "LG-0047"
+   ],
+   "predecessor_of": [
+    "01/VBHN-BKHCN"
+   ]
+  },
+  {
+   "doc_id": "99/2022/NĐ-CP",
+   "title": "Nghị định 99/2022/NĐ-CP về đăng ký biện pháp bảo đảm",
+   "url": "https://hethongphapluat.com/nghi-dinh-99-2022-nd-cp-ve-dang-ky-bien-phap-bao-dam.html",
+   "role": "topical",
+   "items": [
+    "LG-0099"
+   ]
+  },
+  {
+   "doc_id": "202/2025/QH15",
+   "title": "Nghị quyết 202/2025/QH15 sắp xếp đơn vị hành chính cấp tỉnh do Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/nghi-quyet-202-2025-qh15-sap-xep-don-vi-hanh-chinh-cap-tinh-do-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0072"
+   ]
+  },
+  {
+   "doc_id": "93/2015/QH13",
+   "title": "Nghị quyết 93/2015/QH13 thực hiện chính sách hưởng bảo hiểm xã hội một lần đối với người lao động do Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/nghi-quyet-93-2015-qh13-thuc-hien-chinh-sach-huong-bao-hiem-xa-hoi-mot-lan-doi-voi-nguoi-lao-dong-do-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0120"
+   ]
+  },
+  {
+   "doc_id": "957/NQ-UBTVQH13",
+   "title": "Nghị quyết 957/NQ-UBTVQH13 năm 2015 thành lập Tòa án nhân dân cấp cao tại Hà Nội, Đà Nẵng và thành phố Hồ Chí Minh do Ủy ban Thường vụ Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/nghi-quyet-957-nq-ubtvqh13-nam-2015-thanh-lap-toa-an-nhan-dan-cap-cao-tai-ha-noi-da-nang-va-thanh-pho-ho-chi-minh-do-uy-ban-thuong-vu-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0051"
+   ]
+  },
+  {
+   "doc_id": "20/2004/PL-UBTVQH11",
+   "title": "Pháp lệnh Chống bán phá giá hàng hóa nhập khẩu vào Việt Nam năm 2004",
+   "url": "https://hethongphapluat.com/phap-lenh-chong-ban-pha-gia-hang-hoa-nhap-khau-vao-viet-nam-nam-2004.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0112"
+   ],
+   "predecessor_of": [
+    "05/2017/QH14"
+   ]
+  },
+  {
+   "doc_id": "42/2002/PL-UBTVQH10",
+   "title": "Pháp lệnh tự vệ trong nhập khẩu hàng hoá nước ngoài vào Việt Nam năm 2002",
+   "url": "https://hethongphapluat.com/phap-lenh-tu-ve-trong-nhap-khau-hang-hoa-nuoc-ngoai-vao-viet-nam-nam-2002.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0027"
+   ],
+   "predecessor_of": [
+    "05/2017/QH14"
+   ]
+  },
+  {
+   "doc_id": "44/2002/PL-UBTVQH10",
+   "title": "Pháp lệnh xử lý vi phạm hành chính năm 2002",
+   "url": "https://hethongphapluat.com/phap-lenh-xu-ly-vi-pham-hanh-chinh-nam-2002.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0013"
+   ],
+   "predecessor_of": [
+    "15/2012/QH13"
+   ]
+  },
+  {
+   "doc_id": "QCVN 113:2024/BGTVT",
+   "title": "Quy chuẩn kỹ thuật quốc gia QCVN 113:2024/BGTVT về Yêu cầu kỹ thuật và phương pháp thử vành bánh xe mô tô, xe gắn máy",
+   "url": "https://hethongphapluat.com/quy-chuan-ky-thuat-quoc-gia-qcvn-113-2024-bgtvt-ve-yeu-cau-ky-thuat-va-phuong-phap-thu-vanh-banh-xe-mo-to-xe-gan-may.html",
+   "role": "topical",
+   "items": [
+    "LG-0107"
+   ]
+  },
+  {
+   "doc_id": "02/2007/QĐ-UBTDTT",
+   "title": "Quyết định 02/2007/QĐ-UBTDTT Quy định tiêu chuẩn cơ bản về đạo đức nghề nghiệp của huấn luyện viên, trọng tài thể thao do Bộ trưởng, Chủ nhiệm Uỷ Ban Thể Dục Thể Thao ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-02-2007-qd-ubtdtt-quy-dinh-tieu-chuan-co-ban-ve-dao-duc-nghe-nghiep-cua-huan-luyen-vien-trong-tai-the-thao-do-bo-truong-chu-nhiem-uy-ban-the-duc-the-thao-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0042"
+   ],
+   "part": "QUY ĐỊNH"
+  },
+  {
+   "doc_id": "05/2025/QĐ-TTg",
+   "title": "Quyết định 05/2025/QĐ-TTg về Quy chế tổ chức và hoạt động của Hội đồng Y khoa Quốc gia do Thủ tướng Chính phủ ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-05-2025-qd-ttg-ve-quy-che-to-chuc-va-hoat-dong-cua-hoi-dong-y-khoa-quoc-gia-do-thu-tuong-chinh-phu-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0126"
+   ],
+   "part": "QUY CHẾ"
+  },
+  {
+   "doc_id": "149/2001/QĐ-BTC",
+   "title": "Quyết định 149/2001/QĐ-BTC ban hành và công bố bốn (04) chuẩn mực kế toán Việt Nam (đợt 1) do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-149-2001-qd-btc-ban-hanh-va-cong-bo-bon-04-chuan-muc-ke-toan-viet-nam-dot-1-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0033"
+   ]
+  },
+  {
+   "doc_id": "157/2007/QĐ-TTg",
+   "title": "Quyết định 157/2007/QĐ-TTg về tín dụng đối với học sinh, sinh viên do Thủ tướng Chính phủ ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-157-2007-qd-ttg-ve-tin-dung-doi-voi-hoc-sinh-sinh-vien-do-thu-tuong-chinh-phu-ban-hanh.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "21/QĐ-SGDVN",
+   "title": "Quyết định 21/QĐ-SGDVN năm 2021 về Quy chế Công bố thông tin tại Sở Giao dịch Chứng khoán Việt Nam và công ty con",
+   "url": "https://hethongphapluat.com/quyet-dinh-21-qd-sgdvn-nam-2021-ve-quy-che-cong-bo-thong-tin-tai-so-giao-dich-chung-khoan-viet-nam-va-cong-ty-con.html",
+   "role": "topical",
+   "items": [
+    "LG-0017"
+   ],
+   "part": "QUY CHẾ CÔNG BỐ THÔNG TIN"
+  },
+  {
+   "doc_id": "2205/QĐ-TTg",
+   "title": "Quyết định 2205/QĐ-TTg năm 2020 về phê duyệt Chương trình phát triển tài sản trí tuệ đến năm 2030 do Thủ tướng Chính phủ ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-2205-qd-ttg-nam-2020-ve-phe-duyet-chuong-trinh-phat-trien-tai-san-tri-tue-den-nam-2030-do-thu-tuong-chinh-phu-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0127"
+   ]
+  },
+  {
+   "doc_id": "244/2005/QĐ-TTg",
+   "title": "Quyết định 244/2005/QĐ-TTg về chế độ phụ cấp ưu đãi đối với nhà giáo đang trực tiếp giảng dạy trong các cơ sở giáo dục công lập do Thủ tướng Chính phủ ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-244-2005-qd-ttg-ve-che-do-phu-cap-uu-dai-doi-voi-nha-giao-dang-truc-tiep-giang-day-trong-cac-co-so-giao-duc-cong-lap-do-thu-tuong-chinh-phu-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0070"
+   ],
+   "predecessor_of": [
+    "182/2026/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "382/QĐ-BTC",
+   "title": "Quyết định 382/QĐ-BTC năm 2025 quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Cục Hải quan do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-382-qd-btc-nam-2025-quy-dinh-chuc-nang-nhiem-vu-quyen-han-va-co-cau-to-chuc-cua-cuc-hai-quan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0096"
+   ]
+  },
+  {
+   "doc_id": "385/QĐ-BTC",
+   "title": "Quyết định 385/QĐ-BTC năm 2025 quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Kho bạc Nhà nước do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-385-qd-btc-nam-2025-quy-dinh-chuc-nang-nhiem-vu-quyen-han-va-co-cau-to-chuc-cua-kho-bac-nha-nuoc-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0053"
+   ]
+  },
+  {
+   "doc_id": "48/2006/QĐ-BTC",
+   "title": "Quyết định 48/2006/QĐ-BTC ban hành Chế độ Kế toán Doanh nghiệp nhỏ và vừa do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-48-2006-qd-btc-ban-hanh-che-do-ke-toan-doanh-nghiep-nho-va-vua-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0022"
+   ],
+   "predecessor_of": [
+    "133/2016/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "60/2006/QĐ-NHNN",
+   "title": "Quyết định 60/2006/QĐ-NHNN Ban hành Chế độ giao nhận, bảo quản, vận chuyển tiền mặt, tài sản quý, giấy tờ có giá do Thống đốc Ngân hàng Nhà nước ban hành",
+   "url": "https://hethongphapluat.com/quyet-dinh-60-2006-qd-nhnn-ban-hanh-che-do-giao-nhan-bao-quan-van-chuyen-tien-mat-tai-san-quy-giay-to-co-gia-do-thong-doc-ngan-hang-nha-nuoc-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0129"
+   ],
+   "predecessor_of": [
+    "01/2014/TT-NHNN"
+   ],
+   "part": "QUY ĐỊNH CHUNG"
+  },
+  {
+   "doc_id": "01/2014/TT-NHNN",
+   "title": "Thông tư 01/2014/TT-NHNN quy định về giao nhận, bảo quản, vận chuyển tiền mặt, tài sản quý, giấy tờ có giá do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-01-2014-tt-nhnn-quy-dinh-ve-giao-nhan-bao-quan-van-chuyen-tien-mat-tai-san-quy-giay-to-co-gia-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0129"
+   ]
+  },
+  {
+   "doc_id": "01/2021/TT-BKHĐT",
+   "title": "Thông tư 01/2021/TT-BKHĐT hướng dẫn về đăng ký doanh nghiệp do Bộ trưởng Bộ Kế hoạch và Đầu tư ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-01-2021-tt-bkhdt-huong-dan-ve-dang-ky-doanh-nghiep-do-bo-truong-bo-ke-hoach-va-dau-tu-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0130",
+    "LG-0141"
+   ],
+   "predecessor_of": [
+    "68/2025/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "02/2025/TT-NHNN",
+   "title": "Thông tư 02/2025/TT-NHNN quy định về phát hành chứng chỉ tiền gửi trong nước của tổ chức tín dụng, chi nhánh ngân hàng nước ngoài do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-02-2025-tt-nhnn-quy-dinh-ve-phat-hanh-chung-chi-tien-gui-trong-nuoc-cua-to-chuc-tin-dung-chi-nhanh-ngan-hang-nuoc-ngoai-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "04/2015/TT-NHNN",
+   "title": "Thông tư 04/2015/TT-NHNN Quy định về quỹ tín dụng nhân dân do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-04-2015-tt-nhnn-quy-dinh-ve-quy-tin-dung-nhan-dan-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0080",
+    "LG-0102"
+   ],
+   "predecessor_of": [
+    "29/2024/TT-NHNN"
+   ]
+  },
+  {
+   "doc_id": "06/2017/TT-BVHTTDL",
+   "title": "Thông tư 06/2017/TT-BVHTTDL về hướng dẫn Luật Du lịch do Bộ trưởng Bộ Văn hóa, Thể thao và Du lịch ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-06-2017-tt-bvhttdl-ve-huong-dan-luat-du-lich-do-bo-truong-bo-van-hoa-the-thao-va-du-lich-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0024"
+   ]
+  },
+  {
+   "doc_id": "08/2025/TT-BYT",
+   "title": "Thông tư 08/2025/TT-BYT quy định hồ sơ, thủ tục cấp giấy chứng nhận đối với thực phẩm xuất khẩu thuộc phạm vi quản lý của Bộ Y tế",
+   "url": "https://hethongphapluat.com/thong-tu-08-2025-tt-byt-quy-dinh-ho-so-thu-tuc-cap-giay-chung-nhan-doi-voi-thuc-pham-xuat-khau-thuoc-pham-vi-quan-ly-cua-bo-y-te.html",
+   "role": "topical",
+   "items": [
+    "LG-0104"
+   ]
+  },
+  {
+   "doc_id": "105/2020/TT-BTC",
+   "title": "Thông tư 105/2020/TT-BTC hướng dẫn về đăng ký thuế do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-105-2020-tt-btc-huong-dan-ve-dang-ky-thue-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0001",
+    "LG-0111"
+   ],
+   "predecessor_of": [
+    "86/2024/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "118/2020/TT-BTC",
+   "title": "Thông tư 118/2020/TT-BTC hướng dẫn nội dung về chào bán, phát hành chứng khoán, chào mua công khai, mua lại cổ phiếu, đăng ký công ty đại chúng và hủy tư cách công ty đại chúng do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-118-2020-tt-btc-huong-dan-noi-dung-ve-chao-ban-phat-hanh-chung-khoan-chao-mua-cong-khai-mua-lai-co-phieu-dang-ky-cong-ty-dai-chung-va-huy-tu-cach-cong-ty-dai-chung-do-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0079"
+   ],
+   "predecessor_of": [
+    "19/2025/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "12/2017/TT-BGTVT",
+   "title": "Thông tư 12/2017/TT-BGTVT quy định về đào tạo, sát hạch, cấp giấy phép lái xe cơ giới đường bộ do Bộ trưởng Bộ Giao thông vận tải ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-12-2017-tt-bgtvt-quy-dinh-ve-dao-tao-sat-hach-cap-giay-phep-lai-xe-co-gioi-duong-bo-do-bo-truong-bo-giao-thong-van-tai-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0040",
+    "LG-0069"
+   ],
+   "predecessor_of": [
+    "35/2024/TT-BGTVT"
+   ]
+  },
+  {
+   "doc_id": "12/2025/TT-BCA",
+   "title": "Thông tư 12/2025/TT-BCA quy định về sát hạch, cấp giấy phép lái xe; cấp, sử dụng giấy phép lái xe quốc tế do Bộ trưởng Bộ Công an ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-12-2025-tt-bca-quy-dinh-ve-sat-hach-cap-giay-phep-lai-xe-cap-su-dung-giay-phep-lai-xe-quoc-te-do-bo-truong-bo-cong-an-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0040",
+    "LG-0125"
+   ]
+  },
+  {
+   "doc_id": "12/2025/TT-BNV",
+   "title": "Thông tư 12/2025/TT-BNV hướng dẫn Luật Bảo hiểm xã hội về bảo hiểm xã hội bắt buộc do Bộ trưởng Bộ Nội vụ ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-12-2025-tt-bnv-huong-dan-luat-bao-hiem-xa-hoi-ve-bao-hiem-xa-hoi-bat-buoc-do-bo-truong-bo-noi-vu-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0056"
+   ]
+  },
+  {
+   "doc_id": "12/2025/TT-BTC",
+   "title": "Thông tư 12/2025/TT-BTC sửa đổi Thông tư 40/2017/TT-BTC quy định chế độ công tác phí, chế độ chi hội nghị do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-12-2025-tt-btc-sua-doi-thong-tu-40-2017-tt-btc-quy-dinh-che-do-cong-tac-phi-che-do-chi-hoi-nghi-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0003"
+   ]
+  },
+  {
+   "doc_id": "121/2020/TT-BTC",
+   "title": "Thông tư 121/2020/TT-BTC quy định về hoạt động của công ty chứng khoán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-121-2020-tt-btc-quy-dinh-ve-hoat-dong-cua-cong-ty-chung-khoan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0108"
+   ]
+  },
+  {
+   "doc_id": "133/2016/TT-BTC",
+   "title": "Thông tư 133/2016/TT-BTC hướng dẫn Chế độ kế toán doanh nghiệp nhỏ và vừa do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-133-2016-tt-btc-huong-dan-che-do-ke-toan-doanh-nghiep-nho-va-vua-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0022",
+    "LG-0033"
+   ]
+  },
+  {
+   "doc_id": "134/2017/TT-BTC",
+   "title": "Thông tư 134/2017/TT-BTC về hướng dẫn giao dịch điện tử trên thị trường chứng khoán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-134-2017-tt-btc-ve-huong-dan-giao-dich-dien-tu-tren-thi-truong-chung-khoan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0046"
+   ],
+   "predecessor_of": [
+    "37/VBHN-BTC"
+   ]
+  },
+  {
+   "doc_id": "147/2016/TT-BTC",
+   "title": "Thông tư 147/2016/TT-BTC sửa đổi Thông tư 45/2013/TT-BTC hướng dẫn chế độ quản lý, sử dụng và trích khấu hao tài sản cố định do Bộ trưởng Bộ Tài chính ban hành ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-147-2016-tt-btc-sua-doi-thong-tu-45-2013-tt-btc-huong-dan-che-do-quan-ly-su-dung-va-trich-khau-hao-tai-san-co-dinh-do-bo-truong-bo-tai-chinh-ban-hanh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0119"
+   ]
+  },
+  {
+   "doc_id": "15/2024/TT-NHNN",
+   "title": "Thông tư 15/2024/TT-NHNN quy định về cung ứng dịch vụ thanh toán không dùng tiền mặt do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-15-2024-tt-nhnn-quy-dinh-ve-cung-ung-dich-vu-thanh-toan-khong-dung-tien-mat-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0085"
+   ]
+  },
+  {
+   "doc_id": "155/2015/TT-BTC",
+   "title": "Thông tư 155/2015/TT-BTC hướng dẫn công bố thông tin trên thị trường chứng khoán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-155-2015-tt-btc-huong-dan-cong-bo-thong-tin-tren-thi-truong-chung-khoan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0008",
+    "LG-0014",
+    "LG-0017"
+   ],
+   "predecessor_of": [
+    "96/2020/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "17/2022/TT-NHNN",
+   "title": "Thông tư 17/2022/TT-NHNN hướng dẫn thực hiện quản lý rủi ro về môi trường trong hoạt động cấp tín dụng của tổ chức tín dụng, chi nhánh ngân hàng nước ngoài do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-17-2022-tt-nhnn-huong-dan-thuc-hien-quan-ly-rui-ro-ve-moi-truong-trong-hoat-dong-cap-tin-dung-cua-to-chuc-tin-dung-chi-nhanh-ngan-hang-nuoc-ngoai-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0146"
+   ]
+  },
+  {
+   "doc_id": "17/2024/TT-BCA",
+   "title": "Thông tư 17/2024/TT-BCA hướng dẫn Luật Căn cước do Bộ trưởng Bộ Công an ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-17-2024-tt-bca-huong-dan-luat-can-cuoc-do-bo-truong-bo-cong-an-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0028"
+   ]
+  },
+  {
+   "doc_id": "17/2024/TT-NHNN",
+   "title": "Thông tư 17/2024/TT-NHNN quy định việc mở và sử dụng tài khoản thanh toán tại tổ chức cung ứng dịch vụ thanh toán do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-17-2024-tt-nhnn-quy-dinh-viec-mo-va-su-dung-tai-khoan-thanh-toan-tai-to-chuc-cung-ung-dich-vu-thanh-toan-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0113"
+   ]
+  },
+  {
+   "doc_id": "18/2024/TT-NHNN",
+   "title": "Thông tư 18/2024/TT-NHNN quy định về hoạt động thẻ ngân hàng do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-18-2024-tt-nhnn-quy-dinh-ve-hoat-dong-the-ngan-hang-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "distractor",
+   "items": []
+  },
+  {
+   "doc_id": "19/2021/TT-NHNN",
+   "title": "Thông tư 19/2021/TT-NHNN sửa đổi, bổ sung một số điều của Thông tư 01/2014/TT-NHNN quy định về giao nhận, bảo quản, vận chuyển tiền mặt, tài sản quý, giấy tờ có giá do Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-19-2021-tt-nhnn-sua-doi-bo-sung-mot-so-dieu-cua-thong-tu-01-2014-tt-nhnn-quy-dinh-ve-giao-nhan-bao-quan-van-chuyen-tien-mat-tai-san-quy-giay-to-co-gia-do-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0129"
+   ]
+  },
+  {
+   "doc_id": "19/2025/TT-BTC",
+   "title": "Thông tư 19/2025/TT-BTC quy định việc đăng ký công ty đại chúng, hủy tư cách công ty đại chúng, báo cáo về vốn điều lệ đã góp được kiểm toán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-19-2025-tt-btc-quy-dinh-viec-dang-ky-cong-ty-dai-chung-huy-tu-cach-cong-ty-dai-chung-bao-cao-ve-von-dieu-le-da-gop-duoc-kiem-toan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0079"
+   ]
+  },
+  {
+   "doc_id": "200/2014/TT-BTC",
+   "title": "Thông tư 200/2014/TT-BTC hướng dẫn Chế độ kế toán Doanh nghiệp do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-200-2014-tt-btc-huong-dan-che-do-ke-toan-doanh-nghiep-do-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0033"
+   ],
+   "predecessor_of": [
+    "99/2025/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "203/2009/TT-BTC",
+   "title": "Thông tư 203/2009/TT-BTC hướng dẫn chế độ quản lý, sử dụng và trích khấu hao tài sản cố định do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-203-2009-tt-btc-huong-dan-che-do-quan-ly-su-dung-va-trich-khau-hao-tai-san-co-dinh-do-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0119"
+   ],
+   "predecessor_of": [
+    "45/2013/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "210/2012/TT-BTC",
+   "title": "Thông tư 210/2012/TT-BTC hướng dẫn thành lập và hoạt động công ty chứng khoán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-210-2012-tt-btc-huong-dan-thanh-lap-va-hoat-dong-cong-ty-chung-khoan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0108"
+   ],
+   "predecessor_of": [
+    "121/2020/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "212/2012/TT-BTC",
+   "title": "Thông tư 212/2012/TT-BTC hướng dẫn về thành lập, tổ chức và hoạt động công ty quản lý quỹ do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-212-2012-tt-btc-huong-dan-ve-thanh-lap-to-chuc-va-hoat-dong-cong-ty-quan-ly-quy-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0030"
+   ],
+   "predecessor_of": [
+    "99/2020/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "23/2014/TT-NHNN",
+   "title": "Thông tư 23/2014/TT-NHNN hướng dẫn việc mở và sử dụng tài khoản thanh toán tại tổ chức cung ứng dịch vụ thanh toán do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-23-2014-tt-nhnn-huong-dan-viec-mo-va-su-dung-tai-khoan-thanh-toan-tai-to-chuc-cung-ung-dich-vu-thanh-toan-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0113"
+   ],
+   "predecessor_of": [
+    "17/2024/TT-NHNN"
+   ]
+  },
+  {
+   "doc_id": "24/2023/TT-BCA",
+   "title": "Thông tư 24/2023/TT-BCA quy định về cấp, thu hồi đăng ký, biển số xe cơ giới do Bộ trưởng Bộ Công an ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-24-2023-tt-bca-quy-dinh-ve-cap-thu-hoi-dang-ky-bien-so-xe-co-gioi-do-bo-truong-bo-cong-an-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0072",
+    "LG-0093",
+    "LG-0135"
+   ],
+   "predecessor_of": [
+    "79/2024/TT-BCA"
+   ]
+  },
+  {
+   "doc_id": "25/2014/TT-BTNMT",
+   "title": "Thông tư 25/2014/TT-BTNMT về bản đồ địa chính do Bộ trưởng Bộ Tài nguyên và Môi trường ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-25-2014-tt-btnmt-ve-ban-do-dia-chinh-do-bo-truong-bo-tai-nguyen-va-moi-truong-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0018"
+   ],
+   "predecessor_of": [
+    "26/2024/TT-BTNMT"
+   ]
+  },
+  {
+   "doc_id": "26/2024/TT-BTNMT",
+   "title": "Thông tư 26/2024/TT-BTNMT Quy định kỹ thuật về đo đạc lập bản đồ địa chính do Bộ trưởng Bộ Tài nguyên và Môi trường ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-26-2024-tt-btnmt-quy-dinh-ky-thuat-ve-do-dac-lap-ban-do-dia-chinh-do-bo-truong-bo-tai-nguyen-va-moi-truong-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0018"
+   ]
+  },
+  {
+   "doc_id": "26/2025/TT-BCT",
+   "title": "Thông tư 26/2025/TT-BCT hướng dẫn các biện pháp phòng vệ thương mại do Bộ trưởng Bộ Công Thương ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-26-2025-tt-bct-huong-dan-cac-bien-phap-phong-ve-thuong-mai-do-bo-truong-bo-cong-thuong-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0027",
+    "LG-0112"
+   ]
+  },
+  {
+   "doc_id": "27/2024/TT-NHNN",
+   "title": "Thông tư 27/2024/TT-NHNN quy định về ngân hàng hợp tác xã, việc trích nộp, quản lý và sử dụng Quỹ bảo đảm an toàn hệ thống quỹ tín dụng nhân dân do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-27-2024-tt-nhnn-quy-dinh-ve-ngan-hang-hop-tac-xa-viec-trich-nop-quan-ly-va-su-dung-quy-bao-dam-an-toan-he-thong-quy-tin-dung-nhan-dan-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0080"
+   ]
+  },
+  {
+   "doc_id": "29/2024/TT-NHNN",
+   "title": "Thông tư 29/2024/TT-NHNN quy định về quỹ tín dụng nhân dân do Thống đốc Ngân hàng Nhà nước Việt Nam",
+   "url": "https://hethongphapluat.com/thong-tu-29-2024-tt-nhnn-quy-dinh-ve-quy-tin-dung-nhan-dan-do-thong-doc-ngan-hang-nha-nuoc-viet-nam.html",
+   "role": "topical",
+   "items": [
+    "LG-0080",
+    "LG-0102"
+   ]
+  },
+  {
+   "doc_id": "32/2023/TT-BCA",
+   "title": "Thông tư 32/2023/TT-BCA quy định nhiệm vụ, quyền hạn, hình thức, nội dung và quy trình tuần tra, kiểm soát, xử lý vi phạm hành chính về giao thông đường bộ của Cảnh sát giao thông do Bộ trưởng Bộ Công an ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-32-2023-tt-bca-quy-dinh-nhiem-vu-quyen-han-hinh-thuc-noi-dung-va-quy-trinh-tuan-tra-kiem-soat-xu-ly-vi-pham-hanh-chinh-ve-giao-thong-duong-bo-cua-canh-sat-giao-thong-do-bo-truong-bo-cong-an-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0074",
+    "LG-0092"
+   ],
+   "predecessor_of": [
+    "73/2024/TT-BCA"
+   ]
+  },
+  {
+   "doc_id": "33/2014/TT-BNNPTNT",
+   "title": "Thông tư 33/2014/TT-BNNPTNT quy định trình tự, thủ tục kiểm dịch thực vật nhập, xuất khẩu, quá cảnh và sau nhập khẩu vật thể thuộc diện kiểm dịch thực vật do Bộ trưởng Bộ Nông nghiệp và Phát triển nông thôn ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-33-2014-tt-bnnptnt-quy-dinh-trinh-tu-thu-tuc-kiem-dich-thuc-vat-nhap-xuat-khau-qua-canh-va-sau-nhap-khau-vat-the-thuoc-dien-kiem-dich-thuc-vat-do-bo-truong-bo-nong-nghiep-va-phat-trien-nong-thon-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0061",
+    "LG-0105"
+   ],
+   "predecessor_of": [
+    "19/VBHN-BNNPTNT"
+   ]
+  },
+  {
+   "doc_id": "34/2024/TT-NHNN",
+   "title": "Thông tư 34/2024/TT-NHNN quy định việc cấp đổi Giấy phép, cấp bổ sung nội dung hoạt động vào Giấy phép và tổ chức, hoạt động của ngân hàng thương mại, chi nhánh ngân hàng nước ngoài, văn phòng đại diện tại Việt Nam của tổ chức tín dụng nước ngoài, tổ chức nước ngoài khác có hoạt động ngân hàng do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-34-2024-tt-nhnn-61f3e7af8387060cc720bbc38065f4a2.html",
+   "role": "topical",
+   "items": [
+    "LG-0043"
+   ]
+  },
+  {
+   "doc_id": "36/2012/TT-NHNN",
+   "title": "Thông tư 36/2012/TT-NHNN quy định về trang bị, quản lý, vận hành và đảm bảo an toàn hoạt động của máy giao dịch tự động do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-36-2012-tt-nhnn-quy-dinh-ve-trang-bi-quan-ly-van-hanh-va-dam-bao-an-toan-hoat-dong-cua-may-giao-dich-tu-dong-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0059"
+   ],
+   "predecessor_of": [
+    "04/VBHN-NHNN"
+   ]
+  },
+  {
+   "doc_id": "37/2019/TT-BCT",
+   "title": "Thông tư 37/2019/TT-BCT hướng dẫn biện pháp phòng vệ thương mại do Bộ trưởng Bộ Công thương ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-37-2019-tt-bct-huong-dan-bien-phap-phong-ve-thuong-mai-do-bo-truong-bo-cong-thuong-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0112"
+   ],
+   "predecessor_of": [
+    "26/2025/TT-BCT"
+   ]
+  },
+  {
+   "doc_id": "38/2015/TT-BTC",
+   "title": "Thông tư 38/2015/TT-BTC Quy định về thủ tục hải quan; kiểm tra, giám sát hải quan; thuế xuất khẩu, thuế nhập khẩu và quản lý thuế đối với hàng hoá xuất khẩu, nhập khẩu do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-38-2015-tt-btc-quy-dinh-ve-thu-tuc-hai-quan-kiem-tra-giam-sat-hai-quan-thue-xuat-khau-thue-nhap-khau-va-quan-ly-thue-doi-voi-hang-hoa-xuat-khau-nhap-khau-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0088"
+   ]
+  },
+  {
+   "doc_id": "39/2011/TT-NHNN",
+   "title": "Thông tư 39/2011/TT-NHNN quy định về kiểm toán độc lập đối với tổ chức tín dụng, chi nhánh ngân hàng nước ngoài do Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-39-2011-tt-nhnn-quy-dinh-ve-kiem-toan-doc-lap-doi-voi-to-chuc-tin-dung-chi-nhanh-ngan-hang-nuoc-ngoai-do-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0060"
+   ],
+   "predecessor_of": [
+    "51/2024/TT-NHNN"
+   ]
+  },
+  {
+   "doc_id": "40/2011/TT-NHNN",
+   "title": "Thông tư 40/2011/TT-NHNN quy định về cấp Giấy phép và tổ chức, hoạt động của ngân hàng thương mại, chi nhánh ngân hàng nước ngoài, văn phòng đại diện của tổ chức tín dụng nước ngoài, tổ chức nước ngoài khác có hoạt động ngân hàng tại Việt Nam do Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-40-2011-tt-nhnn-quy-dinh-ve-cap-giay-phep-va-to-chuc-hoat-dong-cua-ngan-hang-thuong-mai-chi-nhanh-ngan-hang-nuoc-ngoai-van-phong-dai-dien-cua-to-chuc-tin-dung-nuoc-ngoai-to-chuc-nuoc-ngoai-khac-co-hoat-dong-ngan-hang.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0043"
+   ],
+   "predecessor_of": [
+    "34/2024/TT-NHNN"
+   ]
+  },
+  {
+   "doc_id": "40/2017/TT-BTC",
+   "title": "Thông tư 40/2017/TT-BTC quy định chế độ công tác phí, chế độ chi hội nghị do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-40-2017-tt-btc-quy-dinh-che-do-cong-tac-phi-che-do-chi-hoi-nghi-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0003"
+   ]
+  },
+  {
+   "doc_id": "40/2021/TT-BTC",
+   "title": "Thông tư 40/2021/TT-BTC hướng dẫn thuế giá trị gia tăng, thuế thu nhập cá nhân và quản lý thuế đối với hộ kinh doanh, cá nhân kinh doanh do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-40-2021-tt-btc-huong-dan-thue-gia-tri-gia-tang-thue-thu-nhap-ca-nhan-va-quan-ly-thue-doi-voi-ho-kinh-doanh-ca-nhan-kinh-doanh-do-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0123"
+   ]
+  },
+  {
+   "doc_id": "45/2013/TT-BTC",
+   "title": "Thông tư 45/2013/TT-BTC hướng dẫn chế độ quản lý, sử dụng và trích khấu hao tài sản cố định do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-45-2013-tt-btc-huong-dan-che-do-quan-ly-su-dung-va-trich-khau-hao-tai-san-co-dinh-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0119"
+   ]
+  },
+  {
+   "doc_id": "46/2014/TT-NHNN",
+   "title": "Thông tư 46/2014/TT-NHNN hướng dẫn về dịch vụ thanh toán không dùng tiền mặt do Thống đốc Ngân hàng Nhà nước ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-46-2014-tt-nhnn-huong-dan-ve-dich-vu-thanh-toan-khong-dung-tien-mat-do-thong-doc-ngan-hang-nha-nuoc-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0085"
+   ],
+   "predecessor_of": [
+    "15/2024/TT-NHNN"
+   ]
+  },
+  {
+   "doc_id": "48/2024/TT-BGTVT",
+   "title": "Thông tư 48/2024/TT-BGTVT Quy chuẩn kỹ thuật quốc gia về chất lượng an toàn kỹ thuật và bảo vệ môi trường, tiêu thụ năng lượng xe cơ giới; xe máy chuyên dùng; phụ tùng xe cơ giới; thiết bị an toàn cho trẻ em do Bộ trưởng Bộ Giao thông vận tải ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-48-2024-tt-bgtvt-388090861fcad00f3805cab8bab1e5a5.html",
+   "role": "topical",
+   "items": [
+    "LG-0107"
+   ]
+  },
+  {
+   "doc_id": "51/2024/TT-NHNN",
+   "title": "Thông tư 51/2024/TT-NHNN quy định về kiểm toán độc lập đối với ngân hàng thương mại, tổ chức tín dụng phi ngân hàng, tổ chức tài chính vi mô, chi nhánh ngân hàng nước ngoài do Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-51-2024-tt-nhnn-quy-dinh-ve-kiem-toan-doc-lap-doi-voi-ngan-hang-thuong-mai-to-chuc-tin-dung-phi-ngan-hang-to-chuc-tai-chinh-vi-mo-chi-nhanh-ngan-hang-nuoc-ngoai-do-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0060"
+   ]
+  },
+  {
+   "doc_id": "51/2025/TT-BCA",
+   "title": "Thông tư 51/2025/TT-BCA sửa đổi Thông tư 79/2024/TT-BCA quy định về cấp, thu hồi chứng nhận đăng ký xe, biển số xe cơ giới, xe máy chuyên dùng đã được sửa đổi Thông tư 13/2025/TT-BCA do Bộ trưởng Bộ Công an ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-51-2025-tt-bca-sua-doi-thong-tu-79-2024-tt-bca-quy-dinh-ve-cap-thu-hoi-chung-nhan-dang-ky-xe-bien-so-xe-co-gioi-xe-may-chuyen-dung-da-duoc-sua-doi-thong-tu-13-2025-tt-bca-do-bo-truong-bo-cong-an-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0072",
+    "LG-0093",
+    "LG-0135"
+   ]
+  },
+  {
+   "doc_id": "52/2015/TT-BYT",
+   "title": "Thông tư 52/2015/TT-BYT quy định việc kiểm tra nhà nước về an toàn thực phẩm đối với thực phẩm nhập khẩu và hồ sơ thủ tục cấp giấy chứng nhận đối với thực phẩm xuất khẩu thuộc phạm vi quản lý của Bộ Y tế",
+   "url": "https://hethongphapluat.com/thong-tu-52-2015-tt-byt-quy-dinh-viec-kiem-tra-nha-nuoc-ve-an-toan-thuc-pham-doi-voi-thuc-pham-nhap-khau-va-ho-so-thu-tuc-cap-giay-chung-nhan-doi-voi-thuc-pham-xuat-khau-thuoc-pham-vi-quan-ly-cua-bo-y-te.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0104"
+   ],
+   "predecessor_of": [
+    "08/2025/TT-BYT"
+   ]
+  },
+  {
+   "doc_id": "55/2024/TT-BGTVT",
+   "title": "Thông tư 55/2024/TT-BGTVT quy định về trình tự, thủ tục chứng nhận chất lượng an toàn kỹ thuật và bảo vệ môi trường của xe cơ giới, xe máy chuyên dùng, phụ tùng xe cơ giới trong sản xuất, lắp ráp do Bộ trưởng Bộ Giao thông vận tải ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-55-2024-tt-bgtvt-quy-dinh-ve-trinh-tu-thu-tuc-chung-nhan-chat-luong-an-toan-ky-thuat-va-bao-ve-moi-truong-cua-xe-co-gioi-xe-may-chuyen-dung-phu-tung-xe-co-gioi-trong-san-xuat-lap-rap-do-bo-truong-bo-giao-thong-van-tai-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0107"
+   ]
+  },
+  {
+   "doc_id": "64/2024/TT-NHNN",
+   "title": "Thông tư 64/2024/TT-NHNN quy định về triển khai giao diện lập trình ứng dụng mở trong ngành Ngân hàng do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-64-2024-tt-nhnn-quy-dinh-ve-trien-khai-giao-dien-lap-trinh-ung-dung-mo-trong-nganh-ngan-hang-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0045"
+   ]
+  },
+  {
+   "doc_id": "65/2012/TT-BNNPTNT",
+   "title": "Thông tư 65/2012/TT-BNNPTNT quy định về trình tự, thủ tục cấp giấy chứng nhận kiểm dịch thực vật do Bộ trưởng Bộ Nông nghiệp và Phát triển nông thôn ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-65-2012-tt-bnnptnt-quy-dinh-ve-trinh-tu-thu-tuc-cap-giay-chung-nhan-kiem-dich-thuc-vat-do-bo-truong-bo-nong-nghiep-va-phat-trien-nong-thon-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0105"
+   ],
+   "predecessor_of": [
+    "33/2014/TT-BNNPTNT"
+   ]
+  },
+  {
+   "doc_id": "68/2024/TT-BTC",
+   "title": "Thông tư 68/2024/TT-BTC sửa đổi Thông tư quy định về giao dịch chứng khoán trên hệ thống giao dịch chứng khoán; bù trừ và thanh toán giao dịch chứng khoán; hoạt động của công ty chứng khoán và công bố thông tin trên thị trường chứng khoán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-68-2024-tt-btc-53e9cb20cc74df0319a9ca98e4deccac.html",
+   "role": "topical",
+   "items": [
+    "LG-0008"
+   ]
+  },
+  {
+   "doc_id": "68/2025/TT-BTC",
+   "title": "Thông tư 68/2025/TT-BTC về Biểu mẫu sử dụng trong đăng ký doanh nghiệp, đăng ký hộ kinh doanh do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-68-2025-tt-btc-ve-bieu-mau-su-dung-trong-dang-ky-doanh-nghiep-dang-ky-ho-kinh-doanh-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0130",
+    "LG-0141"
+   ]
+  },
+  {
+   "doc_id": "73/2024/TT-BCA",
+   "title": "Thông tư 73/2024/TT-BCA quy định công tác tuần tra, kiểm soát, xử lý vi phạm pháp luật về trật tự, an toàn giao thông đường bộ của Cảnh sát giao thông do Bộ trưởng Bộ Công an ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-73-2024-tt-bca-quy-dinh-cong-tac-tuan-tra-kiem-soat-xu-ly-vi-pham-phap-luat-ve-trat-tu-an-toan-giao-thong-duong-bo-cua-canh-sat-giao-thong-do-bo-truong-bo-cong-an-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0074",
+    "LG-0092"
+   ]
+  },
+  {
+   "doc_id": "75/2021/TT-BTC",
+   "title": "Thông tư 75/2021/TT-BTC quy định về quản lý tài chính thực hiện Chương trình phát triển tài sản trí tuệ đến năm 2030 do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-75-2021-tt-btc-quy-dinh-ve-quan-ly-tai-chinh-thuc-hien-chuong-trinh-phat-trien-tai-san-tri-tue-den-nam-2030-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0127"
+   ]
+  },
+  {
+   "doc_id": "78/2014/TT-BTC",
+   "title": "Thông tư 78/2014/TT-BTC hướng dẫn thi hành Nghị định 218/2013/NĐ-CP hướng dẫn Luật Thuế thu nhập doanh nghiệp do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-78-2014-tt-btc-huong-dan-thi-hanh-nghi-dinh-218-2013-nd-cp-huong-dan-luat-thue-thu-nhap-doanh-nghiep-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0036",
+    "LG-0081"
+   ],
+   "predecessor_of": [
+    "96/2015/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "79/2024/TT-BCA",
+   "title": "Thông tư 79/2024/TT-BCA quy định về cấp, thu hồi chứng nhận đăng ký xe, biển số xe cơ giới, xe máy chuyên dùng do Bộ trưởng Bộ Công an ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-79-2024-tt-bca-quy-dinh-ve-cap-thu-hoi-chung-nhan-dang-ky-xe-bien-so-xe-co-gioi-xe-may-chuyen-dung-do-bo-truong-bo-cong-an-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0072",
+    "LG-0093",
+    "LG-0135"
+   ]
+  },
+  {
+   "doc_id": "81/2019/TT-BTC",
+   "title": "Thông tư 81/2019/TT-BTC quy định về quản lý rủi ro trong hoạt động nghiệp vụ hải quan do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-81-2019-tt-btc-quy-dinh-ve-quan-ly-rui-ro-trong-hoat-dong-nghiep-vu-hai-quan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0096"
+   ]
+  },
+  {
+   "doc_id": "86/2024/TT-BTC",
+   "title": "Thông tư 86/2024/TT-BTC quy định về đăng ký thuế do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-86-2024-tt-btc-quy-dinh-ve-dang-ky-thue-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0001",
+    "LG-0111"
+   ]
+  },
+  {
+   "doc_id": "96/2015/TT-BTC",
+   "title": "Thông tư 96/2015/TT-BTC hướng dẫn về thuế thu nhập doanh nghiệp tại Nghị định 12/2015/NĐ-CP quy định chi tiết thi hành Luật sửa đổi, bổ sung một số điều của các Luật về thuế và sửa đổi, bổ sung một số điều của Thông tư 78/2014/TT-BTC, Thông tư 119/2014/TT-BTC, Thông tư 151/2014/TT-BTC do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-96-2015-tt-btc-huong-dan-ve-thue-thu-nhap-doanh-nghiep-tai-nghi-dinh-12-2015-nd-cp-quy-dinh-chi-tiet-thi-hanh-luat-sua-doi-bo-sung-mot-so-dieu-cua-cac-luat-ve-thue-va-sua-doi-bo-sung-mot-so-dieu-cua-thong-tu-78-2014-tt.html",
+   "role": "topical",
+   "items": [
+    "LG-0036"
+   ]
+  },
+  {
+   "doc_id": "96/2020/TT-BTC",
+   "title": "Thông tư 96/2020/TT-BTC hướng dẫn công bố thông tin trên thị trường chứng khoán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-96-2020-tt-btc-huong-dan-cong-bo-thong-tin-tren-thi-truong-chung-khoan-do-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0008",
+    "LG-0014",
+    "LG-0017"
+   ]
+  },
+  {
+   "doc_id": "97/2010/TT-BTC",
+   "title": "Thông tư 97/2010/TT-BTC quy định chế độ công tác phí, chi tổ chức các cuộc hội nghị đối với các cơ quan nhà nước và đơn vị sự nghiệp công lập do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-97-2010-tt-btc-quy-dinh-che-do-cong-tac-phi-chi-to-chuc-cac-cuoc-hoi-nghi-doi-voi-cac-co-quan-nha-nuoc-va-don-vi-su-nghiep-cong-lap-do-bo-tai-chinh-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0003"
+   ],
+   "predecessor_of": [
+    "40/2017/TT-BTC"
+   ]
+  },
+  {
+   "doc_id": "99/2020/TT-BTC",
+   "title": "Thông tư 99/2020/TT-BTC hướng dẫn về hoạt động của công ty quản lý quỹ đầu tư chứng khoán do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-99-2020-tt-btc-huong-dan-ve-hoat-dong-cua-cong-ty-quan-ly-quy-dau-tu-chung-khoan-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0030"
+   ]
+  },
+  {
+   "doc_id": "99/2025/TT-BTC",
+   "title": "Thông tư 99/2025/TT-BTC hướng dẫn Chế độ kế toán doanh nghiệp do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-99-2025-tt-btc-huong-dan-che-do-ke-toan-doanh-nghiep-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0033"
+   ]
+  },
+  {
+   "doc_id": "06/2018/TTLT-BCA-BQP-BTC-VKSNDTC-TANDTC",
+   "title": "Thông tư liên tịch 06/2018/TTLT-BCA-BQP-BTC-VKSNDTC-TANDTC hướng dẫn trình tự, thủ tục, mức tiền đặt, việc tạm giữ, hoàn trả, tịch thu, nộp ngân sách nhà nước số tiền đã đặt để bảo đảm do Bộ trưởng Bộ Công an - Bộ Quốc phòng - Bộ Tài chính - Viện trưởng Viện Kiểm sát nhân dân tối cao - Chánh án Tòa án nhân dân tối cao ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-lien-tich-06-2018-ttlt-bca-bqp-btc-vksndtc-tandtc-huong-dan-trinh-tu-thu-tuc-muc-tien-dat-viec-tam-giu-hoan-tra-tich-thu-nop-ngan-sach-nha-nuoc-so-tien-da-dat-de-bao-dam-do-bo-truong-bo-cong-an-bo-quoc-phong-bo.html",
+   "role": "topical",
+   "items": [
+    "LG-0100"
+   ]
+  },
+  {
+   "doc_id": "13/2012/TTLT-BCA-BTP-VKSNDTC-TANDTC",
+   "title": "Thông tư liên tịch 13/2012/TTLT-BCA-BTP-VKSNDTC-TANDTC hướng dẫn quy định của Bộ luật tố tụng hình sự và Luật thi hành án hình sự về truy nã do Bộ Công an - Bộ Tư pháp - Viện kiểm sát nhân dân tối cao - Tòa án nhân dân tối cao ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-lien-tich-13-2012-ttlt-bca-btp-vksndtc-tandtc-huong-dan-quy-dinh-cua-bo-luat-to-tung-hinh-su-va-luat-thi-hanh-an-hinh-su-ve-truy-na-do-bo-cong-an-bo-tu-phap-vien-kiem-sat-nhan-dan-toi-cao-toa-an-nhan-dan-toi-cao-ban.html",
+   "role": "topical",
+   "items": [
+    "LG-0052"
+   ]
+  },
+  {
+   "doc_id": "17/2013/TTLT-BTP-BCA-BQP-BTC-VKSNDTC-TANDTC",
+   "title": "Thông tư liên tịch 17/2013/TTLT-BTP-BCA-BQP-BTC-VKSNDTC-TANDTC hướng dẫn về đặt tiền để bảo đảm theo quy định tại Điều 93 của Bộ luật tố tụng hình sự năm 2003 do Bộ Tư pháp - Bộ Công an - Bộ Quốc phòng - Bộ Tài chính - Viện kiểm sát nhân dân tối cao - Toà án nhân dân tối cao ban hành",
+   "url": "https://hethongphapluat.com/thong-tu-lien-tich-17-2013-ttlt-btp-bca-bqp-btc-vksndtc-tandtc-huong-dan-ve-da-t-tien-de-ba-o-da-m-theo-quy-dinh-tai-dieu-93-cu-a-bo-lua-t-to-tung-hinh-su-nam-2003-do-bo-tu-phap-bo-cong-an-bo-quoc-phong-bo-tai-chinh-vien.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0100"
+   ],
+   "predecessor_of": [
+    "06/2018/TTLT-BCA-BQP-BTC-VKSNDTC-TANDTC"
+   ]
+  },
+  {
+   "doc_id": "01/VBHN-BKHCN",
+   "title": "Văn bản hợp nhất 01/VBHN-BKHCN năm 2024 hợp nhất Nghị định về Quy định xử phạt vi phạm hành chính trong lĩnh vực sở hữu công nghiệp do Bộ Khoa học và Công nghệ ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-01-vbhn-bkhcn-nam-2024-hop-nhat-nghi-dinh-ve-quy-dinh-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-so-huu-cong-nghiep-do-bo-khoa-hoc-va-cong-nghe-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0038",
+    "LG-0047"
+   ]
+  },
+  {
+   "doc_id": "01/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 01/VBHN-VPQH năm 2017 hợp nhất Bộ luật Hình sự do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-01-vbhn-vpqh-nam-2017-hop-nhat-bo-luat-hinh-su-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0097"
+   ]
+  },
+  {
+   "doc_id": "03/VBHN-BCT",
+   "title": "Văn bản hợp nhất 03/VBHN-BCT năm 2025 hợp nhất Nghị định quy định xử phạt vi phạm hành chính trong hoạt động thương mại, sản xuất, buôn bán hàng giả, hàng cấm và bảo vệ quyền lợi người tiêu dùng do Bộ Công thương ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-03-vbhn-bct-nam-2025-hop-nhat-nghi-dinh-quy-dinh-xu-phat-vi-pham-hanh-chinh-trong-hoat-dong-thuong-mai-san-xuat-buon-ban-hang-gia-hang-cam-va-bao-ve-quyen-loi-nguoi-tieu-dung-do-bo-cong-thuong-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0038"
+   ]
+  },
+  {
+   "doc_id": "04/VBHN-NHNN",
+   "title": "Văn bản hợp nhất 04/VBHN-NHNN năm 2024 hợp nhất Thông tư quy định về trang bị, quản lý, vận hành và đảm bảo an toàn hoạt động của máy giao dịch tự động do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-04-vbhn-nhnn-nam-2024-hop-nhat-thong-tu-quy-dinh-ve-trang-bi-quan-ly-van-hanh-va-dam-bao-an-toan-hoat-dong-cua-may-giao-dich-tu-dong-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0059"
+   ]
+  },
+  {
+   "doc_id": "09/VBHN-VPQH (2022)",
+   "title": "Văn bản hợp nhất 09/VBHN-VPQH năm 2022 hợp nhất Luật Thi hành án dân sự do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-09-vbhn-vpqh-nam-2022-hop-nhat-luat-thi-hanh-an-dan-su-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0137"
+   ]
+  },
+  {
+   "doc_id": "09/VBHN-VPQH (2025)",
+   "title": "Văn bản hợp nhất 09/VBHN-VPQH năm 2025 hợp nhất Luật Đầu tư do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-09-vbhn-vpqh-nam-2025-hop-nhat-luat-dau-tu-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0048"
+   ]
+  },
+  {
+   "doc_id": "10/VBHN-BTC",
+   "title": "Văn bản hợp nhất 10/VBHN-BTC năm 2026 hợp nhất Thông tư hướng dẫn công bố thông tin trên thị trường chứng khoán do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-10-vbhn-btc-nam-2026-hop-nhat-thong-tu-huong-dan-cong-bo-thong-tin-tren-thi-truong-chung-khoan-do-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0008",
+    "LG-0014"
+   ]
+  },
+  {
+   "doc_id": "104/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 104/VBHN-VPQH năm 2025 hợp nhất Bộ luật Tố tụng hình sự do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-104-vbhn-vpqh-nam-2025-hop-nhat-bo-luat-to-tung-hinh-su-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0015",
+    "LG-0016",
+    "LG-0052",
+    "LG-0100"
+   ]
+  },
+  {
+   "doc_id": "11/VBHN-NHNN",
+   "title": "Văn bản hợp nhất 11/VBHN-NHNN năm 2025 hợp nhất Thông tư quy định về quỹ tín dụng nhân dân do Thống đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-11-vbhn-nhnn-nam-2025-hop-nhat-thong-tu-quy-dinh-ve-quy-tin-dung-nhan-dan-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0102"
+   ]
+  },
+  {
+   "doc_id": "11/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 11/VBHN-VPQH năm 2025 hợp nhất Bộ luật Hình sự do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-11-vbhn-vpqh-nam-2025-hop-nhat-bo-luat-hinh-su-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0133"
+   ]
+  },
+  {
+   "doc_id": "115/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 115/VBHN-VPQH năm 2025 hợp nhất Luật Thi hành án dân sự do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-115-vbhn-vpqh-nam-2025-hop-nhat-luat-thi-hanh-an-dan-su-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0010"
+   ]
+  },
+  {
+   "doc_id": "13/VBHN-VPQH (2013)",
+   "title": "Văn bản hợp nhất 13/VBHN-VPQH năm 2013 hợp nhất Luật phòng, chống ma túy do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-13-vbhn-vpqh-nam-2013-hop-nhat-luat-phong-chong-ma-tuy-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0136"
+   ],
+   "predecessor_of": [
+    "73/2021/QH14"
+   ]
+  },
+  {
+   "doc_id": "13/VBHN-VPQH (2023)",
+   "title": "Văn bản hợp nhất 13/VBHN-VPQH năm 2023 hợp nhất Luật Chuyển giao công nghệ do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-13-vbhn-vpqh-nam-2023-hop-nhat-luat-chuyen-giao-cong-nghe-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0140"
+   ]
+  },
+  {
+   "doc_id": "132/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 132/VBHN-VPQH năm 2025 hợp nhất Luật Nhà ở do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-132-vbhn-vpqh-nam-2025-hop-nhat-luat-nha-o-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0091"
+   ]
+  },
+  {
+   "doc_id": "133/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 133/VBHN-VPQH năm 2025 hợp nhất Luật Đất đai do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-133-vbhn-vpqh-nam-2025-hop-nhat-luat-dat-dai-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0012",
+    "LG-0048",
+    "LG-0050",
+    "LG-0064",
+    "LG-0067",
+    "LG-0078",
+    "LG-0131"
+   ]
+  },
+  {
+   "doc_id": "14/VBHN-NHNN",
+   "title": "Văn bản hợp nhất 14/VBHN-NHNN năm 2023 hợp nhất Nghị định quy định xử phạt vi phạm hành chính trong lĩnh vực tiền tệ và ngân hàng do Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-14-vbhn-nhnn-nam-2023-hop-nhat-nghi-dinh-quy-dinh-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-tien-te-va-ngan-hang-do-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "predecessor",
+   "items": [
+    "LG-0037"
+   ],
+   "predecessor_of": [
+    "340/2025/NĐ-CP"
+   ]
+  },
+  {
+   "doc_id": "155/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 155/VBHN-VPQH năm 2025 hợp nhất Luật Sở hữu trí tuệ do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-155-vbhn-vpqh-nam-2025-hop-nhat-luat-so-huu-tri-tue-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0034",
+    "LG-0038",
+    "LG-0047",
+    "LG-0116"
+   ]
+  },
+  {
+   "doc_id": "158/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 158/VBHN-VPQH năm 2025 hợp nhất Luật Các tổ chức tín dụng do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-158-vbhn-vpqh-nam-2025-hop-nhat-luat-cac-to-chuc-tin-dung-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0043",
+    "LG-0060",
+    "LG-0066"
+   ]
+  },
+  {
+   "doc_id": "19/VBHN-BNNPTNT",
+   "title": "Văn bản hợp nhất 19/VBHN-BNNPTNT năm 2024 hợp nhất Thông tư Quy định trình tự, thủ tục kiểm dịch thực vật nhập khẩu, xuất khẩu, quá cảnh và sau nhập khẩu vật thể thuộc diện kiểm dịch thực vật do Bộ trưởng Bộ Nông nghiệp và Phát triển nông thôn ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-19-vbhn-bnnptnt-bedd69f39df288b4482a986369336e4d.html",
+   "role": "topical",
+   "items": [
+    "LG-0061",
+    "LG-0105"
+   ]
+  },
+  {
+   "doc_id": "19/VBHN-BTC",
+   "title": "Văn bản hợp nhất 19/VBHN-BTC năm 2017 về hướng dẫn chế độ quản lý, sử dụng và trích khấu hao tài sản cố định do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-19-vbhn-btc-nam-2017-ve-huong-dan-che-do-quan-ly-su-dung-va-trich-khau-hao-tai-san-co-dinh-do-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0119"
+   ]
+  },
+  {
+   "doc_id": "25/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 25/VBHN-VPQH năm 2022 hợp nhất Luật Ngân hàng Nhà nước Việt Nam do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-25-vbhn-vpqh-nam-2022-hop-nhat-luat-ngan-hang-nha-nuoc-viet-nam-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0144"
+   ]
+  },
+  {
+   "doc_id": "26/VBHN-NHNN",
+   "title": "Văn bản hợp nhất 26/VBHN-NHNN năm 2019 hợp nhất Thông tư quy định về giao nhận, bảo quản, vận chuyển tiền mặt, tài sản quý, giấy tờ có giá do Thông đốc Ngân hàng Nhà nước Việt Nam ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-26-vbhn-nhnn-nam-2019-hop-nhat-thong-tu-quy-dinh-ve-giao-nhan-bao-quan-van-chuyen-tien-mat-tai-san-quy-giay-to-co-gia-do-thong-doc-ngan-hang-nha-nuoc-viet-nam-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0129"
+   ]
+  },
+  {
+   "doc_id": "27/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 27/VBHN-VPQH năm 2025 hợp nhất Luật Xử lý vi phạm hành chính do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-27-vbhn-vpqh-nam-2025-hop-nhat-luat-xu-ly-vi-pham-hanh-chinh-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0136"
+   ]
+  },
+  {
+   "doc_id": "32/VBHN-BNNMT",
+   "title": "CẤP GIẤY CHỨNG NHẬN QUYỀN SỬ DỤNG ĐẤT, QUYỀN SỞ HỮU TÀI SẢN GẮN LIỀN VỚI ĐẤT",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-32-vbhn-bnnmt-nam-2025-hop-nhat-thong-tu-quy-dinh-ve-ho-so-dia-chinh-giay-chung-nhan-quyen-su-dung-dat-quyen-so-huu-tai-san-gan-lien-voi-dat-do-bo-truong-bo-tai-nguyen-va-moi-truong-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0018"
+   ]
+  },
+  {
+   "doc_id": "34/VBHN-BNNMT",
+   "title": "Văn bản hợp nhất 34/VBHN-BNNMT năm 2025 hợp nhất Thông tư quy định kỹ thuật về đo đạc lập bản đồ địa chính do Bộ Nông nghiệp và Môi trường ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-34-vbhn-bnnmt-nam-2025-hop-nhat-thong-tu-quy-dinh-ky-thuat-ve-do-dac-lap-ban-do-dia-chinh-do-bo-nong-nghiep-va-moi-truong.html",
+   "role": "topical",
+   "items": [
+    "LG-0018"
+   ]
+  },
+  {
+   "doc_id": "35/VBHN-BTC",
+   "title": "Văn bản hợp nhất 35/VBHN-BTC năm 2025 hợp nhất Thông tư quy định chế độ công tác phí, chế độ chi hội nghị do Bộ trưởng Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-35-vbhn-btc-nam-2025-hop-nhat-thong-tu-quy-dinh-che-do-cong-tac-phi-che-do-chi-hoi-nghi-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0003"
+   ]
+  },
+  {
+   "doc_id": "37/VBHN-BTC",
+   "title": "Văn bản hợp nhất 37/VBHN-BTC năm 2020 hợp nhất Thông tư về hướng dẫn giao dịch điện tử trên thị trường chứng khoán do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-37-vbhn-btc-nam-2020-hop-nhat-thong-tu-ve-huong-dan-giao-dich-dien-tu-tren-thi-truong-chung-khoan-do-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0046"
+   ]
+  },
+  {
+   "doc_id": "39/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 39/VBHN-VPQH năm 2025 hợp nhất Luật Dược do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-39-vbhn-vpqh-nam-2025-hop-nhat-luat-duoc-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0114"
+   ]
+  },
+  {
+   "doc_id": "4634/VBHN-BVHTTDL",
+   "title": "Văn bản hợp nhất 4634/VBHN-BVHTTDL năm 2021 hợp nhất Thông tư hướng dẫn Luật Du lịch do Bộ trưởng Bộ Văn hóa, Thể thao và Du lịch ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-4634-vbhn-bvhttdl-nam-2021-hop-nhat-thong-tu-huong-dan-luat-du-lich-do-bo-truong-bo-van-hoa-the-thao-va-du-lich-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0024"
+   ]
+  },
+  {
+   "doc_id": "4749/VBHN-BTP",
+   "title": "Văn bản hợp nhất 4749/VBHN-BTP năm 2025 hợp nhất Nghị định hướng dẫn Luật Xử lý vi phạm hành chính do Bộ Tư pháp ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-4749-vbhn-btp-nam-2025-hop-nhat-nghi-dinh-huong-dan-luat-xu-ly-vi-pham-hanh-chinh-do-bo-tu-phap-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0039"
+   ]
+  },
+  {
+   "doc_id": "5/VBHN-BTC",
+   "title": "Văn bản hợp nhất 5/VBHN-BTC năm 2023 hợp nhất Nghị định hướng dẫn Luật Quản lý thuế do Bộ Tài chính ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-5-vbhn-btc-nam-2023-hop-nhat-nghi-dinh-huong-dan-luat-quan-ly-thue-do-bo-tai-chinh-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0109"
+   ]
+  },
+  {
+   "doc_id": "50/VBHN-BNNMT",
+   "title": "Văn bản hợp nhất 50/VBHN-BNNMT năm 2025 hợp nhất Nghị định quy định về phân định thẩm quyền của chính quyền địa phương 02 cấp, phân quyền, phân cấp trong lĩnh vực đất đai do Bộ trưởng Bộ Nông nghiệp và Môi trường ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-50-vbhn-bnnmt-nam-2025-hop-nhat-nghi-dinh-quy-dinh-ve-phan-dinh-tham-quyen-cua-chinh-quyen-dia-phuong-02-cap-phan-quyen-phan-cap-trong-linh-vuc-dat-dai-do-bo-truong-bo-nong-nghiep-va-moi-truong-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0050",
+    "LG-0095"
+   ]
+  },
+  {
+   "doc_id": "63/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 63/VBHN-VPQH năm 2025 hợp nhất Luật Xử lý vi phạm hành chính do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-63-vbhn-vpqh-nam-2025-hop-nhat-luat-xu-ly-vi-pham-hanh-chinh-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0013",
+    "LG-0015",
+    "LG-0039",
+    "LG-0074"
+   ]
+  },
+  {
+   "doc_id": "64/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 64/VBHN-VPQH năm 2025 hợp nhất Luật Thể dục, thể thao do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-64-vbhn-vpqh-nam-2025-hop-nhat-luat-the-duc-the-thao-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0042"
+   ]
+  },
+  {
+   "doc_id": "67/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 67/VBHN-VPQH năm 2025 hợp nhất Luật Doanh nghiệp do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-67-vbhn-vpqh-nam-2025-hop-nhat-luat-doanh-nghiep-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0084",
+    "LG-0118",
+    "LG-0130"
+   ]
+  },
+  {
+   "doc_id": "951/VBHN-BTP",
+   "title": "Văn bản hợp nhất 951/VBHN-BTP năm 2019 hợp nhất Nghị định hướng dẫn Luật nuôi con nuôi do Bộ Tư pháp ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-951-vbhn-btp-nam-2019-hop-nhat-nghi-dinh-huong-dan-luat-nuoi-con-nuoi-do-bo-tu-phap-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0004"
+   ]
+  },
+  {
+   "doc_id": "99/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 99/VBHN-VPQH năm 2025 hợp nhất Bộ luật Tố tụng dân sự do Văn phòng Quốc hội ban hành",
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-99-vbhn-vpqh-nam-2025-hop-nhat-bo-luat-to-tung-dan-su-do-van-phong-quoc-hoi-ban-hanh.html",
+   "role": "topical",
+   "items": [
+    "LG-0026",
+    "LG-0051"
+   ]
+  }
+ ],
+ "uncovered": [
+  "LG-0007"
+ ],
+ "renamed": [
+  {
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-09-vbhn-vpqh-nam-2022-hop-nhat-luat-thi-hanh-an-dan-su-do-van-phong-quoc-hoi-ban-hanh.html",
+   "from": "09/VBHN-VPQH",
+   "to": "09/VBHN-VPQH (2022)"
+  },
+  {
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-09-vbhn-vpqh-nam-2025-hop-nhat-luat-dau-tu-do-van-phong-quoc-hoi-ban-hanh.html",
+   "from": "09/VBHN-VPQH",
+   "to": "09/VBHN-VPQH (2025)"
+  }
+ ],
+ "role_counts": {
+  "predecessor": 98,
+  "topical": 193,
+  "distractor": 12
+ },
+ "lists_sha256": {
+  "sources_1.json": "ca30d6b8acda9ce1a07ec3a1829e2ec2d79532701c712fd8db8b213c288b9ac3",
+  "sources_2.json": "3cf4fce76ff45e12cd0ea15b9fd49dcc2b67075274e1ab51e2f0d2c0f4013a79",
+  "sources_3.json": "7dc1e9db290857537ef115946ee7f98761f45ae7291963b07567a1fac7cdd1b8",
+  "sources_4.json": "a285a9da86d77cbd6a624da73e5824f341f54076e8aee9e0cb65139181d8868f"
+ }
+}

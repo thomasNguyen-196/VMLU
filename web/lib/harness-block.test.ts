@@ -111,7 +111,7 @@ const block = (ladder: unknown[] = [row(), row({ role: "baseline", arm: "A", del
   benchmark_name: "Harness arm",
   date: "2026-09-26",
   model_id: "Qwen3.5-9B-28K",
-  endpoint: "https://llmapi.iec-uit.com/v1",
+  endpoint: "IEC (host ẩn)",
   harness: "omp v18.2.7",
   condition: "prompt byte-identical",
   measurement_card: "MC-15…MC-23",

@@ -19,9 +19,11 @@ from pathlib import Path
 from typing import Any
 
 try:
+    from code_benchmark import diagnostic
     from code_benchmark import vi_multimodel as v1
     from code_benchmark.score_vi_multimodel import score_rows
 except ImportError:  # executed from code_benchmark/
+    import diagnostic
     import vi_multimodel as v1
     from score_vi_multimodel import score_rows
 
@@ -31,8 +33,13 @@ PROTOCOL_PATH = DATA_DIR / "protocol.json"
 TEMPLATES_PATH = DATA_DIR / "prompt_templates_v1.json"
 REGISTRATION_PATH = DATA_DIR / "registration.json"
 PROTOCOL_ID = "vmlu-diagnostic-prospective-v1"
-ARMS = ("B", "S", "O", "K", "KS")
+CAMPAIGN_ARMS = ("B", "S", "O", "K", "KS")
+# Arms a replicate id may carry: the campaign's, plus Q ("trích rồi đáp", openspec change diagnostic-llm-router),
+# whose prompts that change builds itself.
+ARMS = CAMPAIGN_ARMS + ("Q",)
 REASONING_ARMS = frozenset({"S", "KS"})
+# Arms scored from the text after the last final-answer label: the reasoning arms and Q.
+FINAL_LABEL_ARMS = REASONING_ARMS | {"Q"}
 EVIDENCE_ARMS = frozenset({"O", "K", "KS"})
 PHASES = ("core", "wide")
 MAIN_REPLICATE = "main-000"
@@ -51,10 +58,15 @@ TEMPLATE_KEYS = ("version", "s_mc_head", "s_reading_head", "evidence_header", "e
 EVIDENCE_PLACEHOLDERS = ("{index}", "{doc_title}", "{locator}", "{text}")
 PROVISION_KEYS = ("doc_id", "doc_title", "locator", "text", "text_sha256", "source_ref")
 ORACLE_KEYS = ("dataset_id", "item_id", "provisions", "reviewer_id", "review_export_sha256", "eligibility")
+RETRIEVED_KEYS = ("dataset_id", "item_id", "provisions", "ranking", "query_sha256", "corpus_sha256",
+                  "retrieval_config_sha256", "eligibility")
+RANKING_KEYS = ("chunk_id", "score", "text_sha256")
+RETRIEVAL_ARMS = frozenset({"K", "KS"})
 FORBIDDEN_EVIDENCE_KEYS = frozenset({
     "answer", "gold", "gold_answer", "option", "option_letter", "choice", "rationale", "solution", "explanation",
 })
-_LEAK = re.compile(r"(?:đáp án|answer)\s*[:：]\s*[A-Ea-e]\b|lời giải|giải thích", re.IGNORECASE)
+ANSWER_KEY = re.compile(r"(?:đáp án|answer)\s*[:：]\s*[A-Ea-e]\b", re.IGNORECASE)
+_LEAK = re.compile(ANSWER_KEY.pattern + r"|lời giải|giải thích", re.IGNORECASE)
 _MARKDOWN = re.compile(r"[*`]|^\s*#")
 _SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 # Same label pattern the frozen reading extractor uses (vi_multimodel.extract_final_answer).
@@ -96,13 +108,13 @@ def load_protocol(path: Path = PROTOCOL_PATH) -> dict[str, Any]:
     protocol = _read_json(path, "campaign protocol")
     if protocol.get("protocol_id") != PROTOCOL_ID or protocol.get("protocol_version") != 1:
         raise _fail("unsupported prospective protocol id/version")
-    if set(protocol.get("arms", {})) != set(ARMS):
+    if set(protocol.get("arms", {})) != set(CAMPAIGN_ARMS):
         raise _fail("protocol arms differ from B/S/O/K/KS")
     if set(protocol.get("phases", {})) != set(PHASES):
         raise _fail("protocol phases differ from core/wide")
     for name, phase in protocol["phases"].items():
         arms = phase.get("arms", [])
-        if not set(arms) <= set(ARMS) or "B" not in arms:
+        if not set(arms) <= set(CAMPAIGN_ARMS) or "B" not in arms:
             raise _fail(f"phase {name} must use known arms and include B")
         if not isinstance(phase.get("replicates"), int) or phase["replicates"] < 1:
             raise _fail(f"phase {name} needs a positive replicate count")
@@ -203,7 +215,7 @@ def render_evidence_block(provisions: list[dict[str, Any]], templates: dict[str,
 
 def build_arm_prompt(item: v1.EvalItem, arm: str, templates: dict[str, str],
                      provisions: list[dict[str, Any]] | None = None) -> str:
-    if arm not in ARMS:
+    if arm not in CAMPAIGN_ARMS:
         raise _fail(f"unknown arm {arm!r}")
     needs_evidence = arm in EVIDENCE_ARMS
     if needs_evidence != bool(provisions):
@@ -225,7 +237,10 @@ def evidence_digest(evidence: dict[str, list[dict[str, Any]]]) -> str:
     return v1.sha256_bytes(v1.canonical_json(evidence))
 
 
-def validate_provisions(provisions: Any, where: str) -> list[dict[str, Any]]:
+def validate_provisions(provisions: Any, where: str, *, verbatim_source: bool = False) -> list[dict[str, Any]]:
+    """Shape, text hash and leakage of evidence provisions. Text copied verbatim from a corpus article is
+    checked for answer-key lines only, since statutes legitimately say "giải thích" ("Giải thích từ ngữ")."""
+    leak = ANSWER_KEY if verbatim_source else _LEAK
     if not isinstance(provisions, list) or not provisions:
         raise _fail(f"{where}: provisions must be a non-empty list")
     for index, provision in enumerate(provisions, 1):
@@ -235,45 +250,280 @@ def validate_provisions(provisions: Any, where: str) -> list[dict[str, Any]]:
             raise _fail(f"{where}: provision {index} has an empty field")
         if v1.sha256_bytes(provision["text"].encode("utf-8")) != provision["text_sha256"]:
             raise _fail(f"{where}: provision {index} text hash mismatch")
-        if _LEAK.search(provision["text"]):
+        if leak.search(provision["text"]):
             raise _fail(f"{where}: provision {index} looks like an answer or an explanation")
     return provisions
+
+
+def _evidence_rows(path: Path, label: str) -> list[Any]:
+    try:
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except (OSError, json.JSONDecodeError) as exc:
+        raise _fail(f"cannot read {label} {path}: {exc}") from exc
+
+
+def _evidence_key(row: Any, where: str, keys: tuple[str, ...], protocol: dict[str, Any],
+                  main_items: dict[str, v1.EvalItem], seen: dict[str, Any]) -> str:
+    """Checks every evidence record shares: exact keys, no answer-bearing key, an eligible frozen item."""
+    if not isinstance(row, dict):
+        raise _fail(f"{where}: record must be an object")
+    leaked = FORBIDDEN_EVIDENCE_KEYS & set(row)
+    if leaked:
+        raise _fail(f"{where}: record carries forbidden answer-bearing keys {sorted(leaked)}")
+    if set(row) != set(keys):
+        raise _fail(f"{where}: record must have exactly the keys {list(keys)}")
+    key = item_key(row["dataset_id"], row["item_id"])
+    if key in seen:
+        raise _fail(f"{where}: duplicate evidence for {key}")
+    if row["dataset_id"] not in protocol["evidence"]["eligible_datasets"]:
+        raise _fail(f"{where}: {key} is not an evidence-eligible dataset")
+    if f"{key}:{MAIN_REPLICATE}" not in main_items:
+        raise _fail(f"{where}: {key} is not a frozen main-v1 item")
+    required = protocol["evidence"]["required_input_evidence_sufficiency"]
+    if row["eligibility"] != {"input_evidence_sufficiency": required}:
+        raise _fail(f"{where}: eligibility must state input_evidence_sufficiency={required}")
+    return key
 
 
 def load_oracle_evidence(path: Path, protocol: dict[str, Any],
                          main_items: dict[str, v1.EvalItem]) -> dict[str, list[dict[str, Any]]]:
     """Return {dataset:item -> provisions}. Fails closed on leakage, ineligibility or hash drift."""
-    try:
-        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    except (OSError, json.JSONDecodeError) as exc:
-        raise _fail(f"cannot read oracle evidence {path}: {exc}") from exc
-    eligible = set(protocol["evidence"]["eligible_datasets"])
-    required = protocol["evidence"]["required_input_evidence_sufficiency"]
     result: dict[str, list[dict[str, Any]]] = {}
-    for number, row in enumerate(rows, 1):
+    for number, row in enumerate(_evidence_rows(path, "oracle evidence"), 1):
         where = f"{path.name}:{number}"
-        if not isinstance(row, dict):
-            raise _fail(f"{where}: record must be an object")
-        leaked = FORBIDDEN_EVIDENCE_KEYS & set(row)
-        if leaked:
-            raise _fail(f"{where}: record carries forbidden answer-bearing keys {sorted(leaked)}")
-        if set(row) != set(ORACLE_KEYS):
-            raise _fail(f"{where}: record must have exactly the keys {list(ORACLE_KEYS)}")
-        key = item_key(row["dataset_id"], row["item_id"])
-        if key in result:
-            raise _fail(f"{where}: duplicate evidence for {key}")
-        if row["dataset_id"] not in eligible:
-            raise _fail(f"{where}: {key} is not an evidence-eligible dataset")
-        if f"{key}:{MAIN_REPLICATE}" not in main_items:
-            raise _fail(f"{where}: {key} is not a frozen main-v1 item")
-        if row["eligibility"] != {"input_evidence_sufficiency": required}:
-            raise _fail(f"{where}: eligibility must state input_evidence_sufficiency={required}")
+        key = _evidence_key(row, where, ORACLE_KEYS, protocol, main_items, result)
         if not isinstance(row["reviewer_id"], str) or not row["reviewer_id"].strip():
             raise _fail(f"{where}: reviewer_id is empty")
         if not isinstance(row["review_export_sha256"], str) or not _SHA256_HEX.match(row["review_export_sha256"]):
             raise _fail(f"{where}: review_export_sha256 is not a SHA-256 hex digest")
         result[key] = validate_provisions(row["provisions"], where)
     return result
+
+
+def load_retrieved_evidence(path: Path, protocol: dict[str, Any], main_items: dict[str, v1.EvalItem]
+                            ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, dict[str, Any]]]:
+    """Return ({dataset:item -> provisions}, {dataset:item -> retrieval trace}) for arms K and KS.
+
+    Every provision must be the ranked corpus chunk whose hash it carries, scores must not increase down the
+    ranking, and all records must come from one corpus and one retrieval configuration."""
+    result: dict[str, list[dict[str, Any]]] = {}
+    traces: dict[str, dict[str, Any]] = {}
+    for number, row in enumerate(_evidence_rows(path, "retrieved evidence"), 1):
+        where = f"{path.name}:{number}"
+        key = _evidence_key(row, where, RETRIEVED_KEYS, protocol, main_items, result)
+        for field in ("query_sha256", "corpus_sha256", "retrieval_config_sha256"):
+            if not isinstance(row[field], str) or not _SHA256_HEX.match(row[field]):
+                raise _fail(f"{where}: {field} is not a SHA-256 hex digest")
+        provisions = validate_provisions(row["provisions"], where, verbatim_source=True)
+        ranking = row["ranking"]
+        if (not isinstance(ranking, list) or len(ranking) != len(provisions)
+                or any(not isinstance(entry, dict) or set(entry) != set(RANKING_KEYS) for entry in ranking)):
+            raise _fail(f"{where}: ranking must list {list(RANKING_KEYS)} for each provision")
+        if any(entry["text_sha256"] != provision["text_sha256"]
+               for entry, provision in zip(ranking, provisions, strict=True)):
+            raise _fail(f"{where}: a provision differs from the ranked chunk it stands for")
+        scores = [entry["score"] for entry in ranking]
+        if (any(isinstance(s, bool) or not isinstance(s, (int, float)) for s in scores)
+                or scores != sorted(scores, reverse=True)):
+            raise _fail(f"{where}: ranking scores must be numbers in non-increasing order")
+        result[key] = provisions
+        traces[key] = {field: row[field] for field in ("corpus_sha256", "retrieval_config_sha256", "query_sha256")}
+        traces[key]["ranking"] = ranking
+    sources = {(trace["corpus_sha256"], trace["retrieval_config_sha256"]) for trace in traces.values()}
+    if len(sources) > 1:
+        raise _fail(f"{path.name}: records come from {len(sources)} corpus/configuration pairs, not one")
+    return result, traces
+
+
+# A reviewer's note at the end of a drafted locator, e.g. "(kèm câu dẫn của khoản)"; never part of the prompt.
+_LOCATOR_NOTE = re.compile(r"\s*\([^()]*\)\s*$")
+
+
+def oracle_records(review_rows: list[dict[str, Any]], provisions: list[dict[str, Any]],
+                   protocol: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    """Oracle evidence records from one imported review and the drafted provisions (design Decision 11).
+
+    An anchor of the evidence-eligible dataset gets a record when its audited input evidence has the required
+    sufficiency and its gold is valid; the dataset's other anchors come back as {item key: reason}. Fails closed
+    on labels from more than one review export, a provisional or unattached provision, or an evidence anchor
+    without a provision."""
+    eligible = protocol["evidence"]["eligible_datasets"]
+    required = protocol["evidence"]["required_input_evidence_sufficiency"]
+    if len(eligible) != 1:
+        raise _fail("drafted provisions carry no dataset id, so exactly one evidence-eligible dataset is supported")
+    dataset_id = eligible[0]
+    sources = {(row.get("annotator_id"), row.get("review_source_sha256")) for row in review_rows}
+    if len(sources) != 1:
+        raise _fail(f"labels must come from exactly one imported review export, found {len(sources)}")
+    (reviewer_id, export_sha256), = sources
+    reasons: dict[str, str | None] = {}
+    for row in review_rows:
+        row_dataset, rest = str(row["observation_key"]).split("|", 1)[-1].split(":", 1)
+        item_id = rest.rsplit(":", 1)[0]
+        if row_dataset != dataset_id:
+            continue
+        if item_id in reasons:
+            raise _fail(f"two label rows for {item_key(dataset_id, item_id)}")
+        if row["input_evidence_sufficiency"] != required:
+            reasons[item_id] = f"input_evidence_sufficiency={row['input_evidence_sufficiency']}"
+        elif row["gold_validity"] != "valid":
+            reasons[item_id] = f"gold_validity={row['gold_validity']}"
+        else:
+            reasons[item_id] = None
+    drafted: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for provision in provisions:
+        if provision.get("item_id") not in reasons:
+            raise _fail(f"provision for {provision.get('item_id')!r}, which is not an anchor of {dataset_id}")
+        drafted[provision["item_id"]].append(provision)
+    records = []
+    for item_id in sorted(key for key, reason in reasons.items() if reason is None):
+        if not drafted[item_id]:
+            raise _fail(f"evidence anchor {item_id} has no drafted provision")
+        if any(p.get("provisional") for p in drafted[item_id]):
+            raise _fail(f"evidence anchor {item_id} has a provisional provision; verify it against the source first")
+        cleaned = [{key: _LOCATOR_NOTE.sub("", p[key]) if key == "locator" else p[key] for key in PROVISION_KEYS}
+                   for p in drafted[item_id]]
+        records.append({"dataset_id": dataset_id, "item_id": item_id,
+                        "provisions": validate_provisions(cleaned, item_key(dataset_id, item_id)),
+                        "reviewer_id": reviewer_id, "review_export_sha256": export_sha256,
+                        "eligibility": {"input_evidence_sufficiency": required}})
+    excluded = {item_key(dataset_id, item_id): reason for item_id, reason in sorted(reasons.items()) if reason}
+    return records, excluded
+
+
+# ---------------------------------------------------------------- anchor diagnosis (design Decision 12)
+
+ANCHOR_DIAGNOSIS_KEYS = ("dataset_id", "item_id", "judgment_source", "reviewers", "semantic_correctness",
+                         "gold_validity", "input_evidence_sufficiency", "corpus_evidence_availability",
+                         "diagnostic_outcome", "observed_issues", "diagnostic_labels", "hypothesis_status")
+JUDGMENT_FIELDS = ("semantic_correctness", "gold_validity", "input_evidence_sufficiency",
+                   "corpus_evidence_availability", "diagnostic_outcome")
+JUDGMENT_SETS = ("observed_issues", "diagnostic_labels")
+
+
+def judgment_vocabulary() -> dict[str, frozenset[str]]:
+    """Allowed values of every final-judgment field, from the frozen review schema and the audit taxonomy."""
+    enums = _read_json(diagnostic.REVIEW_SCHEMA_PATH, "review schema")["enums"]
+    vocabulary = {field: frozenset(enums[field]) for field in JUDGMENT_FIELDS}
+    vocabulary["observed_issues"] = frozenset(diagnostic.OBSERVED_ISSUES)
+    vocabulary["diagnostic_labels"] = frozenset(diagnostic.DIAGNOSTIC_LABELS)
+    return vocabulary
+
+
+def anchor_of_observation(observation_key: str) -> str:
+    """`source|dataset:item:replicate` -> `dataset:item`."""
+    return str(observation_key).split("|", 1)[-1].rsplit(":", 1)[0]
+
+
+def final_judgment(rationale: str, vocabulary: dict[str, frozenset[str]]) -> dict[str, Any]:
+    """The final labels an adjudication records as `FINAL field=value | ... || reason`. Every judgment field
+    appears exactly once; the two set fields are `;`-separated and may be empty."""
+    head, separator, _ = str(rationale).partition("||")
+    if not head.startswith("FINAL ") or not separator:
+        raise _fail("adjudication rationale lacks a `FINAL field=value | ... || reason` block")
+    judgment: dict[str, Any] = {}
+    for part in head[len("FINAL "):].split("|"):
+        name, equals, value = part.strip().partition("=")
+        if not equals or name not in vocabulary or name in judgment:
+            raise _fail(f"adjudication field {name!r} is unknown, malformed or repeated")
+        value = value.strip()
+        if name in JUDGMENT_SETS:
+            values = [entry.strip() for entry in value.split(";") if entry.strip()]
+            if len(values) != len(set(values)) or not set(values) <= vocabulary[name]:
+                raise _fail(f"adjudication {name}={value!r} repeats a value or names one outside the vocabulary")
+            judgment[name] = sorted(values)
+        elif value in vocabulary[name]:
+            judgment[name] = value
+        else:
+            raise _fail(f"adjudication {name}={value!r} is outside the vocabulary")
+    missing = sorted(set(vocabulary) - set(judgment))
+    if missing:
+        raise _fail(f"adjudication lacks the final {missing}")
+    return judgment
+
+
+def _review_judgment(row: dict[str, Any]) -> dict[str, Any]:
+    return {**{field: row[field] for field in JUDGMENT_FIELDS},
+            **{field: sorted(row[field]) for field in JUDGMENT_SETS}}
+
+
+def anchor_diagnosis(pilot_dir: Path) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    """The final audit judgment of every anchor (design Decision 12), in pilot order: the judgment every imported
+    review agrees on, or the FINAL block of the anchor's latest resolved adjudication. Fails closed on an anchor
+    without a review, on reviews that disagree without a resolved adjudication and on an unreadable final block.
+    Returns the records and the SHA-256 of each input file."""
+    anchors, _ = anchor_item_keys(pilot_dir)
+    vocabulary = judgment_vocabulary()
+    inputs: dict[str, str] = {}
+    reviews: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for path in sorted((pilot_dir / "reviews").glob("*.jsonl")):
+        inputs[f"reviews/{path.name}"] = v1.sha256_file(path)
+        for row in _evidence_rows(path, "imported review"):
+            if row.get("review_status"):
+                reviews[anchor_of_observation(row["observation_key"])].append(row)
+    adjudicated: dict[str, dict[str, Any]] = {}
+    path = pilot_dir / "adjudications.jsonl"
+    if path.is_file():
+        inputs["adjudications.jsonl"] = v1.sha256_file(path)
+        adjudicated = {anchor_of_observation(row["observation_key"]): row
+                       for row in _evidence_rows(path, "adjudications")}
+    stray = sorted(set(reviews) - set(anchors))
+    if stray:
+        raise _fail(f"reviews for items outside the pilot anchors: {stray[:3]}")
+    records = []
+    for key in anchors:
+        rows = reviews.get(key)
+        if not rows:
+            raise _fail(f"anchor {key} has no imported review")
+        views = [_review_judgment(row) for row in rows]
+        decision = adjudicated.get(key, {})
+        if decision.get("decision") == "resolved":
+            judgment, source = final_judgment(decision["rationale"], vocabulary), "adjudicated"
+        elif all(view == views[0] for view in views):
+            judgment, source = views[0], "agreed" if len(rows) > 1 else "single_review"
+        else:
+            raise _fail(f"the reviews of {key} disagree and no resolved adjudication records the final judgment")
+        primary = next((row for row in rows if row.get("review_scope") == "primary-60"), rows[0])
+        status = {support["label"]: support["status"] for support in primary.get("diagnostic_support", [])}
+        dataset_id, item_id = key.split(":", 1)
+        records.append({"dataset_id": dataset_id, "item_id": item_id, "judgment_source": source,
+                        "reviewers": sorted({str(row["annotator_id"]) for row in rows}), **judgment,
+                        "hypothesis_status": {label: status.get(label, "hypothesis")
+                                              for label in judgment["diagnostic_labels"]}})
+    return records, inputs
+
+
+def load_anchor_diagnosis(path: Path) -> tuple[dict[str, dict[str, Any]], str]:
+    """{dataset:item: final judgment} and the SHA-256 of the file (the value the core registration records)."""
+    vocabulary = judgment_vocabulary()
+    mapping: dict[str, dict[str, Any]] = {}
+    for number, row in enumerate(_evidence_rows(path, "anchor diagnosis"), 1):
+        where = f"{path.name}:{number}"
+        if not isinstance(row, dict) or set(row) != set(ANCHOR_DIAGNOSIS_KEYS):
+            raise _fail(f"{where}: record must have exactly the keys {list(ANCHOR_DIAGNOSIS_KEYS)}")
+        key = item_key(row["dataset_id"], row["item_id"])
+        if key in mapping:
+            raise _fail(f"{where}: duplicate diagnosis for {key}")
+        if (any(row[field] not in vocabulary[field] for field in JUDGMENT_FIELDS)
+                or any(not isinstance(row[field], list) or not set(row[field]) <= vocabulary[field]
+                       for field in JUDGMENT_SETS)
+                or not isinstance(row["hypothesis_status"], dict)
+                or set(row["hypothesis_status"]) != set(row["diagnostic_labels"])
+                or not set(row["hypothesis_status"].values()) <= diagnostic.ATTRIBUTION_STATUSES):
+            raise _fail(f"{where}: {key} has a value outside the audit vocabulary")
+        mapping[key] = row
+    return mapping, v1.sha256_file(path)
+
+
+def reported_tokens(row: dict[str, Any]) -> int | None:
+    """Total tokens the endpoint reported for an attempt; None when it reported none (unknown, never zero)."""
+    total = row.get("total_tokens")
+    if isinstance(total, int):
+        return total
+    prompt, completion = row.get("prompt_tokens"), row.get("completion_tokens")
+    if isinstance(prompt, int) and isinstance(completion, int):
+        return prompt + completion
+    return None
 
 
 # ---------------------------------------------------------------- manifests
@@ -360,6 +610,9 @@ def build_manifest(phase: str, *, evidence_by_arm: dict[str, dict[str, list[dict
         stray = sorted(set(mapping) - base_keys)
         if stray:
             raise _fail(f"evidence for items outside phase {phase}: {stray[:3]}")
+    if {"O", "K"} <= set(evidence_by_arm) and set(evidence_by_arm["O"]) != set(evidence_by_arm["K"]):
+        differ = sorted(set(evidence_by_arm["O"]) ^ set(evidence_by_arm["K"]))
+        raise _fail(f"oracle and retrieved evidence must cover the same items; they differ on {differ[:3]}")
     if supplement is None:
         items = expand_arms(base_items, phase, protocol, templates, evidence_by_arm)
     else:
@@ -430,7 +683,7 @@ def final_segment(raw: str) -> tuple[str, bool]:
 
 def score_arm_rows(manifest: dict[str, Any], predictions: dict[str, dict[str, Any]],
                    item_map: dict[str, v1.EvalItem]) -> tuple[list[dict[str, Any]], dict[str, dict[str, dict[str, Any]]]]:
-    """Frozen scoring applied per arm; reasoning arms are scored from the final-answer segment.
+    """Frozen scoring applied per arm; reasoning arms and Q are scored from the final-answer segment.
 
     Returns (scored rows for all arms, {arm: {dataset_id: summary}}). Arms are never pooled."""
     refs_by_arm: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -449,7 +702,7 @@ def score_arm_rows(manifest: dict[str, Any], predictions: dict[str, dict[str, An
             prediction = predictions.get(key)
             if prediction is None:
                 continue
-            if arm in REASONING_ARMS and prediction.get("status") == "complete":
+            if arm in FINAL_LABEL_ARMS and prediction.get("status") == "complete":
                 raw = str(prediction.get("raw_response", ""))
                 segment, found = final_segment(raw)
                 is_mc = item_map[key].task == "multiple_choice"
@@ -469,7 +722,7 @@ def score_arm_rows(manifest: dict[str, Any], predictions: dict[str, dict[str, An
         for dataset_id, summary in arm_summaries.items():
             subset = [row for row in scored if row["dataset_id"] == dataset_id]
             summary["arm"] = arm
-            if arm in REASONING_ARMS:
+            if arm in FINAL_LABEL_ARMS:
                 compliant = sum(bool(row["format_ok"]) for row in subset)
                 summary.update({
                     "format_ok_n": compliant,

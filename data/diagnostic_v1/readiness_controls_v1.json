@@ -1,0 +1,22 @@
+{
+  "controls_id": "diagnostic-readiness-controls-v1",
+  "protocol_sha256": "44fc2ea0f51954628e7a2d2716f3e468f7f68fcea8df9481679dd69b603aec0f",
+  "registered_on": "2026-10-27",
+  "note": "Resolves the controls that protocol.json leaves unset for the prospective campaign (openspec change diagnostic-prospective-campaign). They live in this file, bound to the protocol by its SHA-256, so that protocol.json keeps its bytes: its hash is part of the pilot identity, and the pilot content hash is part of every campaign manifest, including the frozen wide ones.",
+  "readiness_controls": {
+    "verified_endpoint": "Qwen3.5-9B-65K on the IEC endpoint named in the model block of data/diagnostic_prospective_v1/protocol.json (sha256 fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137). The runner's endpoint_identity gate compares the configured host and model id with it before any request, and a response that names another model stops the run (model_identity_drift).",
+    "versioned_vietnamese_corpus": "corpus v0: 19 Vietnamese legal documents split into 2,375 articles, corpus_sha256 967f9cad805dbd10b9104e25b534c3cf8446a486bea0c5b7d6f121417499fdca, built from data/diagnostic_prospective_v1/corpus_v0_sources.json (sha256 f21c8e86a2c312ccc2b5dad5dd92bc46634f70332355d02f230c9263ccb77497).",
+    "hard_runtime_budget": "4,096 output tokens per attempt and 5,000,000 reported tokens per phase run (budget block of the campaign protocol); usage the endpoint does not report counts as unknown, never as zero, and the budget guard stops new requests at the cap.",
+    "augmentation_model_and_controls": "No second model. Arm S adds a decomposition instruction to the frozen B prompt; arm O prepends the reviewer-cited provisions (evidence digest 4be39757903c649c8e50056bb6eadb5b44a95158dedd4929178acdb7ea3b2691); arm K prepends the BM25 top-3 articles of corpus v0 (data/diagnostic_prospective_v1/retrieval_v0.json, sha256 2504f177ed5c08d9610bfbe65b212bc027e718c5eb90b8dd61527f32de6def0c; evidence digest fb3e43de3448a922337dce12c82dd514eb83ddb0ecbd8af91de90c0ef88e3139); KS puts the K block on the S prompt. Prompt templates sha256 9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481. Comparators: B, the B replicates as the noise reference, and O as a ceiling that is never deployable.",
+    "runtime_verification_policy": "Before --execute the runner checks the card heading and detail card, the endpoint identity, the frozen protocol, template, manifest and evidence hashes, inference_ready, and the router rule and cue-lexicon hashes of the registration. Answers are scored by the frozen scorer, truncation is read from completion_tokens, and completed attempts, including truncated or unparsed ones, are never retried automatically."
+  },
+  "future_experiment_contract": {
+    "status": "preregistered",
+    "campaign_controls": "data/diagnostic_prospective_v1/protocol.json (sha256 fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137) and its prompt templates (sha256 9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481): temperature 1.0, 4,096 output tokens, streaming, arms B, S, O, K and KS on core with 3 replicates; the router is data/diagnostic_prospective_v1/router_v1.json (sha256 8140c13eade80cbaa5f3b0e7f14cbba88caa547c844df014de1d5f35a845b292).",
+    "split_manifest": "core: the 60 pilot anchors (pilot content sha256 19b31d71643d8c894edb0afe3439fc35270e51099c51e49bbde1fe9b0d774b26); B and S on all 60 and O, K and KS on the 8 evidence anchors, 3 replicates each, 432 attempts, manifest sha256 c00bc988d61711a18a5a348c0d34cc6bb8e373c9feacde9af8447616aa823d54. wide: the 1,239 main items that are not anchors, manifest sha256 d5f022d63d641ceb635882537f914c6e7e9df17a1695649f0dd6b67432e5c297, run as MC-90 to MC-92.",
+    "corpus_version": "corpus v0, corpus_sha256 967f9cad805dbd10b9104e25b534c3cf8446a486bea0c5b7d6f121417499fdca.",
+    "budget_policy": "As hard_runtime_budget: 4,096 output tokens per attempt, 5,000,000 reported tokens per phase run, unknown usage kept unknown.",
+    "replicate_pairing_and_stability": "3 replicates per arm and anchor with the same prompt and settings; the item outcome is the strict majority (at least 2 of 3 correct); disagreement among the B replicates is the noise reference.",
+    "verification_policy": "As runtime_verification_policy. The core run is analysed once with analyze_diagnostic_prospective (phase core, with the anchor diagnosis) and analyze_diagnostic_router (evaluate), whose report keys are recorded in the core registration."
+  }
+}

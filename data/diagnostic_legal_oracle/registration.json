@@ -1,0 +1,40 @@
+{
+ "status": "legal-oracle registered",
+ "card_ids": {
+  "legal-oracle": "MC-100"
+ },
+ "card_files": {
+  "legal-oracle": "docs/measurement_cards/MC-100-diagnostic-legal-oracle.md"
+ },
+ "registered_on": {
+  "legal-oracle": "2026-10-29"
+ },
+ "frozen": {
+  "legal_oracle_protocol_sha256": "1373bde891d738e32edb6a015001adca35549713b815d48c69cbe785f5a1bd04",
+  "campaign_protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+  "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
+  "evidence_sha256": "367632d7243855d8818dac7d7d34207a2b718f0723d389a0204c296eda5275bb",
+  "manifest_sha256": "4eb235e6f3ece13bbbd40e0f968c9b5444bc87cf8372c31dd4a19ca4b5cd9ab8"
+ },
+ "owner_review": {
+  "file": "all_res/diagnostic_legal_oracle/evidence/owner_review.json",
+  "sha256": "9e69313c9bfc1a590ca55a69add0302f2c33a423ab8553cce2607cffe77a71c2",
+  "note": "kept outside the repository: its options mostly equal the gold"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-oracle-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "evidence_sha256",
+   "scores_sha256",
+   "support_counts",
+   "label_sources",
+   "primary",
+   "reading_rule",
+   "gold_check",
+   "descriptive"
+  ]
+ }
+}

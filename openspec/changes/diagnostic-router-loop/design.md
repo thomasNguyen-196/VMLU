@@ -1,0 +1,164 @@
+## Context
+
+See proposal.md for the motivation. The plan builds on these pieces:
+
+- **The campaign engine.** It runs any arm whose prompt is frozen in a manifest, with guards, scoring and resume (MC-90 to MC-101). It already accepts a retrieval trace per K row.
+- **Existing arms.**
+  - B, S, Q: prompts.
+  - K: BM25 over a corpus. For Legal MC this is `vi-legal-corpus-lmc-v1`, 303 documents and 24,265 units.
+  - O: oracle provisions, a ceiling only.
+  - The `omp` harness (`run_harness_eval.py`, frozen genomes): MC-86 to MC-89 ran four models with full tools, against direct-API runs MC-80 to MC-85.
+- **The two-answer probe** of router v2. Its cascade form, "B twice, escalate when they differ", was evaluated in MC-94 (VMLU: 76.7% against 68.3% for always-B and 80.0% for always-S). It was simulated for Legal MC on MC-101 data: 87.3% against 84.3%.
+- **The LLM-router client of MC-98:** Muse Spark 1.3 with a closed output grammar, about 3,100 tokens and 13 s a call.
+- **Outcome data for Qwen3.5-9B:** about 18,000 scored attempts across arms and draws (MC-90 to MC-101).
+- **Fresh items with gold remain** in VMLU (about 390 valid and dev items not used by any router), VM14K (thousands) and ViBidLQA train (about 1,100). None remain in Legal MC, Vi-SQuAD or Vi-DROP.
+
+## Goals / Non-Goals
+
+**Goals:**
+- One loop procedure for every student model. Only its weakness map changes per model.
+- An honest test on fresh items: whether a router that reads the answer beats the rule loop, at the cost it actually adds.
+- Answers to the thesis questions for at least two student models: where each model is weak, and which enhancement repairs what.
+
+**Non-Goals:**
+- Training student models.
+- Free-text coaching that could carry the answer (see Decision 3).
+- Covering every available model.
+
+## Decisions
+
+### 1. Architecture: five parts
+1. **Student models.** Qwen3.5-9B (IEC), plus one or two API models chosen in Phase 0.
+2. **Knowledge stores (RAG):**
+   - **Evidence store:** the item's own passage when the task has one, `vi-legal-corpus-lmc-v1` at article and clause level, corpus v0, and the ViBidLQA passages.
+   - **Experience store:** past cases. Each case holds the dataset, the question, the model, the arm, whether the two B answers agreed, and the outcome. Cases are retrieved by similarity, never for the item being answered and never for an evaluation item.
+3. **Router-critic:** one LLM call per consulted round, with a closed output (Decision 3).
+4. **Enhancement menu:** registered arms (Decision 4).
+5. **Loop controller and cost ledger:** rounds, stop rule, final answer, and every token.
+
+The pre-answer routers failed because the question alone predicts little. The critic instead judges an answer it can see, with evidence in hand, which is how tool-based critics such as CRITIC correct outputs. The literature also warns that self-correction without new information does not help (Huang et al., 2024). That is why every prescription must bring something new: evidence, a procedure or a tool.
+
+### 2. Detection in two stages
+- **Stage 1, every item:** ask B twice. Different parsed answers raise a flag. This costs one extra student call and caught 30 of 42 wrong first answers on Legal MC.
+- **Stage 2, the router-critic.** It always runs on flagged items. It runs on unflagged items only if Phase 3 shows it catches enough "confident errors" (two equal wrong answers; 12 of 42 on Legal MC) to pay for calling it on every item. That choice is registered before Phase 4.
+
+### 3. Router-critic output: closed, and no answer injection
+The critic returns one JSON object:
+- `verdict`: `likely_correct`, `likely_wrong` or `unsure`;
+- `cause`: one of `knowledge_or_evidence`, `reasoning`, `reading`, `format`, `instability`, `other`;
+- `prescription`: one menu id, optional evidence unit ids chosen from the retrieved candidates, and an optional focus note of at most 200 characters;
+- `rationale`: kept in the log and never sent to the student.
+
+The student receives only what the menu item renders: the template, the chosen evidence units verbatim, and the focus note if it passes the leak check. The leak check rejects any note that contains an option letter in an answer pattern, an option's text, or answer phrases ("đáp án", "chọn …"). Free-form coaching is not used: it could carry the answer and could not be reproduced. Whether the focus note helps is an ablation in Phase 3.
+
+### 4. Enhancement menu v1 (each a registered arm)
+| id | Enhancement | Status |
+| --- | --- | --- |
+| E0 | Resample B | exists |
+| E1 | S, step by step | exists |
+| E2 | Q, quote then answer | exists |
+| E3 | Clause-level retrieval, the top clauses rather than whole units | new; MC-101 showed whole units dilute |
+| E4 | Critic-selected evidence, from the retrieved candidates | new |
+| E5 | Calculator or Python tool for arithmetic (Vi-DROP style) | new, via the harness tool loop |
+| E6 | `omp` harness with tools, a frozen genome | exists (MC-86 to MC-89) |
+| E7 | Self-consistency vote over k samples | new, cheap |
+| E8 | Escalate to a stronger model | new; must beat "router alone" on cost |
+
+Phase 1 delivers E0–E4 and E7. E5, E6 and E8 enter once their wrappers pass offline tests.
+
+### 5. Loop and stop rule
+- **Rounds:** at most 3 after the first answer.
+- **Stop** when an enhancement's answer equals the previous round's answer, or when the critic says `likely_correct`.
+- **Final answer:** the answer of the last round that the critic did not reject. If it rejected every round, the most frequent answer, with ties broken in favour of B.
+
+All three choices are registered, and Phase 3 may tighten them only on calibration data.
+
+### 6. Weakness map per model (Phase 2)
+- For each student: about 60 fresh calibration items per dataset (VMLU, VM14K, ViBidLQA), each run with B twice and every menu item once.
+- The map records, per dataset and per cause group, the rescue rate and the damage rate of each enhancement, plus its cost.
+- The map is frozen per model. A new model joins by running this calibration only; the loop itself does not change.
+- **First map, MiMo V2.6 Flash (MC-103), decided 2026-10-30.** The first map does not use fresh items. It uses the 180 calibration items of MC-95, where Qwen's B and S answers are already logged, so the two models compare item by item without new Qwen requests.
+  - **Arms.** B twice and S once on every item, and Q once on ViBidLQA. The other menu items wait until a map shows a need.
+  - **Two maps per model.** The point map takes the best draw-1 arm, with a 1.0-point margin in favour of B. The reliable map takes a fix only when its gain's 95% interval lies above zero.
+  - **Later evaluation.** Fresh items stay reserved for evaluation.
+
+### 7. Evaluation (Phase 4)
+- **Items:** about 300 fresh items per dataset per student, disjoint from calibration. Legal MC, Vi-SQuAD and Vi-DROP are reported as exploratory on their used items.
+- **Conditions per student:**
+  - always-B;
+  - the best fixed enhancement per dataset, chosen on calibration;
+  - the rule loop (B twice; on disagreement, the dataset's best enhancement);
+  - the critic loop;
+  - router alone (the critic model answering the item);
+  - the oracle-detector ceiling, offline.
+- **Primary comparison:** the critic loop against the rule loop per student, on quality at the reported cost, with Holm correction across students.
+- **Reading rule:** fixed in the Phase 4 registration, before data.
+
+### 8. Fallback: learned router (Phase 5)
+- **When:** only if the critic fails its Phase 3 or Phase 4 rule.
+- **Data:** every (item, model, arm, draw) outcome, with evaluation items excluded.
+- **Features:**
+  - question embedding (BGE-M3, already cached);
+  - dataset;
+  - whether the two answers agreed;
+  - answer type;
+  - token log-probabilities where the provider gives them.
+- **Target:** whether an enhancement rescues the item.
+- **Models**, in this order: logistic regression, gradient boosting, then a small MLP on frozen embeddings. All use grouped cross-validation by item.
+- **Policy:** choose the enhancement with the best expected gain minus a registered cost weight.
+- **Expectation, stated now:** with a few thousand cases per model and Adaptive-RAG's 54.5% classifier accuracy as precedent, this is likely exploratory or future work.
+
+### 9. Timeline
+| Dates | Phase | Output |
+| --- | --- | --- |
+| 30/10–1/11 | 0 | Router and student models, quota and budget, Notion scope |
+| 1/11–5/11 | 1 | Rule-loop simulation on all Qwen data; experience store; E0–E4 and E7; MC-80–89 harness review |
+| 5/11–10/11 | 2 | Calibration cards and weakness maps for 2–3 students |
+| 10/11–17/11 | 3 | Critic design check on calibration data; go or no-go |
+| 23/11 | gate | Chapters 1–3 and the analysis skeleton (MC-90–101, loop design, first maps) |
+| 17/11–30/11 | 4 | Held-out evaluation card and run |
+| December | 5 | Learned router if triggered; writing; submission 12–15/12 |
+
+### 10. Reading scorer vi-reading-v3 (decided 2026-10-30, after MC-103)
+- **Problem.** `vi-reading-v2`, the frozen reading scorer, keeps Markdown marks on word tokens. A bolded answer (`**từ 20% đến 30%**`) loses token-F1 and exact match although its words are right. A bolded label followed by a line break (`**Trả lời:**`, then the answer) is read as an empty answer. MC-103 showed the problem: 29 of MiMo's 60 ViBidLQA B-r1 answers were bolded.
+- **Rule.** v3 deletes every `*` and `` ` `` from the response and from the reference, then applies v2 unchanged (`code_benchmark/vi_reading_v3.py`). No gold answer of the six reading sets contains either mark, and text without marks scores exactly as under v2.
+- **Compatibility.** v2 stays the scorer of every card registered with it. No registered number changes and no output file is rewritten; v3 results are reported beside v2 under their own name.
+- **From now on.** Router-loop cards registered after this decision name v3 as their reading scorer, so a weakness map reflects what a model answers rather than how it formats the answer. They report v2 beside it for comparison with earlier cards.
+- **Earlier runs, post hoc.** `analyze_reading_v3` re-scores MC-103's reading dataset with v3 and runs the weakness-map-v1 analysis on it. It also sets v2 against v3 for every registered run with reading answers: MC-53 to MC-56, MC-72, MC-73, MC-80, MC-83 to MC-97 and MC-103. It was decided after the MC-103 exploratory finding, so it is descriptive, not confirmatory.
+
+### 11. Self-improvement loop: the same model, the fix it lacks (decided 2026-10-30, MC-104)
+- **The owner's rule.** The loop measures and improves the student itself, so the student writes every final answer. Escalating unsure items to a stronger model was proposed and rejected: the final answer would be the stronger model's, which measures that model and drifts toward passing the test. E8 is therefore not a fix (pending decision 4).
+- **The fix follows the question type.** A knowledge question the student cannot answer from memory gets evidence, the cited clauses, not more reasoning. A multiple-choice question it is unsure of gets reasoning (S), and when S disagrees, two more S answers and a majority vote.
+- **Knowledge part.** 300 unused ViBidLQA train questions are asked without their own passage. The owner chose this set as legal knowledge questions; for this study only, that overrides the 2026-10-28 rule that a reading item keeps its passage. The arms are B (the question only), K with the top 2 and with the top 5 of the registered K2 BM25 ranking, and O (the own clause, a ceiling).
+  - Offline, on the 720 design items, a local dense model (Qwen3-Embedding 0.6B) ranked the own clause in the top 2 for 55% of questions against BM25's 78%, and fusing the two did not help. The 2026-10-27 K2.1 bake-off found the same with BGE-M3. BM25's top 5 holds the own clause for 89%.
+  - The knowledge fix therefore varies how many clauses are attached, not the retriever.
+- **Multiple-choice part.** The 303 VMLU dev items and 300 unused four-option VM14K items.
+  - Qwen's round 1 is the MC-43 probe: temperature 0, letter log-probabilities. Its confidence decides round 2 at threshold 0.80, fixed by a registered rule on design data (the smallest threshold whose two-round loop is within 1 point of always-S on the 660 VMLU valid items of MC-94 and MC-95).
+  - MiMo's route reports no log-probabilities, so its signal is two B answers that differ.
+- **Students.** Qwen3.5-9B on IEC and MiMo V2.6 Flash on OpenCode Go. The per-model maps of MC-95 and MC-103 are reported beside the loop.
+- **Primary tests.** The loop beats always-B (exact McNemar, Holm over the two students). The loop is no more than 1 point below always-S, with fewer tokens. K with the top 5 beats K with the top 2 on token-F1 under vi-reading-v3 (Holm over the two students).
+
+### 12. Before and after on the /table suite (decided 2026-10-31, MC-105)
+- **The owner's request.** Compare before and after on the datasets /table shows, so the loop's effect reads against the familiar benchmark numbers. The owner chose the six main-v1 datasets with local gold (VMLU valid, Legal MC, Legal NLI, Vi-SQuAD, Vi-DROP, ViBidLQA test; 2,043 items). VMLU test, scored only by vmlu.ai, was left out. The VMLU dev row is MC-104's.
+- **Before and after in one run.** B is the before, with the frozen main-v1 prompt byte for byte, on the same route and settings as the loop. The loop of MC-104 is the after. The numbers /table publishes (MC-83, MC-85) sit beside as a reference only, because their route and settings differ (for example, MC-83 allowed 20,000 output tokens).
+- **Reading.** A free-text answer has no letter to probe. Both students therefore answer B twice, and router v2's normalized-answer-v1 (MC-94) decides agreement, applied to the vi-reading-v3 prediction. Otherwise the rounds are those of MiMo's multiple-choice loop.
+- **Not held-out.** Earlier router cards used 660 of the 744 VMLU valid items, which include the threshold's design data, and every item of the other five datasets (MC-90 to MC-93). The before and after here describe the benchmark numbers; the held-out evidence remains MC-104.
+- **Primary test.** In each of the 12 student and dataset cells, the loop against always-B: exact McNemar for multiple choice, sign-flip on token-F1 for reading, Holm over the 12.
+
+## Risks / Trade-offs
+
+- [The critic is simply a better model, so the loop adds nothing over asking it] → "Router alone" is a required baseline, and cost is reported beside quality.
+- [The critic leaks answers through its notes] → A closed output, evidence copied verbatim and a code leak check; rejected notes are logged and counted.
+- [Enhancements damage right answers, as K did on easy Legal MC items] → Enhance only flagged or critic-rejected answers, and report damage rates per enhancement.
+- [Confident errors escape both stages] → Measure the critic's recall on them in Phase 3 and report the remainder.
+- [API quotas and costs: Jev's free tier stopped after about 234 requests a window] → Phase 0 checks every model, and each card carries an estimate and a budget guard.
+- [Too few fresh items: none left in Legal MC, Vi-SQuAD or Vi-DROP] → Evaluate on VMLU, VM14K and ViBidLQA; report the rest as exploratory.
+- [Time against writing] → Writing runs in parallel. If Phase 3 slips, the thesis reports the rule loop plus the weakness maps, and the critic becomes future work.
+- [Earlier LLM routers matched cheap rules (MC-98)] → The Phase 3 go or no-go gate runs before any held-out spending.
+
+## Decisions pending the owner (Phase 0)
+
+1. **Router-critic model:** decided 2026-10-30: Muse Spark 1.3 for now. The owner asked for near-term results first and left the other decisions for later.
+2. **Student models:** Qwen3.5-9B plus MiMo V2.6 Flash, and optionally a third, after checking quotas. Decided 2026-10-30: MiMo V2.6 Flash is the first API student (owner's choice); its map is MC-103. A third student remains open.
+3. **Monthly API budget.**
+4. **Escalation (E8):** a menu item, or only the "router alone" baseline. Decided 2026-10-30: not a fix. The student writes every final answer (decision 11).

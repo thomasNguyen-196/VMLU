@@ -22,6 +22,37 @@ class DiagnosticProtocolTests(unittest.TestCase):
         self.assertFalse(report["inference_ready"])
         self.assertIn("unresolved control: verified_endpoint", report["inference_blockers"])
 
+    def test_controls_file_resolves_the_unset_controls_and_leaves_the_protocol_bytes(self):
+        protocol, digest = diag.load_protocol()
+        unset = sorted(key for key, value in protocol["readiness_controls"].items() if value in (None, ""))
+        contract = {**{field: "x" for field in diag.EXPERIMENT_CONTROLS}, "status": "preregistered"}
+        controls = {"controls_id": "test", "protocol_sha256": digest, "registered_on": "2026-10-27", "note": "",
+                    "readiness_controls": {key: "x" for key in unset}, "future_experiment_contract": contract}
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "controls.json"
+
+            def report(value: dict) -> dict:
+                path.write_text(json.dumps(value), encoding="utf-8")
+                return diag.readiness_report(controls_path=path)
+
+            resolved = report(controls)
+            # only the audit still blocks here, because no pilot directory is given
+            self.assertEqual(resolved["inference_blockers"], ["completed and independently reviewed pilot audit required"])
+            self.assertEqual(resolved["controls_sha256"], diag._sha256_file(path))
+            for broken, message in (
+                    ({**controls, "protocol_sha256": "0" * 64}, "another protocol revision"),
+                    ({**controls, "readiness_controls": {key: "x" for key in unset[1:]}}, "exactly the unset readiness"),
+                    ({**controls, "future_experiment_contract": {**contract, "status": "draft"}}, "preregistered"),
+                    ({**controls, "readiness_controls": {key: " " for key in unset}}, "without a value"),
+                    ({**controls, "extra": 1}, "exactly the keys")):
+                with self.assertRaisesRegex(diag.DiagnosticError, message):
+                    report(broken)
+        self.assertEqual(diag.load_protocol()[1], digest)
+
+    def test_committed_controls_resolve_every_control(self):
+        report = diag.readiness_report(controls_path=diag.CONTROLS_PATH)
+        self.assertEqual(report["inference_blockers"], ["completed and independently reviewed pilot audit required"])
+
     def test_unknown_protocol_version_fails_closed(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
