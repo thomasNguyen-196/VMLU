@@ -485,6 +485,66 @@ def fmt(value: float) -> str:
     return f"{value:.1f}".replace(".", ",")
 
 
+VOTE_MECHANISM = (
+    "Ba lần S độc lập: cùng một prompt suy luận từng bước, temperature 1.0, mỗi lần tự kết luận một dòng "
+    "`Đáp án: X`.",
+    "Chuẩn hoá rồi đếm phiếu trên các đáp án khác rỗng: đáp án nhiều phiếu nhất thắng; hoà thì lần sớm nhất trong "
+    "các đáp án đồng hạng đứng; đáp án rỗng không tính phiếu. Đáp án cuối luôn là đáp án của chính model — không "
+    "tự chế và không lấy trung bình.",
+    "Cả ba lần đều được trả tiền, kể cả khi ba lần ra giống nhau. Vì vậy đây là mốc tham chiếu để đo vòng tự sửa, "
+    "không phải cách chọn được đề xuất.",
+)
+VOTE_KIND_LABELS = {"rescued": "Cứu: S-r1 sai, bỏ phiếu đúng",
+                    "broken": "Phá: S-r1 đúng, bỏ phiếu sai",
+                    "no_majority": "Hoà: không đáp án nào đạt 2 phiếu"}
+
+
+def vote_group(model: str, mc: dict[str, Any]) -> dict[str, Any]:
+    """One student's funnel of the three-S vote, as the card's descriptive addition records it."""
+    funnel = mc["vote_funnel"]
+    if funnel["n"] != mc["n"] or funnel["three_agree"] + funnel["all_empty"] + funnel["any_disagreement"] != funnel["n"]:
+        raise _fail(f"MC-104: the vote funnel of {model} does not add up to its {mc['n']} items")
+    if funnel["rescued"] + funnel["broken"] + funnel["both_wrong_changed"] != funnel["answer_changed"]:
+        raise _fail(f"MC-104: the vote funnel of {model} does not split the changed answers")
+    facts = [{"label": "Ba lần ra cùng một đáp án", "value": f"{funnel['three_agree']} / {funnel['n']}"},
+             {"label": "Ba lần đều rỗng (không có đáp án)", "value": f"{funnel['all_empty']} / {funnel['n']}"},
+             {"label": "Có ít nhất một lần lệch", "value": f"{funnel['any_disagreement']} / {funnel['n']}"},
+             {"label": "Bỏ phiếu đổi đáp án so với S-r1", "value": f"{funnel['answer_changed']} / {funnel['n']}"},
+             {"label": "Đổi đúng (cứu)", "value": str(funnel["rescued"])},
+             {"label": "Đổi sai (phá)", "value": str(funnel["broken"])},
+             {"label": "Đổi nhưng cả hai đều sai", "value": str(funnel["both_wrong_changed"])},
+             {"label": "Không đáp án nào đạt 2 phiếu", "value": str(funnel["no_majority"])},
+             {"label": "Phiếu rỗng bị loại", "value": str(funnel["empty_votes"])}]
+    examples = [{"item": mc["vote_examples"]["items"][kind]["item_key"],
+                 "question": mc["vote_examples"]["items"][kind]["question"],
+                 "gold": mc["vote_examples"]["items"][kind]["gold"],
+                 "answers": list(mc["vote_examples"]["items"][kind]["answers"]),
+                 "final": mc["vote_examples"]["items"][kind]["final"],
+                 "tokens": list(mc["vote_examples"]["items"][kind]["tokens"]),
+                 "verdict": label}
+                for kind, label in VOTE_KIND_LABELS.items() if kind in mc["vote_examples"]["items"]]
+    return {"title": model, "facts": facts, "examples": examples}
+
+
+def vote_explainer(report: dict[str, Any]) -> dict[str, Any]:
+    """The collapsed section the /table card shows under its tables: the mechanism, then each student's funnel."""
+    return {"id": "vote-3s", "title": "“Bỏ phiếu: 3 lần S” chạy thế nào",
+            "paragraphs": list(VOTE_MECHANISM),
+            "groups": [vote_group(model, report["multiple_choice"][student]) for student, model in STUDENTS],
+            "note": ("Ba dòng đầu của mỗi model cộng lại đúng bằng số câu của model đó. Phân tích mô tả, tính sau khi chạy "
+                     "(2026-11-01) bên cạnh phân tích đã đăng ký: không phải test đã đăng ký và không đổi con số nào ở "
+                     "trên. Nguồn: self_loop_report.json.")}
+
+
+def vote_explainer_short() -> dict[str, Any]:
+    """MC-105 reruns the same vote on six datasets without its own funnel; point the reader at MC-104."""
+    return {"id": "vote-3s", "title": "“Bỏ phiếu: 3 lần S” chạy thế nào",
+            "paragraphs": list(VOTE_MECHANISM),
+            "groups": [],
+            "note": ("Cùng cơ chế như MC-104; ở đây mỗi bộ có một dòng bỏ phiếu riêng trong bảng phía trên, còn thống "
+                     "kê chi tiết của cơ chế nằm ở MC-104.")}
+
+
 def self_loop(src: Sources) -> dict[str, Any]:
     report = src("self_loop")
     expect("MC-104", report, card_id="MC-104", plan_id="self-loop-v1")
@@ -543,7 +603,7 @@ def self_loop(src: Sources) -> dict[str, Any]:
                         f"{fmt(qwen['loop']['accuracy'])}%; với MiMo chỉ thêm {fmt(gain('mimo'))} điểm, chưa chắc. Vòng lặp tốn token "
                         f"hơn luôn S nên không đạt điều kiện rẻ hơn. Kèm 5 khoản luật hơn 2 khoản ở Qwen nhưng "
                         f"{'kém hơn' if k5_mimo < 0 else 'không hơn rõ'} ở MiMo."),
-            "tables": tables, "tests": tests,
+            "tables": tables, "tests": tests, "explainers": [vote_explainer(report)],
             "notes": ["Vòng tự sửa được tính lại từ các câu trả lời đã ghi: mỗi câu được hỏi đủ mọi lượt, rồi chỉ tính "
                       "điểm và token của những lượt vòng lặp thật sự dùng.",
                       "Qwen \"không chắc\" khi xác suất của chữ cái nó chọn dưới 0,80; MiMo \"không chắc\" khi hai lần hỏi "
@@ -596,7 +656,7 @@ def table_loop(src: Sources) -> dict[str, Any]:
                         f"{', '.join(neither)} vòng lặp không giúp; với Qwen ở Legal MC còn kém hỏi thẳng "
                         f"{fmt(legal['always_B']['accuracy'] - legal['loop']['accuracy'])} điểm, vì suy luận từng bước "
                         f"kém hỏi thẳng ở đó."),
-            "tables": tables, "tests": tests,
+            "tables": tables, "tests": tests, "explainers": [vote_explainer_short()],
             "notes": ["Trước là câu trả lời thẳng trong cùng lượt chạy, với prompt giống hệt /table; số /table hiện có đo "
                       "với cài đặt khác nên chỉ để tham khảo.",
                       "Không phải câu mới: các bộ này đã dùng để thiết kế router (MC-90 – MC-95). Bằng chứng trên câu mới "
@@ -629,6 +689,19 @@ def validate(data: dict[str, Any]) -> None:
         for entry in experiment["tests"]:
             if entry["p"] is not None and not 0 <= entry["p"] <= 1:
                 raise _fail(f"{name}: p outside [0, 1] in {entry['label']}")
+        for explainer in experiment.get("explainers", []):
+            text_keys = ("id", "title", "note")
+            if any(not isinstance(explainer.get(key), str) or not explainer[key].strip() for key in text_keys):
+                raise _fail(f"{name}: explainer id, title and note must be non-empty text")
+            if not explainer["paragraphs"] or any(not str(p).strip() for p in explainer["paragraphs"]):
+                raise _fail(f"{name}: explainer {explainer['id']} has no paragraphs")
+            for group in explainer["groups"]:
+                if not str(group["title"]).strip() or any(not str(f["label"]).strip() or not str(f["value"]).strip()
+                                                          for f in group["facts"]):
+                    raise _fail(f"{name}: explainer {explainer['id']} has an empty fact")
+                for example in group["examples"]:
+                    if len(example["answers"]) != 3 or len(example["tokens"]) != 3:
+                        raise _fail(f"{name}: explainer example {example['item']} needs three answers and tokens")
 
 
 def build(root: Path = ROOT) -> dict[str, Any]:

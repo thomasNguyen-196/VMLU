@@ -22,6 +22,23 @@ describe("router results", () => {
     expect(data.experiments.every((experiment) => experiment.sources.every((source) => source.path.startsWith("all_res/")))).toBe(true);
   });
 
+  test("the vote explainer carries the funnel and the worked examples that MC-104 reports", () => {
+    const data = parseRouterResults(raw());
+    const explainer = data.experiments.find((experiment) => experiment.id === "mc-104")!.explainers![0];
+    expect(explainer.title).toContain("Bỏ phiếu");
+    expect(explainer.groups.map((group) => group.title)).toEqual(["Qwen3.5-9B", "MiMo V2.6 Flash"]);
+    const [qwen, mimo] = explainer.groups;
+    expect(qwen.facts[0]).toEqual({ label: "Ba lần ra cùng một đáp án", value: "428 / 603" });
+    expect(mimo.facts[0]).toEqual({ label: "Ba lần ra cùng một đáp án", value: "462 / 603" });
+    const n = Number(qwen.facts[0].value.split("/")[1]);
+    const counted = qwen.facts.slice(0, 3).reduce((total, fact) => total + Number(fact.value.split(" / ")[0]), 0);
+    expect(counted).toBe(n);
+    expect(qwen.examples.map((example) => example.verdict.split(":")[0])).toEqual(["Cứu", "Phá", "Hoà"]);
+    expect(qwen.examples.every((example) => example.answers.length === 3 && example.tokens.length === 3)).toBe(true);
+    expect(qwen.examples[0].final).toBe(qwen.examples[0].gold);
+    expect(data.experiments.find((experiment) => experiment.id === "mc-105")!.explainers![0].groups).toEqual([]);
+  });
+
   test("a broken blob fails loudly instead of rendering", () => {
     const unknownColumn = raw();
     unknownColumn.experiments[0].tables[0].rows[0].cells.unknown = { score: 1, ci: null, tokens: null };
@@ -35,5 +52,12 @@ describe("router results", () => {
     const reversed = raw();
     reversed.experiments[1].tables[0].rows[0].cells.core.ci = [80, 50];
     expect(() => parseRouterResults(reversed)).toThrow(/reversed/);
+    const shortExample = raw();
+    shortExample.experiments.find((experiment: { id: string }) => experiment.id === "mc-104").explainers[0]
+      .groups[0].examples[0].answers = ["A", "B"];
+    expect(() => parseRouterResults(shortExample)).toThrow(/three answers/);
+    const noTitle = raw();
+    delete noTitle.experiments.find((experiment: { id: string }) => experiment.id === "mc-104").explainers[0].title;
+    expect(() => parseRouterResults(noTitle)).toThrow(/explainer.title/);
   });
 });

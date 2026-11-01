@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "generated_at": "2026-11-01T03:22:42.034136+00:00",
+ "generated_at": "2026-11-01T15:05:31.896946+00:00",
  "alpha": 0.05,
  "experiments": [
   {
@@ -2185,6 +2185,208 @@
      "primary": true
     }
    ],
+   "explainers": [
+    {
+     "id": "vote-3s",
+     "title": "“Bỏ phiếu: 3 lần S” chạy thế nào",
+     "paragraphs": [
+      "Ba lần S độc lập: cùng một prompt suy luận từng bước, temperature 1.0, mỗi lần tự kết luận một dòng `Đáp án: X`.",
+      "Chuẩn hoá rồi đếm phiếu trên các đáp án khác rỗng: đáp án nhiều phiếu nhất thắng; hoà thì lần sớm nhất trong các đáp án đồng hạng đứng; đáp án rỗng không tính phiếu. Đáp án cuối luôn là đáp án của chính model — không tự chế và không lấy trung bình.",
+      "Cả ba lần đều được trả tiền, kể cả khi ba lần ra giống nhau. Vì vậy đây là mốc tham chiếu để đo vòng tự sửa, không phải cách chọn được đề xuất."
+     ],
+     "groups": [
+      {
+       "title": "Qwen3.5-9B",
+       "facts": [
+        {
+         "label": "Ba lần ra cùng một đáp án",
+         "value": "428 / 603"
+        },
+        {
+         "label": "Ba lần đều rỗng (không có đáp án)",
+         "value": "1 / 603"
+        },
+        {
+         "label": "Có ít nhất một lần lệch",
+         "value": "174 / 603"
+        },
+        {
+         "label": "Bỏ phiếu đổi đáp án so với S-r1",
+         "value": "58 / 603"
+        },
+        {
+         "label": "Đổi đúng (cứu)",
+         "value": "29"
+        },
+        {
+         "label": "Đổi sai (phá)",
+         "value": "14"
+        },
+        {
+         "label": "Đổi nhưng cả hai đều sai",
+         "value": "15"
+        },
+        {
+         "label": "Không đáp án nào đạt 2 phiếu",
+         "value": "24"
+        },
+        {
+         "label": "Phiếu rỗng bị loại",
+         "value": "29"
+        }
+       ],
+       "examples": [
+        {
+         "item": "vmlu-mqa-dev:28-0006",
+         "question": "Thành phần nào sau đây thuộc lực lượng lao động:\n\nA. Học sinh trường trung học chuyên nghiệp\nB. Người nội trợ\nC. Bộ đội xuất ngũ\nD. Sinh viên năm cuối",
+         "gold": "C",
+         "answers": [
+          "D",
+          "C",
+          "C"
+         ],
+         "final": "C",
+         "tokens": [
+          1081,
+          634,
+          784
+         ],
+         "verdict": "Cứu: S-r1 sai, bỏ phiếu đúng"
+        },
+        {
+         "item": "vmlu-mqa-dev:53-0001",
+         "question": "Khi báng lượng vừa, vị trí thường dùng để chọc dò:\n\nA. \\frac{1}{3} ngoài đường nối rốn - gai chậu trước trên phải\nB. \\frac{1}{3} ngoài đường nối rốn - gai chậu trước trên trái\nC. Trên và dưới rốn trên đường trắng\nD. Cạnh rốn trên đường trắng",
+         "gold": "B",
+         "answers": [
+          "B",
+          "A",
+          "A"
+         ],
+         "final": "A",
+         "tokens": [
+          2031,
+          2757,
+          1702
+         ],
+         "verdict": "Phá: S-r1 đúng, bỏ phiếu sai"
+        },
+        {
+         "item": "vmlu-mqa-dev:56-0002",
+         "question": "Theo Luật Cán bộ, Công chức sửa đổi năm 2019: căn cứ vào ngạch được bổ nhiệm, những người được bổ nhiệm vào ngạch cán sự hoặc tương đương và ngạch nhân viên thuộc công chức loại gì?\n\nA. Loại A\nB. Loại B\nC. Loại C\nD. Loại D",
+         "gold": "D",
+         "answers": [
+          "C",
+          "B",
+          "D"
+         ],
+         "final": "C",
+         "tokens": [
+          943,
+          2215,
+          1093
+         ],
+         "verdict": "Hoà: không đáp án nào đạt 2 phiếu"
+        }
+       ]
+      },
+      {
+       "title": "MiMo V2.6 Flash",
+       "facts": [
+        {
+         "label": "Ba lần ra cùng một đáp án",
+         "value": "462 / 603"
+        },
+        {
+         "label": "Ba lần đều rỗng (không có đáp án)",
+         "value": "1 / 603"
+        },
+        {
+         "label": "Có ít nhất một lần lệch",
+         "value": "140 / 603"
+        },
+        {
+         "label": "Bỏ phiếu đổi đáp án so với S-r1",
+         "value": "39 / 603"
+        },
+        {
+         "label": "Đổi đúng (cứu)",
+         "value": "21"
+        },
+        {
+         "label": "Đổi sai (phá)",
+         "value": "12"
+        },
+        {
+         "label": "Đổi nhưng cả hai đều sai",
+         "value": "6"
+        },
+        {
+         "label": "Không đáp án nào đạt 2 phiếu",
+         "value": "15"
+        },
+        {
+         "label": "Phiếu rỗng bị loại",
+         "value": "5"
+        }
+       ],
+       "examples": [
+        {
+         "item": "vmlu-mqa-dev:31-0004",
+         "question": "Các hình thức thực hiện pháp luật?\n\nA. Nghe theo pháp luật\nB. Vận dụng pháp luật\nC. Thi hành pháp luật\nD. Làm theo pháp luật",
+         "gold": "C",
+         "answers": [
+          "B",
+          "C",
+          "C"
+         ],
+         "final": "C",
+         "tokens": [
+          1944,
+          776,
+          1053
+         ],
+         "verdict": "Cứu: S-r1 sai, bỏ phiếu đúng"
+        },
+        {
+         "item": "vmlu-mqa-dev:55-0001",
+         "question": "Các loại thuế, phí, lệ phí được phản ánh trên các tài khoản nào?\n\nA. TK 333, TK 133\nB. TK 821, TK 347\nC. TK 243, TK 133\nD. Cả A, B, C đều đúng",
+         "gold": "D",
+         "answers": [
+          "D",
+          "A",
+          "A"
+         ],
+         "final": "A",
+         "tokens": [
+          1904,
+          2046,
+          2205
+         ],
+         "verdict": "Phá: S-r1 đúng, bỏ phiếu sai"
+        },
+        {
+         "item": "vmlu-mqa-dev:57-0003",
+         "question": "Theo Luật Cán bộ, Công chức sửa đổi năm 2019. Căn cứ vào kết quả đánh giá, công chức được xếp loại chất lượng theo bao nhiêu mức?\n\nA. 4 mức\nB. 3 mức\nC. 5 mức\nD. 6 mức",
+         "gold": "A",
+         "answers": [
+          "B",
+          "C",
+          "A"
+         ],
+         "final": "B",
+         "tokens": [
+          491,
+          554,
+          6667
+         ],
+         "verdict": "Hoà: không đáp án nào đạt 2 phiếu"
+        }
+       ]
+      }
+     ],
+     "note": "Ba dòng đầu của mỗi model cộng lại đúng bằng số câu của model đó. Phân tích mô tả, tính sau khi chạy (2026-11-01) bên cạnh phân tích đã đăng ký: không phải test đã đăng ký và không đổi con số nào ở trên. Nguồn: self_loop_report.json."
+    }
+   ],
    "notes": [
     "Vòng tự sửa được tính lại từ các câu trả lời đã ghi: mỗi câu được hỏi đủ mọi lượt, rồi chỉ tính điểm và token của những lượt vòng lặp thật sự dùng.",
     "Qwen \"không chắc\" khi xác suất của chữ cái nó chọn dưới 0,80; MiMo \"không chắc\" khi hai lần hỏi thẳng ra khác nhau."
@@ -2192,7 +2394,7 @@
    "sources": [
     {
      "path": "all_res/diagnostic_router_loop/self_loop/analysis/self_loop_report.json",
-     "sha256": "705c5788e467940e03353fa664531614cec552bfae56980e2cc4562c9481d34d"
+     "sha256": "f213879703b3eb31ebfb874185598a2f5b152961474029143f04a9af1d3f6e82"
     }
    ]
   },
@@ -2837,6 +3039,19 @@
      "primary": true
     }
    ],
+   "explainers": [
+    {
+     "id": "vote-3s",
+     "title": "“Bỏ phiếu: 3 lần S” chạy thế nào",
+     "paragraphs": [
+      "Ba lần S độc lập: cùng một prompt suy luận từng bước, temperature 1.0, mỗi lần tự kết luận một dòng `Đáp án: X`.",
+      "Chuẩn hoá rồi đếm phiếu trên các đáp án khác rỗng: đáp án nhiều phiếu nhất thắng; hoà thì lần sớm nhất trong các đáp án đồng hạng đứng; đáp án rỗng không tính phiếu. Đáp án cuối luôn là đáp án của chính model — không tự chế và không lấy trung bình.",
+      "Cả ba lần đều được trả tiền, kể cả khi ba lần ra giống nhau. Vì vậy đây là mốc tham chiếu để đo vòng tự sửa, không phải cách chọn được đề xuất."
+     ],
+     "groups": [],
+     "note": "Cùng cơ chế như MC-104; ở đây mỗi bộ có một dòng bỏ phiếu riêng trong bảng phía trên, còn thống kê chi tiết của cơ chế nằm ở MC-104."
+    }
+   ],
    "notes": [
     "Trước là câu trả lời thẳng trong cùng lượt chạy, với prompt giống hệt /table; số /table hiện có đo với cài đặt khác nên chỉ để tham khảo.",
     "Không phải câu mới: các bộ này đã dùng để thiết kế router (MC-90 – MC-95). Bằng chứng trên câu mới là MC-104.",
@@ -2845,11 +3060,11 @@
    "sources": [
     {
      "path": "all_res/diagnostic_router_loop/table_loop/analysis/table_loop_report.json",
-     "sha256": "388ef8429a233af3eb914c0f343054daf917228044d34c53106a7c101accfd95"
+     "sha256": "8b9a526b49286ca7bb487cb545b1dd07008082caddffee9d42888011423372e7"
     },
     {
      "path": "all_res/diagnostic_router_loop/self_loop/analysis/self_loop_report.json",
-     "sha256": "705c5788e467940e03353fa664531614cec552bfae56980e2cc4562c9481d34d"
+     "sha256": "f213879703b3eb31ebfb874185598a2f5b152961474029143f04a9af1d3f6e82"
     }
    ]
   }

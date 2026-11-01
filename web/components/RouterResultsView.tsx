@@ -1,4 +1,4 @@
-import type { RouterExperiment, RouterResults, RouterRole, RouterStatus, RouterTable } from "@/lib/router-results.ts";
+import type { RouterExperiment, RouterExplainer, RouterResults, RouterRole, RouterStatus, RouterTable } from "@/lib/router-results.ts";
 import { fmtInt, fmtNum } from "@/lib/format.ts";
 
 const STATUS: Record<RouterStatus, { label: string; className: string }> = {
@@ -52,6 +52,49 @@ function ResultTable({ table }: { table: RouterTable }) {
   </figure>;
 }
 
+/** One collapsed section: the mechanism in prose, then a student's counted funnel and worked examples. Native
+ *  <details> keeps it keyboard- and screen-reader-accessible with no JavaScript, and starts closed. */
+function Explainer({ explainer }: { explainer: RouterExplainer }) {
+  return <details className="group mt-4 rounded-xl border border-hair bg-paper/60">
+    <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2.5 text-[12.5px] font-semibold text-ink-2 hover:text-ink [&::-webkit-details-marker]:hidden">
+      <span aria-hidden="true" className="inline-block text-ink-3 transition-transform group-open:rotate-90">▸</span>
+      {explainer.title}
+    </summary>
+    <div className="border-t border-hair/70 px-3 pb-3 pt-2.5">
+      {explainer.paragraphs.map((paragraph) => <p key={paragraph} className="mt-1 text-[12px] leading-relaxed text-ink-2">{paragraph}</p>)}
+      {explainer.groups.map((group) => <div key={group.title} className="mt-3.5">
+        <h5 className="text-[12px] font-semibold text-ink">{group.title}</h5>
+        <div className="mt-1.5 space-y-1">{group.facts.map((fact) => <div key={fact.label} className="flex items-baseline justify-between gap-4 text-[11.5px]">
+          <span className="text-ink-3">{fact.label}</span>
+          <span className="whitespace-nowrap font-mono tabular-nums text-ink-2">{fact.value}</span>
+        </div>)}</div>
+        {group.examples.map((example) => <figure key={example.item} className="mt-3 rounded-lg border border-hair bg-card px-3 py-2">
+          <figcaption className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <span className="text-[11.5px] font-semibold text-ink">{example.verdict}</span>
+            <span className="font-mono text-[10px] text-ink-3">{example.item}</span>
+          </figcaption>
+          <p className="mt-1 whitespace-pre-line text-[11.5px] leading-relaxed text-ink-2">{example.question}</p>
+          <p className="mt-2 flex flex-wrap items-center gap-1.5">
+            {example.answers.map((answer, index) => <span key={`${example.item}-${index}`}
+              className={`rounded border px-1.5 py-0.5 font-mono text-[10.5px] ${answer === example.gold
+                ? "border-accept/40 bg-accept-soft text-accept" : "border-hair bg-paper text-ink-2"}`}>
+              S-r{index + 1} {answer}
+            </span>)}
+            <span aria-hidden="true" className="text-ink-3">→</span>
+            <span className={`rounded border px-1.5 py-0.5 font-mono text-[10.5px] ${example.final === example.gold
+              ? "border-accept/40 bg-accept-soft text-accept" : "border-reject/40 bg-reject-soft text-reject"}`}>
+              chốt {example.final}
+            </span>
+            <span className="text-[10.5px] text-ink-3">đáp án đúng {example.gold}</span>
+          </p>
+          <p className="mt-1.5 font-mono text-[10px] text-ink-3">token ba lần: {example.tokens.join(" · ")}</p>
+        </figure>)}
+      </div>)}
+      <p className="mt-3 text-[10.5px] leading-relaxed text-ink-3">{explainer.note}</p>
+    </div>
+  </details>;
+}
+
 function ExperimentCard({ experiment }: { experiment: RouterExperiment }) {
   return <article id={`router-${experiment.id}`} className="scroll-mt-5 rounded-xl border border-hair bg-card p-4 sm:p-5">
     <header className="flex flex-wrap items-start justify-between gap-3">
@@ -64,6 +107,7 @@ function ExperimentCard({ experiment }: { experiment: RouterExperiment }) {
       <dt className="text-ink-3">Tập câu</dt><dd className="text-ink-2">{experiment.items}</dd>
     </dl>
     {experiment.tables.map((table) => <ResultTable key={table.title} table={table} />)}
+    {experiment.explainers?.map((explainer) => <Explainer key={explainer.id} explainer={explainer} />)}
     {experiment.tests.length ? <div className="mt-4">
       <h4 className="text-[12.5px] font-semibold text-ink-2">Phép so sánh</h4>
       <ul className="mt-1.5 space-y-1.5 text-[12px]">{experiment.tests.map((test) => <li key={test.label} className={test.primary ? "text-ink" : "text-ink-2"}>

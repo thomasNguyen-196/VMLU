@@ -54,6 +54,53 @@ class TestPolicies(unittest.TestCase):
         self.assertEqual(asl.policies("mimo", mimo, 0.8)["always_B"], ("A", 40, 1))
 
 
+class TestVoteFunnel(unittest.TestCase):
+    @staticmethod
+    def cell(item_id: str, answers: list[str], gold: str) -> dict:
+        return {"dataset_id": sl.VMLU, "item_id": item_id, "gold": gold, "s": answers,
+                "s_tokens": [10, 20, 30], "question": "Q?"}
+
+    def test_the_funnel_counts_each_outcome_once_and_keeps_the_books_balanced(self):
+        cells = [self.cell("agree", ["A", "A", "A"], "A"),
+                 self.cell("empty", ["", "", ""], "A"),
+                 self.cell("split", ["A", "A", "B"], "A"),
+                 self.cell("rescue", ["B", "A", "A"], "A"),
+                 self.cell("broken", ["A", "B", "B"], "A"),
+                 self.cell("both-wrong", ["C", "B", "B"], "A"),
+                 self.cell("tie", ["C", "B", "D"], "A")]
+        funnel = asl.vote_block(cells)["funnel"]
+        self.assertEqual(funnel, {"n": 7, "three_agree": 1, "all_empty": 1, "any_disagreement": 5,
+                                  "answer_changed": 3, "rescued": 1, "broken": 1, "both_wrong_changed": 1,
+                                  "no_majority": 1, "empty_votes": 3})
+        self.assertEqual(funnel["three_agree"] + funnel["all_empty"] + funnel["any_disagreement"], funnel["n"])
+        self.assertEqual(funnel["rescued"] + funnel["broken"] + funnel["both_wrong_changed"],
+                         funnel["answer_changed"])
+
+    def test_a_tie_no_longer_holds_a_majority_and_the_earliest_answer_stands(self):
+        funnel = asl.vote_block([self.cell("tie", ["C", "B", "D"], "D")])["funnel"]
+        self.assertEqual(funnel["no_majority"], 1)
+        self.assertEqual(asl.sl.majority(["C", "B", "D"]), "C")
+        self.assertEqual(asl.sl.majority(["", "B", "B"]), "B")
+
+    def test_the_examples_are_the_first_readable_item_in_manifest_order(self):
+        cells = [self.cell("first", ["B", "A", "A"], "A"),  # rescued, all three non-empty
+                 self.cell("second", ["B", "C", "C"], "C"),  # also rescued, must not be picked
+                 self.cell("empty-rescue", ["", "A", "A"], "A"),  # rescued but not readable
+                 self.cell("tie", ["A", "B", "C"], "A")]
+        examples = asl.vote_block(cells)["examples"]["items"]
+        self.assertEqual(examples["rescued"]["item_key"], f"{sl.VMLU}:first")
+        self.assertEqual(examples["rescued"]["answers"], ["B", "A", "A"])
+        self.assertEqual(examples["rescued"]["final"], "A")
+        self.assertEqual(examples["no_majority"]["item_key"], f"{sl.VMLU}:tie")
+        self.assertNotIn("broken", examples)
+
+    def test_the_examples_carry_the_predictions_file_they_draw_their_questions_from(self):
+        block = asl.vote_block([self.cell("tie", ["A", "B", "C"], "A")],
+                               {"source": "predictions.jsonl", "source_sha256": "a" * 64})
+        self.assertEqual(block["examples"]["source_sha256"], "a" * 64)
+        self.assertEqual(block["examples"]["items"]["no_majority"]["item_key"], f"{sl.VMLU}:tie")
+
+
 @unittest.skipUnless(HAS_MANIFESTS, "needs the frozen self-loop manifests")
 class TestReport(unittest.TestCase):
     def test_the_report_on_synthetic_runs_has_the_registered_keys_and_sane_numbers(self):
@@ -67,6 +114,11 @@ class TestReport(unittest.TestCase):
                                                               "manifest_sha256": manifest["manifest_sha256"]}))
                 (run_dir / "scores.jsonl").write_text("\n".join(json.dumps(synthetic_row(student, ref))
                                                                 for ref in manifest["items"]) + "\n")
+                head = dp.load_templates()["s_mc_head"]
+                prompts = [{"dataset_id": ref["dataset_id"], "item_id": ref["item_id"], "replicate_id": "S-r1",
+                            "raw_prompt": f"{head}Câu hỏi thử?"} for ref in manifest["items"]
+                           if ref["replicate_id"] == "S-r1" and ref["dataset_id"] in (sl.VMLU, sl.VM14K)]
+                (run_dir / "predictions.jsonl").write_text("\n".join(json.dumps(row) for row in prompts) + "\n")
             registration = root / "registration.json"
             keys = sl.load_config()[0]["analysis"]["report_keys"]
             registration.write_text(json.dumps({"card_ids": {sl.PHASE: "MC-104"}, "analysis": {"report_keys": keys}}))
@@ -77,6 +129,14 @@ class TestReport(unittest.TestCase):
             mc, know = report["multiple_choice"][student], report["knowledge"][student]
             self.assertEqual(mc["n"], 603)
             self.assertEqual(sum(mc["loop_rounds"].values()), 603)
+            funnel = mc["vote_funnel"]
+            self.assertEqual(funnel["three_agree"] + funnel["all_empty"] + funnel["any_disagreement"], 603)
+            self.assertEqual(funnel["rescued"] + funnel["broken"] + funnel["both_wrong_changed"],
+                             funnel["answer_changed"])
+            for example in mc["vote_examples"]["items"].values():
+                self.assertEqual(len(example["answers"]), 3)
+                self.assertTrue(all(example["answers"]))
+                self.assertEqual(example["question"], "Câu hỏi thử?")
             self.assertGreater(mc["pooled"]["always_S"]["accuracy"], mc["pooled"]["always_B"]["accuracy"])
             self.assertGreater(know["means"]["K5"]["token_f1"], know["means"]["K2"]["token_f1"])
             self.assertEqual(sum(group["items"] for group in know["by_retrieval"].values()), 300)

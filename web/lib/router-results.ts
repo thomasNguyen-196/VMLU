@@ -20,6 +20,25 @@ export interface RouterTest {
   note: string;
   primary: boolean;
 }
+/** One collapsed section under a card: prose, then one block of counted facts and worked examples per student. */
+export interface RouterFact { label: string; value: string }
+export interface RouterExample {
+  item: string;
+  question: string;
+  gold: string;
+  answers: string[];
+  final: string;
+  tokens: number[];
+  verdict: string;
+}
+export interface RouterExplainerGroup { title: string; facts: RouterFact[]; examples: RouterExample[] }
+export interface RouterExplainer {
+  id: string;
+  title: string;
+  paragraphs: string[];
+  groups: RouterExplainerGroup[];
+  note: string;
+}
 export interface RouterExperiment {
   id: string;
   cards: string;
@@ -32,6 +51,7 @@ export interface RouterExperiment {
   tables: RouterTable[];
   tests: RouterTest[];
   notes: string[];
+  explainers?: RouterExplainer[];
   sources: Array<{ path: string; sha256: string }>;
 }
 export interface RouterResults { schema_version: 1; generated_at: string; alpha: number; experiments: RouterExperiment[] }
@@ -112,6 +132,38 @@ export function parseRouterResults(value: unknown): RouterResults {
       }
     }
     for (const note of experiment.notes) text(note, `note of ${id}`);
+    if (experiment.explainers !== undefined) {
+      if (!Array.isArray(experiment.explainers)) fail(`explainers of ${id}`);
+      for (const explainer of experiment.explainers) {
+        if (!object(explainer)) fail(`explainer of ${id}`);
+        for (const key of ["id", "title", "note"]) text(explainer[key], `explainer.${key} of ${id}`);
+        if (!Array.isArray(explainer.paragraphs) || !explainer.paragraphs.length) fail(`explainer paragraphs of ${id}`);
+        for (const paragraph of explainer.paragraphs) text(paragraph, `explainer paragraph of ${id}`);
+        if (!Array.isArray(explainer.groups)) fail(`explainer groups of ${id}`);
+        for (const group of explainer.groups) {
+          if (!object(group) || !Array.isArray(group.facts) || !Array.isArray(group.examples))
+            fail(`explainer group of ${id}`);
+          text(group.title, `explainer group title of ${id}`);
+          for (const fact of group.facts) {
+            if (!object(fact)) fail(`explainer fact of ${id}`);
+            text(fact.label, `explainer fact label of ${id}`);
+            text(fact.value, `explainer fact value of ${id}`);
+          }
+          for (const example of group.examples) {
+            if (!object(example) || !Array.isArray(example.answers) || !Array.isArray(example.tokens))
+              fail(`explainer example of ${id}`);
+            for (const key of ["item", "question", "gold", "final", "verdict"]) text(example[key], `example.${key} of ${id}`);
+            if (example.answers.length !== 3 || example.tokens.length !== 3)
+              fail(`explainer example ${String(example.item)} needs three answers and three token counts`);
+            for (const answer of example.answers) text(answer, `explainer answer of ${id}`);
+            for (const tokens of example.tokens) {
+              const count = finite(tokens, `explainer tokens of ${id}`);
+              if (!Number.isInteger(count) || count < 0) fail(`explainer tokens of ${id}`);
+            }
+          }
+        }
+      }
+    }
     for (const source of experiment.sources) {
       if (!object(source) || !/^[0-9a-f]{64}$/.test(String(source.sha256))) fail(`source of ${id}`);
       text(source.path, `source path of ${id}`);

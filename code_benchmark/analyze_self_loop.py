@@ -7,7 +7,9 @@ Per student (Qwen3.5-9B on IEC, MiMo V2.6 Flash on OpenCode Go), from the scored
   of always-B, always-S, always-vote (the majority of three S answers), the loop and the map; the rounds the loop
   used. Primary: the loop against always-B (exact McNemar, Holm over the two students), and the loop against
   always-S (the mean paired difference with a percentile bootstrap interval; met when the lower bound is above -1.0
-  point and the loop's mean tokens are lower).
+  point and the loop's mean tokens are lower). Beside those registered numbers, a descriptive funnel of always-vote
+  (how often the three S answers agree, how often the vote leaves S-r1, and what that bought or cost) with one
+  deterministically chosen example per outcome, added 2026-11-01 after the run.
 * knowledge (300 ViBidLQA questions without their passage): token-F1 under vi-reading-v3 with v2 and exact match
   beside, of B, K top 2, K top 5 and O. Primary: K top 5 against K top 2 (sign-flip p, Holm over the students).
   Descriptive: K as a share of O, and the scores by where BM25 ranked the item's own clause.
@@ -18,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import statistics
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -72,17 +75,36 @@ def load_rows(run_dir: Path, manifest: dict[str, Any]) -> dict[str, dict[str, An
     return rows
 
 
-def mc_cells(student: str, rows: dict[str, dict[str, Any]], items: list[tuple[str, str]]) -> list[dict[str, Any]]:
-    """Per multiple-choice item: gold, dataset, the B and S answers with their tokens, Qwen's confidence."""
+def load_questions(run_dir: Path, items: list[tuple[str, str]], head: str) -> tuple[dict[str, str], str]:
+    """({dataset:item: question}, SHA-256 of the file) from the logged S-r1 prompts, with the shared template head
+    removed. The question is only used to make an example readable; the answers still come from the scored rows."""
+    path = run_dir / "predictions.jsonl"
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    logged = {dp.run_key(row): row for row in rows if row.get("replicate_id") == "S-r1"}
+    missing = [f"{dataset}:{item}" for dataset, item in items if f"{dataset}:{item}:S-r1" not in logged]
+    if missing:
+        raise _fail(f"{path}: no logged S-r1 prompt for {len(missing)} multiple-choice items, first {missing[0]}")
+    questions = {}
+    for dataset, item in items:
+        prompt = str(logged[f"{dataset}:{item}:S-r1"].get("raw_prompt") or "")
+        questions[f"{dataset}:{item}"] = (prompt[len(head):] if head and prompt.startswith(head) else prompt).strip()
+    return questions, v1.sha256_file(path)
+
+
+def mc_cells(student: str, rows: dict[str, dict[str, Any]], items: list[tuple[str, str]],
+             questions: dict[str, str] | None = None) -> list[dict[str, Any]]:
+    """Per multiple-choice item: gold, dataset, the B and S answers with their tokens, Qwen's confidence, and the
+    question exactly as the logged S prompt asked it."""
     b_reps = ["B-r1"] if student == "qwen" else ["B-r1", "B-r2"]
     cells = []
     for dataset_id, item_id in items:
         b = [rows[f"{dataset_id}:{item_id}:{replicate}"] for replicate in b_reps]
         s = [rows[f"{dataset_id}:{item_id}:S-r{k}"] for k in (1, 2, 3)]
-        cells.append({"dataset_id": dataset_id, "gold": str(b[0]["gold_answer"]).strip().upper(),
+        cells.append({"dataset_id": dataset_id, "item_id": item_id, "gold": str(b[0]["gold_answer"]).strip().upper(),
                       "b": [str(r.get("prediction") or "") for r in b], "s": [str(r.get("prediction") or "") for r in s],
                       "b_tokens": [_tokens(r) for r in b], "s_tokens": [_tokens(r) for r in s],
-                      "confidence": b[0].get("confidence")})
+                      "confidence": b[0].get("confidence"),
+                      "question": (questions or {}).get(f"{dataset_id}:{item_id}", "")})
     return cells
 
 
@@ -99,11 +121,63 @@ def policies(student: str, cell: dict[str, Any], threshold: float) -> dict[str, 
             "loop": (loop, loop_tokens, rounds), "map": always_b if MAP[student][cell["dataset_id"]] == "B" else always_s}
 
 
-def mc_block(student: str, cells: list[dict[str, Any]], threshold: float) -> dict[str, Any]:
+VOTE_EXAMPLE_KINDS = ("rescued", "broken", "no_majority")
+
+
+def vote_example(cell: dict[str, Any], final: str) -> dict[str, Any]:
+    """One vote, spelled out: the item, its question, the three S answers, the vote's final answer, and the tokens
+    each attempt reported."""
+    return {"item_key": f"{cell['dataset_id']}:{cell['item_id']}", "question": cell["question"], "gold": cell["gold"],
+            "answers": list(cell["s"]), "final": final, "tokens": list(cell["s_tokens"])}
+
+
+def vote_block(cells: list[dict[str, Any]], source: dict[str, str] | None = None) -> dict[str, Any]:
+    """The descriptive funnel of always-vote, added beside the registered analysis (2026-11-01, after the run): how
+    often the three S answers agree, how often the vote moves away from S-r1, and what that move bought or cost. The
+    examples are the first item of each kind in manifest order whose three S answers are all non-empty, so no item is
+    picked by hand."""
+    funnel = {"n": len(cells), "three_agree": 0, "all_empty": 0, "any_disagreement": 0, "answer_changed": 0,
+              "rescued": 0, "broken": 0, "both_wrong_changed": 0, "no_majority": 0, "empty_votes": 0}
+    examples: dict[str, Any] = {}
+    for cell in cells:
+        answers, gold = cell["s"], cell["gold"]
+        final = sl.majority(answers)
+        non_empty = [answer for answer in answers if answer]
+        votes = Counter(non_empty)
+        funnel["empty_votes"] += len(answers) - len(non_empty)
+        if not non_empty:
+            funnel["all_empty"] += 1
+        elif len(set(answers)) == 1:
+            funnel["three_agree"] += 1
+        else:
+            funnel["any_disagreement"] += 1
+        if votes and max(votes.values()) < 2:
+            funnel["no_majority"] += 1
+        if final == answers[0]:
+            continue
+        funnel["answer_changed"] += 1
+        before_right, after_right = bool(answers[0]) and answers[0] == gold, bool(final) and final == gold
+        kind = ("rescued" if after_right and not before_right else "broken" if before_right and not after_right
+                else "both_wrong_changed")
+        funnel[kind] += 1
+        if kind in VOTE_EXAMPLE_KINDS and kind not in examples and all(answers) and len(set(answers)) > 1:
+            examples[kind] = vote_example(cell, final)
+    if "no_majority" not in examples:
+        for cell in cells:
+            answers = cell["s"]
+            if all(answers) and len(set(answers)) == 3:
+                examples["no_majority"] = vote_example(cell, sl.majority(answers))
+                break
+    return {"funnel": funnel, "examples": {**(source or {}), "items": examples}}
+
+
+def mc_block(student: str, cells: list[dict[str, Any]], threshold: float,
+             vote_source: dict[str, str] | None = None) -> dict[str, Any]:
     outcome = [policies(student, cell, threshold) for cell in cells]
     correct = {name: [int(o[name][0] == cell["gold"] and bool(o[name][0])) for o, cell in zip(outcome, cells, strict=True)]
                for name in outcome[0]}
     tokens = {name: [o[name][1] for o in outcome] for name in outcome[0]}
+    vote = vote_block(cells, vote_source)
 
     def summary(indices: list[int]) -> dict[str, Any]:
         return {name: {"accuracy": _pct(statistics.fmean(correct[name][i] for i in indices)),
@@ -122,6 +196,7 @@ def mc_block(student: str, cells: list[dict[str, Any]], threshold: float) -> dic
         "loop_vs_B": {"rescues": rescues, "regressions": regressions, "mcnemar_p": mcnemar_exact_p(regressions, rescues)},
         "loop_vs_S": versus_s,
         "vote_vs_S": arl.difference_block([float(x) for x in correct["always_vote"]], [float(x) for x in correct["always_S"]]),
+        "vote_funnel": vote["funnel"], "vote_examples": vote["examples"],
         "missing_confidence": sum(cell["confidence"] is None for cell in cells) if student == "qwen" else None,
     }
 
@@ -170,6 +245,7 @@ def build_report(root: Path = OUTPUT_ROOT) -> dict[str, Any]:
     config, _ = sl.load_config()
     registration = json.loads(sl.REGISTRATION_PATH.read_text(encoding="utf-8"))
     threshold = config["loop"]["qwen"]["threshold"]
+    head = dp.load_templates()["s_mc_head"]
     report: dict[str, Any] = {"plan_id": PLAN_ID, "card_id": registration["card_ids"][sl.PHASE],
                               "manifest_sha256": {}, "scores_sha256": {}, "multiple_choice": {}, "knowledge": {},
                               "primary": {}, "cost": {}}
@@ -181,7 +257,10 @@ def build_report(root: Path = OUTPUT_ROOT) -> dict[str, Any]:
         report["scores_sha256"][student] = v1.sha256_file(run_dir / "scores.jsonl")
         mc_items = list(dict.fromkeys((ref["dataset_id"], ref["item_id"]) for ref in manifest["items"]
                                       if ref["dataset_id"] in (sl.VMLU, sl.VM14K)))
-        report["multiple_choice"][student] = mc_block(student, mc_cells(student, rows, mc_items), threshold)
+        questions, predictions_sha = load_questions(run_dir, mc_items, head)
+        report["multiple_choice"][student] = mc_block(
+            student, mc_cells(student, rows, mc_items, questions), threshold,
+            {"source": "predictions.jsonl", "source_sha256": predictions_sha})
         report["knowledge"][student] = knowledge_block(rows, manifest)
         report["cost"][student] = cost_block(student, rows)
     alpha = config["analysis"]["alpha"]
