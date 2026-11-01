@@ -29,5 +29,19 @@
    "vmlu_dev",
    "cost"
   ]
- }
+ },
+ "amendments": [
+  {
+   "id": 1,
+   "decided_on": "2026-11-01",
+   "decided_by": "the owner, before the analysis was run",
+   "student": "mimo",
+   "unanswered_attempts": [
+    "vi-multimodel-v1-vmlu-valid:04-0018:B-r1",
+    "vi-multimodel-v1-vmlu-valid:04-0018:B-r2"
+   ],
+   "scored_as": "no answer: an empty prediction, incorrect, usage unknown; the loop treats it as any empty answer",
+   "reason": "both attempts timed out at the registered 300 s in all five sends (the main pass, a resume and three timeout re-sends); the registration did not say how to score an attempt that never returns"
+  }
+ ]
 }

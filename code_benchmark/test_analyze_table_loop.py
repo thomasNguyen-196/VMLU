@@ -83,5 +83,37 @@ class TestReport(unittest.TestCase):
         self.assertIn("list_price_usd", report["cost"]["mimo"])
 
 
+@unittest.skipUnless(HAS_INPUTS, "needs the frozen table-loop manifests")
+class TestAmendmentOne(unittest.TestCase):
+    MISSING = ["vi-multimodel-v1-vmlu-valid:04-0018:B-r1", "vi-multimodel-v1-vmlu-valid:04-0018:B-r2"]
+
+    def run_dir(self, root: Path, missing: list[str]) -> Path:
+        manifest = tl.load_frozen_manifest("mimo")
+        run_dir = root / atl.PROFILES["mimo"]
+        run_dir.mkdir(parents=True)
+        (run_dir / "run.json").write_text(json.dumps({"status": "incomplete", "request_error_items": len(missing),
+                                                      "manifest_sha256": manifest["manifest_sha256"]}))
+        (run_dir / "scores.jsonl").write_text("\n".join(json.dumps(synthetic_row("mimo", ref)) for ref in manifest["items"]
+                                                        if dp.run_key(ref) not in missing) + "\n")
+        return run_dir
+
+    def test_only_the_listed_attempts_may_be_missing_and_they_score_nothing(self):
+        manifest = tl.load_frozen_manifest("mimo")
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = atl.load_rows(self.run_dir(Path(tmp), self.MISSING), manifest, set(self.MISSING))
+        self.assertEqual(len(rows), manifest["n"])
+        self.assertEqual([(rows[k]["prediction"], rows[k]["correct"], rows[k]["total_tokens"]) for k in self.MISSING],
+                         [("", 0, None)] * 2)
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaises(SystemExit):
+            atl.load_rows(self.run_dir(Path(tmp), self.MISSING), manifest, {self.MISSING[0]})
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaises(SystemExit):
+            atl.load_rows(self.run_dir(Path(tmp), self.MISSING[:1]), manifest, set(self.MISSING))
+
+    def test_the_registration_lists_them_per_student(self):
+        registration = {"amendments": [{"id": 1, "student": "mimo", "unanswered_attempts": self.MISSING}]}
+        self.assertEqual(atl.accepted_unanswered(registration, "mimo"), set(self.MISSING))
+        self.assertEqual(atl.accepted_unanswered(registration, "qwen"), set())
+
+
 if __name__ == "__main__":
     unittest.main()

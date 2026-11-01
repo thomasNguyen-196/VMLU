@@ -58,6 +58,41 @@ def _mean_pct(values: list[float]) -> float:
     return round(100 * statistics.fmean(values), 2)
 
 
+def accepted_unanswered(registration: dict[str, Any], student: str) -> set[str]:
+    """Amendment 1: the run keys of a student that never returned within the registered timeout after the re-sends
+    and are scored as no answer, as the registration lists them."""
+    return {key for amendment in registration.get("amendments", []) if amendment.get("student") == student
+            for key in amendment.get("unanswered_attempts", [])}
+
+
+def load_rows(run_dir: Path, manifest: dict[str, Any], unanswered: set[str]) -> dict[str, dict[str, Any]]:
+    """The scored attempts of a run of the frozen manifest. A run may stop short only by exactly the attempts that
+    amendment 1 lists; each is added as an answer that scores nothing (no prediction, unknown usage)."""
+    if not unanswered:
+        return asl.load_rows(run_dir, manifest)
+    run = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    if run.get("manifest_sha256") != manifest["manifest_sha256"] or run.get("status") not in ("complete", "incomplete"):
+        raise _fail(f"the run in {run_dir} is not a finished run of the frozen manifest")
+    rows = {dp.run_key(row): row for row in (json.loads(line) for line in
+            (run_dir / "scores.jsonl").read_text(encoding="utf-8").splitlines() if line.strip())}
+    refs = {dp.run_key(ref): ref for ref in manifest["items"]}
+    missing = set(refs) - set(rows)
+    if missing != unanswered or set(rows) - set(refs) or run.get("request_error_items") != len(unanswered):
+        raise _fail(f"{run_dir}: the unscored attempts {sorted(missing)[:5]} are not the {len(unanswered)} that "
+                    "amendment 1 lists")
+    for key in sorted(unanswered):
+        ref = refs[key]
+        sibling = next(row for k, row in rows.items() if k.rsplit(":", 1)[0] == key.rsplit(":", 1)[0])
+        row = {name: ref[name] for name in ("dataset_id", "item_id", "replicate_id")}
+        row.update({"prediction": "", "gold_answer": sibling["gold_answer"], "total_tokens": None, "unanswered": True})
+        if "token_f1" in sibling:
+            row.update(dict.fromkeys(READING_KEYS, 0.0))
+        else:
+            row["correct"] = 0
+        rows[key] = row
+    return rows
+
+
 def item_groups(rows: dict[str, dict[str, Any]], manifest: dict[str, Any]) -> dict[tuple[str, str], dict[str, dict]]:
     """{(dataset, item): {replicate: scored row}} in manifest order."""
     groups: dict[tuple[str, str], dict[str, dict]] = defaultdict(dict)
@@ -149,7 +184,7 @@ def build_report(root: Path = OUTPUT_ROOT) -> dict[str, Any]:
     for student in tl.STUDENTS:
         manifest = tl.load_frozen_manifest(student)
         run_dir = root / PROFILES[student]
-        rows = asl.load_rows(run_dir, manifest)
+        rows = load_rows(run_dir, manifest, accepted_unanswered(registration, student))
         report["manifest_sha256"][student] = manifest["manifest_sha256"]
         report["scores_sha256"][student] = v1.sha256_file(run_dir / "scores.jsonl")
         by_dataset: dict[str, list[dict[str, Any]]] = defaultdict(list)
