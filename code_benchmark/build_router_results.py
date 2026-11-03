@@ -5,7 +5,10 @@ NO NUMBER IS TYPED HERE. Every score, interval and p-value is read from the regi
 (question, verdict text) is editorial and written for a known outcome: each verdict's status is computed from the
 report's own fields, and the build stops if a report no longer supports the published wording.
 
-Each experiment ran on its own items, so the page shows one table per experiment, never one matrix across them.
+Each experiment ran on its own items, so no table puts two experiments' numbers in one column. The page opens with
+two overview tables that name existing cells and tests instead of copying them: Bảng 1 is MC-105, whose cells share
+items and prompts with /table, with the rules of its loop under it; Bảng 2 gives each other experiment its own lines, and a line compares numbers measured
+on the same items. The full tables, tests, notes and sources of each experiment follow, collapsed.
 
   .venv/bin/python code_benchmark/build_router_results.py   ->  web/data/router-results.json
 """
@@ -45,6 +48,8 @@ REPORTS = {
     "table_loop": "all_res/diagnostic_router_loop/table_loop/analysis/table_loop_report.json",
 }
 SELF_LOOP_MANIFEST = "data/diagnostic_router_loop/self_loop_manifest_qwen_v1.json"
+TABLE_LOOP_CONFIG = "data/diagnostic_router_loop/table_loop_v1.json"
+TABLE_LOOP_REGISTRATION = "data/diagnostic_router_loop/registration_table_loop.json"
 STUDENTS = (("qwen", "Qwen3.5-9B"), ("mimo", "MiMo V2.6 Flash"))
 LOOP_POLICIES = (("always_B", "Trước: hỏi thẳng (B)", "baseline"), ("loop", "Sau: vòng tự sửa", "candidate"),
                  ("always_S", "Luôn S", "baseline"), ("always_vote", "Bỏ phiếu: 3 lần S", "baseline"))
@@ -101,8 +106,30 @@ def row(row_id: str, label: str, role: str, cells: dict[str, dict[str, Any]]) ->
     return {"id": row_id, "label": label, "role": role, "cells": cells}
 
 
-def table(title: str, columns: list[dict[str, Any]], rows: list[dict[str, Any]], note: str = "") -> dict[str, Any]:
-    return {"title": title, "columns": columns, "rows": rows, "note": note}
+B_ROWS = ("B", "always_B")
+
+
+def table(title: str, columns: list[dict[str, Any]], rows: list[dict[str, Any]], note: str = "",
+          versus: dict[str, str] | None = None) -> dict[str, Any]:
+    """A table whose cells also carry `vs_b`: the score minus the score of the row's B on the same column, so on the
+    same items, in points. The B row is the table's one row named B or always_B, unless `versus` maps each row to its
+    own B (two models in one table). B rows and reference rows (another run or setting) get none."""
+    by_id = {entry["id"]: entry for entry in rows}
+    if versus is None:
+        named = [row_id for row_id in B_ROWS if row_id in by_id]
+        if len(named) > 1:
+            raise _fail(f"table {title!r} has two B rows; name each row's B with versus")
+        versus = {row_id: named[0] for row_id, entry in by_id.items()
+                  if named and row_id != named[0] and entry["role"] != "reference"}
+        if not named and any(entry["role"] != "reference" for entry in rows):
+            raise _fail(f"table {title!r} has no B row to compare with")
+    if set(versus) - set(by_id) or set(versus.values()) - set(by_id):
+        raise _fail(f"table {title!r} compares a row it does not have")
+    def compared(entry: dict[str, Any]) -> dict[str, Any]:
+        base = by_id[versus[entry["id"]]]["cells"] if entry["id"] in versus else {}
+        return {**entry, "cells": {key: {**value, "vs_b": round(value["score"] - base[key]["score"], 2)
+                                         if key in base else None} for key, value in entry["cells"].items()}}
+    return {"title": title, "columns": columns, "rows": [compared(entry) for entry in rows], "note": note}
 
 
 def test(label: str, *, diff: float | None = None, ci: list[float] | None = None, p: float | None = None,
@@ -123,6 +150,21 @@ def better(p_holm: float, gain: float) -> bool:
     return p_holm < ALPHA and gain > 0
 
 
+def line(tables: list[dict[str, Any]], label: str, block: dict[str, Any], column_id: str, tried: tuple[str, str], *,
+         always_b: str | None = None, always_s: str | None = None, others: tuple[tuple[str, str], ...] = (),
+         compared: tuple[tuple[dict[str, Any], str], ...] = ()) -> dict[str, Any]:
+    """One line of Bảng 2: rows of one experiment table read on one column, so on one set of items. Rows and tests
+    are named rather than copied, so the overview cannot disagree with the tables under it; each test keeps its full
+    label as the key and gets the short label the line prints."""
+    index = next((number for number, entry in enumerate(tables) if entry is block), None)
+    if index is None:
+        raise _fail(f"overview line {label!r} points at a table outside its experiment")
+    return {"label": label, "table": index, "column": column_id, "tried": {"row": tried[0], "label": tried[1]},
+            "always_b": always_b, "always_s": always_s,
+            "others": [{"row": row_id, "label": text} for row_id, text in others],
+            "tests": [{"test": entry["label"], "label": text} for entry, text in compared]}
+
+
 # ---------------------------------------------------------------- experiments
 
 def wide(src: Sources) -> dict[str, Any]:
@@ -137,14 +179,21 @@ def wide(src: Sources) -> dict[str, Any]:
             row("S", "S: suy luận từng bước", "candidate",
                 {family: cell(100 * (arm["both_correct"] + arm["rescues"]) / arm["n_pairs"])
                  for family, arm in arms.items()})]
-    tests = [test(f"S so với B, {label}, một lượt", diff=100 * arms[family]["net_gain"],
-                  ci=arms[family]["net_gain_ci95_pct"], p=arms[family]["mcnemar_p_holm"], p_kind="McNemar, Holm")
-             for family, label in (("reading", "đọc hiểu"), ("mc", "trắc nghiệm luật"))]
-    tests += [test(f"S hơn B ổn định qua hai lượt, {label} (MC-92)", p=stable[family]["sign_test_p_holm"],
-                   p_kind="dấu, Holm", primary=True,
-                   note=f"S thắng ở cả hai lượt {stable[family]['s_stable_better']} câu, "
-                        f"B thắng ở cả hai lượt {stable[family]['b_stable_better']} câu")
-              for family, label in (("reading", "đọc hiểu"), ("mc", "trắc nghiệm luật"))]
+    families = (("reading", "đọc hiểu"), ("mc", "trắc nghiệm luật"))
+    once = {family: test(f"S so với B, {label}, một lượt", diff=100 * arms[family]["net_gain"],
+                         ci=arms[family]["net_gain_ci95_pct"], p=arms[family]["mcnemar_p_holm"], p_kind="McNemar, Holm")
+            for family, label in families}
+    twice = {family: test(f"S hơn B ổn định qua hai lượt, {label} (MC-92)", p=stable[family]["sign_test_p_holm"],
+                          p_kind="dấu, Holm", primary=True,
+                          note=f"S thắng ở cả hai lượt {stable[family]['s_stable_better']} câu, "
+                               f"B thắng ở cả hai lượt {stable[family]['b_stable_better']} câu")
+             for family, label in families}
+    tests = [*once.values(), *twice.values()]
+    tables = [table("Điểm của lượt đầu", columns, rows)]
+    overview = [line(tables, setting, tables[0], family, ("S", "S: suy luận từng bước"), always_b="B",
+                     compared=((once[family], "một lượt"), (twice[family], "ổn định qua hai lượt")))
+                for family, setting in (("reading", "Đọc hiểu (ViBidLQA, Vi-DROP, Vi-SQuAD), tập wide"),
+                                        ("mc", "Trắc nghiệm luật (Legal MC, Legal NLI), tập wide"))]
     systematic = any(better(entry["sign_test_p_holm"], entry["s_stable_better"] - entry["b_stable_better"])
                      for entry in stable.values())
     return {"id": "mc-90-92", "cards": "MC-90, MC-91, MC-92", "title": "B và S trên tập wide",
@@ -153,7 +202,7 @@ def wide(src: Sources) -> dict[str, Any]:
             "status": settle("MC-90", "met" if systematic else "not_met", "not_met"),
             "verdict": ("Trong một lượt, S hơn B ở đọc hiểu, còn ở trắc nghiệm luật thì không. Phép thử đã đăng ký "
                         "\"S hơn B ổn định qua hai lượt\" không đạt, nên chưa gọi được là hơn có hệ thống."),
-            "tables": [table("Điểm của lượt đầu", columns, rows)], "tests": tests,
+            "tables": tables, "tests": tests, "overview": overview,
             "notes": ["Tỷ lệ đúng của đọc hiểu tính bằng EM (khớp hoàn toàn), theo protocol của chiến dịch."],
             "sources": src.refs("wide", "wide_s2")}
 
@@ -169,11 +218,18 @@ def core(src: Sources) -> dict[str, Any]:
     rows = [row(name, label, role, {"core": cell(pts(policies[name]["accuracy"]), policies[name]["accuracy_ci95_pct"],
                                                  policies[name]["mean_total_tokens"])})
             for name, (label, role) in labels.items()]
-    tests = [test(f"Router v1 so với {label}", diff=pts(policies["router"]["accuracy"] - policies[other]["accuracy"]),
-                  p=primary["tests"][key]["mcnemar_p_holm"], p_kind="McNemar, Holm", primary=True,
-                  note=f"cứu {primary['tests'][key]['rescues']} câu, làm hỏng {primary['tests'][key]['regressions']} câu")
-             for key, other, label in (("router_vs_always_B", "always_B", "luôn B"),
-                                       ("router_vs_always_S", "always_S", "luôn S"))]
+    versus = {other: test(f"Router v1 so với {label}",
+                          diff=pts(policies["router"]["accuracy"] - policies[other]["accuracy"]),
+                          p=primary["tests"][key]["mcnemar_p_holm"], p_kind="McNemar, Holm", primary=True,
+                          note=f"cứu {primary['tests'][key]['rescues']} câu, "
+                               f"làm hỏng {primary['tests'][key]['regressions']} câu")
+              for key, other, label in (("router_vs_always_B", "always_B", "luôn B"),
+                                        ("router_vs_always_S", "always_S", "luôn S"))}
+    tests = list(versus.values())
+    tables = [table("Kết quả", columns, rows)]
+    overview = [line(tables, "60 câu core đã audit, đánh giá một lần", tables[0], "core",
+                     ("router", "Router v1: Vi-DROP dùng S, còn lại B"), always_b="always_B", always_s="always_S",
+                     compared=((versus["always_B"], "so với luôn B"), (versus["always_S"], "so với luôn S")))]
     wins = [better(primary["tests"][key]["mcnemar_p_holm"], policies["router"]["accuracy"] - policies[other]["accuracy"])
             for key, other in (("router_vs_always_B", "always_B"), ("router_vs_always_S", "always_S"))]
     computed = "met" if all(wins) else "partial" if any(wins) else "not_met"
@@ -182,7 +238,7 @@ def core(src: Sources) -> dict[str, Any]:
             "student": QWEN, "items": "60 câu core đã audit, đánh giá đúng một lần",
             "status": settle("MC-93", computed, "not_met"),
             "verdict": "Router đúng nhiều câu hơn cả luôn B và luôn S nhưng chưa đủ chắc: 60 câu quá ít để tách các cách.",
-            "tables": [table("Kết quả", columns, rows)], "tests": tests, "notes": [],
+            "tables": tables, "tests": tests, "overview": overview, "notes": [],
             "sources": src.refs("core")}
 
 
@@ -200,9 +256,14 @@ def router_v2(src: Sources) -> dict[str, Any]:
         "bidlqa": cell(pts(reading["mean_token_f1"][name]), None, reading["policies"][name]["mean_total_tokens"])})
         for name, (label, role) in labels.items()]
     gain = {other: mc["policies"]["v2"]["accuracy"] - mc["policies"][other]["accuracy"] for other in ("always_B", "always_S")}
-    tests = [test(f"Router v2 so với {ARM_LABELS[other]}, VMLU", diff=pts(gain[other]),
-                  p=mc["tests"][f"v2_vs_{other}"]["mcnemar_p_holm"], p_kind="McNemar, Holm", primary=True)
-             for other in ("always_B", "always_S")]
+    versus = {other: test(f"Router v2 so với {ARM_LABELS[other]}, VMLU", diff=pts(gain[other]),
+                          p=mc["tests"][f"v2_vs_{other}"]["mcnemar_p_holm"], p_kind="McNemar, Holm", primary=True)
+              for other in ("always_B", "always_S")}
+    tests = list(versus.values())
+    tables = [table("Kết quả vòng 1", columns, rows)]
+    overview = [line(tables, "VMLU valid, câu mới (vòng 1)", tables[0], "vmlu",
+                     ("v2", "Router v2: hỏi B hai lần, lệch thì S"), always_b="always_B", always_s="always_S",
+                     compared=((versus["always_B"], "so với luôn B"), (versus["always_S"], "so với luôn S")))]
     wins = [better(mc["tests"][f"v2_vs_{other}"]["mcnemar_p_holm"], gain[other]) for other in ("always_B", "always_S")]
     computed = "met" if all(wins) else "partial" if any(wins) else "not_met"
     return {"id": "mc-94", "cards": "MC-94", "title": "Router v2 trên câu mới",
@@ -211,7 +272,7 @@ def router_v2(src: Sources) -> dict[str, Any]:
             "status": settle("MC-94", computed, "partial"),
             "verdict": ("Router v2 hơn luôn B rõ ràng, tốn khoảng một nửa token so với luôn S, "
                         "nhưng vẫn kém luôn S trên VMLU."),
-            "tables": [table("Kết quả vòng 1", columns, rows)], "tests": tests,
+            "tables": tables, "tests": tests, "overview": overview,
             "notes": [f"Tỷ lệ câu chuyển sang S: VMLU {pts(mc['escalated_share']):.0f}%, "
                       f"ViBidLQA {pts(reading['escalated_share']):.0f}%."],
             "sources": src.refs("v2")}
@@ -237,9 +298,16 @@ def router_v3(src: Sources) -> dict[str, Any]:
         "bidlqa": cell(pts(bidlqa["scores"][name]), None, bidlqa["mean_tokens"][name])})
         for name, (label, role) in labels.items()]
     gain = {other: mc["policies"]["v3"]["accuracy"] - mc["policies"][other]["accuracy"] for other in ("v2", "always_S")}
-    tests = [test(f"Router v3 so với {ARM_LABELS.get(other, 'router v2')}, trắc nghiệm gộp", diff=pts(gain[other]),
-                  p=mc["tests"][f"v3_vs_{other}"]["mcnemar_p_holm"], p_kind="McNemar, Holm", primary=True)
-             for other in ("v2", "always_S")]
+    versus = {other: test(f"Router v3 so với {ARM_LABELS.get(other, 'router v2')}, trắc nghiệm gộp",
+                          diff=pts(gain[other]), p=mc["tests"][f"v3_vs_{other}"]["mcnemar_p_holm"],
+                          p_kind="McNemar, Holm", primary=True)
+              for other in ("v2", "always_S")}
+    tests = list(versus.values())
+    tables = [table("Kết quả vòng 1 (300 câu kiểm tra mỗi bộ)", columns, rows)]
+    overview = [line(tables, "Trắc nghiệm gộp (VMLU valid, VM14K), câu mới (vòng 1)", tables[0], "mc",
+                     ("v3", "Router v3: tự chọn cách cho mỗi bộ"), always_b="always_B", always_s="always_S",
+                     others=(("v2", "router v2"),),
+                     compared=((versus["v2"], "so với router v2"), (versus["always_S"], "so với luôn S")))]
     wins = [better(mc["tests"][f"v3_vs_{other}"]["mcnemar_p_holm"], gain[other]) for other in ("v2", "always_S")]
     computed = "met" if all(wins) else "partial" if any(wins) else "not_met"
     choices = report["calibration"]["1"]["choices"]
@@ -249,7 +317,7 @@ def router_v3(src: Sources) -> dict[str, Any]:
             "status": settle("MC-95", computed, "not_met"),
             "verdict": ("Không hơn router v2 và kém luôn S. 60 câu hiệu chỉnh chọn sai cách cho VM14K: "
                         "hai cách chỉ chênh nhau vài điểm thì 60 câu không đủ để tách."),
-            "tables": [table("Kết quả vòng 1 (300 câu kiểm tra mỗi bộ)", columns, rows)], "tests": tests,
+            "tables": tables, "tests": tests, "overview": overview,
             "notes": ["Hiệu chỉnh vòng 1 chọn: " + ", ".join(
                 f"{label} → {ARM_LABELS.get(choices[key], choices[key])}"
                 for key, label in (("vi-multimodel-v1-vmlu-valid", "VMLU valid"), ("vm14k-4-options", "VM14K"),
@@ -279,9 +347,16 @@ def k2(src: Sources) -> dict[str, Any]:
                     {group["id"]: cell(pts(groups[group["id"]][name])) for group in by_hit})
                 for name, key in (("always_K", "always_K"), ("always_KS", "always_KS"), ("always_B", "always_B"),
                                   ("O", "O"))]
-    tests = [test(f"Router so với {label}", diff=pts(rotation["tests"][key]["mean_token_f1_difference"]),
-                  p=rotation["tests"][key]["sign_flip_p_holm"], p_kind="đổi dấu, Holm", primary=True)
-             for key, label in (("router_vs_always_K", "luôn K"), ("router_vs_always_KS", "luôn KS"))]
+    versus = {key: test(f"Router so với {label}", diff=pts(rotation["tests"][key]["mean_token_f1_difference"]),
+                        p=rotation["tests"][key]["sign_flip_p_holm"], p_kind="đổi dấu, Holm", primary=True)
+              for key, label in (("router_vs_always_K", "luôn K"), ("router_vs_always_KS", "luôn KS"))}
+    tests = list(versus.values())
+    tables = [table("Kết quả vòng 1", columns, rows), table("Theo kết quả tìm kiếm", by_hit, hit_rows)]
+    overview = [line(tables, "ViBidLQA train, không kèm đoạn văn gốc (vòng 1)", tables[0], "bidlqa",
+                     ("router", "Router K: hỏi K hai lần, lệch thì KS"), always_b="always_B",
+                     others=(("always_K", "luôn K"), ("always_KS", "luôn KS"), ("O", "O: đoạn gốc (trần)")),
+                     compared=((versus["router_vs_always_K"], "so với luôn K"),
+                               (versus["router_vs_always_KS"], "so với luôn KS")))]
     wins = [better(rotation["tests"][key]["sign_flip_p_holm"], rotation["tests"][key]["mean_token_f1_difference"])
             for key in ("router_vs_always_K", "router_vs_always_KS")]
     computed = "met" if all(wins) else "partial" if any(wins) else "not_met"
@@ -291,9 +366,7 @@ def k2(src: Sources) -> dict[str, Any]:
             "status": settle("MC-96", computed, "not_met"),
             "verdict": ("Khi BM25 tìm trúng, trả lời tốt ngang có đoạn gốc; khi tìm trượt thì tụt mạnh. Router không "
                         "hơn luôn K hay luôn KS mà tốn nhiều token hơn."),
-            "tables": [table("Kết quả vòng 1", columns, rows),
-                       table("Theo kết quả tìm kiếm", by_hit, hit_rows)],
-            "tests": tests, "notes": [], "sources": src.refs("k2")}
+            "tables": tables, "tests": tests, "overview": overview, "notes": [], "sources": src.refs("k2")}
 
 
 def menu(src: Sources) -> dict[str, Any]:
@@ -314,12 +387,15 @@ def menu(src: Sources) -> dict[str, Any]:
              for key, _, label in keys for other in ("B", "S")]
     q_best = any(report["datasets"][key]["best_fixed_arm"] == "Q" for key, _, _ in keys)
     best = ", ".join(f"{label} {report['datasets'][key]['best_fixed_arm']}" for key, _, label in keys)
+    tables = [table("Token-F1 theo bộ", columns, rows)]
+    overview = [line(tables, "Đọc hiểu gộp (Vi-SQuAD, Vi-DROP, ViBidLQA test), tập wide", tables[0], "pooled",
+                     ("Q", "Q: trích câu trong đoạn rồi đáp"), always_b="B", always_s="S")]
     return {"id": "mc-97", "cards": "MC-97", "title": "Cách hỏi Q (trích rồi đáp)",
             "question": "Bắt model trích câu trong đoạn văn trước rồi mới trả lời (Q) có tốt hơn B hay S không?",
             "student": QWEN, "items": "967 câu đọc hiểu của wide, dùng để thiết kế",
             "status": settle("MC-97", "met" if q_best else "descriptive", "descriptive"),
             "verdict": f"Q không là cách tốt nhất ở bộ nào. Cách cố định tốt nhất mỗi bộ: {best}.",
-            "tables": [table("Token-F1 theo bộ", columns, rows)], "tests": tests, "notes": [],
+            "tables": tables, "tests": tests, "overview": overview, "notes": [],
             "sources": src.refs("menu")}
 
 
@@ -333,16 +409,24 @@ def muse_router(src: Sources) -> dict[str, Any]:
               "per_item_bound": ("Trần: chọn đúng cách cho từng câu", "ceiling")}
     columns = [column("bidlqa", "ViBidLQA test (câu thiết kế)", "Token-F1", report["items"])]
     rows = [row(name, label, role, {"bidlqa": cell(routing[name])}) for name, (label, role) in labels.items()]
-    tests = [test(f"Router Muse so với {label}", diff=report[key]["mean_points"], ci=report[key]["ci95_points"],
-                  p=report[key]["sign_flip_p"], p_kind="đổi dấu", primary=True)
-             for key, label in (("muse_minus_always_S", "luôn S"), ("muse_minus_keywords", "chia bằng từ khóa"))]
+    versus = {key: test(f"Router Muse so với {label}", diff=report[key]["mean_points"], ci=report[key]["ci95_points"],
+                        p=report[key]["sign_flip_p"], p_kind="đổi dấu", primary=True)
+              for key, label in (("muse_minus_always_S", "luôn S"), ("muse_minus_keywords", "chia bằng từ khóa"))}
+    tests = list(versus.values())
+    tables = [table("Token-F1", columns, rows)]
+    overview = [line(tables, "ViBidLQA test, câu dùng để thiết kế", tables[0], "bidlqa",
+                     ("muse_grouping", "Router Muse: LLM đọc đoạn văn và câu hỏi, chọn cách hỏi"),
+                     always_b="always_B", always_s="always_S",
+                     others=(("keyword_grouping", "chia theo từ khóa"), ("per_item_bound", "trần từng câu")),
+                     compared=((versus["muse_minus_always_S"], "so với luôn S"),
+                               (versus["muse_minus_keywords"], "so với chia bằng từ khóa")))]
     return {"id": "mc-98", "cards": "MC-98", "title": "Router LLM (Muse Spark 1.3)",
             "question": "Một LLM mạnh hơn đọc đoạn văn và câu hỏi rồi chọn cách hỏi cho Qwen có tốt hơn không?",
             "student": QWEN, "items": "591 câu ViBidLQA dùng để thiết kế",
             "status": settle("MC-98", "met" if report["reading_rule"]["promising"] else "not_met", "not_met"),
             "verdict": ("Router Muse chỉ ngang luôn S và ngang cách chia bằng từ khóa, nên không đạt quy tắc ghi trước "
                         "(hơn luôn S ít nhất 1 điểm) và dừng ở bước thiết kế."),
-            "tables": [table("Token-F1", columns, rows)], "tests": tests,
+            "tables": tables, "tests": tests, "overview": overview,
             "notes": [f"Mỗi câu, router tốn thêm khoảng {report['router_cost']['total_tokens']:.0f} token của Muse."],
             "sources": src.refs("labels")}
 
@@ -356,10 +440,15 @@ def legal_oracle(src: Sources) -> dict[str, Any]:
     rows = [row("B", "B: hỏi như cũ, không kèm luật", "baseline",
                 {name: cell(groups[name]["B"]) for name in ("wrong", "right")}),
             row("O", "O: kèm đúng điều luật", "candidate", {name: cell(groups[name]["O"]) for name in ("wrong", "right")})]
-    tests = [test(f"O so với B, {label}", diff=groups[name]["O_versus_B"]["mean_points"],
-                  ci=groups[name]["O_versus_B"]["ci95_points"], p=groups[name]["O_versus_B"]["sign_flip_p"],
-                  p_kind="đổi dấu", primary=True)
-             for name, label in (("wrong", "câu từng sai"), ("right", "câu vốn đúng"))]
+    versus = {name: test(f"O so với B, {label}", diff=groups[name]["O_versus_B"]["mean_points"],
+                         ci=groups[name]["O_versus_B"]["ci95_points"], p=groups[name]["O_versus_B"]["sign_flip_p"],
+                         p_kind="đổi dấu", primary=True)
+              for name, label in (("wrong", "câu từng sai"), ("right", "câu vốn đúng"))}
+    tests = list(versus.values())
+    tables = [table("Kết quả", columns, rows)]
+    overview = [line(tables, setting, tables[0], name, ("O", "O: kèm đúng điều luật"), always_b="B",
+                     compared=((versus[name], "so với B"),))
+                for name, setting in (("wrong", "Legal MC, câu Qwen từng sai"), ("right", "Legal MC, câu Qwen vốn đúng"))]
     rule = report["reading_rule"]
     return {"id": "mc-100", "cards": "MC-100", "title": "Legal MC: đưa sẵn đúng điều luật",
             "question": "Nếu đưa sẵn đúng điều luật, Qwen có sửa được câu từng sai mà không làm hỏng câu đang đúng?",
@@ -367,7 +456,7 @@ def legal_oracle(src: Sources) -> dict[str, Any]:
             "status": settle("MC-100", "met" if rule["fixes_enough"] and rule["harmless_enough"] else "not_met", "met"),
             "verdict": ("Đạt: ở các câu từng sai, đúng điều luật tăng tỷ lệ đúng lên rất nhiều, và không làm hại câu "
                         "vốn đúng. Thiếu điều luật là nguyên nhân thật của phần lớn lỗi."),
-            "tables": [table("Kết quả", columns, rows)], "tests": tests,
+            "tables": tables, "tests": tests, "overview": overview,
             "notes": ["O là trần: điều luật do người và AI chọn sẵn, chưa dùng được ngoài thực tế."],
             "sources": src.refs("oracle")}
 
@@ -384,18 +473,25 @@ def legal_retrieval(src: Sources) -> dict[str, Any]:
             row("K", "K: kèm 2 điều luật BM25 tự tìm", "candidate",
                 {"all": cell(primary["K"]), "wrong": cell(wrong["K_vs_B"]["K"]), "outside": cell(outside["K"])}),
             row("O", "O: kèm đúng điều luật (trần)", "ceiling", {"wrong": cell(wrong["O_vs_B"]["O"])})]
-    tests = [test("K so với B, cả bộ", diff=primary["K_versus_B"]["mean_points"], ci=primary["K_versus_B"]["ci95_points"],
-                  p=primary["K_versus_B"]["sign_flip_p"], p_kind="đổi dấu", primary=True),
-             test("K so với B, câu từng sai", diff=wrong["K_vs_B"]["K_versus_B"]["mean_points"],
-                  ci=wrong["K_vs_B"]["K_versus_B"]["ci95_points"], p=wrong["K_vs_B"]["K_versus_B"]["sign_flip_p"],
-                  p_kind="đổi dấu")]
+    whole = test("K so với B, cả bộ", diff=primary["K_versus_B"]["mean_points"], ci=primary["K_versus_B"]["ci95_points"],
+                 p=primary["K_versus_B"]["sign_flip_p"], p_kind="đổi dấu", primary=True)
+    stratum = test("K so với B, câu từng sai", diff=wrong["K_vs_B"]["K_versus_B"]["mean_points"],
+                   ci=wrong["K_vs_B"]["K_versus_B"]["ci95_points"], p=wrong["K_vs_B"]["K_versus_B"]["sign_flip_p"],
+                   p_kind="đổi dấu")
+    tests = [whole, stratum]
+    tables = [table("Kết quả", columns, rows)]
+    retrieved = ("K", "K: kèm 2 điều luật BM25 tự tìm")
+    overview = [line(tables, "Legal MC, cả bộ", tables[0], "all", retrieved, always_b="B",
+                     compared=((whole, "so với B"),)),
+                line(tables, "Legal MC, câu từng sai (nhóm MC-100)", tables[0], "wrong", retrieved, always_b="B",
+                     others=(("O", "O (trần)"),), compared=((stratum, "so với B"),))]
     return {"id": "mc-101", "cards": "MC-101", "title": "Legal MC: tự tìm điều luật",
             "question": "Để BM25 tự tìm điều luật trong kho luật rồi đưa vào câu hỏi: \"luôn tra luật\" có hơn \"luôn hỏi như cũ\"?",
             "student": QWEN, "items": "134 câu Legal MC",
             "status": settle("MC-101", "met" if report["reading_rule"]["k_beats_b"] else "not_met", "not_met"),
             "verdict": ("Không đạt: trên cả bộ, tra luật ngang hỏi như cũ. K có giúp ở nhóm câu từng sai nhưng chỉ lấy lại "
                         "một phần nhỏ phần lợi của O, và làm hỏng chút ít ở câu vốn đúng. Legal MC giữ B."),
-            "tables": [table("Kết quả", columns, rows)], "tests": tests,
+            "tables": tables, "tests": tests, "overview": overview,
             "notes": [f"Ở nhóm câu từng sai, K giữ lại {pts(wrong['share_of_O_gain_kept_by_K']):.0f}% phần lợi của O."],
             "sources": src.refs("retrieval")}
 
@@ -416,6 +512,11 @@ def critic(src: Sources) -> dict[str, Any]:
     versus = report["primary"]["critic_versus_rule"]
     tests = [test("Vòng lặp có Muse chấm so với vòng lặp đơn giản", diff=versus["mean_points"], ci=versus["ci95_points"],
                   p=versus["sign_flip_p"], p_kind="đổi dấu", primary=True)]
+    tables = [table("Token-F1", columns, rows)]
+    overview = [line(tables, "Vi-DROP và Vi-SQuAD, câu thiết kế (phát lại câu trả lời đã lưu)", tables[0], "pooled",
+                     ("critic_loop", "Vòng lặp có Muse chấm câu trả lời"), always_b="always_B", always_s="always_S",
+                     others=(("rule_loop", "vòng lặp đơn giản"), ("bound", "trần từng câu")),
+                     compared=((tests[0], "so với vòng lặp đơn giản"),))]
     detector = report["detector"]["pooled"]
     return {"id": "mc-102", "cards": "MC-102", "title": "Muse chấm câu trả lời của Qwen",
             "question": "Một LLM mạnh hơn chấm câu trả lời đầu tiên của Qwen rồi chọn cách sửa: có hơn vòng lặp đơn giản?",
@@ -423,7 +524,7 @@ def critic(src: Sources) -> dict[str, Any]:
             "status": settle("MC-102", "met" if report["reading_rule"]["critic_goes_on"] else "not_met", "not_met"),
             "verdict": ("Không đạt: hơn vòng lặp đơn giản khoảng 1 điểm nhưng chưa chắc. Muse bắt được nhiều câu sai ở "
                         "Vi-DROP, nhưng ở đó luôn S cũng đạt cùng mức; ở Vi-SQuAD Muse báo nhầm nhiều hơn số câu bắt được."),
-            "tables": [table("Token-F1", columns, rows)], "tests": tests,
+            "tables": tables, "tests": tests, "overview": overview,
             "notes": [f"Muse bắt được {detector['caught']}/{detector['b1_wrong']} câu B sai "
                       f"(tỷ lệ bắt {pts(detector['recall']):.0f}%, tỷ lệ báo đúng {pts(detector['precision']):.0f}%)."],
             "sources": src.refs("critic")}
@@ -450,14 +551,26 @@ def weakness_map(src: Sources) -> dict[str, Any]:
             cells = {short: cell(value(report["by_dataset"][key][side], name)) for key, short, _, _ in keys}
             cells["bidlqa_v3"] = cell(value(v3_block[side], name))
             rows.append(row(f"{side}-{name}", f"{model} · {label}", role, cells))
-    tests = [test(f"Tương tác: lợi của S ở MiMo trừ lợi của S ở Qwen, {label}",
-                  diff=report["by_dataset"][key]["interaction_S"]["mean_points"],
-                  ci=report["by_dataset"][key]["interaction_S"]["ci95_points"],
-                  p=report["by_dataset"][key]["interaction_S"]["sign_flip_p"], p_kind="đổi dấu")
-             for key, _, label, _ in keys]
-    tests.append(test("Tương tác, ViBidLQA train (bộ chấm v3, chấm lại sau)", diff=v3_block["interaction_S"]["mean_points"],
-                      ci=v3_block["interaction_S"]["ci95_points"], p=v3_block["interaction_S"]["sign_flip_p"],
-                      p_kind="đổi dấu"))
+    interaction = {key: test(f"Tương tác: lợi của S ở MiMo trừ lợi của S ở Qwen, {label}",
+                             diff=report["by_dataset"][key]["interaction_S"]["mean_points"],
+                             ci=report["by_dataset"][key]["interaction_S"]["ci95_points"],
+                             p=report["by_dataset"][key]["interaction_S"]["sign_flip_p"], p_kind="đổi dấu")
+                   for key, _, label, _ in keys}
+    tests = [*interaction.values(),
+             test("Tương tác, ViBidLQA train (bộ chấm v3, chấm lại sau)", diff=v3_block["interaction_S"]["mean_points"],
+                  ci=v3_block["interaction_S"]["ci95_points"], p=v3_block["interaction_S"]["sign_flip_p"],
+                  p_kind="đổi dấu")]
+    tables = [table("Điểm lượt đầu", columns, rows,
+                    versus={entry["id"]: f"{entry['id'].split('-')[0]}-B1" for entry in rows
+                            if not entry["id"].endswith("-B1")})]
+    # Descriptive card: the overview keeps its clearest contrast, VMLU valid; the bold-answer artefact on ViBidLQA
+    # needs the v2 and v3 columns side by side, so it stays in the full table.
+    overview = [line(tables, "VMLU valid, 60 câu hiệu chỉnh của MC-95", tables[0], "vmlu",
+                     (f"{side}-S1", f"S · {model}"), always_b=f"{side}-B1",
+                     others=((f"{side}-rule_loop", "vòng lặp đơn giản"),),
+                     compared=((interaction["vi-multimodel-v1-vmlu-valid"], "lợi của S, MiMo trừ Qwen"),)
+                     if side == "student" else ())
+                for side, model in (("reference", "Qwen3.5-9B"), ("student", "MiMo V2.6 Flash"))]
     maps = report["maps"]
     notes = ["Bản đồ (điểm / chắc chắn): " + "; ".join(
         f"{model}: " + ", ".join(f"{label} {maps[side][key]['point']} / {maps[side][key]['reliable']}"
@@ -472,7 +585,7 @@ def weakness_map(src: Sources) -> dict[str, Any]:
             "status": "descriptive",
             "verdict": ("Ở VMLU, S giúp Qwen nhiều nhưng không giúp MiMo, vì MiMo vốn tự suy nghĩ. Ở ViBidLQA, khác biệt "
                         "ban đầu chủ yếu do MiMo in đậm câu trả lời; chấm lại bằng v3 thì S giúp hai model như nhau."),
-            "tables": [table("Điểm lượt đầu", columns, rows)], "tests": tests, "notes": notes,
+            "tables": tables, "tests": tests, "overview": overview, "notes": notes,
             "sources": src.refs("weakness", "reading_v3")}
 
 
@@ -550,7 +663,7 @@ def self_loop(src: Sources) -> dict[str, Any]:
     expect("MC-104", report, card_id="MC-104", plan_id="self-loop-v1")
     counts = json.loads((src.root / SELF_LOOP_MANIFEST).read_text(encoding="utf-8"))["dataset_counts"]
     keys = (("vmlu-mqa-dev", "vmlu", "VMLU dev"), ("vm14k-4-options", "vm14k", "VM14K"))
-    tables = []
+    tables, mc_tables = [], {}
     for student, model in STUDENTS:
         mc = report["multiple_choice"][student]
         columns = [column(short, label, "Tỷ lệ đúng", counts[key]) for key, short, label in keys]
@@ -561,8 +674,9 @@ def self_loop(src: Sources) -> dict[str, Any]:
                                         "pooled": cell(mc["pooled"][name]["accuracy"],
                                                        tokens=mc["pooled"][name]["mean_tokens"])})
                 for name, label, role in LOOP_POLICIES]
-        tables.append(table(f"{model} · trắc nghiệm, câu chưa router nào dùng", columns, rows,
-                            "Dưới mỗi điểm là số token trung bình mỗi câu; vòng tự sửa trả cho mọi lượt hỏi nó dùng."))
+        mc_tables[student] = table(f"{model} · trắc nghiệm, câu chưa router nào dùng", columns, rows,
+                                   "Dưới mỗi điểm là số token trung bình mỗi câu; vòng tự sửa trả cho mọi lượt hỏi nó dùng.")
+        tables.append(mc_tables[student])
     know = report["knowledge"]
     columns = [column(student, model, "Token-F1 (v3)", know[student]["n"]) for student, model in STUDENTS]
     arms = (("B", "Chỉ câu hỏi (B)", "baseline"), ("K2", "Kèm 2 khoản luật BM25 tìm", "baseline"),
@@ -570,27 +684,39 @@ def self_loop(src: Sources) -> dict[str, Any]:
     rows = [row(arm, label, role, {student: cell(know[student]["means"][arm]["token_f1"],
                                                  tokens=know[student]["means"][arm]["mean_tokens"])
                                    for student, _ in STUDENTS}) for arm, label, role in arms]
-    tables.append(table("Câu hỏi luật không kèm đoạn văn (ViBidLQA train chưa dùng)", columns, rows))
+    knowledge = table("Câu hỏi luật không kèm đoạn văn (ViBidLQA train chưa dùng)", columns, rows)
+    tables.append(knowledge)
     def gain(student: str) -> float:
         """Loop minus always-B in points, from the paired counts rather than two rounded percentages."""
         mc = report["multiple_choice"][student]
         return 100 * (mc["loop_vs_B"]["rescues"] - mc["loop_vs_B"]["regressions"]) / mc["n"]
 
-    tests, flags = [], []
+    tests, flags, overview, retrieval = [], [], [], []
     for student, model in STUDENTS:
         mc, primary = report["multiple_choice"][student], report["primary"][student]
         pooled = mc["pooled"]
-        tests.append(test(f"{model}: vòng tự sửa so với hỏi thẳng (gộp)", diff=gain(student),
-                          p=primary["loop_beats_B"]["p_holm"], p_kind="McNemar, Holm", primary=True,
-                          note=f"sửa đúng {mc['loop_vs_B']['rescues']} câu, làm sai {mc['loop_vs_B']['regressions']} câu"))
-        tests.append(test(f"{model}: vòng tự sửa so với luôn S (cần không kém quá 1 điểm và ít token hơn)",
-                          diff=mc["loop_vs_S"]["mean_points"], ci=mc["loop_vs_S"]["ci95_points"], primary=True,
-                          note=f"token: vòng lặp {fmt(pooled['loop']['mean_tokens'])}, luôn S "
-                               f"{fmt(pooled['always_S']['mean_tokens'])}"))
+        versus_b = test(f"{model}: vòng tự sửa so với hỏi thẳng (gộp)", diff=gain(student),
+                        p=primary["loop_beats_B"]["p_holm"], p_kind="McNemar, Holm", primary=True,
+                        note=f"sửa đúng {mc['loop_vs_B']['rescues']} câu, làm sai {mc['loop_vs_B']['regressions']} câu")
+        versus_s = test(f"{model}: vòng tự sửa so với luôn S (cần không kém quá 1 điểm và ít token hơn)",
+                        diff=mc["loop_vs_S"]["mean_points"], ci=mc["loop_vs_S"]["ci95_points"], primary=True,
+                        note=f"token: vòng lặp {fmt(pooled['loop']['mean_tokens'])}, luôn S "
+                             f"{fmt(pooled['always_S']['mean_tokens'])}")
         k5 = know[student]["k5_vs_k2"]
-        tests.append(test(f"{model}: kèm 5 khoản so với 2 khoản", diff=k5["mean_points"], ci=k5["ci95_points"],
-                          p=primary["k5_beats_k2"]["p_holm"], p_kind="đổi dấu, Holm", primary=True))
+        versus_k2 = test(f"{model}: kèm 5 khoản so với 2 khoản", diff=k5["mean_points"], ci=k5["ci95_points"],
+                         p=primary["k5_beats_k2"]["p_holm"], p_kind="đổi dấu, Holm", primary=True)
+        tests += [versus_b, versus_s, versus_k2]
         flags += [primary[name]["met"] for name in ("loop_beats_B", "loop_not_worse_than_S", "k5_beats_k2")]
+        overview.append(line(tables, "Trắc nghiệm câu mới (VMLU dev, VM14K)", mc_tables[student], "pooled",
+                             ("loop", f"Vòng tự sửa · {model}"), always_b="always_B", always_s="always_S",
+                             others=(("always_vote", "bỏ phiếu 3 lần S"),),
+                             compared=((versus_b, "so với luôn B"),
+                                       (versus_s, "so với luôn S (cần không kém và ít token hơn)"))))
+        retrieval.append(line(tables, "ViBidLQA train chưa dùng, hỏi không kèm đoạn văn", knowledge, student,
+                              ("K5", f"K5: kèm 5 khoản luật BM25 tìm · {model}"), always_b="B",
+                              others=(("K2", "K2: 2 khoản"), ("O", "O: khoản gốc (trần)")),
+                              compared=((versus_k2, "so với K2"),)))
+    overview += retrieval
     qwen = report["multiple_choice"]["qwen"]["pooled"]
     k5_mimo = know["mimo"]["k5_vs_k2"]["mean_points"]
     return {"id": "mc-104", "cards": "MC-104", "title": "Vòng tự sửa của chính model, trên câu mới",
@@ -603,12 +729,17 @@ def self_loop(src: Sources) -> dict[str, Any]:
                         f"{fmt(qwen['loop']['accuracy'])}%; với MiMo chỉ thêm {fmt(gain('mimo'))} điểm, chưa chắc. Vòng lặp tốn token "
                         f"hơn luôn S nên không đạt điều kiện rẻ hơn. Kèm 5 khoản luật hơn 2 khoản ở Qwen nhưng "
                         f"{'kém hơn' if k5_mimo < 0 else 'không hơn rõ'} ở MiMo."),
-            "tables": tables, "tests": tests, "explainers": [vote_explainer(report)],
+            "tables": tables, "tests": tests, "overview": overview, "explainers": [vote_explainer(report)],
             "notes": ["Vòng tự sửa được tính lại từ các câu trả lời đã ghi: mỗi câu được hỏi đủ mọi lượt, rồi chỉ tính "
                       "điểm và token của những lượt vòng lặp thật sự dùng.",
                       "Qwen \"không chắc\" khi xác suất của chữ cái nó chọn dưới 0,80; MiMo \"không chắc\" khi hai lần hỏi "
                       "thẳng ra khác nhau."],
             "sources": src.refs("self_loop")}
+
+
+def before_after(model: str, dataset: str) -> str:
+    """The label of MC-105's registered test for one model and dataset; Bảng 1 finds each change by it."""
+    return f"{model} · {dataset}: sau so với trước"
 
 
 def table_loop(src: Sources) -> dict[str, Any]:
@@ -639,7 +770,7 @@ def table_loop(src: Sources) -> dict[str, Any]:
         for key, label in TABLE_DATASETS.items():
             primary = report["primary"][f"{student}:{key}"]
             kind = "McNemar, Holm 12 ô" if blocks[key]["task"] == "multiple_choice" else "đổi dấu, Holm 12 ô"
-            tests.append(test(f"{model} · {label}: sau so với trước", diff=primary["loop_minus_B_points"],
+            tests.append(test(before_after(model, label), diff=primary["loop_minus_B_points"],
                               p=primary["p_holm"], p_kind=kind, primary=True))
             met[(student, key)] = primary["met"]
     both = [label for key, label in TABLE_DATASETS.items() if all(met[(student, key)] for student, _ in STUDENTS)]
@@ -656,7 +787,7 @@ def table_loop(src: Sources) -> dict[str, Any]:
                         f"{', '.join(neither)} vòng lặp không giúp; với Qwen ở Legal MC còn kém hỏi thẳng "
                         f"{fmt(legal['always_B']['accuracy'] - legal['loop']['accuracy'])} điểm, vì suy luận từng bước "
                         f"kém hỏi thẳng ở đó."),
-            "tables": tables, "tests": tests, "explainers": [vote_explainer_short()],
+            "tables": tables, "tests": tests, "overview": [], "explainers": [vote_explainer_short()],
             "notes": ["Trước là câu trả lời thẳng trong cùng lượt chạy, với prompt giống hệt /table; số /table hiện có đo "
                       "với cài đặt khác nên chỉ để tham khảo.",
                       "Không phải câu mới: các bộ này đã dùng để thiết kế router (MC-90 – MC-95). Bằng chứng trên câu mới "
@@ -668,6 +799,123 @@ def table_loop(src: Sources) -> dict[str, Any]:
 
 EXPERIMENTS = (wide, core, router_v2, router_v3, k2, menu, muse_router, legal_oracle, legal_retrieval, critic,
                weakness_map, self_loop, table_loop)
+BENCHMARK_ID = "mc-105"
+
+
+def registered_threshold(root: Path) -> float:
+    """MC-105's confidence threshold, read from the configuration its registration froze. The explanation under
+    Bảng 1 was written for that loop, so a configuration with another hash stops the build."""
+    raw = (root / TABLE_LOOP_CONFIG).read_bytes()
+    frozen = json.loads((root / TABLE_LOOP_REGISTRATION).read_text(encoding="utf-8"))["frozen"]["config_sha256"]
+    if hashlib.sha256(raw).hexdigest() != frozen:
+        raise _fail(f"{TABLE_LOOP_CONFIG} is not the configuration MC-105 registered")
+    threshold = json.loads(raw)["loop"]["multiple_choice"]["threshold"]
+    if not isinstance(threshold, (int, float)) or not 0 < threshold < 1:
+        raise _fail(f"MC-105: threshold {threshold!r} is not a probability")
+    return float(threshold)
+
+
+def loop_method(experiment: dict[str, Any], groups: list[dict[str, Any]], threshold: float) -> dict[str, Any]:
+    """How the "Sau" row picks its answer, shown under Bảng 1: MC-105's registered loop, whose multiple-choice rules
+    are MC-104's. The token range is read from the cells Bảng 1 shows, so the wording cannot drift from them."""
+    ratios = []
+    for group in groups:
+        cells = {entry["id"]: entry["cells"] for entry in experiment["tables"][group["table"]]["rows"]}
+        for key, after in cells["loop"].items():
+            before = cells["always_B"][key]["tokens"]
+            if after["tokens"] is None or not before:
+                raise _fail(f"Bảng 1: {group['label']} has no token count for Trước or Sau on {key}")
+            ratios.append(after["tokens"] / before)
+    if min(ratios) <= 1:
+        raise _fail("Bảng 1: the explanation says Sau costs more tokens than Trước in every cell")
+    sure = f"{threshold:.2f}".replace(".", ",")
+    return {"title": "Vòng tự sửa (dòng Sau) chạy thế nào",
+            "steps": [{"title": "Hỏi thẳng (B)",
+                       "text": ("Dùng đúng prompt của /table. Model chắc thì giữ đáp án và dừng. Qwen làm trắc nghiệm: "
+                                f"chắc khi xác suất của chữ cái nó chọn từ {sure} trở lên. MiMo, và cả hai model ở đọc "
+                                "hiểu: hỏi B hai lần, chắc khi hai lần ra cùng đáp án.")},
+                      {"title": "Suy luận từng bước (S)",
+                       "text": "Không chắc thì hỏi S một lần. S trùng với một câu trả lời B thì lấy đáp án đó và dừng."},
+                      {"title": "Bỏ phiếu",
+                       "text": ("Vẫn lệch thì hỏi S thêm hai lần, lấy đáp án nhiều phiếu nhất trong ba lần S. Hoà thì "
+                                "lấy lần sớm nhất; câu trả lời rỗng không được tính phiếu.")}],
+            "note": ("Các lần hỏi độc lập: model không thấy câu trả lời trước, và mọi đáp án cuối do chính model viết. "
+                     "Mỗi câu được hỏi đủ mọi lượt rồi tính lại theo quy tắc trên, nên Trước, Sau và Luôn S so trên "
+                     "cùng các câu trả lời. Sau chỉ trả token cho những lượt nó thật sự dùng, nhưng vẫn tốn gấp "
+                     f"{fmt(min(ratios))} đến {fmt(max(ratios))} lần Trước tuỳ ô; token từng ô nằm trong chi tiết MC-105.")}
+
+
+def benchmark(experiments: list[dict[str, Any]], root: Path = ROOT) -> dict[str, Any]:
+    """Bảng 1, the one matrix on the page: MC-105's cells share items and prompts with /table, so both students sit
+    in one table. The change printed under "Sau" is MC-105's registered paired difference, found by its test label,
+    never a subtraction of two printed scores."""
+    experiment = next((entry for entry in experiments if entry["id"] == BENCHMARK_ID), None)
+    if experiment is None:
+        raise _fail(f"Bảng 1 needs experiment {BENCHMARK_ID}")
+    groups = []
+    for _, model in STUDENTS:
+        matches = [number for number, block in enumerate(experiment["tables"]) if block["title"].startswith(f"{model} · ")]
+        if len(matches) != 1:
+            raise _fail(f"{experiment['cards']}: expected one table for {model}, found {len(matches)}")
+        rows = [{"row": name, "label": label,
+                 "changes": {key: before_after(model, dataset) for key, dataset in TABLE_DATASETS.items()}
+                 if name == "loop" else {}}
+                for name, label, _ in LOOP_POLICIES if name != "always_vote"]
+        groups.append({"label": model, "table": matches[0], "rows": rows})
+    return {"experiment": BENCHMARK_ID, "title": "Trước / sau trên các bộ của /table", "groups": groups,
+            "method": loop_method(experiment, groups, registered_threshold(root)),
+            "note": ("Cùng câu và prompt với /table; trắc nghiệm tính tỷ lệ đúng, đọc hiểu tính token-F1 chấm v3. Dưới "
+                     "điểm Sau là chênh lệch sau trừ trước của phép thử đã đăng ký (cặp câu, Holm trên 12 ô). Cột VMLU "
+                     "dev lấy từ MC-104, không thuộc 12 ô đó nên không có phép thử riêng. Trước là hỏi thẳng trong cùng "
+                     "lượt chạy, nên có thể khác số /table hiện có (MC-83 / MC-85, cài đặt khác). Các bộ này đã dùng để "
+                     "thiết kế router; bằng chứng trên câu mới là MC-104 ở Bảng 2.")}
+
+
+def has_cell(block: dict[str, Any], row_id: str, column_id: str) -> bool:
+    return any(entry["id"] == row_id and column_id in entry["cells"] for entry in block["rows"])
+
+
+def validate_overview(data: dict[str, Any]) -> None:
+    """Every name the two overview tables use must point at a cell or a test that exists, and every experiment but
+    the one Bảng 1 shows needs at least one line in Bảng 2, so no card silently drops out of the overview."""
+    cards = {entry["id"]: entry for entry in data["experiments"]}
+    for name, experiment in cards.items():
+        labels = {entry["label"] for entry in experiment["tests"]}
+        keys = [(entry["table"], entry["column"], entry["tried"]["row"]) for entry in experiment["overview"]]
+        if len(set(keys)) != len(keys):
+            raise _fail(f"{name}: two overview lines read the same row on the same column")
+        for entry in experiment["overview"]:
+            if not 0 <= entry["table"] < len(experiment["tables"]):
+                raise _fail(f"{name}: overview line {entry['label']!r} points at no table")
+            block = experiment["tables"][entry["table"]]
+            named = [entry["tried"]["row"], *(ref["row"] for ref in entry["others"]),
+                     *(row_id for row_id in (entry["always_b"], entry["always_s"]) if row_id is not None)]
+            if not all(has_cell(block, row_id, entry["column"]) for row_id in named):
+                raise _fail(f"{name}: overview line {entry['label']!r} names a row without a cell on {entry['column']}")
+            if any(ref["test"] not in labels for ref in entry["tests"]):
+                raise _fail(f"{name}: overview line {entry['label']!r} names a test the card does not have")
+    view = data["benchmark"]
+    source = cards.get(view["experiment"])
+    if source is None:
+        raise _fail(f"Bảng 1 names unknown experiment {view['experiment']}")
+    labels = {entry["label"] for entry in source["tests"]}
+    columns = None
+    for group in view["groups"]:
+        if not 0 <= group["table"] < len(source["tables"]):
+            raise _fail(f"Bảng 1: group {group['label']} points at no table")
+        block = source["tables"][group["table"]]
+        ids = [entry["id"] for entry in block["columns"]]
+        if columns is not None and ids != columns:
+            raise _fail("Bảng 1: the groups' tables have different columns")
+        columns = ids
+        for entry in group["rows"]:
+            if not any(has_cell(block, entry["row"], column_id) for column_id in ids):
+                raise _fail(f"Bảng 1: group {group['label']} names row {entry['row']} without cells")
+            if set(entry["changes"]) - set(ids) or set(entry["changes"].values()) - labels:
+                raise _fail(f"Bảng 1: row {entry['row']} of {group['label']} names an unknown column or test")
+    missing = [entry["cards"] for entry in cards.values() if entry["id"] != view["experiment"] and not entry["overview"]]
+    if missing:
+        raise _fail(f"no overview line for {', '.join(missing)}")
 
 
 def validate(data: dict[str, Any]) -> None:
@@ -686,6 +934,8 @@ def validate(data: dict[str, Any]) -> None:
                 for value in entry["cells"].values():
                     if not math.isfinite(value["score"]) or (value["ci"] and value["ci"][0] > value["ci"][1]):
                         raise _fail(f"{name}: invalid cell in row {entry['id']}")
+                    if value["vs_b"] is not None and not math.isfinite(value["vs_b"]):
+                        raise _fail(f"{name}: invalid difference from B in row {entry['id']}")
         for entry in experiment["tests"]:
             if entry["p"] is not None and not 0 <= entry["p"] <= 1:
                 raise _fail(f"{name}: p outside [0, 1] in {entry['label']}")
@@ -702,12 +952,18 @@ def validate(data: dict[str, Any]) -> None:
                 for example in group["examples"]:
                     if len(example["answers"]) != 3 or len(example["tokens"]) != 3:
                         raise _fail(f"{name}: explainer example {example['item']} needs three answers and tokens")
+    method = data["benchmark"]["method"]
+    if not str(method["title"]).strip() or not str(method["note"]).strip() or not method["steps"] or any(
+            not str(step["title"]).strip() or not str(step["text"]).strip() for step in method["steps"]):
+        raise _fail("Bảng 1: the explanation needs a title, a note and steps with text")
+    validate_overview(data)
 
 
 def build(root: Path = ROOT) -> dict[str, Any]:
     src = Sources(root)
-    data = {"schema_version": 1, "generated_at": datetime.now(timezone.utc).isoformat(), "alpha": ALPHA,
-            "experiments": [make(src) for make in EXPERIMENTS]}
+    experiments = [make(src) for make in EXPERIMENTS]
+    data = {"schema_version": 2, "generated_at": datetime.now(timezone.utc).isoformat(), "alpha": ALPHA,
+            "benchmark": benchmark(experiments, root), "experiments": experiments}
     validate(data)
     return data
 
@@ -722,8 +978,11 @@ def main(argv: list[str] | None = None) -> int:
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     tmp.replace(out)
     for experiment in data["experiments"]:
-        print(f"{experiment['cards']:<20} {experiment['status']:<12} {experiment['title']}")
-    print(f"wrote {out.relative_to(args.root)} ({len(data['experiments'])} experiments)")
+        print(f"{experiment['cards']:<20} {experiment['status']:<12} {len(experiment['overview']):>2} line(s)  "
+              f"{experiment['title']}")
+    lines = sum(len(experiment["overview"]) for experiment in data["experiments"])
+    print(f"wrote {out.relative_to(args.root)} ({len(data['experiments'])} experiments; Bảng 1 from "
+          f"{data['benchmark']['experiment']}, Bảng 2 with {lines} lines)")
     return 0
 
 
