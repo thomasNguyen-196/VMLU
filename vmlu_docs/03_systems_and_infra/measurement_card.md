@@ -2838,3 +2838,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 4 requests in flight for Qwen and 6 for MiMo; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
 | `details` | `docs/measurement_cards/MC-105-diagnostic-table-loop.md` |
 | `outputs` | `all_res/diagnostic_router_loop/table_loop/`; no upload |
+
+## MC-108 — Muse Spark 1.3 and Muse Spark 1.2 (OpenCode Go) / self-improvement loop on the /table suite / before and after on 2,346 items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-108` |
+| `status` | Preregistered 2026-11-03 (+07), before benchmark-item requests of this card |
+| `scope` | The 2,346 items of the seven columns of the /table before-and-after table (VMLU dev 303, VMLU valid 744, Legal MC 146, Legal NLI 150, Vi-SQuAD 200, Vi-DROP 200, ViBidLQA test 603), for each of two students. Every item is answered B twice and S three times. The before is the within-run B with the frozen /table prompt; the after is MC-105's MiMo loop, unchanged and with nothing fitted to Muse, replayed from the logged answers, and the student writes every final answer. Primary: loop against B in each of 14 student and dataset cells, Holm over the 14. Not held-out: the loop was designed on these items for Qwen and MiMo |
+| `harness / tools` | Direct HTTP API, no harness, no tools; OpenAI Responses API, not streamed, one routing session per attempt |
+| `model / route` | Muse Spark 1.3 Contributor (`muse-spark-1.3-contributor`) and Muse Spark 1.2 Contributor (`muse-spark-1.2-contributor`) on the direct OpenCode Go route of MC-98 and MC-102 (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | System prompt `Answer the user's question.`; temperature, seed and reasoning effort not sent (provider defaults); `max_output_tokens=20000`; 300 s timeout; no SDK retries; budget guards of 30,000,000 reported tokens each (about 20 million projected each) |
+| `workers / scheduler` | At most 8 requests in flight per student; breaker after 4 consecutive network failures; halt on an authentication error, a permanent provider error, a tool call or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-108-diagnostic-table-loop-muse.md` |
+| `outputs` | `all_res/diagnostic_router_loop/table_loop_muse/`; no upload |

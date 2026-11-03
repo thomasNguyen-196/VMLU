@@ -1,0 +1,35 @@
+{
+ "status": "Muse table loop registered",
+ "card_ids": {
+  "table_loop_muse": "MC-108"
+ },
+ "card_files": {
+  "table_loop_muse": "docs/measurement_cards/MC-108-diagnostic-table-loop-muse.md"
+ },
+ "registered_on": {
+  "table_loop_muse": "2026-11-03"
+ },
+ "frozen": {
+  "config_sha256": "270e66e93ea6d8419c9b4de6b9d319c7d44090cbd7c7b8de8abb220531588393",
+  "manifest_sha256": {
+   "muse13": "fac70c51bc2da3fd69fe54881aa68ebf78d1b55568ec814d71224c22ceb0f54b",
+   "muse12": "cebeb5bdbdb4298a73adcb0a643534dd0e5f5a945d31982eb69bcecf77d31f68"
+  }
+ },
+ "analysis": {
+  "plan_id": "table-loop-muse-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "mc105_report_sha256",
+   "datasets",
+   "primary",
+   "beside_mc105",
+   "cost"
+  ]
+ },
+ "amendments": []
+}
