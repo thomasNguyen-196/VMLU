@@ -1,7 +1,88 @@
 {
- "schema_version": 1,
- "generated_at": "2026-11-01T15:05:31.896946+00:00",
+ "schema_version": 2,
+ "generated_at": "2026-11-03T01:31:50.476140+00:00",
  "alpha": 0.05,
+ "benchmark": {
+  "experiment": "mc-105",
+  "title": "Trước / sau trên các bộ của /table",
+  "groups": [
+   {
+    "label": "Qwen3.5-9B",
+    "table": 0,
+    "rows": [
+     {
+      "row": "always_B",
+      "label": "Trước: hỏi thẳng (B)",
+      "changes": {}
+     },
+     {
+      "row": "loop",
+      "label": "Sau: vòng tự sửa",
+      "changes": {
+       "vi-multimodel-v1-vmlu-valid": "Qwen3.5-9B · VMLU valid: sau so với trước",
+       "vi-multimodel-v1-legal-mc-146": "Qwen3.5-9B · Legal MC: sau so với trước",
+       "vi-multimodel-v1-legal-nli-150": "Qwen3.5-9B · Legal NLI: sau so với trước",
+       "vi-multimodel-v1-vi-squad-200": "Qwen3.5-9B · Vi-SQuAD: sau so với trước",
+       "vi-multimodel-v1-vi-drop-200": "Qwen3.5-9B · Vi-DROP: sau so với trước",
+       "vi-multimodel-v1-bidlqa-test": "Qwen3.5-9B · ViBidLQA test: sau so với trước"
+      }
+     },
+     {
+      "row": "always_S",
+      "label": "Luôn S",
+      "changes": {}
+     }
+    ]
+   },
+   {
+    "label": "MiMo V2.6 Flash",
+    "table": 1,
+    "rows": [
+     {
+      "row": "always_B",
+      "label": "Trước: hỏi thẳng (B)",
+      "changes": {}
+     },
+     {
+      "row": "loop",
+      "label": "Sau: vòng tự sửa",
+      "changes": {
+       "vi-multimodel-v1-vmlu-valid": "MiMo V2.6 Flash · VMLU valid: sau so với trước",
+       "vi-multimodel-v1-legal-mc-146": "MiMo V2.6 Flash · Legal MC: sau so với trước",
+       "vi-multimodel-v1-legal-nli-150": "MiMo V2.6 Flash · Legal NLI: sau so với trước",
+       "vi-multimodel-v1-vi-squad-200": "MiMo V2.6 Flash · Vi-SQuAD: sau so với trước",
+       "vi-multimodel-v1-vi-drop-200": "MiMo V2.6 Flash · Vi-DROP: sau so với trước",
+       "vi-multimodel-v1-bidlqa-test": "MiMo V2.6 Flash · ViBidLQA test: sau so với trước"
+      }
+     },
+     {
+      "row": "always_S",
+      "label": "Luôn S",
+      "changes": {}
+     }
+    ]
+   }
+  ],
+  "method": {
+   "title": "Vòng tự sửa (dòng Sau) chạy thế nào",
+   "steps": [
+    {
+     "title": "Hỏi thẳng (B)",
+     "text": "Dùng đúng prompt của /table. Model chắc thì giữ đáp án và dừng. Qwen làm trắc nghiệm: chắc khi xác suất của chữ cái nó chọn từ 0,80 trở lên. MiMo, và cả hai model ở đọc hiểu: hỏi B hai lần, chắc khi hai lần ra cùng đáp án."
+    },
+    {
+     "title": "Suy luận từng bước (S)",
+     "text": "Không chắc thì hỏi S một lần. S trùng với một câu trả lời B thì lấy đáp án đó và dừng."
+    },
+    {
+     "title": "Bỏ phiếu",
+     "text": "Vẫn lệch thì hỏi S thêm hai lần, lấy đáp án nhiều phiếu nhất trong ba lần S. Hoà thì lấy lần sớm nhất; câu trả lời rỗng không được tính phiếu."
+    }
+   ],
+   "note": "Các lần hỏi độc lập: model không thấy câu trả lời trước, và mọi đáp án cuối do chính model viết. Mỗi câu được hỏi đủ mọi lượt rồi tính lại theo quy tắc trên, nên Trước, Sau và Luôn S so trên cùng các câu trả lời. Sau chỉ trả token cho những lượt nó thật sự dùng, nhưng vẫn tốn gấp 1,9 đến 10,2 lần Trước tuỳ ô; token từng ô nằm trong chi tiết MC-105."
+  },
+  "note": "Cùng câu và prompt với /table; trắc nghiệm tính tỷ lệ đúng, đọc hiểu tính token-F1 chấm v3. Dưới điểm Sau là chênh lệch sau trừ trước của phép thử đã đăng ký (cặp câu, Holm trên 12 ô). Cột VMLU dev lấy từ MC-104, không thuộc 12 ô đó nên không có phép thử riêng. Trước là hỏi thẳng trong cùng lượt chạy, nên có thể khác số /table hiện có (MC-83 / MC-85, cài đặt khác). Các bộ này đã dùng để thiết kế router; bằng chứng trên câu mới là MC-104 ở Bảng 2."
+ },
  "experiments": [
   {
    "id": "mc-90-92",
@@ -38,12 +119,14 @@
         "mc": {
          "score": 88.6,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "reading": {
          "score": 38.99,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -55,12 +138,14 @@
         "mc": {
          "score": 86.03,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -2.57
         },
         "reading": {
          "score": 42.92,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 3.93
         }
        }
       }
@@ -112,6 +197,52 @@
      "primary": true
     }
    ],
+   "overview": [
+    {
+     "label": "Đọc hiểu (ViBidLQA, Vi-DROP, Vi-SQuAD), tập wide",
+     "table": 0,
+     "column": "reading",
+     "tried": {
+      "row": "S",
+      "label": "S: suy luận từng bước"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [],
+     "tests": [
+      {
+       "test": "S so với B, đọc hiểu, một lượt",
+       "label": "một lượt"
+      },
+      {
+       "test": "S hơn B ổn định qua hai lượt, đọc hiểu (MC-92)",
+       "label": "ổn định qua hai lượt"
+      }
+     ]
+    },
+    {
+     "label": "Trắc nghiệm luật (Legal MC, Legal NLI), tập wide",
+     "table": 0,
+     "column": "mc",
+     "tried": {
+      "row": "S",
+      "label": "S: suy luận từng bước"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [],
+     "tests": [
+      {
+       "test": "S so với B, trắc nghiệm luật, một lượt",
+       "label": "một lượt"
+      },
+      {
+       "test": "S hơn B ổn định qua hai lượt, trắc nghiệm luật (MC-92)",
+       "label": "ổn định qua hai lượt"
+      }
+     ]
+    }
+   ],
    "notes": [
     "Tỷ lệ đúng của đọc hiểu tính bằng EM (khớp hoàn toàn), theo protocol của chiến dịch."
    ],
@@ -158,7 +289,8 @@
           52.36,
           75.83
          ],
-         "tokens": 483.2
+         "tokens": 483.2,
+         "vs_b": 5.0
         }
        }
       },
@@ -173,7 +305,8 @@
           47.37,
           71.43
          ],
-         "tokens": 418.8
+         "tokens": 418.8,
+         "vs_b": null
         }
        }
       },
@@ -188,7 +321,8 @@
           44.1,
           68.43
          ],
-         "tokens": 982.5
+         "tokens": 982.5,
+         "vs_b": -3.33
         }
        }
       }
@@ -214,6 +348,30 @@
      "p_kind": "McNemar, Holm",
      "note": "cứu 10 câu, làm hỏng 5 câu",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "60 câu core đã audit, đánh giá một lần",
+     "table": 0,
+     "column": "core",
+     "tried": {
+      "row": "router",
+      "label": "Router v1: Vi-DROP dùng S, còn lại B"
+     },
+     "always_b": "always_B",
+     "always_s": "always_S",
+     "others": [],
+     "tests": [
+      {
+       "test": "Router v1 so với luôn B",
+       "label": "so với luôn B"
+      },
+      {
+       "test": "Router v1 so với luôn S",
+       "label": "so với luôn S"
+      }
+     ]
     }
    ],
    "notes": [],
@@ -262,12 +420,14 @@
           71.56,
           81.1
          ],
-         "tokens": 606.6
+         "tokens": 606.6,
+         "vs_b": 8.34
         },
         "bidlqa": {
          "score": 67.84,
          "ci": null,
-         "tokens": 2273.9
+         "tokens": 2273.9,
+         "vs_b": 6.24
         }
        }
       },
@@ -282,12 +442,14 @@
           62.87,
           73.34
          ],
-         "tokens": 135.8
+         "tokens": 135.8,
+         "vs_b": null
         },
         "bidlqa": {
          "score": 61.6,
          "ci": null,
-         "tokens": 810.0
+         "tokens": 810.0,
+         "vs_b": null
         }
        }
       },
@@ -302,12 +464,14 @@
           75.11,
           84.13
          ],
-         "tokens": 1046.0
+         "tokens": 1046.0,
+         "vs_b": 11.67
         },
         "bidlqa": {
          "score": 67.84,
          "ci": null,
-         "tokens": 1116.8
+         "tokens": 1116.8,
+         "vs_b": 6.24
         }
        }
       }
@@ -333,6 +497,30 @@
      "p_kind": "McNemar, Holm",
      "note": "",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "VMLU valid, câu mới (vòng 1)",
+     "table": 0,
+     "column": "vmlu",
+     "tried": {
+      "row": "v2",
+      "label": "Router v2: hỏi B hai lần, lệch thì S"
+     },
+     "always_b": "always_B",
+     "always_s": "always_S",
+     "others": [],
+     "tests": [
+      {
+       "test": "Router v2 so với luôn B, VMLU",
+       "label": "so với luôn B"
+      },
+      {
+       "test": "Router v2 so với luôn S, VMLU",
+       "label": "so với luôn S"
+      }
+     ]
     }
    ],
    "notes": [
@@ -392,12 +580,14 @@
         "vmlu": {
          "score": 81.33,
          "ci": null,
-         "tokens": 1002.7
+         "tokens": 1002.7,
+         "vs_b": 11.33
         },
         "vm14k": {
          "score": 54.33,
          "ci": null,
-         "tokens": 124.1
+         "tokens": 124.1,
+         "vs_b": 0.0
         },
         "mc": {
          "score": 67.83,
@@ -405,12 +595,14 @@
           63.99,
           71.45
          ],
-         "tokens": 563.4
+         "tokens": 563.4,
+         "vs_b": 5.66
         },
         "bidlqa": {
          "score": 66.52,
          "ci": null,
-         "tokens": 1190.0
+         "tokens": 1190.0,
+         "vs_b": 0.02
         }
        }
       },
@@ -422,12 +614,14 @@
         "vmlu": {
          "score": 76.67,
          "ci": null,
-         "tokens": 643.1
+         "tokens": 643.1,
+         "vs_b": 6.67
         },
         "vm14k": {
          "score": 61.67,
          "ci": null,
-         "tokens": 750.3
+         "tokens": 750.3,
+         "vs_b": 7.34
         },
         "mc": {
          "score": 69.17,
@@ -435,12 +629,14 @@
           65.36,
           72.73
          ],
-         "tokens": 696.7
+         "tokens": 696.7,
+         "vs_b": 7.0
         },
         "bidlqa": {
          "score": 66.96,
          "ci": null,
-         "tokens": 2370.8
+         "tokens": 2370.8,
+         "vs_b": 0.46
         }
        }
       },
@@ -452,12 +648,14 @@
         "vmlu": {
          "score": 70.0,
          "ci": null,
-         "tokens": 134.4
+         "tokens": 134.4,
+         "vs_b": null
         },
         "vm14k": {
          "score": 54.33,
          "ci": null,
-         "tokens": 124.1
+         "tokens": 124.1,
+         "vs_b": null
         },
         "mc": {
          "score": 62.17,
@@ -465,12 +663,14 @@
           58.22,
           65.96
          ],
-         "tokens": 129.2
+         "tokens": 129.2,
+         "vs_b": null
         },
         "bidlqa": {
          "score": 66.5,
          "ci": null,
-         "tokens": 861.5
+         "tokens": 861.5,
+         "vs_b": null
         }
        }
       },
@@ -482,12 +682,14 @@
         "vmlu": {
          "score": 81.33,
          "ci": null,
-         "tokens": 1002.7
+         "tokens": 1002.7,
+         "vs_b": 11.33
         },
         "vm14k": {
          "score": 61.33,
          "ci": null,
-         "tokens": 1131.2
+         "tokens": 1131.2,
+         "vs_b": 7.0
         },
         "mc": {
          "score": 71.33,
@@ -495,12 +697,14 @@
           67.59,
           74.81
          ],
-         "tokens": 1066.9
+         "tokens": 1066.9,
+         "vs_b": 9.16
         },
         "bidlqa": {
          "score": 66.52,
          "ci": null,
-         "tokens": 1190.0
+         "tokens": 1190.0,
+         "vs_b": 0.02
         }
        }
       }
@@ -526,6 +730,35 @@
      "p_kind": "McNemar, Holm",
      "note": "",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "Trắc nghiệm gộp (VMLU valid, VM14K), câu mới (vòng 1)",
+     "table": 0,
+     "column": "mc",
+     "tried": {
+      "row": "v3",
+      "label": "Router v3: tự chọn cách cho mỗi bộ"
+     },
+     "always_b": "always_B",
+     "always_s": "always_S",
+     "others": [
+      {
+       "row": "v2",
+       "label": "router v2"
+      }
+     ],
+     "tests": [
+      {
+       "test": "Router v3 so với router v2, trắc nghiệm gộp",
+       "label": "so với router v2"
+      },
+      {
+       "test": "Router v3 so với luôn S, trắc nghiệm gộp",
+       "label": "so với luôn S"
+      }
+     ]
     }
    ],
    "notes": [
@@ -570,7 +803,8 @@
           57.57,
           66.42
          ],
-         "tokens": 3946.1
+         "tokens": 3946.1,
+         "vs_b": 47.55
         }
        }
       },
@@ -585,7 +819,8 @@
           55.4,
           63.66
          ],
-         "tokens": 1442.5
+         "tokens": 1442.5,
+         "vs_b": 45.19
         }
        }
       },
@@ -600,7 +835,8 @@
           56.7,
           65.33
          ],
-         "tokens": 1920.2
+         "tokens": 1920.2,
+         "vs_b": 46.55
         }
        }
       },
@@ -615,7 +851,8 @@
           12.17,
           16.77
          ],
-         "tokens": 161.4
+         "tokens": 161.4,
+         "vs_b": null
         }
        }
       },
@@ -630,7 +867,8 @@
           62.67,
           70.37
          ],
-         "tokens": 867.6
+         "tokens": 867.6,
+         "vs_b": 52.13
         }
        }
       }
@@ -662,12 +900,14 @@
         "own_passage_in_top_2": {
          "score": 67.91,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 53.55
         },
         "own_passage_missed": {
          "score": 32.05,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 17.2
         }
        }
       },
@@ -679,12 +919,14 @@
         "own_passage_in_top_2": {
          "score": 68.13,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 53.77
         },
         "own_passage_missed": {
          "score": 37.24,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 22.39
         }
        }
       },
@@ -696,12 +938,14 @@
         "own_passage_in_top_2": {
          "score": 14.36,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "own_passage_missed": {
          "score": 14.85,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -713,12 +957,14 @@
         "own_passage_in_top_2": {
          "score": 67.94,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 53.58
         },
         "own_passage_missed": {
          "score": 62.08,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 47.23
         }
        }
       }
@@ -744,6 +990,43 @@
      "p_kind": "đổi dấu, Holm",
      "note": "",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "ViBidLQA train, không kèm đoạn văn gốc (vòng 1)",
+     "table": 0,
+     "column": "bidlqa",
+     "tried": {
+      "row": "router",
+      "label": "Router K: hỏi K hai lần, lệch thì KS"
+     },
+     "always_b": "always_B",
+     "always_s": null,
+     "others": [
+      {
+       "row": "always_K",
+       "label": "luôn K"
+      },
+      {
+       "row": "always_KS",
+       "label": "luôn KS"
+      },
+      {
+       "row": "O",
+       "label": "O: đoạn gốc (trần)"
+      }
+     ],
+     "tests": [
+      {
+       "test": "Router so với luôn K",
+       "label": "so với luôn K"
+      },
+      {
+       "test": "Router so với luôn KS",
+       "label": "so với luôn KS"
+      }
+     ]
     }
    ],
    "notes": [],
@@ -801,22 +1084,26 @@
         "squad": {
          "score": 92.79,
          "ci": null,
-         "tokens": 443.7
+         "tokens": 443.7,
+         "vs_b": null
         },
         "drop": {
          "score": 54.54,
          "ci": null,
-         "tokens": 327.1
+         "tokens": 327.1,
+         "vs_b": null
         },
         "bidlqa": {
          "score": 64.63,
          "ci": null,
-         "tokens": 813.5
+         "tokens": 813.5,
+         "vs_b": null
         },
         "pooled": {
          "score": 68.14,
          "ci": null,
-         "tokens": 647.0
+         "tokens": 647.0,
+         "vs_b": null
         }
        }
       },
@@ -828,22 +1115,26 @@
         "squad": {
          "score": 89.52,
          "ci": null,
-         "tokens": 573.0
+         "tokens": 573.0,
+         "vs_b": -3.27
         },
         "drop": {
          "score": 54.61,
          "ci": null,
-         "tokens": 484.6
+         "tokens": 484.6,
+         "vs_b": 0.07
         },
         "bidlqa": {
          "score": 62.67,
          "ci": null,
-         "tokens": 994.0
+         "tokens": 994.0,
+         "vs_b": -1.96
         },
         "pooled": {
          "score": 66.33,
          "ci": null,
-         "tokens": 813.1
+         "tokens": 813.1,
+         "vs_b": -1.81
         }
        }
       },
@@ -855,22 +1146,26 @@
         "squad": {
          "score": 89.25,
          "ci": null,
-         "tokens": 679.4
+         "tokens": 679.4,
+         "vs_b": -3.54
         },
         "drop": {
          "score": 75.91,
          "ci": null,
-         "tokens": 764.8
+         "tokens": 764.8,
+         "vs_b": 21.37
         },
         "bidlqa": {
          "score": 65.88,
          "ci": null,
-         "tokens": 1155.1
+         "tokens": 1155.1,
+         "vs_b": 1.25
         },
         "pooled": {
          "score": 72.37,
          "ci": null,
-         "tokens": 986.8
+         "tokens": 986.8,
+         "vs_b": 4.23
         }
        }
       }
@@ -934,6 +1229,21 @@
      "primary": false
     }
    ],
+   "overview": [
+    {
+     "label": "Đọc hiểu gộp (Vi-SQuAD, Vi-DROP, ViBidLQA test), tập wide",
+     "table": 0,
+     "column": "pooled",
+     "tried": {
+      "row": "Q",
+      "label": "Q: trích câu trong đoạn rồi đáp"
+     },
+     "always_b": "B",
+     "always_s": "S",
+     "others": [],
+     "tests": []
+    }
+   ],
    "notes": [],
    "sources": [
     {
@@ -971,7 +1281,8 @@
         "bidlqa": {
          "score": 66.16,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 1.53
         }
        }
       },
@@ -983,7 +1294,8 @@
         "bidlqa": {
          "score": 66.25,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 1.62
         }
        }
       },
@@ -995,7 +1307,8 @@
         "bidlqa": {
          "score": 65.88,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 1.25
         }
        }
       },
@@ -1007,7 +1320,8 @@
         "bidlqa": {
          "score": 64.63,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -1019,7 +1333,8 @@
         "bidlqa": {
          "score": 62.67,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -1.96
         }
        }
       },
@@ -1031,7 +1346,8 @@
         "bidlqa": {
          "score": 67.38,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 2.75
         }
        }
       }
@@ -1063,6 +1379,39 @@
      "p_kind": "đổi dấu",
      "note": "",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "ViBidLQA test, câu dùng để thiết kế",
+     "table": 0,
+     "column": "bidlqa",
+     "tried": {
+      "row": "muse_grouping",
+      "label": "Router Muse: LLM đọc đoạn văn và câu hỏi, chọn cách hỏi"
+     },
+     "always_b": "always_B",
+     "always_s": "always_S",
+     "others": [
+      {
+       "row": "keyword_grouping",
+       "label": "chia theo từ khóa"
+      },
+      {
+       "row": "per_item_bound",
+       "label": "trần từng câu"
+      }
+     ],
+     "tests": [
+      {
+       "test": "Router Muse so với luôn S",
+       "label": "so với luôn S"
+      },
+      {
+       "test": "Router Muse so với chia bằng từ khóa",
+       "label": "so với chia bằng từ khóa"
+      }
+     ]
     }
    ],
    "notes": [
@@ -1110,12 +1459,14 @@
         "wrong": {
          "score": 36.96,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "right": {
          "score": 94.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -1127,12 +1478,14 @@
         "wrong": {
          "score": 82.61,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 45.65
         },
         "right": {
          "score": 96.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 2.0
         }
        }
       }
@@ -1164,6 +1517,44 @@
      "p_kind": "đổi dấu",
      "note": "",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "Legal MC, câu Qwen từng sai",
+     "table": 0,
+     "column": "wrong",
+     "tried": {
+      "row": "O",
+      "label": "O: kèm đúng điều luật"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [],
+     "tests": [
+      {
+       "test": "O so với B, câu từng sai",
+       "label": "so với B"
+      }
+     ]
+    },
+    {
+     "label": "Legal MC, câu Qwen vốn đúng",
+     "table": 0,
+     "column": "right",
+     "tried": {
+      "row": "O",
+      "label": "O: kèm đúng điều luật"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [],
+     "tests": [
+      {
+       "test": "O so với B, câu vốn đúng",
+       "label": "so với B"
+      }
+     ]
     }
    ],
    "notes": [
@@ -1217,17 +1608,20 @@
         "all": {
          "score": 84.33,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "wrong": {
          "score": 32.61,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "outside": {
          "score": 96.15,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -1239,17 +1633,20 @@
         "all": {
          "score": 84.7,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 0.37
         },
         "wrong": {
          "score": 52.17,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 19.56
         },
         "outside": {
          "score": 95.51,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -0.64
         }
        }
       },
@@ -1261,7 +1658,8 @@
         "wrong": {
          "score": 84.78,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 52.17
         }
        }
       }
@@ -1293,6 +1691,49 @@
      "p_kind": "đổi dấu",
      "note": "",
      "primary": false
+    }
+   ],
+   "overview": [
+    {
+     "label": "Legal MC, cả bộ",
+     "table": 0,
+     "column": "all",
+     "tried": {
+      "row": "K",
+      "label": "K: kèm 2 điều luật BM25 tự tìm"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [],
+     "tests": [
+      {
+       "test": "K so với B, cả bộ",
+       "label": "so với B"
+      }
+     ]
+    },
+    {
+     "label": "Legal MC, câu từng sai (nhóm MC-100)",
+     "table": 0,
+     "column": "wrong",
+     "tried": {
+      "row": "K",
+      "label": "K: kèm 2 điều luật BM25 tự tìm"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [
+      {
+       "row": "O",
+       "label": "O (trần)"
+      }
+     ],
+     "tests": [
+      {
+       "test": "K so với B, câu từng sai",
+       "label": "so với B"
+      }
+     ]
     }
    ],
    "notes": [
@@ -1346,17 +1787,20 @@
         "drop": {
          "score": 75.78,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 23.34
         },
         "squad": {
          "score": 90.7,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -1.53
         },
         "pooled": {
          "score": 83.24,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 10.9
         }
        }
       },
@@ -1368,17 +1812,20 @@
         "drop": {
          "score": 70.27,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 17.83
         },
         "squad": {
          "score": 94.03,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 1.8
         },
         "pooled": {
          "score": 82.15,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 9.81
         }
        }
       },
@@ -1390,17 +1837,20 @@
         "drop": {
          "score": 52.44,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "squad": {
          "score": 92.23,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "pooled": {
          "score": 72.34,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -1412,17 +1862,20 @@
         "drop": {
          "score": 75.99,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 23.55
         },
         "squad": {
          "score": 89.13,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -3.1
         },
         "pooled": {
          "score": 82.56,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 10.22
         }
        }
       },
@@ -1434,17 +1887,20 @@
         "drop": {
          "score": 55.75,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 3.31
         },
         "squad": {
          "score": 89.37,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -2.86
         },
         "pooled": {
          "score": 72.56,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 0.22
         }
        }
       },
@@ -1456,17 +1912,20 @@
         "drop": {
          "score": 73.41,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "squad": {
          "score": 91.3,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "pooled": {
          "score": 82.35,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -1478,17 +1937,20 @@
         "drop": {
          "score": 84.01,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 31.57
         },
         "squad": {
          "score": 96.86,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 4.63
         },
         "pooled": {
          "score": 90.44,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 18.1
         }
        }
       }
@@ -1508,6 +1970,35 @@
      "p_kind": "đổi dấu",
      "note": "",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "Vi-DROP và Vi-SQuAD, câu thiết kế (phát lại câu trả lời đã lưu)",
+     "table": 0,
+     "column": "pooled",
+     "tried": {
+      "row": "critic_loop",
+      "label": "Vòng lặp có Muse chấm câu trả lời"
+     },
+     "always_b": "always_B",
+     "always_s": "always_S",
+     "others": [
+      {
+       "row": "rule_loop",
+       "label": "vòng lặp đơn giản"
+      },
+      {
+       "row": "bound",
+       "label": "trần từng câu"
+      }
+     ],
+     "tests": [
+      {
+       "test": "Vòng lặp có Muse chấm so với vòng lặp đơn giản",
+       "label": "so với vòng lặp đơn giản"
+      }
+     ]
     }
    ],
    "notes": [
@@ -1567,22 +2058,26 @@
         "vmlu": {
          "score": 80.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vm14k": {
          "score": 78.33,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "bidlqa": {
          "score": 58.53,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "bidlqa_v3": {
          "score": 72.03,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -1594,22 +2089,26 @@
         "vmlu": {
          "score": 76.67,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -3.33
         },
         "vm14k": {
          "score": 83.33,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 5.0
         },
         "bidlqa": {
          "score": 79.5,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 20.97
         },
         "bidlqa_v3": {
          "score": 79.5,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 7.47
         }
        }
       },
@@ -1621,22 +2120,26 @@
         "vmlu": {
          "score": 83.33,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 3.33
         },
         "vm14k": {
          "score": 86.67,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 8.34
         },
         "bidlqa": {
          "score": 78.77,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 20.24
         },
         "bidlqa_v3": {
          "score": 79.8,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 7.77
         }
        }
       },
@@ -1648,22 +2151,26 @@
         "vmlu": {
          "score": 60.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vm14k": {
          "score": 76.67,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "bidlqa": {
          "score": 59.08,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "bidlqa_v3": {
          "score": 59.08,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       },
@@ -1675,22 +2182,26 @@
         "vmlu": {
          "score": 75.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 15.0
         },
         "vm14k": {
          "score": 70.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": -6.67
         },
         "bidlqa": {
          "score": 66.77,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 7.69
         },
         "bidlqa_v3": {
          "score": 66.77,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 7.69
         }
        }
       },
@@ -1702,22 +2213,26 @@
         "vmlu": {
          "score": 65.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 5.0
         },
         "vm14k": {
          "score": 76.67,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 0.0
         },
         "bidlqa": {
          "score": 64.22,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 5.14
         },
         "bidlqa_v3": {
          "score": 64.22,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": 5.14
         }
        }
       }
@@ -1773,6 +2288,49 @@
      "p_kind": "đổi dấu",
      "note": "",
      "primary": false
+    }
+   ],
+   "overview": [
+    {
+     "label": "VMLU valid, 60 câu hiệu chỉnh của MC-95",
+     "table": 0,
+     "column": "vmlu",
+     "tried": {
+      "row": "reference-S1",
+      "label": "S · Qwen3.5-9B"
+     },
+     "always_b": "reference-B1",
+     "always_s": null,
+     "others": [
+      {
+       "row": "reference-rule_loop",
+       "label": "vòng lặp đơn giản"
+      }
+     ],
+     "tests": []
+    },
+    {
+     "label": "VMLU valid, 60 câu hiệu chỉnh của MC-95",
+     "table": 0,
+     "column": "vmlu",
+     "tried": {
+      "row": "student-S1",
+      "label": "S · MiMo V2.6 Flash"
+     },
+     "always_b": "student-B1",
+     "always_s": null,
+     "others": [
+      {
+       "row": "student-rule_loop",
+       "label": "vòng lặp đơn giản"
+      }
+     ],
+     "tests": [
+      {
+       "test": "Tương tác: lợi của S ở MiMo trừ lợi của S ở Qwen, VMLU valid",
+       "label": "lợi của S, MiMo trừ Qwen"
+      }
+     ]
     }
    ],
    "notes": [
@@ -1831,17 +2389,20 @@
         "vmlu": {
          "score": 73.6,
          "ci": null,
-         "tokens": 120.0
+         "tokens": 120.0,
+         "vs_b": null
         },
         "vm14k": {
          "score": 64.33,
          "ci": null,
-         "tokens": 116.1
+         "tokens": 116.1,
+         "vs_b": null
         },
         "pooled": {
          "score": 68.99,
          "ci": null,
-         "tokens": 118.0
+         "tokens": 118.0,
+         "vs_b": null
         }
        }
       },
@@ -1853,17 +2414,20 @@
         "vmlu": {
          "score": 80.53,
          "ci": null,
-         "tokens": 1032.5
+         "tokens": 1032.5,
+         "vs_b": 6.93
         },
         "vm14k": {
          "score": 72.0,
          "ci": null,
-         "tokens": 1637.7
+         "tokens": 1637.7,
+         "vs_b": 7.67
         },
         "pooled": {
          "score": 76.29,
          "ci": null,
-         "tokens": 1333.6
+         "tokens": 1333.6,
+         "vs_b": 7.3
         }
        }
       },
@@ -1875,17 +2439,20 @@
         "vmlu": {
          "score": 79.54,
          "ci": null,
-         "tokens": 996.1
+         "tokens": 996.1,
+         "vs_b": 5.94
         },
         "vm14k": {
          "score": 68.33,
          "ci": null,
-         "tokens": 1103.0
+         "tokens": 1103.0,
+         "vs_b": 4.0
         },
         "pooled": {
          "score": 73.96,
          "ci": null,
-         "tokens": 1049.3
+         "tokens": 1049.3,
+         "vs_b": 4.97
         }
        }
       },
@@ -1897,17 +2464,20 @@
         "vmlu": {
          "score": 82.51,
          "ci": null,
-         "tokens": 2933.4
+         "tokens": 2933.4,
+         "vs_b": 8.91
         },
         "vm14k": {
          "score": 70.33,
          "ci": null,
-         "tokens": 3339.2
+         "tokens": 3339.2,
+         "vs_b": 6.0
         },
         "pooled": {
          "score": 76.45,
          "ci": null,
-         "tokens": 3135.3
+         "tokens": 3135.3,
+         "vs_b": 7.46
         }
        }
       }
@@ -1945,17 +2515,20 @@
         "vmlu": {
          "score": 81.85,
          "ci": null,
-         "tokens": 362.7
+         "tokens": 362.7,
+         "vs_b": null
         },
         "vm14k": {
          "score": 70.67,
          "ci": null,
-         "tokens": 484.4
+         "tokens": 484.4,
+         "vs_b": null
         },
         "pooled": {
          "score": 76.29,
          "ci": null,
-         "tokens": 423.3
+         "tokens": 423.3,
+         "vs_b": null
         }
        }
       },
@@ -1967,17 +2540,20 @@
         "vmlu": {
          "score": 83.83,
          "ci": null,
-         "tokens": 1020.9
+         "tokens": 1020.9,
+         "vs_b": 1.98
         },
         "vm14k": {
          "score": 73.0,
          "ci": null,
-         "tokens": 1762.1
+         "tokens": 1762.1,
+         "vs_b": 2.33
         },
         "pooled": {
          "score": 78.44,
          "ci": null,
-         "tokens": 1389.7
+         "tokens": 1389.7,
+         "vs_b": 2.15
         }
        }
       },
@@ -1989,17 +2565,20 @@
         "vmlu": {
          "score": 83.83,
          "ci": null,
-         "tokens": 944.2
+         "tokens": 944.2,
+         "vs_b": 1.98
         },
         "vm14k": {
          "score": 73.67,
          "ci": null,
-         "tokens": 1332.3
+         "tokens": 1332.3,
+         "vs_b": 3.0
         },
         "pooled": {
          "score": 78.77,
          "ci": null,
-         "tokens": 1137.3
+         "tokens": 1137.3,
+         "vs_b": 2.48
         }
        }
       },
@@ -2011,17 +2590,20 @@
         "vmlu": {
          "score": 86.47,
          "ci": null,
-         "tokens": 3024.1
+         "tokens": 3024.1,
+         "vs_b": 4.62
         },
         "vm14k": {
          "score": 74.0,
          "ci": null,
-         "tokens": 4220.0
+         "tokens": 4220.0,
+         "vs_b": 3.33
         },
         "pooled": {
          "score": 80.27,
          "ci": null,
-         "tokens": 3619.1
+         "tokens": 3619.1,
+         "vs_b": 3.98
         }
        }
       }
@@ -2053,12 +2635,14 @@
         "qwen": {
          "score": 15.9,
          "ci": null,
-         "tokens": 160.2
+         "tokens": 160.2,
+         "vs_b": null
         },
         "mimo": {
          "score": 23.9,
          "ci": null,
-         "tokens": 549.5
+         "tokens": 549.5,
+         "vs_b": null
         }
        }
       },
@@ -2070,12 +2654,14 @@
         "qwen": {
          "score": 55.2,
          "ci": null,
-         "tokens": 1425.1
+         "tokens": 1425.1,
+         "vs_b": 39.3
         },
         "mimo": {
          "score": 64.17,
          "ci": null,
-         "tokens": 610.4
+         "tokens": 610.4,
+         "vs_b": 40.27
         }
        }
       },
@@ -2087,12 +2673,14 @@
         "qwen": {
          "score": 62.31,
          "ci": null,
-         "tokens": 3561.6
+         "tokens": 3561.6,
+         "vs_b": 46.41
         },
         "mimo": {
          "score": 60.28,
          "ci": null,
-         "tokens": 1314.2
+         "tokens": 1314.2,
+         "vs_b": 36.38
         }
        }
       },
@@ -2104,12 +2692,14 @@
         "qwen": {
          "score": 62.1,
          "ci": null,
-         "tokens": 873.7
+         "tokens": 873.7,
+         "vs_b": 46.2
         },
         "mimo": {
          "score": 73.46,
          "ci": null,
-         "tokens": 399.2
+         "tokens": 399.2,
+         "vs_b": 49.56
         }
        }
       }
@@ -2183,6 +2773,116 @@
      "p_kind": "đổi dấu, Holm",
      "note": "",
      "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "Trắc nghiệm câu mới (VMLU dev, VM14K)",
+     "table": 0,
+     "column": "pooled",
+     "tried": {
+      "row": "loop",
+      "label": "Vòng tự sửa · Qwen3.5-9B"
+     },
+     "always_b": "always_B",
+     "always_s": "always_S",
+     "others": [
+      {
+       "row": "always_vote",
+       "label": "bỏ phiếu 3 lần S"
+      }
+     ],
+     "tests": [
+      {
+       "test": "Qwen3.5-9B: vòng tự sửa so với hỏi thẳng (gộp)",
+       "label": "so với luôn B"
+      },
+      {
+       "test": "Qwen3.5-9B: vòng tự sửa so với luôn S (cần không kém quá 1 điểm và ít token hơn)",
+       "label": "so với luôn S (cần không kém và ít token hơn)"
+      }
+     ]
+    },
+    {
+     "label": "Trắc nghiệm câu mới (VMLU dev, VM14K)",
+     "table": 1,
+     "column": "pooled",
+     "tried": {
+      "row": "loop",
+      "label": "Vòng tự sửa · MiMo V2.6 Flash"
+     },
+     "always_b": "always_B",
+     "always_s": "always_S",
+     "others": [
+      {
+       "row": "always_vote",
+       "label": "bỏ phiếu 3 lần S"
+      }
+     ],
+     "tests": [
+      {
+       "test": "MiMo V2.6 Flash: vòng tự sửa so với hỏi thẳng (gộp)",
+       "label": "so với luôn B"
+      },
+      {
+       "test": "MiMo V2.6 Flash: vòng tự sửa so với luôn S (cần không kém quá 1 điểm và ít token hơn)",
+       "label": "so với luôn S (cần không kém và ít token hơn)"
+      }
+     ]
+    },
+    {
+     "label": "ViBidLQA train chưa dùng, hỏi không kèm đoạn văn",
+     "table": 2,
+     "column": "qwen",
+     "tried": {
+      "row": "K5",
+      "label": "K5: kèm 5 khoản luật BM25 tìm · Qwen3.5-9B"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [
+      {
+       "row": "K2",
+       "label": "K2: 2 khoản"
+      },
+      {
+       "row": "O",
+       "label": "O: khoản gốc (trần)"
+      }
+     ],
+     "tests": [
+      {
+       "test": "Qwen3.5-9B: kèm 5 khoản so với 2 khoản",
+       "label": "so với K2"
+      }
+     ]
+    },
+    {
+     "label": "ViBidLQA train chưa dùng, hỏi không kèm đoạn văn",
+     "table": 2,
+     "column": "mimo",
+     "tried": {
+      "row": "K5",
+      "label": "K5: kèm 5 khoản luật BM25 tìm · MiMo V2.6 Flash"
+     },
+     "always_b": "B",
+     "always_s": null,
+     "others": [
+      {
+       "row": "K2",
+       "label": "K2: 2 khoản"
+      },
+      {
+       "row": "O",
+       "label": "O: khoản gốc (trần)"
+      }
+     ],
+     "tests": [
+      {
+       "test": "MiMo V2.6 Flash: kèm 5 khoản so với 2 khoản",
+       "label": "so với K2"
+      }
+     ]
     }
    ],
    "explainers": [
@@ -2463,37 +3163,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 69.89,
          "ci": null,
-         "tokens": 124.1
+         "tokens": 124.1,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 91.1,
          "ci": null,
-         "tokens": 222.8
+         "tokens": 222.8,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 90.67,
          "ci": null,
-         "tokens": 301.8
+         "tokens": 301.8,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 89.74,
          "ci": null,
-         "tokens": 445.9
+         "tokens": 445.9,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 54.27,
          "ci": null,
-         "tokens": 328.5
+         "tokens": 328.5,
+         "vs_b": null
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 64.99,
          "ci": null,
-         "tokens": 818.0
+         "tokens": 818.0,
+         "vs_b": null
         },
         "vmlu-dev": {
          "score": 73.6,
          "ci": null,
-         "tokens": 120.0
+         "tokens": 120.0,
+         "vs_b": null
         }
        }
       },
@@ -2505,37 +3212,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 81.99,
          "ci": null,
-         "tokens": 1265.0
+         "tokens": 1265.0,
+         "vs_b": 12.1
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 86.99,
          "ci": null,
-         "tokens": 1106.9
+         "tokens": 1106.9,
+         "vs_b": -4.11
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 89.33,
          "ci": null,
-         "tokens": 583.1
+         "tokens": 583.1,
+         "vs_b": -1.34
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 90.03,
          "ci": null,
-         "tokens": 1254.7
+         "tokens": 1254.7,
+         "vs_b": 0.29
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 69.66,
          "ci": null,
-         "tokens": 1562.3
+         "tokens": 1562.3,
+         "vs_b": 15.39
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 69.74,
          "ci": null,
-         "tokens": 3211.1
+         "tokens": 3211.1,
+         "vs_b": 4.75
         },
         "vmlu-dev": {
          "score": 80.53,
          "ci": null,
-         "tokens": 1032.5
+         "tokens": 1032.5,
+         "vs_b": 6.93
         }
        }
       },
@@ -2547,37 +3261,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 80.38,
          "ci": null,
-         "tokens": 1021.5
+         "tokens": 1021.5,
+         "vs_b": 10.49
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 82.88,
          "ci": null,
-         "tokens": 1211.3
+         "tokens": 1211.3,
+         "vs_b": -8.22
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 83.33,
          "ci": null,
-         "tokens": 877.8
+         "tokens": 877.8,
+         "vs_b": -7.34
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 89.81,
          "ci": null,
-         "tokens": 691.9
+         "tokens": 691.9,
+         "vs_b": 0.07
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 75.41,
          "ci": null,
-         "tokens": 719.4
+         "tokens": 719.4,
+         "vs_b": 21.14
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 67.63,
          "ci": null,
-         "tokens": 1165.1
+         "tokens": 1165.1,
+         "vs_b": 2.64
         },
         "vmlu-dev": {
          "score": 79.54,
          "ci": null,
-         "tokens": 996.1
+         "tokens": 996.1,
+         "vs_b": 5.94
         }
        }
       },
@@ -2589,37 +3310,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 81.99,
          "ci": null,
-         "tokens": 3031.0
+         "tokens": 3031.0,
+         "vs_b": 12.1
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 84.93,
          "ci": null,
-         "tokens": 3700.9
+         "tokens": 3700.9,
+         "vs_b": -6.17
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 84.67,
          "ci": null,
-         "tokens": 2693.2
+         "tokens": 2693.2,
+         "vs_b": -6.0
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 89.19,
          "ci": null,
-         "tokens": 2085.4
+         "tokens": 2085.4,
+         "vs_b": -0.55
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 77.26,
          "ci": null,
-         "tokens": 2202.9
+         "tokens": 2202.9,
+         "vs_b": 22.99
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 69.03,
          "ci": null,
-         "tokens": 3500.7
+         "tokens": 3500.7,
+         "vs_b": 4.04
         },
         "vmlu-dev": {
          "score": 82.51,
          "ci": null,
-         "tokens": 2933.4
+         "tokens": 2933.4,
+         "vs_b": 8.91
         }
        }
       },
@@ -2631,37 +3359,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 68.55,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 83.56,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 91.33,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 90.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 54.58,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 66.01,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vmlu-dev": {
          "score": 69.97,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       }
@@ -2723,37 +3458,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 77.82,
          "ci": null,
-         "tokens": 382.7
+         "tokens": 382.7,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 91.78,
          "ci": null,
-         "tokens": 453.4
+         "tokens": 453.4,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 89.33,
          "ci": null,
-         "tokens": 494.1
+         "tokens": 494.1,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 88.95,
          "ci": null,
-         "tokens": 518.7
+         "tokens": 518.7,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 53.99,
          "ci": null,
-         "tokens": 477.4
+         "tokens": 477.4,
+         "vs_b": null
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 72.92,
          "ci": null,
-         "tokens": 389.1
+         "tokens": 389.1,
+         "vs_b": null
         },
         "vmlu-dev": {
          "score": 81.85,
          "ci": null,
-         "tokens": 362.7
+         "tokens": 362.7,
+         "vs_b": null
         }
        }
       },
@@ -2765,37 +3507,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 83.2,
          "ci": null,
-         "tokens": 1216.8
+         "tokens": 1216.8,
+         "vs_b": 5.38
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 92.47,
          "ci": null,
-         "tokens": 1169.3
+         "tokens": 1169.3,
+         "vs_b": 0.69
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 88.67,
          "ci": null,
-         "tokens": 1033.9
+         "tokens": 1033.9,
+         "vs_b": -0.66
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 91.29,
          "ci": null,
-         "tokens": 1489.1
+         "tokens": 1489.1,
+         "vs_b": 2.34
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 76.02,
          "ci": null,
-         "tokens": 2233.5
+         "tokens": 2233.5,
+         "vs_b": 22.03
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 78.08,
          "ci": null,
-         "tokens": 1405.8
+         "tokens": 1405.8,
+         "vs_b": 5.16
         },
         "vmlu-dev": {
          "score": 83.83,
          "ci": null,
-         "tokens": 1020.9
+         "tokens": 1020.9,
+         "vs_b": 1.98
         }
        }
       },
@@ -2807,37 +3556,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 82.39,
          "ci": null,
-         "tokens": 1067.1
+         "tokens": 1067.1,
+         "vs_b": 4.57
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 91.78,
          "ci": null,
-         "tokens": 1258.8
+         "tokens": 1258.8,
+         "vs_b": 0.0
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 89.33,
          "ci": null,
-         "tokens": 931.9
+         "tokens": 931.9,
+         "vs_b": 0.0
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 90.56,
          "ci": null,
-         "tokens": 752.9
+         "tokens": 752.9,
+         "vs_b": 1.61
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 77.61,
          "ci": null,
-         "tokens": 821.2
+         "tokens": 821.2,
+         "vs_b": 23.62
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 76.6,
          "ci": null,
-         "tokens": 696.5
+         "tokens": 696.5,
+         "vs_b": 3.68
         },
         "vmlu-dev": {
          "score": 83.83,
          "ci": null,
-         "tokens": 944.2
+         "tokens": 944.2,
+         "vs_b": 1.98
         }
        }
       },
@@ -2849,37 +3605,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 85.08,
          "ci": null,
-         "tokens": 3108.9
+         "tokens": 3108.9,
+         "vs_b": 7.26
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 92.47,
          "ci": null,
-         "tokens": 3809.7
+         "tokens": 3809.7,
+         "vs_b": 0.69
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 90.67,
          "ci": null,
-         "tokens": 2772.6
+         "tokens": 2772.6,
+         "vs_b": 1.34
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 90.51,
          "ci": null,
-         "tokens": 2249.1
+         "tokens": 2249.1,
+         "vs_b": 1.56
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 78.57,
          "ci": null,
-         "tokens": 2404.8
+         "tokens": 2404.8,
+         "vs_b": 24.58
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 77.55,
          "ci": null,
-         "tokens": 2082.7
+         "tokens": 2082.7,
+         "vs_b": 4.63
         },
         "vmlu-dev": {
          "score": 86.47,
          "ci": null,
-         "tokens": 3024.1
+         "tokens": 3024.1,
+         "vs_b": 4.62
         }
        }
       },
@@ -2891,37 +3654,44 @@
         "vi-multimodel-v1-vmlu-valid": {
          "score": 79.84,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-mc-146": {
          "score": 89.73,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-legal-nli-150": {
          "score": 88.0,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-squad-200": {
          "score": 86.83,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-vi-drop-200": {
          "score": 58.38,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vi-multimodel-v1-bidlqa-test": {
          "score": 75.63,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         },
         "vmlu-dev": {
          "score": 81.85,
          "ci": null,
-         "tokens": null
+         "tokens": null,
+         "vs_b": null
         }
        }
       }
@@ -3039,6 +3809,7 @@
      "primary": true
     }
    ],
+   "overview": [],
    "explainers": [
     {
      "id": "vote-3s",
