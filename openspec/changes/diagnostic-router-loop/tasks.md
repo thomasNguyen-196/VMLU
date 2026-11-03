@@ -131,6 +131,12 @@
   - **Against always-S.** The loop is above S on VMLU valid, Legal MC, Legal NLI and ViBidLQA test for Qwen, and below S on Vi-DROP (−5.8, −10.4 to −1.3). On Vi-DROP, two agreeing B answers are often agreeing wrong answers, and the loop keeps them.
   - **VMLU dev (MC-104).** Qwen 73.6 → 80.5; MiMo 81.9 → 83.8.)
 
+- [ ] 2.8 (added 2026-11-03, at the owner's request) MC-108: the same before and after for two more students, Muse Spark 1.3 and Muse Spark 1.2, on the seven columns of the /table before-and-after table (VMLU dev 303 and the six main-v1 datasets). Both students answer B twice and S three times on every item; the loop is MC-105's MiMo loop, unchanged, with nothing fitted to Muse.
+  - **Build.** `diagnostic_table_loop_muse` holds the configuration, the items (MC-105's checked main-v1 items and MC-104's VMLU dev items) and the two frozen manifests; it imports MC-105's module unchanged. `run_table_loop_muse` sends the requests on the direct OpenCode Go Responses route. `analyze_table_loop_muse` is the registered analysis; it reuses MC-105's replay and tests.
+  - **Verify.** `test_table_loop_muse` passes. Every attempt is byte for byte MiMo's row of MC-104 or MC-105. The offline preflight passes every gate for both students with `endpoint_calls=0`.
+
+  (2026-11-03: configuration `270e66e9…`, manifests Muse Spark 1.3 `fac70c51…` and Muse Spark 1.2 `cebeb5bd…` (11,730 attempts each), card MC-108. Both preflights pass all four gates offline, and 12 tests pass.)
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).

@@ -1,0 +1,132 @@
+{
+ "loop_id": "table-loop-muse-v1",
+ "protocol_id": "vmlu-diagnostic-table-loop-muse",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-loop, decision 12 (MC-105's loop), applied to two more students",
+ "purpose": "Before and after for Muse Spark 1.3 and Muse Spark 1.2 on the seven columns of the /table before-and-after table: the six main-v1 datasets with local gold and VMLU dev. Each student answers every round and writes every final answer. The loop is MC-105's loop for MiMo, unchanged: it has no parameter fitted to either Muse student, so the card shows how the loop carries over to two stronger students. The items were used to design the loop on Qwen and MiMo (MC-90 to MC-105), so the numbers describe the familiar benchmark, not held-out evidence.",
+ "items": {
+  "source": "the frozen vi-multimodel main-v1 manifest data/vi_multimodel_v1/main_v1.json (the items and prompts of the /table runs), and VMLU dev 303 built by the frozen loader as in MC-104",
+  "main_manifest_sha256": "0d413341f1fceea2e131e3a7fe7b73032e31303c8935ce5fba93c5f40b126551",
+  "datasets": {
+   "vi-multimodel-v1-vmlu-valid": 744,
+   "vi-multimodel-v1-legal-mc-146": 146,
+   "vi-multimodel-v1-legal-nli-150": 150,
+   "vi-multimodel-v1-vi-squad-200": 200,
+   "vi-multimodel-v1-vi-drop-200": 200,
+   "vi-multimodel-v1-bidlqa-test": 603
+  },
+  "vmlu_dev": {
+   "dataset_id": "vmlu-mqa-dev",
+   "n": 303,
+   "source": "vmlu_mqa_v1.5/dev.jsonl through vi_multimodel._load_vmlu('dev'), the items and prompts of MC-104"
+  },
+  "families": {
+   "multiple_choice": ["vmlu-mqa-dev", "vi-multimodel-v1-vmlu-valid", "vi-multimodel-v1-legal-mc-146", "vi-multimodel-v1-legal-nli-150"],
+   "reading": ["vi-multimodel-v1-vi-squad-200", "vi-multimodel-v1-vi-drop-200", "vi-multimodel-v1-bidlqa-test"]
+  }
+ },
+ "arms": {
+  "muse13": {
+   "multiple_choice": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"],
+   "reading": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"]
+  },
+  "muse12": {
+   "multiple_choice": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"],
+   "reading": ["B-r1", "B-r2", "S-r1", "S-r2", "S-r3"]
+  }
+ },
+ "arm_meaning": {
+  "B": "the frozen main-v1 prompt, byte for byte the prompt of the /table runs (VMLU dev: the frozen VMLU prompt of MC-104)",
+  "S": "the campaign step-by-step template of data/diagnostic_prospective_v1/prompt_templates_v1.json, as in MC-90 to MC-105"
+ },
+ "students": {
+  "muse13": {
+   "profile_id": "muse-spark-1-3-contributor",
+   "model_id": "muse-spark-1.3-contributor",
+   "display_name": "Muse Spark 1.3",
+   "route_profile": "muse-spark-1-3-contributor",
+   "provider": "OpenCode Go",
+   "endpoint_host": "opencode.ai",
+   "api_protocol": "openai-responses",
+   "stream": false,
+   "system_prompt": "Answer the user's question.",
+   "max_output_tokens": 20000,
+   "timeout_seconds": 300,
+   "sdk_retries": 0,
+   "max_in_flight": 8,
+   "stop_after_timeouts": 4,
+   "budget_tokens": 30000000,
+   "model_identity": "muse-spark-1.3"
+  },
+  "muse12": {
+   "profile_id": "muse-spark-1-2-contributor",
+   "model_id": "muse-spark-1.2-contributor",
+   "display_name": "Muse Spark 1.2",
+   "route_profile": "muse-spark-1-3-contributor",
+   "provider": "OpenCode Go",
+   "endpoint_host": "opencode.ai",
+   "api_protocol": "openai-responses",
+   "stream": false,
+   "system_prompt": "Answer the user's question.",
+   "max_output_tokens": 20000,
+   "timeout_seconds": 300,
+   "sdk_retries": 0,
+   "max_in_flight": 8,
+   "stop_after_timeouts": 4,
+   "budget_tokens": 30000000,
+   "model_identity": "muse-spark-1.2"
+  }
+ },
+ "loop": {
+  "agreement": "router v2's normalized-answer-v1 (diagnostic_router.answers_agree): both parsed answers non-empty and equal; multiple choice compares the letter, reading the exact-match normalization of the vi-reading-v3 prediction",
+  "rule": "MC-105's MiMo loop (diagnostic_table_loop.choose with a student other than Qwen), for multiple choice and reading alike: round 1 keeps B-r1 when B-r1 and B-r2 agree; round 2 keeps S-r1 when it agrees with one of them; round 3 takes the majority of S-r1 to S-r3 by normalized answer, a tie to the earliest, the earliest attempt of the winning answer final; an empty answer casts no vote, and with no answer S-r1 is final",
+  "fitted_parameters": "none: the loop has no threshold, and nothing in it was chosen on Muse answers",
+  "final_answer": "always one of the student's own logged answers"
+ },
+ "reference": {
+  "table_conditions": {
+   "muse13": {"vi-multimodel-v1-vmlu-valid": "muse13-direct-mc80", "other": "muse13-direct-recovery"},
+   "muse12": {"vi-multimodel-v1-vmlu-valid": "muse12-direct-mc84-main", "other": "muse12-direct-mc84-main"}
+  },
+  "table_vmlu_dev_conditions": {"muse13": "muse13-direct-mc82", "muse12": "muse12-direct-mc84-vmlu"},
+  "source": "web/data/benchmark-reports.json, the published /table numbers (MC-80 and MC-82 for Muse Spark 1.3, MC-84 for Muse Spark 1.2); a different route and settings, so a reference only",
+  "mc105_report": "all_res/diagnostic_router_loop/table_loop/analysis/table_loop_report.json (Qwen and MiMo, beside)"
+ },
+ "analysis": {
+  "plan_id": "table-loop-muse-v1",
+  "alpha": 0.05,
+  "score": "multiple choice: accuracy by the frozen letter parser; reading: token-F1 under vi-reading-v3 (primary), exact match beside, vi-reading-v2 beside both",
+  "policies": {
+   "always_B": "B-r1, the before",
+   "always_S": "S-r1",
+   "always_vote": "the majority of S-r1 to S-r3 as in round 3",
+   "loop": "the registered loop, the after"
+  },
+  "primary": {
+   "id": "loop_beats_B",
+   "unit": "each student and dataset, 14 tests (2 students x 7 datasets, VMLU dev included)",
+   "test": "multiple choice: exact two-sided McNemar of the loop against always_B; reading: the mean paired token-F1 difference with a two-sided sign-flip p-value (20,000 resamples, seed 7)",
+   "correction": "Holm over the 14 tests",
+   "met": "Holm p below alpha and the loop scores higher"
+  },
+  "descriptive": [
+   "loop minus always_S and always_vote minus always_S, mean paired difference with a percentile bootstrap interval (2,000 resamples, seed 7)",
+   "mean reported tokens per item of each policy; the loop pays for every request its rounds use, two B answers in round 1",
+   "the rounds the loop used",
+   "the /table number of MC-80, MC-82 and MC-84 beside each dataset",
+   "MC-105's Qwen and MiMo loop-minus-B beside each dataset, read from its report"
+  ],
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "mc105_report_sha256",
+   "datasets",
+   "primary",
+   "beside_mc105",
+   "cost"
+  ]
+ }
+}
