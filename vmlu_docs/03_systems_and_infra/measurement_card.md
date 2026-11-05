@@ -2852,3 +2852,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 8 requests in flight per student; breaker after 4 consecutive network failures; halt on an authentication error, a permanent provider error, a tool call or a model-identity drift |
 | `details` | `docs/measurement_cards/MC-108-diagnostic-table-loop-muse.md` |
 | `outputs` | `all_res/diagnostic_router_loop/table_loop_muse/`; no upload |
+
+## MC-109 — Qwen3.5-9B-65K (IEC) / self-improvement loop on VMLU test, asked round by round / before and after on 9,833 items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-109` |
+| `status` | Preregistered 2026-11-05 (+07), before benchmark-item requests of this card |
+| `scope` | The 9,833 VMLU test items (gold withheld), with the /table VMLU Test prompts. The before is Qwen's within-run probe (B-r1); the after is MC-105's Qwen multiple-choice loop, unchanged. Each attempt is asked only when the rule needs it: the probe for every item, S-r1 when the confidence is below 0.80 or missing, S-r2 and S-r3 when S-r1 disagrees. Primary: vmlu.ai accuracy of the loop minus that of the before, descriptive (no item-level gold, no paired test) |
+| `harness / tools` | Direct HTTP API, no harness, no tools |
+| `model / route` | Qwen3.5-9B-65K on the IEC endpoint (VPN, in-process tunnel DNS) with the campaign transport (Responses API) for S; B-r1 is the MC-43 chat-completions probe with letter log-probabilities. Credentials are never written to outputs |
+| `sampling / limits` | S: temperature 1.0 and 4,096 output tokens; the probe at temperature 0, seed 42, 4 tokens, top 20 log-probabilities. 300 s timeout, no SDK retries; budget guard of 20,000,000 reported tokens (about 10–12 million projected) |
+| `workers / scheduler` | At most 6 requests in flight (the owner's choice; MC-105: 4), one gate for the probe and S; passes round by round, a technical failure re-sent in the next pass, at most 6 passes per launch; no attempt sent twice; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-109-diagnostic-vmlu-test-loop.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
