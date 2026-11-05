@@ -1,0 +1,73 @@
+{
+ "loop_id": "vmlu-test-loop-v1",
+ "protocol_id": "vmlu-diagnostic-vmlu-test-loop",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-loop, task 2.9",
+ "purpose": "The VMLU Test column of the /table before-and-after table: Qwen's within-run direct answer (before) and MC-105's self-improvement loop (after) on the 9,833 VMLU test items, whose gold only vmlu.ai holds. Each attempt is asked only when the loop's rule needs it, so the final answer is the one MC-105's offline replay would choose from the same attempts.",
+ "items": {
+  "source": "the frozen vi-multimodel v2 VMLU manifest data/vi_multimodel_v2/vmlu_v2.json, test split, the items and prompts of the /table VMLU Test runs (MC-83 direct)",
+  "vmlu_manifest_sha256": "553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "count": 9833,
+  "gold": "withheld: only vmlu.ai scores the test split"
+ },
+ "arms": {
+  "qwen": ["B-r1", "S-r1", "S-r2", "S-r3"]
+ },
+ "arm_meaning": {
+  "B": "the frozen v2 VMLU prompt, byte for byte the /table VMLU Test prompt; Qwen's B-r1 is the MC-43 letter probe",
+  "S": "the campaign step-by-step template of data/diagnostic_prospective_v1/prompt_templates_v1.json, as in MC-90 to MC-105"
+ },
+ "schedule": {
+  "rule": "round by round: B-r1 for every item; S-r1 only when the probe confidence is below the threshold or missing; S-r2 and S-r3 only when S-r1 does not agree with B-r1",
+  "passes": "each pass sends every attempt the rule needs from the completed attempts so far; an attempt without a completed response (a technical failure, not a fatal one) is sent again in the next pass; a launch stops after max_passes passes, after a pass that completes nothing, or at any fatal row",
+  "max_passes": 6,
+  "equivalence": "the attempts are independent requests, so the final answer equals the one diagnostic_table_loop.choose (MC-105's replay) returns on the same attempts; the attempts the rule never needs are not sent"
+ },
+ "students": {
+  "qwen": {
+   "profile_id": "qwen3-5-9b-65k-prospective",
+   "route": "the campaign transport of data/diagnostic_prospective_v1/protocol.json (IEC endpoint, Responses API, temperature 1.0, 4,096 output tokens) for S; the MC-43 probe for B-r1",
+   "probe": {
+    "arms": "B-r1",
+    "api_protocol": "openai-chat-completions",
+    "messages": "the user prompt only",
+    "temperature": 0.0,
+    "seed": 42,
+    "max_tokens": 4,
+    "top_logprobs": 20,
+    "confidence": "the probability of the parsed letter, renormalized over the letters the item offers (run_mc_calibration_eval.letter_probs and offered_letters); missing when fewer than two offered letters are visible or the option block cannot be read",
+    "condition_source": "MC-43, as in MC-104 and MC-105"
+   },
+   "max_in_flight": 6,
+   "max_in_flight_source": "the owner's choice on 2026-11-05 (MC-105: 4)",
+   "stop_after_timeouts": 4,
+   "budget_tokens": 20000000
+  }
+ },
+ "loop": {
+  "agreement": "router v2's normalized-answer-v1 (diagnostic_router.answers_agree): both parsed letters non-empty and equal",
+  "rule": "MC-104 and MC-105 for Qwen's multiple choice: round 1 keeps B-r1 when its probe confidence is at least 0.80; round 2 keeps B-r1 when S-r1 agrees with it; round 3 takes the majority of S-r1 to S-r3 (a tie to the earliest; an empty answer casts no vote; with no answer S-r1 is final)",
+  "threshold": 0.8,
+  "threshold_source": "MC-104's registered rule, unchanged in MC-105",
+  "final_answer": "always one of the student's own logged answers"
+ },
+ "reference": {
+  "table_conditions": {
+   "qwen": "MC-83 (direct API, 62.94 on vmlu.ai) and MC-70 (OMP without tools, 63.86), as /table shows them"
+  },
+  "valid_rounds": "MC-105 on VMLU valid: round 1 405, round 2 178, round 3 161 of 744 items"
+ },
+ "analysis": {
+  "plan_id": "vmlu-test-loop-v1",
+  "outputs": "the runner writes loop.jsonl (per item: the attempts the rule read, their letters, the probe confidence, the rounds and the final answer), summary.json, and, once every item has a final answer, submission_before.csv (B-r1) and submission_loop.csv (the loop), both id,answer for vmlu.ai",
+  "scores": "accuracy on vmlu.ai for the two submissions, entered from vmlu.ai's reply; the owner submits them",
+  "primary": "the loop's accuracy minus the before's accuracy on vmlu.ai, descriptive: with item-level gold withheld there is no paired test",
+  "descriptive": [
+   "the rounds the loop used, beside MC-105's VMLU valid rounds",
+   "how many final answers differ from B-r1",
+   "mean reported tokens per item, the probe included, and latency",
+   "the /table VMLU Test numbers of MC-83 and MC-70 beside the two scores"
+  ]
+ }
+}

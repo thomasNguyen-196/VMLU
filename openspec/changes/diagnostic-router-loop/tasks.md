@@ -137,6 +137,12 @@
 
   (2026-11-03: configuration `270e66e9…`, manifests Muse Spark 1.3 `fac70c51…` and Muse Spark 1.2 `cebeb5bd…` (11,730 attempts each), card MC-108. Both preflights pass all four gates offline, and 12 tests pass.)
 
+- [ ] 2.9 (added 2026-11-05, at the owner's request) MC-109: the VMLU Test column of the before-and-after table for Qwen. MC-105's Qwen multiple-choice loop on the 9,833 VMLU test items, whose gold only vmlu.ai holds, with each attempt asked only when the rule needs it; MiMo later, under its own card.
+  - **Build.** `diagnostic_vmlu_test_loop` holds the configuration, the items (checked row by row against the frozen v2 VMLU manifest), the possible attempts and the round-by-round rule (`plan`). `run_vmlu_test_loop` sends MC-105's Qwen requests pass by pass and writes `loop.jsonl`, `summary.json` and the two vmlu.ai submissions.
+  - **Verify.** `test_vmlu_test_loop` passes. The round-by-round answer equals MC-105's replay on 3,000 random cases; through the real engine, every attempt is sent once, a technical failure is re-sent in the next pass, a fatal row stops the passes, and a second launch on the same output is refused. The offline preflight passes every gate with `endpoint_calls=0`.
+
+  (2026-11-05: configuration `8d089da7…`, manifest `bbf5ad00…` (39,332 possible attempts), card MC-109; 17 tests pass.)
+
 ## 3. Router-critic design check (10/11–17/11)
 
 - [x] 3.0 (added 2026-10-30, pulled forward at the owner's request for early results) MC-102: a reading pilot of the critic, replayed on Qwen's logged answers. Muse Spark 1.3 judges Qwen's B-r1 answer on the 376 Vi-DROP and Vi-SQuAD items of the menu set and prescribes keep, S or Q. The loop takes the logged draw-1 answer, so no student request is sent. Primary: critic loop against the rule loop on token-F1, with a reading rule of at least +1.0 point and p < 0.05. Verify that the offline preflight passes every gate with `endpoint_calls=0` and that the tests pass (`test_diagnostic_router_critic`).

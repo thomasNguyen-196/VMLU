@@ -1,0 +1,354 @@
+"""Run Qwen's self-improvement loop on VMLU test, round by round (openspec change diagnostic-router-loop, task 2.9;
+card MC-109).
+
+From the repo root:
+  .venv/bin/python -m code_benchmark.run_vmlu_test_loop --student qwen          # offline preflight, endpoint_calls=0
+  .venv/bin/python -m code_benchmark.run_vmlu_test_loop --student qwen --execute [--resume] [--tunnel-dns <in-tunnel DNS server>]
+
+The requests are MC-105's for Qwen: B-r1 is the MC-43 letter probe, S the campaign transport, all behind one gate.
+What changes is the item set (the 9,833 VMLU test items, gold withheld) and the schedule: instead of asking every
+attempt, each pass sends the attempts the loop's rule needs given the completed ones (`diagnostic_vmlu_test_loop.plan`):
+the probe for every item, S-r1 for the unsure ones, S-r2 and S-r3 where S-r1 disagrees. An attempt without a
+completed response is sent again in the next pass. A launch stops after the registered number of passes, after a pass
+that completes nothing, or at a fatal row (authentication, model-identity drift, budget, endpoint breaker); `--resume`
+continues from the ledger. When every item has a final answer, the two vmlu.ai submissions are written.
+`--execute` fails closed unless the MC-109 heading and detail card exist, the configuration and the rebuilt manifest
+carry the registered SHA-256 values, and the route is the registered one.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import statistics
+import threading
+import time
+from collections import Counter
+from pathlib import Path
+from typing import Any
+from urllib.parse import urlsplit
+
+from dotenv import dotenv_values
+from openai import OpenAI
+
+try:
+    from code_benchmark import diagnostic_prospective as dp
+    from code_benchmark import diagnostic_router as router
+    from code_benchmark import diagnostic_table_loop as tl
+    from code_benchmark import diagnostic_vmlu_test_loop as vt
+    from code_benchmark import run_diagnostic_prospective as pr
+    from code_benchmark import run_self_loop as rsl
+    from code_benchmark import vi_multimodel as v1
+    from code_benchmark.common import write_csv_atomic
+    from code_benchmark.run_mc_calibration_eval import letter_probs
+    from code_benchmark.run_mc_eval import extract_answer
+except ImportError:  # executed from code_benchmark/
+    import diagnostic_prospective as dp
+    import diagnostic_router as router
+    import diagnostic_table_loop as tl
+    import diagnostic_vmlu_test_loop as vt
+    import run_diagnostic_prospective as pr
+    import run_self_loop as rsl
+    import vi_multimodel as v1
+    from common import write_csv_atomic
+    from run_mc_calibration_eval import letter_probs
+    from run_mc_eval import extract_answer
+
+ROOT = dp.ROOT
+OUTPUT_ROOT = ROOT / "all_res" / "diagnostic_router_loop" / "vmlu_test_loop"
+base = pr.base
+Gate = pr.Gate
+
+
+def load_registration(path: Path = vt.REGISTRATION_PATH) -> dict[str, Any]:
+    try:
+        registration = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"Error: cannot read the VMLU test loop registration {path}: {exc}") from exc
+    for key in ("card_ids", "card_files", "frozen", "analysis"):
+        if key not in registration:
+            raise SystemExit(f"Error: the VMLU test loop registration lacks {key}")
+    return registration
+
+
+def evaluate_gates(student: str, manifest: dict[str, Any], registration: dict[str, Any], route_ok: bool,
+                   route_detail: str, *, card_text: str | None = None, root: Path = ROOT) -> list[Gate]:
+    card_id = (registration.get("card_ids") or {}).get(vt.PHASE)
+    text = pr.MEASUREMENT_CARD.read_text(encoding="utf-8") if card_text is None else card_text
+    heading = bool(card_id) and re.search(rf"^#{{2,3}} {re.escape(str(card_id))}\b", text, re.MULTILINE) is not None
+    gates = [Gate("card_registered", heading, f"{card_id or 'no card id assigned'} heading in measurement_card.md")]
+    card_file = (registration.get("card_files") or {}).get(vt.PHASE)
+    gates.append(Gate("detail_card", bool(card_file) and (root / str(card_file)).is_file(),
+                      str(card_file or "no detail card file recorded")))
+    frozen = registration.get("frozen") or {}
+    differing = [name for name, ok in (("config", frozen.get("config_sha256") == manifest["config_sha256"]),
+                                       ("manifest", (frozen.get("manifest_sha256") or {}).get(student)
+                                        == manifest["manifest_sha256"])) if not ok]
+    gates.append(Gate("frozen_hashes", not differing, "all match" if not differing else f"differ: {differing}"))
+    gates.append(Gate("route_identity", route_ok, route_detail))
+    return gates
+
+
+# ---------------------------------------------------------------- requests (MC-105's, with this card's rows)
+
+def _base_row(item, card_id: str, shard: int, lane: int, api_protocol: str) -> dict[str, Any]:
+    return {"run_key": item.run_key, "item_key": f"{item.dataset_id}:{item.item_id}", "dataset_id": item.dataset_id,
+            "item_id": item.item_id, "replicate_id": item.replicate_id, "arm": dp.arm_of_replicate(item.replicate_id),
+            "phase": vt.PHASE, "profile_id": base.PROFILE, "protocol_id": base.PROTOCOL, "measurement_card_id": card_id,
+            "model_id": base.MODEL, "transport": "direct-api", "api_protocol": api_protocol, "shard": shard,
+            "lane": lane, "prompt_sha256": v1.sha256_bytes(item.prompt.encode()), "raw_prompt": item.prompt,
+            "raw_response": "", "started_at": base.now()}
+
+
+def is_probe(item) -> bool:
+    return item.replicate_id == "B-r1"
+
+
+def unreadable_probes(items: list) -> list[str]:
+    return [item.item_id for item in items if is_probe(item) and len(rsl.readable_letters(item.prompt)) < 2]
+
+
+def make_probe(probe: dict[str, Any], expected_models: set[str], card_id: str, guard: pr.BudgetGuard,
+               outage: pr.OutageGuard, halt: threading.Event):
+    """MC-105's MC-43 letter probe."""
+    def request(client, item, shard: int, lane: int) -> dict[str, Any]:
+        row = _base_row(item, card_id, shard, lane, probe["api_protocol"])
+        row.update({"temperature_sent": probe["temperature"], "seed_sent": probe["seed"], "max_tokens": probe["max_tokens"],
+                    "top_logprobs_requested": probe["top_logprobs"], "probe": probe["condition_source"]})
+        if rsl._blocked(row, guard, outage, halt):  # noqa: SLF001 - MC-104's guard, shared on purpose
+            return row
+        start = time.monotonic()
+        try:
+            response = client.chat.completions.create(
+                model=base.MODEL, messages=[{"role": "user", "content": item.prompt}], temperature=probe["temperature"],
+                seed=probe["seed"], max_tokens=probe["max_tokens"], logprobs=True, top_logprobs=probe["top_logprobs"])
+            if not response.choices:
+                raise ValueError("no_choices")
+            choice = response.choices[0]
+            content = choice.message.content or ""
+            logprobs = getattr(choice, "logprobs", None)
+            first = logprobs.content[0] if logprobs is not None and logprobs.content else None
+            top = [{"token": entry.token, "logprob": entry.logprob} for entry in (first.top_logprobs or [])] if first else []
+            offered = rsl.readable_letters(item.prompt)
+            probs, off = letter_probs(top, offered)
+            answer, found = extract_answer(content), sum(1 for letter in offered if probs[letter] > 0)
+            usage, finish = response.usage, str(choice.finish_reason or "unknown")
+            row.update({
+                "raw_response": content, "finish_reason": finish, "response_model_id": response.model,
+                "request_id": response.id, "prompt_tokens": getattr(usage, "prompt_tokens", None),
+                "completion_tokens": getattr(usage, "completion_tokens", None),
+                "total_tokens": getattr(usage, "total_tokens", None), "first_token": first.token if first else "",
+                "top_logprobs": top, "letter_probs": {letter: round(p, 6) for letter, p in probs.items()},
+                "off_options_mass": round(off, 6), "letters_found": found,
+                "confidence": round(probs[answer], 6) if answer in probs and found >= 2 else None,
+                "status": "complete" if finish in ("stop", "length") else "request_error"})
+            if row["status"] == "complete" and response.model and response.model not in expected_models:
+                row.update({"status": "request_error", "error_type": "model_identity_drift", "fatal": True})
+            elif row["status"] != "complete":
+                row.update({"error_type": "unexpected_finish", "fatal": False})
+        except Exception as exc:  # noqa: BLE001 - never serialize SDK messages: they can echo upstream data
+            status_code = getattr(exc, "status_code", None)
+            row.update({"status": "request_error", "finish_reason": "error", "error_type": type(exc).__name__,
+                        "http_status": status_code, "fatal": status_code in {400, 401, 402, 403, 404}})
+        return rsl._settle(row, start, guard, outage)  # noqa: SLF001
+    return request
+
+
+def make_qwen_request(student: dict[str, Any], campaign: dict[str, Any], card_id: str, guard: pr.BudgetGuard,
+                      outage: pr.OutageGuard):
+    """The probe for B-r1 and the campaign request for S, behind one gate of `max_in_flight`."""
+    halt = threading.Event()  # set by any fatal row; lanes queued at the gate then send nothing
+    campaign_request = pr.make_request(campaign, vt.PHASE, card_id, guard, outage=outage, max_in_flight=None)
+    probe = make_probe(student["probe"], {campaign["model"]["self_reported_id"], campaign["model"]["requested_id"]},
+                       card_id, guard, outage, halt)
+    gate = threading.BoundedSemaphore(student["max_in_flight"])
+
+    def limited(client, item, shard: int, lane: int) -> dict[str, Any]:
+        with gate:  # waiting here is not part of the measured latency: each clock starts inside its request
+            if halt.is_set():
+                row = _base_row(item, card_id, shard, lane, "none")
+                rsl._blocked(row, guard, outage, halt)  # noqa: SLF001
+                return row
+            row = (probe if is_probe(item) else campaign_request)(client, item, shard, lane)
+            if row.get("fatal"):
+                halt.set()
+            return row
+    return limited
+
+
+# ---------------------------------------------------------------- condition, loop outputs
+
+def build_condition(student: str, config: dict[str, Any], manifest: dict[str, Any], registration: dict[str, Any],
+                    route: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "protocol_id": vt.PROTOCOL_ID, "protocol_version": 1, "phase": vt.PHASE, "student": student,
+        "measurement_card_id": registration["card_ids"][vt.PHASE],
+        "measurement_card_hash": v1.sha256_file(pr.MEASUREMENT_CARD),
+        "card_sha256": v1.sha256_file(ROOT / registration["card_files"][vt.PHASE]),
+        "config_sha256": manifest["config_sha256"], "manifest_sha256": manifest["manifest_sha256"],
+        **{key: manifest[key] for key in ("vmlu_manifest_sha256", "campaign_protocol_sha256", "prompt_templates_sha256",
+                                         "source_sha256", "dataset_counts", "arm_counts")},
+        "schedule": config["schedule"], "loop": config["loop"], "student_config": config["students"][student], **route,
+        "module_sha256": v1.sha256_file(Path(vt.__file__)),
+        "loop_module_sha256": v1.sha256_file(Path(tl.__file__)),
+        "router_sha256": v1.sha256_file(Path(router.__file__)),
+        "wrapper_sha256": v1.sha256_file(Path(dp.__file__)),
+        "engine_sha256": v1.sha256_file(Path(pr.__file__)),
+        "base_engine_sha256": v1.sha256_file(Path(base.__file__)),
+        "shared_runner_sha256": v1.sha256_file(Path(rsl.__file__)),
+        "runner_sha256": v1.sha256_file(Path(__file__)),
+    }
+
+
+def _mean(values: list[float]) -> float | None:
+    return round(statistics.fmean(values), 2) if values else None
+
+
+def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: float):
+    """After each pass: loop.jsonl and summary.json; the two submissions once every item has a final answer."""
+    def write(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], rows: dict[str, Any],
+              meta: dict[str, Any]) -> None:
+        states = vt.plan(item_ids, rows, threshold)
+        complete = [row for row in rows.values() if row.get("status") == "complete"]
+        records = [{"item_id": s.item_id, "final_replicate": s.final, "rounds": s.rounds, "answer": s.answer,
+                    "before": s.predictions.get("B-r1"), "confidence": s.confidence, "predictions": s.predictions,
+                    "needed": list(s.needed)} for s in states]
+        v1.write_jsonl_atomic(output / "loop.jsonl", records)
+        decided = [s for s in states if s.final is not None]
+        tokens = [dp.reported_tokens(row) for row in complete]
+        summary = {
+            "protocol_id": vt.PROTOCOL_ID, "phase": vt.PHASE, "student": student, "measurement_card_id": card_id,
+            "model_id": base.MODEL, "manifest_sha256": manifest["manifest_sha256"],
+            "condition_sha256": meta["condition_sha256"], "generated_at": base.now(),
+            "items": len(states), "final_items": len(decided),
+            "rounds": dict(sorted(Counter(s.rounds for s in decided).items())),
+            "still_needed": dict(sorted(Counter(r for s in states for r in s.needed).items())),
+            "complete_attempts": dict(sorted(Counter(str(row["replicate_id"]) for row in complete).items())),
+            "failed_rows_latest": sum(row.get("status") != "complete" for row in rows.values()),
+            "final_differs_from_before": sum(s.answer != s.predictions.get("B-r1") for s in decided),
+            "empty_before": sum(not s.predictions.get("B-r1") for s in states if "B-r1" in s.predictions),
+            "empty_final": sum(not s.answer for s in decided),
+            "confidence_missing": sum(s.confidence is None for s in states if "B-r1" in s.predictions),
+            "reported_tokens": sum(t for t in tokens if isinstance(t, int)),
+            "reported_tokens_per_final_item": round(sum(t for t in tokens if isinstance(t, int)) / len(decided), 1)
+            if decided and len(decided) == len(states) else None,
+            "latency_s_mean": {arm: _mean([float(row["latency_s"]) for row in complete if row.get("arm") == arm
+                                           and row.get("latency_s") is not None]) for arm in ("B", "S")},
+            "gold": "withheld; accuracy comes only from vmlu.ai",
+        }
+        if len(decided) == len(states):
+            write_csv_atomic(output / "submission_before.csv",
+                             [{"id": s.item_id, "answer": s.predictions["B-r1"]} for s in states], ["id", "answer"])
+            write_csv_atomic(output / "submission_loop.csv",
+                             [{"id": s.item_id, "answer": s.answer or ""} for s in states], ["id", "answer"])
+            summary["submissions"] = {name: v1.sha256_file(output / name)
+                                      for name in ("submission_before.csv", "submission_loop.csv")}
+        base.atomic_json(output / "summary.json", summary)
+    return write
+
+
+def run_passes(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], item_ids: list[str],
+               condition: dict[str, Any], client, resume: bool, *, max_passes: int, threshold: float,
+               score_callback, runner_path: Path, execute=None) -> str:
+    """Send what the rule needs, pass after pass. Returns complete, paused, stalled or incomplete."""
+    execute = execute or base.execute
+    resume_next = resume
+    for number in range(1, max_passes + 1):
+        rows = base.load_rows(output, manifest)
+        states = vt.plan(item_ids, rows, threshold)
+        send = [rebuilt[f"{vt.DATASET}:{s.item_id}:{r}"] for s in states for r in s.needed]
+        keys = [item.run_key for item in send]
+        if len(set(keys)) != len(keys) or any((rows.get(key) or {}).get("status") == "complete" for key in keys):
+            raise SystemExit("Error: a pass would send one attempt twice or re-send a completed one")
+        done = sum(row.get("status") == "complete" for row in rows.values())
+        print(f"pass {number}: final {sum(s.final is not None for s in states)}/{len(states)}; sending {len(send)} "
+              f"{dict(sorted(Counter(item.replicate_id for item in send).items()))}", flush=True)
+        if not send:
+            return "complete"
+        execute(output, manifest, rebuilt, send, condition, client, resume_next, score_callback=score_callback,
+                runner_path=runner_path, work_stealing=True)
+        resume_next = True
+        if json.loads((output / "run.json").read_text(encoding="utf-8")).get("status") == "paused":
+            return "paused"
+        if sum(row.get("status") == "complete" for row in base.load_rows(output, manifest).values()) == done:
+            return "stalled"
+    states = vt.plan(item_ids, base.load_rows(output, manifest), threshold)
+    return "complete" if all(s.final is not None for s in states) else "incomplete"
+
+
+def record_launch(output: Path, student: str, *, resume: bool, note: str) -> None:
+    output.mkdir(parents=True, exist_ok=True)
+    event = {"at": base.now(), "phase": vt.PHASE, "student": student, "resume": resume,
+             "runner_sha256": v1.sha256_file(Path(__file__)), "note": note}
+    with (output / "operator_events.jsonl").open("a", encoding="utf-8") as ledger:
+        ledger.write(json.dumps(event, ensure_ascii=False) + "\n")
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--student", choices=vt.STUDENTS, required=True)
+    ap.add_argument("--execute", action="store_true", help="send requests (otherwise offline preflight only)")
+    ap.add_argument("--resume", action="store_true", help="continue from the ledger")
+    ap.add_argument("--tunnel-dns", default=None, help="in-tunnel DNS server for the Qwen endpoint host (this process only)")
+    ap.add_argument("--note", default="", help="free text recorded with this launch")
+    args = ap.parse_args(argv)
+    if args.resume and not args.execute:
+        ap.error("--resume requires --execute")
+    config, _ = vt.load_config()
+    registration = load_registration()
+    student = config["students"][args.student]
+    manifest, rebuilt = vt.build_manifest(args.student)
+    items = vt.verify_rows(manifest, rebuilt)
+    campaign = dp.load_protocol()
+    env = dotenv_values(ROOT / ".env")
+    route_ok, route_detail = rsl.qwen_route(campaign, env)
+    gates = evaluate_gates(args.student, manifest, registration, route_ok, route_detail)
+    unreadable = unreadable_probes(items)
+    print(f"probed prompts whose option letters cannot be read (confidence missing, so unsure): {len(unreadable)} "
+          f"{unreadable[:20]}")
+    print(f"student={args.student} phase={vt.PHASE} items={manifest['item_count']} possible_attempts={manifest['n']} "
+          f"arms={manifest['arm_counts']} max_in_flight={student['max_in_flight']} "
+          f"max_passes={config['schedule']['max_passes']}")
+    print(f"manifest_sha256={manifest['manifest_sha256']} config_sha256={manifest['config_sha256']}")
+    print("gates: " + " ".join(f"{gate.name}={'PASS' if gate.ok else 'FAIL'}" for gate in gates))
+    for gate in gates:
+        if not gate.ok:
+            print(f"  - {gate.name}: {gate.detail}")
+    print(f"preflight=passed items={manifest['item_count']} endpoint_calls=0", flush=True)
+    if not args.execute:
+        return 0
+    failed = [gate for gate in gates if not gate.ok]
+    if failed:
+        raise SystemExit("Error: execution gates failed: " + "; ".join(f"{g.name} ({g.detail})" for g in failed))
+    card_id = str(registration["card_ids"][vt.PHASE])
+    endpoint, key = str(env["OPENAI_BASE_URL"]), str(env["OPENAI_API_KEY"])
+    if args.tunnel_dns:
+        address = pr.install_resolver_shim(urlsplit(endpoint).hostname or "", args.tunnel_dns)
+        print(f"resolver shim (this process only) -> {address} via {args.tunnel_dns}")
+    transport, model = campaign["transport"], campaign["model"]
+    output = OUTPUT_ROOT / model["profile_id"]
+    route = {"model_id": model["requested_id"], "self_reported_model_id": model["self_reported_id"],
+             "profile_id": model["profile_id"], "provider": model["provider"], "endpoint_host": urlsplit(endpoint).hostname,
+             "base_url_sha256": v1.sha256_bytes(endpoint.encode()), "transport": transport}
+    condition = pr.reconcile_resume(output, build_condition(args.student, config, manifest, registration, route),
+                                    args.resume)
+    guard = pr.BudgetGuard(student["budget_tokens"], pr.existing_usage(output))
+    if (base.SHARDS, base.LANES) != (transport["shards"], transport["lanes"]):
+        raise SystemExit("Error: engine shard/lane constants differ from the campaign protocol")
+    base.MODEL, base.PROFILE, base.PROTOCOL, base.CARD_ID = model["requested_id"], model["profile_id"], vt.PROTOCOL_ID, card_id
+    base.request = make_qwen_request(student, campaign, card_id, guard, pr.OutageGuard(student["stop_after_timeouts"]))
+    record_launch(output, args.student, resume=args.resume, note=args.note)
+    item_ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
+    threshold = float(config["loop"]["threshold"])
+    with OpenAI(base_url=endpoint, api_key=key, timeout=transport["timeout_seconds"],
+                max_retries=transport["sdk_retries"], default_headers=transport["gateway_header"]) as client:
+        status = run_passes(output, manifest, rebuilt, item_ids, condition, client, args.resume,
+                            max_passes=int(config["schedule"]["max_passes"]), threshold=threshold,
+                            score_callback=loop_callback(args.student, card_id, item_ids, threshold),
+                            runner_path=Path(__file__))
+    print(f"loop_status={status} output={output}", flush=True)
+    return 0 if status == "complete" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
