@@ -1,19 +1,22 @@
-"""Run Qwen's self-improvement loop on VMLU test, round by round (openspec change diagnostic-router-loop, task 2.9;
-card MC-109).
+"""Run a student's self-improvement loop on VMLU test, round by round (openspec change diagnostic-router-loop, tasks
+2.9 and 2.10; cards MC-109 for Qwen and MC-110 for MiMo).
 
 From the repo root:
   .venv/bin/python -m code_benchmark.run_vmlu_test_loop --student qwen          # offline preflight, endpoint_calls=0
   .venv/bin/python -m code_benchmark.run_vmlu_test_loop --student qwen --execute [--resume] [--tunnel-dns <in-tunnel DNS server>]
+  .venv/bin/python -m code_benchmark.run_vmlu_test_loop --student mimo --execute [--resume]
 
-The requests are MC-105's for Qwen: B-r1 is the MC-43 letter probe, S the campaign transport, all behind one gate.
+The requests are MC-105's. Qwen: B-r1 is the MC-43 letter probe, S the campaign transport, all behind one gate. MiMo:
+the MC-103 route (OpenCode Go chat completions, one routing session per attempt) for B and S alike.
 What changes is the item set (the 9,833 VMLU test items, gold withheld) and the schedule: instead of asking every
 attempt, each pass sends the attempts the loop's rule needs given the completed ones (`diagnostic_vmlu_test_loop.plan`):
-the probe for every item, S-r1 for the unsure ones, S-r2 and S-r3 where S-r1 disagrees. An attempt without a
+for Qwen the probe for every item, S-r1 for the unsure ones, S-r2 and S-r3 where S-r1 disagrees; for MiMo B-r1 and
+B-r2 for every item, S-r1 where they disagree, S-r2 and S-r3 where S-r1 agrees with neither. An attempt without a
 completed response is sent again in the next pass. A launch stops after the registered number of passes, after a pass
 that completes nothing, or at a fatal row (authentication, model-identity drift, budget, endpoint breaker); `--resume`
 continues from the ledger. When every item has a final answer, the two vmlu.ai submissions are written.
-`--execute` fails closed unless the MC-109 heading and detail card exist, the configuration and the rebuilt manifest
-carry the registered SHA-256 values, and the route is the registered one.
+`--execute` fails closed unless the student's card heading and detail card exist, the configuration and the rebuilt
+manifest carry the registered SHA-256 values, and the route is the registered one.
 """
 from __future__ import annotations
 
@@ -42,6 +45,7 @@ try:
     from code_benchmark.common import write_csv_atomic
     from code_benchmark.run_mc_calibration_eval import letter_probs
     from code_benchmark.run_mc_eval import extract_answer
+    from code_benchmark.run_weakness_map import COMPLETE_FINISHES, ModelPin
 except ImportError:  # executed from code_benchmark/
     import diagnostic_prospective as dp
     import diagnostic_router as router
@@ -53,6 +57,7 @@ except ImportError:  # executed from code_benchmark/
     from common import write_csv_atomic
     from run_mc_calibration_eval import letter_probs
     from run_mc_eval import extract_answer
+    from run_weakness_map import COMPLETE_FINISHES, ModelPin
 
 ROOT = dp.ROOT
 OUTPUT_ROOT = ROOT / "all_res" / "diagnostic_router_loop" / "vmlu_test_loop"
@@ -176,6 +181,70 @@ def make_qwen_request(student: dict[str, Any], campaign: dict[str, Any], card_id
     return limited
 
 
+def session_id(card_id: str, run_key: str) -> str:
+    """One OpenCode Go routing session per attempt, named by this card (MC-105 used vmlu-mc105-...)."""
+    return f"vmlu-{card_id.lower().replace('-', '')}-{v1.sha256_bytes(run_key.encode('utf-8'))[:16]}"
+
+
+def make_mimo_request(student: dict[str, Any], card_id: str, guard: pr.BudgetGuard, outage: pr.OutageGuard,
+                      pin: ModelPin):
+    """MC-105's MiMo request (the MC-103 route): direct chat completions, no streaming, one routing session per
+    attempt, behind one gate of `max_in_flight`; a fatal row halts every lane."""
+    gate = threading.BoundedSemaphore(student["max_in_flight"])
+    halt = threading.Event()
+
+    def request(client, item, shard: int, lane: int) -> dict[str, Any]:
+        cap = student["max_completion_tokens"]
+        row = _base_row(item, card_id, shard, lane, student["api_protocol"])
+        row.update({"temperature_sent": None, "reasoning_effort_sent": None, "seed_sent": None, "max_tokens": cap})
+        if rsl._blocked(row, guard, outage, halt):  # noqa: SLF001
+            halt.set()
+            return row
+        start = time.monotonic()
+        try:
+            response = client.chat.completions.create(
+                model=base.MODEL, messages=[{"role": "system", "content": student["system_prompt"]},
+                                            {"role": "user", "content": item.prompt}],
+                max_completion_tokens=cap, stream=False,
+                extra_headers={rsl.SESSION_HEADER: session_id(card_id, item.run_key)})
+            if not response.choices:
+                raise ValueError("no_choices")
+            choice, usage = response.choices[0], response.usage
+            detail = getattr(usage, "completion_tokens_details", None)
+            prompt_detail = getattr(usage, "prompt_tokens_details", None)
+            finish = str(choice.finish_reason or "unknown")
+            tools = getattr(choice.message, "tool_calls", None) or []
+            reasoning = getattr(choice.message, "reasoning_content", None)
+            row.update({
+                "raw_response": choice.message.content or "", "finish_reason": finish,
+                "response_model_id": response.model, "request_id": response.id,
+                "prompt_tokens": getattr(usage, "prompt_tokens", None),
+                "completion_tokens": getattr(usage, "completion_tokens", None),
+                "total_tokens": getattr(usage, "total_tokens", None),
+                "reasoning_tokens": getattr(detail, "reasoning_tokens", None),
+                "cached_prompt_tokens": getattr(prompt_detail, "cached_tokens", None),
+                "reasoning_chars": len(reasoning) if isinstance(reasoning, str) else None, "tool_call_n": len(tools),
+                "status": "complete" if finish in COMPLETE_FINISHES and not tools else "request_error"})
+            drift = pin.check(response.model) if row["status"] == "complete" else None
+            if drift:
+                row.update({"status": "request_error", "error_type": drift, "fatal": True})
+            elif row["status"] != "complete":
+                row.update({"error_type": "unexpected_finish_or_tool_call", "fatal": bool(tools)})
+        except Exception as exc:  # noqa: BLE001 - never serialize SDK messages: they can echo upstream data
+            status_code = getattr(exc, "status_code", None)
+            row.update({"status": "request_error", "finish_reason": "error", "error_type": type(exc).__name__,
+                        "http_status": status_code, "fatal": status_code in {400, 401, 402, 403, 404}})
+        rsl._settle(row, start, guard, outage)  # noqa: SLF001
+        if row.get("fatal"):
+            halt.set()
+        return row
+
+    def limited(client, item, shard: int, lane: int) -> dict[str, Any]:
+        with gate:  # waiting here is not part of the measured latency: the clock starts inside `request`
+            return request(client, item, shard, lane)
+    return limited
+
+
 # ---------------------------------------------------------------- condition, loop outputs
 
 def build_condition(student: str, config: dict[str, Any], manifest: dict[str, Any], registration: dict[str, Any],
@@ -204,11 +273,12 @@ def _mean(values: list[float]) -> float | None:
     return round(statistics.fmean(values), 2) if values else None
 
 
-def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: float):
-    """After each pass: loop.jsonl and summary.json; the two submissions once every item has a final answer."""
+def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: float | None):
+    """After each pass: loop.jsonl and summary.json; the two submissions once every item has a final answer. The
+    before is B-r1 for both students; the probe confidence exists for Qwen only."""
     def write(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], rows: dict[str, Any],
               meta: dict[str, Any]) -> None:
-        states = vt.plan(item_ids, rows, threshold)
+        states = vt.plan(item_ids, rows, threshold, student)
         complete = [row for row in rows.values() if row.get("status") == "complete"]
         records = [{"item_id": s.item_id, "final_replicate": s.final, "rounds": s.rounds, "answer": s.answer,
                     "before": s.predictions.get("B-r1"), "confidence": s.confidence, "predictions": s.predictions,
@@ -228,7 +298,8 @@ def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: fl
             "final_differs_from_before": sum(s.answer != s.predictions.get("B-r1") for s in decided),
             "empty_before": sum(not s.predictions.get("B-r1") for s in states if "B-r1" in s.predictions),
             "empty_final": sum(not s.answer for s in decided),
-            "confidence_missing": sum(s.confidence is None for s in states if "B-r1" in s.predictions),
+            "confidence_missing": sum(s.confidence is None for s in states if "B-r1" in s.predictions)
+            if student == "qwen" else None,
             "reported_tokens": sum(t for t in tokens if isinstance(t, int)),
             "reported_tokens_per_final_item": round(sum(t for t in tokens if isinstance(t, int)) / len(decided), 1)
             if decided and len(decided) == len(states) else None,
@@ -248,14 +319,14 @@ def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: fl
 
 
 def run_passes(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], item_ids: list[str],
-               condition: dict[str, Any], client, resume: bool, *, max_passes: int, threshold: float,
-               score_callback, runner_path: Path, execute=None) -> str:
+               condition: dict[str, Any], client, resume: bool, *, max_passes: int, threshold: float | None,
+               score_callback, runner_path: Path, execute=None, student: str = "qwen") -> str:
     """Send what the rule needs, pass after pass. Returns complete, paused, stalled or incomplete."""
     execute = execute or base.execute
     resume_next = resume
     for number in range(1, max_passes + 1):
         rows = base.load_rows(output, manifest)
-        states = vt.plan(item_ids, rows, threshold)
+        states = vt.plan(item_ids, rows, threshold, student)
         send = [rebuilt[f"{vt.DATASET}:{s.item_id}:{r}"] for s in states for r in s.needed]
         keys = [item.run_key for item in send]
         if len(set(keys)) != len(keys) or any((rows.get(key) or {}).get("status") == "complete" for key in keys):
@@ -272,7 +343,7 @@ def run_passes(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], 
             return "paused"
         if sum(row.get("status") == "complete" for row in base.load_rows(output, manifest).values()) == done:
             return "stalled"
-    states = vt.plan(item_ids, base.load_rows(output, manifest), threshold)
+    states = vt.plan(item_ids, base.load_rows(output, manifest), threshold, student)
     return "complete" if all(s.final is not None for s in states) else "incomplete"
 
 
@@ -294,18 +365,25 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     if args.resume and not args.execute:
         ap.error("--resume requires --execute")
-    config, _ = vt.load_config()
-    registration = load_registration()
+    if args.tunnel_dns and args.student != "qwen":
+        ap.error("--tunnel-dns applies to the Qwen endpoint only")
+    config, _ = vt.load_config(vt.CONFIG_PATHS[args.student])
+    registration = load_registration(vt.REGISTRATION_PATHS[args.student])
     student = config["students"][args.student]
     manifest, rebuilt = vt.build_manifest(args.student)
     items = vt.verify_rows(manifest, rebuilt)
     campaign = dp.load_protocol()
     env = dotenv_values(ROOT / ".env")
-    route_ok, route_detail = rsl.qwen_route(campaign, env)
+    endpoint = key = model_id = credential_source = ""
+    if args.student == "qwen":
+        route_ok, route_detail = rsl.qwen_route(campaign, env)
+    else:
+        endpoint, key, model_id, credential_source, route_ok, route_detail = rsl.mimo_route(student)
     gates = evaluate_gates(args.student, manifest, registration, route_ok, route_detail)
-    unreadable = unreadable_probes(items)
-    print(f"probed prompts whose option letters cannot be read (confidence missing, so unsure): {len(unreadable)} "
-          f"{unreadable[:20]}")
+    if args.student == "qwen":
+        unreadable = unreadable_probes(items)
+        print(f"probed prompts whose option letters cannot be read (confidence missing, so unsure): {len(unreadable)} "
+              f"{unreadable[:20]}")
     print(f"student={args.student} phase={vt.PHASE} items={manifest['item_count']} possible_attempts={manifest['n']} "
           f"arms={manifest['arm_counts']} max_in_flight={student['max_in_flight']} "
           f"max_passes={config['schedule']['max_passes']}")
@@ -321,6 +399,28 @@ def main(argv: list[str] | None = None) -> int:
     if failed:
         raise SystemExit("Error: execution gates failed: " + "; ".join(f"{g.name} ({g.detail})" for g in failed))
     card_id = str(registration["card_ids"][vt.PHASE])
+    item_ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
+    threshold = float(config["loop"]["threshold"]) if args.student == "qwen" else None
+    max_passes = int(config["schedule"]["max_passes"])
+    if args.student == "mimo":
+        output = OUTPUT_ROOT / student["profile_id"]
+        route = {"model_id": model_id, "credential_source": credential_source,
+                 "endpoint_host": urlsplit(endpoint).hostname, "base_url_sha256": v1.sha256_bytes(endpoint.encode())}
+        condition = pr.reconcile_resume(output, build_condition(args.student, config, manifest, registration, route),
+                                        args.resume)
+        guard = pr.BudgetGuard(student["budget_tokens"], pr.existing_usage(output))
+        base.MODEL, base.PROFILE, base.PROTOCOL, base.CARD_ID = model_id, student["profile_id"], vt.PROTOCOL_ID, card_id
+        base.request = make_mimo_request(student, card_id, guard, pr.OutageGuard(student["stop_after_timeouts"]),
+                                         ModelPin(student["model_identity"]))
+        record_launch(output, args.student, resume=args.resume, note=args.note)
+        with OpenAI(base_url=endpoint, api_key=key, timeout=student["timeout_seconds"],
+                    max_retries=student["sdk_retries"]) as client:
+            status = run_passes(output, manifest, rebuilt, item_ids, condition, client, args.resume,
+                                max_passes=max_passes, threshold=None, student="mimo",
+                                score_callback=loop_callback(args.student, card_id, item_ids, None),
+                                runner_path=Path(__file__))
+        print(f"loop_status={status} output={output}", flush=True)
+        return 0 if status == "complete" else 1
     endpoint, key = str(env["OPENAI_BASE_URL"]), str(env["OPENAI_API_KEY"])
     if args.tunnel_dns:
         address = pr.install_resolver_shim(urlsplit(endpoint).hostname or "", args.tunnel_dns)
@@ -338,12 +438,10 @@ def main(argv: list[str] | None = None) -> int:
     base.MODEL, base.PROFILE, base.PROTOCOL, base.CARD_ID = model["requested_id"], model["profile_id"], vt.PROTOCOL_ID, card_id
     base.request = make_qwen_request(student, campaign, card_id, guard, pr.OutageGuard(student["stop_after_timeouts"]))
     record_launch(output, args.student, resume=args.resume, note=args.note)
-    item_ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
-    threshold = float(config["loop"]["threshold"])
     with OpenAI(base_url=endpoint, api_key=key, timeout=transport["timeout_seconds"],
                 max_retries=transport["sdk_retries"], default_headers=transport["gateway_header"]) as client:
         status = run_passes(output, manifest, rebuilt, item_ids, condition, client, args.resume,
-                            max_passes=int(config["schedule"]["max_passes"]), threshold=threshold,
+                            max_passes=max_passes, threshold=threshold,
                             score_callback=loop_callback(args.student, card_id, item_ids, threshold),
                             runner_path=Path(__file__))
     print(f"loop_status={status} output={output}", flush=True)

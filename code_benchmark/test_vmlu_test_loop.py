@@ -316,6 +316,160 @@ class TestGates(unittest.TestCase):
                                  "route_identity": False})
 
 
+# ---------------------------------------------------------------- MiMo (MC-110)
+
+MIMO_CONFIG, _ = vt.load_config(vt.CONFIG_PATHS["mimo"])
+MIMO = vt.REPLICATES_BY_STUDENT["mimo"]
+
+
+def mb_row(item_id: str, replicate: str, letter: str) -> dict:
+    """A MiMo B reply, read by the frozen parser like the probe's."""
+    return {"item_id": item_id, "replicate_id": replicate, "status": "complete", "raw_response": letter}
+
+
+class TestMimoManifest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.manifest, cls.rebuilt = vt.build_manifest("mimo")
+
+    def test_five_possible_attempts_per_item_with_both_b_on_the_frozen_prompt(self):
+        self.assertEqual((self.manifest["item_count"], self.manifest["n"]), (9833, 49165))
+        self.assertEqual(self.manifest["arm_counts"], {"B": 19666, "S": 29499})
+        frozen = {row["item_id"]: row for row in v2.load_manifest("vmlu")["items"] if row["dataset_id"] == vt.DATASET}
+        rows = {dp.run_key(row): row for row in self.manifest["items"]}
+        for item_id in list(frozen)[:200]:
+            for replicate in ("B-r1", "B-r2"):
+                self.assertEqual(rows[f"{vt.DATASET}:{item_id}:{replicate}"]["prompt_sha256"],
+                                 frozen[item_id]["prompt_sha256"])
+        # MiMo's S prompts are byte for byte Qwen's in MC-109.
+        qwen, _ = vt.build_manifest("qwen")
+        s_prompts = {dp.run_key(row): row["prompt_sha256"] for row in qwen["items"] if row["replicate_id"] != "B-r1"}
+        self.assertEqual(len(s_prompts), 29499)
+        self.assertTrue(all(rows[key]["prompt_sha256"] == digest for key, digest in s_prompts.items()))
+
+    def test_the_configuration_keeps_mc105s_request_and_fails_closed(self):
+        student = MIMO_CONFIG["students"]["mimo"]
+        self.assertEqual((student["max_in_flight"], student["budget_tokens"]), (6, 20_000_000))
+        for key, value in (("max_completion_tokens", 4096), ("model_id", "other"), ("system_prompt", ""),
+                           ("timeout_seconds", 600)):
+            with self.assertRaises(SystemExit):
+                vt.validate_config({**MIMO_CONFIG, "students": {"mimo": {**student, key: value}}})
+        with self.assertRaises(SystemExit):
+            vt.validate_config({**MIMO_CONFIG, "arms": {"mimo": ["B-r1", "S-r1", "S-r2", "S-r3"]}})
+        with self.assertRaises(SystemExit):
+            vt.build_manifest("qwen", vt.CONFIG_PATHS["mimo"])
+
+
+class TestMimoRule(unittest.TestCase):
+    def test_two_b_answers_first_then_s_then_the_vote(self):
+        self.assertEqual(vt.item_state("1", {}, None, "mimo").needed, ("B-r1", "B-r2"))
+        rows = {"B-r1": mb_row("1", "B-r1", "A")}
+        self.assertEqual(vt.item_state("1", rows, None, "mimo").needed, ("B-r2",))
+        rows["B-r2"] = mb_row("1", "B-r2", "A")
+        state = vt.item_state("1", rows, None, "mimo")
+        self.assertEqual((state.needed, state.final, state.rounds, state.answer), ((), "B-r1", 1, "A"))
+        rows["B-r2"] = mb_row("1", "B-r2", "B")
+        self.assertEqual(vt.item_state("1", rows, None, "mimo").needed, ("S-r1",))
+        rows["S-r1"] = s_row("1", "S-r1", "B")  # agrees with B-r2: S-r1 is final
+        state = vt.item_state("1", rows, None, "mimo")
+        self.assertEqual((state.final, state.rounds, state.answer), ("S-r1", 2, "B"))
+        rows["S-r1"] = s_row("1", "S-r1", "C")
+        self.assertEqual(vt.item_state("1", rows, None, "mimo").needed, ("S-r2", "S-r3"))
+        rows.update({"S-r2": s_row("1", "S-r2", "D"), "S-r3": s_row("1", "S-r3", "D")})
+        state = vt.item_state("1", rows, None, "mimo")
+        self.assertEqual((state.final, state.rounds, state.answer, state.confidence), ("S-r2", 3, "D", None))
+
+    def test_empty_b_answers_never_agree(self):
+        rows = {"B-r1": mb_row("1", "B-r1", ""), "B-r2": mb_row("1", "B-r2", "")}
+        self.assertEqual(vt.item_state("1", rows, None, "mimo").needed, ("S-r1",))
+
+    def test_round_by_round_equals_mc105_replay_on_the_same_attempts(self):
+        rng = random.Random(11)
+        letters = ["A", "B", "C", "D", ""]
+        for case in range(3000):
+            draw = {r: rng.choice(letters) for r in MIMO}
+            full = {**{r: mb_row("x", r, draw[r]) for r in ("B-r1", "B-r2")},
+                    **{r: s_row("x", r, draw[r]) for r in ("S-r1", "S-r2", "S-r3")}}
+            asked: dict[str, dict] = {}
+            state = vt.item_state("x", asked, None, "mimo")
+            while state.needed:
+                asked.update({r: full[r] for r in state.needed})
+                state = vt.item_state("x", asked, None, "mimo")
+            expected = vt.final_of(draw, None, None, "mimo")
+            self.assertEqual((state.final, state.rounds), expected, f"case {case}: {draw}")
+            self.assertEqual(state.answer, draw[expected[0]])
+            self.assertEqual(len(asked), {1: 2, 2: 3, 3: 5}[expected[1]])
+
+
+class TestMimoPasses(EngineState):
+    """The real engine with a fake MiMo request: B twice for every item, then S where the rule needs it."""
+
+    def test_three_rounds_and_each_attempt_sent_once(self):
+        items = vt.expand(synthetic_items(30), MIMO)
+        manifest: dict[str, Any] = {"items": [v2._item_manifest(item) for item in items]}  # noqa: SLF001
+        manifest["manifest_sha256"] = v1.sha256_bytes(v1.canonical_json(manifest))
+        rebuilt = {item.run_key: item for item in items}
+        ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
+        sent: Counter[str] = Counter()
+        lock = threading.Lock()
+
+        def request(client, item, shard, lane):
+            with lock:
+                sent[item.run_key] += 1
+            index = int(item.item_id.split("-")[1])
+            row = rvt._base_row(item, "MC-110", shard, lane, "fake")  # noqa: SLF001
+            letter = {"B-r1": "A", "B-r2": "A" if index % 3 == 0 else "B", "S-r1": "B" if index % 3 == 1 else "C",
+                      "S-r2": "C", "S-r3": "D"}[item.replicate_id]
+            raw = letter if item.replicate_id.startswith("B") else f"Lời giải.\nĐáp án: {letter}"
+            row.update({"status": "complete", "raw_response": raw, "total_tokens": 10, "latency_s": 0.001,
+                        "finished_at": rvt.base.now()})
+            return row
+
+        rvt.base.request = request
+        with contextlib.redirect_stdout(io.StringIO()):
+            status = rvt.run_passes(self.output, manifest, rebuilt, ids, {"runner_sha256": "test"}, None, False,
+                                    max_passes=6, threshold=None, student="mimo",
+                                    score_callback=rvt.loop_callback("mimo", "MC-110", ids, None),
+                                    runner_path=Path(rvt.__file__))
+        self.assertEqual(status, "complete")
+        self.assertEqual(set(sent.values()), {1})
+        self.assertEqual(Counter(key.rsplit(":", 1)[1] for key in sent),
+                         {"B-r1": 30, "B-r2": 30, "S-r1": 20, "S-r2": 10, "S-r3": 10})
+        summary = json.loads((self.output / "summary.json").read_text())
+        self.assertEqual((summary["rounds"], summary["final_differs_from_before"], summary["confidence_missing"]),
+                         ({"1": 10, "2": 10, "3": 10}, 20, None))
+        with (self.output / "submission_loop.csv").open() as handle:
+            loop = Counter(row["answer"] for row in csv.DictReader(handle))
+        with (self.output / "submission_before.csv").open() as handle:
+            before = Counter(row["answer"] for row in csv.DictReader(handle))
+        self.assertEqual((loop, before), ({"A": 10, "B": 10, "C": 10}, {"A": 30}))
+
+
+class TestMimoRequest(EngineState):
+    def request(self, model: str = "mimo-v2.6-flash"):
+        student = MIMO_CONFIG["students"]["mimo"]
+        rvt.base.MODEL = student["model_id"]
+        request = rvt.make_mimo_request(student, "MC-110", pr.BudgetGuard(10_000), pr.OutageGuard(4),
+                                        rvt.ModelPin(student["model_identity"]))
+        item = vt.expand(synthetic_items(1), MIMO)[1]
+        client = FakeClient(("Đáp án: B", model, None))
+        return request(client, item, 0, 0), client, item
+
+    def test_mc105s_request_with_this_cards_rows_and_session(self):
+        row, client, item = self.request()
+        self.assertEqual((row["status"], row["phase"], row["measurement_card_id"], row["replicate_id"]),
+                         ("complete", vt.PHASE, "MC-110", "B-r2"))
+        sent = client.kwargs
+        assert sent is not None
+        self.assertEqual(sent["max_completion_tokens"], 20000)
+        self.assertEqual(sent["messages"][0], {"role": "system", "content": "Answer the user's question."})
+        self.assertNotIn("temperature", sent)
+        self.assertEqual(sent["extra_headers"], {"x-opencode-session": rvt.session_id("MC-110", item.run_key)})
+        self.assertTrue(rvt.session_id("MC-110", item.run_key).startswith("vmlu-mc110-"))
+
+    def test_another_model_is_fatal(self):
+        row, _, _ = self.request(model="another-model")
+        self.assertEqual((row["status"], row["fatal"]), ("request_error", True))
 
 
 if __name__ == "__main__":
