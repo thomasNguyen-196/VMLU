@@ -9,17 +9,24 @@ describe("router results", () => {
     const data = parseRouterResults(raw());
     expect(data.experiments.map((experiment) => experiment.cards)).toEqual(
       ["MC-90, MC-91, MC-92", "MC-93", "MC-94", "MC-95", "MC-96", "MC-97", "MC-98", "MC-100", "MC-101", "MC-102", "MC-103",
-        "MC-104", "MC-105"]);
+        "MC-104", "MC-105", "MC-109"]);
     const status = Object.fromEntries(data.experiments.map((experiment) => [experiment.cards, experiment.status]));
-    expect([status["MC-94"], status["MC-100"], status["MC-102"], status["MC-103"], status["MC-104"], status["MC-105"]])
-      .toEqual(["partial", "met", "not_met", "descriptive", "partial", "partial"]);
+    expect([status["MC-94"], status["MC-100"], status["MC-102"], status["MC-103"], status["MC-104"], status["MC-105"],
+      status["MC-109"]]).toEqual(["partial", "met", "not_met", "descriptive", "partial", "partial", "descriptive"]);
     const table = data.experiments.find((experiment) => experiment.id === "mc-105")!;
     expect(table.tables.map((block) => block.rows.map((row) => row.id))).toEqual(
       [["always_B", "loop", "always_S", "always_vote", "table"], ["always_B", "loop", "always_S", "always_vote", "table"]]);
     expect(table.tests.filter((entry) => entry.primary)).toHaveLength(12);
     const v2 = data.experiments.find((experiment) => experiment.id === "mc-94")!.tables[0].rows.find((row) => row.id === "v2")!;
     expect(v2.cells.vmlu.score).toBe(76.67);
-    expect(data.experiments.every((experiment) => experiment.sources.every((source) => source.path.startsWith("all_res/")))).toBe(true);
+    // Sources are registered outputs under all_res/, vmlu.ai grades kept in docs/research/, or frozen manifests in data/.
+    expect(data.experiments.every((experiment) => experiment.sources.every((source) =>
+      ["all_res/", "docs/research/", "data/"].some((root) => source.path.startsWith(root))))).toBe(true);
+    // MC-109: Qwen's loop on VMLU test, scored by vmlu.ai; descriptive, so its test has no p.
+    const test109 = data.experiments.find((experiment) => experiment.id === "mc-109")!;
+    const total = Object.fromEntries(test109.tables[0].rows.map((row) => [row.id, row.cells.total.score]));
+    expect(total).toEqual({ always_B: 67.09, loop: 76.63, table: 62.94 });
+    expect([test109.tests[0].diff, test109.tests[0].p]).toEqual([9.54, null]);
   });
 
   test("the vote explainer carries the funnel and the worked examples that MC-104 reports", () => {
@@ -50,8 +57,13 @@ describe("router results", () => {
     expect(card("mc-105").tables[qwen.table].title.startsWith("Qwen3.5-9B")).toBe(true);
     expect(card("mc-105").tables[mimo.table].title.startsWith("MiMo V2.6 Flash")).toBe(true);
     const loop = qwen.rows.find((row) => row.row === "loop")!;
-    expect(Object.keys(loop.changes)).toHaveLength(6);
+    expect(Object.keys(loop.changes)).toHaveLength(7);
     expect(loop.changes["vmlu-dev"]).toBeUndefined();
+    // VMLU test comes from MC-109 for Qwen only; its change is descriptive (no p), MiMo has no cell there.
+    const vmluTest = namedTest(card("mc-105"), loop.changes["vmlu-test"]);
+    expect([vmluTest.diff, vmluTest.p, vmluTest.primary]).toEqual([9.54, null, false]);
+    expect(mimo.rows[1].changes["vmlu-test"]).toBeUndefined();
+    expect(card("mc-105").tables[mimo.table].rows.every((row) => !row.cells["vmlu-test"])).toBe(true);
     const vmlu = namedTest(card("mc-105"), loop.changes["vi-multimodel-v1-vmlu-valid"]);
     expect([vmlu.label.startsWith("Qwen3.5-9B"), vmlu.diff, vmlu.primary, vmlu.p! < data.alpha]).toEqual([true, 12.1, true, true]);
     expect(Object.values(mimo.rows[1].changes).every((label) => label.startsWith("MiMo V2.6 Flash"))).toBe(true);
@@ -65,7 +77,7 @@ describe("router results", () => {
     // Bảng 2: every other card has lines, and a line's numbers are that card's cells on one column.
     expect(Object.fromEntries(data.experiments.map((experiment) => [experiment.cards, experiment.overview.length]))).toEqual({
       "MC-90, MC-91, MC-92": 2, "MC-93": 1, "MC-94": 1, "MC-95": 1, "MC-96": 1, "MC-97": 1, "MC-98": 1, "MC-100": 2,
-      "MC-101": 2, "MC-102": 1, "MC-103": 2, "MC-104": 4, "MC-105": 0 });
+      "MC-101": 2, "MC-102": 1, "MC-103": 2, "MC-104": 4, "MC-105": 0, "MC-109": 1 });
     const v2 = card("mc-94");
     const line = v2.overview[0];
     expect([line.tried.row, line.column]).toEqual(["v2", "vmlu"]);

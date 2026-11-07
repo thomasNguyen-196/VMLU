@@ -1,4 +1,4 @@
-"""Publish the router and diagnosis experiments (MC-90 to MC-105) for the /table page.
+"""Publish the router and diagnosis experiments (MC-90 to MC-105, and MC-109 on VMLU test) for the /table page.
 
 NO NUMBER IS TYPED HERE. Every score, interval and p-value is read from the registered analysis report of its card
 (under the gitignored all_res/), and each report's SHA-256 is published beside the numbers it gave. The wording
@@ -46,6 +46,13 @@ REPORTS = {
     "reading_v3": "all_res/diagnostic_router_loop/reading_v3/reading_v3_report.json",
     "self_loop": "all_res/diagnostic_router_loop/self_loop/analysis/self_loop_report.json",
     "table_loop": "all_res/diagnostic_router_loop/table_loop/analysis/table_loop_report.json",
+    "vmlu_test_summary": "all_res/diagnostic_router_loop/vmlu_test_loop/qwen3-5-9b-65k-prospective/summary.json",
+    "vmlu_test_predictions": ("all_res/diagnostic_router_loop/vmlu_test_loop/qwen3-5-9b-65k-prospective/"
+                              "predictions.jsonl"),
+    "vmlu_test_before": "docs/research/qwen-vmlu-test-server-grade-mc109-before-2026-11-07.json",
+    "vmlu_test_after": "docs/research/qwen-vmlu-test-server-grade-mc109-loop-2026-11-07.json",
+    "vmlu_test_mc83": "docs/research/qwen-vmlu-test-server-grade-mc83-2026-10-14.json",
+    "vmlu_v2_manifest": "data/vi_multimodel_v2/vmlu_v2.json",
 }
 SELF_LOOP_MANIFEST = "data/diagnostic_router_loop/self_loop_manifest_qwen_v1.json"
 TABLE_LOOP_CONFIG = "data/diagnostic_router_loop/table_loop_v1.json"
@@ -56,6 +63,13 @@ LOOP_POLICIES = (("always_B", "Trước: hỏi thẳng (B)", "baseline"), ("loop
 TABLE_DATASETS = {"vi-multimodel-v1-vmlu-valid": "VMLU valid", "vi-multimodel-v1-legal-mc-146": "Legal MC",
                   "vi-multimodel-v1-legal-nli-150": "Legal NLI", "vi-multimodel-v1-vi-squad-200": "Vi-SQuAD",
                   "vi-multimodel-v1-vi-drop-200": "Vi-DROP", "vi-multimodel-v1-bidlqa-test": "ViBidLQA test"}
+# MC-109: Qwen's loop on VMLU test, scored by vmlu.ai, whose total is the mean of the 58 subject accuracies and
+# whose category totals are the means within each category. Keys are vmlu.ai's; names are the v2 manifest's strata.
+VMLU_TEST = "vi-multimodel-v2-vmlu-test"
+VMLU_TEST_COLUMN = ("vmlu-test", "VMLU test (MC-109)")
+VMLU_TEST_CATEGORIES = (("stem", "STEM", "STEM"), ("social_science", "Khoa học xã hội", "Social Science"),
+                        ("humanity", "Nhân văn", "Humanity"), ("other", "Khác", "Other"))
+VMLU_TEST_METRIC = "Tỷ lệ đúng (vmlu.ai)"
 ARM_LABELS = {"always_B": "luôn B", "always_S": "luôn S", "v2_cascade": "router v2", "B": "B", "S": "S", "Q": "Q"}
 
 
@@ -76,6 +90,17 @@ class Sources:
                 raise _fail(f"missing registered report {REPORTS[key]}")
             raw = path.read_bytes()
             self.data[key] = json.loads(raw)
+            self.hashes[key] = hashlib.sha256(raw).hexdigest()
+        return self.data[key]
+
+    def jsonl(self, key: str) -> list[dict[str, Any]]:
+        """A registered JSON Lines output, read once like a report."""
+        if key not in self.data:
+            path = self.root / REPORTS[key]
+            if not path.is_file():
+                raise _fail(f"missing registered output {REPORTS[key]}")
+            raw = path.read_bytes()
+            self.data[key] = [json.loads(line) for line in raw.splitlines() if line.strip()]
             self.hashes[key] = hashlib.sha256(raw).hexdigest()
         return self.data[key]
 
@@ -742,27 +767,79 @@ def before_after(model: str, dataset: str) -> str:
     return f"{model} · {dataset}: sau so với trước"
 
 
+def vmlu_test(src: Sources) -> dict[str, Any]:
+    """MC-109's two vmlu.ai grades, checked against the loop's own outputs: the summary must give every item a final
+    answer, each grade must name the submission the summary hashed, the ledger's tokens must add up to the summary's,
+    and the categories must hold the subjects and items of the frozen v2 manifest. The /table number beside them is
+    MC-83's grade, the source of /table's VMLU test cell for Qwen."""
+    summary = src("vmlu_test_summary")
+    expect("MC-109", summary, measurement_card_id="MC-109", phase="vmlu_test_loop", student="qwen")
+    if summary["final_items"] != summary["items"] or summary["still_needed"]:
+        raise _fail("MC-109: the loop did not give every item a final answer")
+    grades = {}
+    for arm, key, name in (("before", "vmlu_test_before", "submission_before.csv"),
+                           ("loop", "vmlu_test_after", "submission_loop.csv")):
+        grade = src(key)
+        expect("MC-109", grade, condition_ids=["MC-109"], arm=arm, dataset_id=VMLU_TEST, item_count=summary["items"],
+               condition_sha256=summary["condition_sha256"], server_score_status="scored_user_provided")
+        if grade["submission_sha256"] != summary["submissions"][name]:
+            raise _fail(f"MC-109: the {arm} grade is for another file than the summary's {name}")
+        grades[arm] = grade
+    reference = src("vmlu_test_mc83")
+    expect("MC-83", reference, condition_ids=["MC-83"], dataset_id=VMLU_TEST, item_count=summary["items"])
+    strata = [entry["stratum"] for entry in src("vmlu_v2_manifest")["items"] if entry["dataset_id"] == VMLU_TEST]
+    if len(strata) != summary["items"]:
+        raise _fail("MC-109: the v2 manifest's VMLU test items differ from the summary's")
+    counts = {}
+    for key, _, stratum in VMLU_TEST_CATEGORIES:
+        subjects = {entry[0] for entry in strata if entry[2] == stratum}
+        counts[key] = sum(1 for entry in strata if entry[2] == stratum)
+        for grade in (*grades.values(), reference):
+            if len(grade["categories"][key]["subjects"]) != len(subjects):
+                raise _fail(f"MC-109: a grade's {key} subjects differ from the manifest's {len(subjects)}")
+    if sum(counts.values()) != summary["items"]:
+        raise _fail("MC-109: the manifest's categories do not cover the VMLU test items")
+    rows = src.jsonl("vmlu_test_predictions")
+    if len(rows) != sum(summary["complete_attempts"].values()) or any(r["status"] != "complete" for r in rows):
+        raise _fail("MC-109: the ledger differs from the summary's complete attempts")
+    probe = sum(r["total_tokens"] for r in rows if r["replicate_id"] == "B-r1")
+    if sum(r["total_tokens"] for r in rows) != summary["reported_tokens"]:
+        raise _fail("MC-109: the ledger's tokens differ from the summary's")
+    return {"summary": summary, "grades": grades, "reference": reference, "counts": counts,
+            "tokens": {"before": probe / summary["items"], "loop": summary["reported_tokens_per_final_item"]}}
+
+
+VMLU_TEST_CHANGE = before_after("Qwen3.5-9B", VMLU_TEST_COLUMN[1])
+
+
 def table_loop(src: Sources) -> dict[str, Any]:
     report = src("table_loop")
     expect("MC-105", report, card_id="MC-105", plan_id="table-loop-v1")
     if list(report["datasets"]["qwen"]) != list(TABLE_DATASETS):
         raise _fail("MC-105: the report's datasets differ from the published columns")
     counts = json.loads((src.root / SELF_LOOP_MANIFEST).read_text(encoding="utf-8"))["dataset_counts"]
+    test_run = vmlu_test(src)
     tables, tests, met = [], [], {}
     for student, model in STUDENTS:
         blocks, dev = report["datasets"][student], report["vmlu_dev"][student]
         columns = [column(key, label, "Tỷ lệ đúng" if blocks[key]["task"] == "multiple_choice" else "Token-F1 (v3)",
                           blocks[key]["n"]) for key, label in TABLE_DATASETS.items()]
         columns.append(column("vmlu-dev", "VMLU dev (MC-104)", "Tỷ lệ đúng", counts["vmlu-mqa-dev"]))
+        columns.append(column(VMLU_TEST_COLUMN[0], VMLU_TEST_COLUMN[1], VMLU_TEST_METRIC, test_run["summary"]["items"]))
         rows = []
         for name, label, role in LOOP_POLICIES:
             cells = {key: cell(blocks[key]["policies"][name][blocks[key]["metric"]],
                                tokens=blocks[key]["policies"][name]["mean_tokens"]) for key in TABLE_DATASETS}
             cells["vmlu-dev"] = cell(dev["policies"][name]["accuracy"], tokens=dev["policies"][name]["mean_tokens"])
+            if student == "qwen" and name in ("always_B", "loop"):
+                arm = "before" if name == "always_B" else name
+                cells[VMLU_TEST_COLUMN[0]] = cell(test_run["grades"][arm]["total"], tokens=test_run["tokens"][arm])
             rows.append(row(name, label, role, cells))
         reference = {key: cell(blocks[key]["table_reference"]["accuracy" if blocks[key]["task"] == "multiple_choice"
                                                               else "token_f1_v3"]) for key in TABLE_DATASETS}
         reference["vmlu-dev"] = cell(dev["table_reference"]["accuracy"])
+        if student == "qwen":
+            reference[VMLU_TEST_COLUMN[0]] = cell(test_run["reference"]["total"])
         rows.append(row("table", "Số /table hiện có (MC-83 / MC-85, cài đặt khác)", "reference", reference))
         tables.append(table(f"{model} · before / after trên các bộ của /table", columns, rows,
                             "Trắc nghiệm: tỷ lệ đúng; đọc hiểu: token-F1 theo bộ chấm v3. Dưới mỗi điểm là số token "
@@ -773,6 +850,10 @@ def table_loop(src: Sources) -> dict[str, Any]:
             tests.append(test(before_after(model, label), diff=primary["loop_minus_B_points"],
                               p=primary["p_holm"], p_kind=kind, primary=True))
             met[(student, key)] = primary["met"]
+    grades = test_run["grades"]
+    tests.append(test(VMLU_TEST_CHANGE, diff=grades["loop"]["total"] - grades["before"]["total"],
+                      p_kind="mô tả; vmlu.ai chỉ trả điểm theo môn, nên không có phép thử",
+                      note="MC-109, không thuộc 12 ô của MC-105; điểm tổng của vmlu.ai là trung bình 58 môn"))
     both = [label for key, label in TABLE_DATASETS.items() if all(met[(student, key)] for student, _ in STUDENTS)]
     neither = [label for key, label in TABLE_DATASETS.items() if not any(met[(student, key)] for student, _ in STUDENTS)]
     if len(both) + len(neither) != len(TABLE_DATASETS):
@@ -793,12 +874,66 @@ def table_loop(src: Sources) -> dict[str, Any]:
                       "Không phải câu mới: các bộ này đã dùng để thiết kế router (MC-90 – MC-95). Bằng chứng trên câu mới "
                       "là MC-104.",
                       "Sửa đổi 1 (quyết định trước khi phân tích): 2 lượt hỏi thẳng của MiMo ở câu VMLU 04-0018 không trả "
-                      "lời trong 300 giây sau 5 lần gửi, nên được chấm là không trả lời."],
-            "sources": src.refs("table_loop", "self_loop")}
+                      "lời trong 300 giây sau 5 lần gửi, nên được chấm là không trả lời.",
+                      "Cột VMLU test lấy từ MC-109 (chỉ Qwen), do vmlu.ai chấm, và không thuộc 12 ô đã đăng ký; chi tiết "
+                      "ở mục MC-109."],
+            "sources": src.refs("table_loop", "self_loop", "vmlu_test_summary", "vmlu_test_before", "vmlu_test_after",
+                                "vmlu_test_mc83")}
+
+
+def count(value: int) -> str:
+    """An item count the way the page prints it: a dot between thousands."""
+    return f"{value:,}".replace(",", ".")
+
+
+def vmlu_test_loop(src: Sources) -> dict[str, Any]:
+    run = vmlu_test(src)
+    summary, grades, reference = run["summary"], run["grades"], run["reference"]
+    columns = [column("total", "Tổng (trung bình 58 môn)", VMLU_TEST_METRIC, summary["items"])]
+    columns += [column(key, label, VMLU_TEST_METRIC, run["counts"][key]) for key, label, _ in VMLU_TEST_CATEGORIES]
+    def cells(grade: dict[str, Any], tokens: float | None = None) -> dict[str, dict[str, Any]]:
+        return {"total": cell(grade["total"], tokens=tokens),
+                **{key: cell(grade["categories"][key]["total"]) for key, _, _ in VMLU_TEST_CATEGORIES}}
+    rows = [row("always_B", "Trước: hỏi thẳng (probe, cùng lượt chạy)", "baseline",
+                cells(grades["before"], run["tokens"]["before"])),
+            row("loop", "Sau: vòng tự sửa, hỏi theo từng vòng", "candidate", cells(grades["loop"], run["tokens"]["loop"])),
+            row("table", "Số /table hiện có (MC-83, cài đặt khác)", "reference", cells(reference))]
+    block = table("Qwen3.5-9B · VMLU test, 9.833 câu, vmlu.ai chấm", columns, rows,
+                  "Điểm tổng là trung bình 58 môn, điểm nhóm là trung bình các môn trong nhóm; dưới điểm tổng là số "
+                  "token trung bình mỗi câu.")
+    tables = [block]
+    gain = grades["loop"]["total"] - grades["before"]["total"]
+    versus_b = test("Qwen3.5-9B · VMLU test: sau so với trước", diff=gain,
+                    p_kind="mô tả; vmlu.ai chỉ trả điểm theo môn, nên không có phép thử", primary=True)
+    rounds = summary["rounds"]
+    return {"id": "mc-109", "cards": "MC-109", "title": "Vòng tự sửa của Qwen trên VMLU test (vmlu.ai chấm)",
+            "question": "Vòng tự sửa của MC-105 đổi điểm VMLU test của Qwen ra sao, khi vmlu.ai chấm trước và sau?",
+            "student": "Qwen3.5-9B (IEC); model tự viết mọi câu trả lời cuối",
+            "items": (f"{count(summary['items'])} câu VMLU test, cùng câu và prompt với /table; router chưa từng dùng các "
+                      "câu này khi thiết kế, vì Test không có đáp án"),
+            "status": "descriptive",
+            "verdict": (f"Mô tả: vmlu.ai chấm trước {fmt(grades['before']['total'])}%, sau {fmt(grades['loop']['total'])}%, "
+                        f"tức {'+' if gain > 0 else ''}{fmt(gain)} điểm. Nhóm STEM tăng nhiều nhất "
+                        f"({fmt(grades['before']['categories']['stem']['total'])} lên "
+                        f"{fmt(grades['loop']['categories']['stem']['total'])}). Không có phép thử theo cặp câu vì "
+                        "vmlu.ai chỉ trả điểm theo môn."),
+            "tables": tables, "tests": [versus_b],
+            "overview": [line(tables, "VMLU test, câu mới, vmlu.ai chấm", block, "total",
+                              ("loop", "Vòng tự sửa · Qwen3.5-9B"), always_b="always_B",
+                              compared=((versus_b, "so với hỏi thẳng (mô tả)"),))],
+            "notes": [("Hỏi theo từng vòng: S chỉ được hỏi khi probe chưa chắc, S lần 2 và 3 chỉ khi S lệch B. Đáp án cuối "
+                       "giống như khi hỏi đủ rồi tính lại, nhưng không có dòng Luôn S vì S không được hỏi cho mọi câu."),
+                      (f"Dừng ở vòng 1, 2 và 3: {count(rounds['1'])}, {count(rounds['2'])} và {count(rounds['3'])} câu; "
+                       f"{count(summary['final_differs_from_before'])} đáp án cuối khác hỏi thẳng; "
+                       f"{count(summary['empty_final'])} câu để trống vì không lượt S nào cho ra chữ cái, tính là sai."),
+                      "Trước là probe trong cùng lượt chạy (temperature 0, 4 token), nên cao hơn số /table hiện có "
+                      "(MC-83, temperature 1,0)."],
+            "sources": src.refs("vmlu_test_summary", "vmlu_test_predictions", "vmlu_test_before", "vmlu_test_after",
+                                "vmlu_test_mc83", "vmlu_v2_manifest")}
 
 
 EXPERIMENTS = (wide, core, router_v2, router_v3, k2, menu, muse_router, legal_oracle, legal_retrieval, critic,
-               weakness_map, self_loop, table_loop)
+               weakness_map, self_loop, table_loop, vmlu_test_loop)
 BENCHMARK_ID = "mc-105"
 
 
@@ -841,7 +976,8 @@ def loop_method(experiment: dict[str, Any], groups: list[dict[str, Any]], thresh
                                 "lấy lần sớm nhất; câu trả lời rỗng không được tính phiếu.")}],
             "note": ("Các lần hỏi độc lập: model không thấy câu trả lời trước, và mọi đáp án cuối do chính model viết. "
                      "Mỗi câu được hỏi đủ mọi lượt rồi tính lại theo quy tắc trên, nên Trước, Sau và Luôn S so trên "
-                     "cùng các câu trả lời. Sau chỉ trả token cho những lượt nó thật sự dùng, nhưng vẫn tốn gấp "
+                     "cùng các câu trả lời; riêng VMLU test (MC-109) chỉ hỏi lượt nào quy tắc cần, cùng đáp án cuối "
+                     "nhưng không có Luôn S. Sau chỉ trả token cho những lượt nó thật sự dùng, nhưng vẫn tốn gấp "
                      f"{fmt(min(ratios))} đến {fmt(max(ratios))} lần Trước tuỳ ô; token từng ô nằm trong chi tiết MC-105.")}
 
 
@@ -857,18 +993,22 @@ def benchmark(experiments: list[dict[str, Any]], root: Path = ROOT) -> dict[str,
         matches = [number for number, block in enumerate(experiment["tables"]) if block["title"].startswith(f"{model} · ")]
         if len(matches) != 1:
             raise _fail(f"{experiment['cards']}: expected one table for {model}, found {len(matches)}")
-        rows = [{"row": name, "label": label,
-                 "changes": {key: before_after(model, dataset) for key, dataset in TABLE_DATASETS.items()}
-                 if name == "loop" else {}}
+        labels = {entry["label"] for entry in experiment["tests"]}
+        changes = {key: before_after(model, dataset) for key, dataset in TABLE_DATASETS.items()}
+        if before_after(model, VMLU_TEST_COLUMN[1]) in labels:
+            changes[VMLU_TEST_COLUMN[0]] = before_after(model, VMLU_TEST_COLUMN[1])
+        rows = [{"row": name, "label": label, "changes": changes if name == "loop" else {}}
                 for name, label, _ in LOOP_POLICIES if name != "always_vote"]
         groups.append({"label": model, "table": matches[0], "rows": rows})
     return {"experiment": BENCHMARK_ID, "title": "Trước / sau trên các bộ của /table", "groups": groups,
             "method": loop_method(experiment, groups, registered_threshold(root)),
             "note": ("Cùng câu và prompt với /table; trắc nghiệm tính tỷ lệ đúng, đọc hiểu tính token-F1 chấm v3. Dưới "
                      "điểm Sau là chênh lệch sau trừ trước của phép thử đã đăng ký (cặp câu, Holm trên 12 ô). Cột VMLU "
-                     "dev lấy từ MC-104, không thuộc 12 ô đó nên không có phép thử riêng. Trước là hỏi thẳng trong cùng "
-                     "lượt chạy, nên có thể khác số /table hiện có (MC-83 / MC-85, cài đặt khác). Các bộ này đã dùng để "
-                     "thiết kế router; bằng chứng trên câu mới là MC-104 ở Bảng 2.")}
+                     "dev lấy từ MC-104, không thuộc 12 ô đó nên không có phép thử riêng. Cột VMLU test lấy từ MC-109, "
+                     "mới có Qwen: vmlu.ai chấm hai file trước và sau, điểm là trung bình 58 môn, và chênh lệch dưới "
+                     "điểm Sau chỉ là mô tả vì vmlu.ai không trả kết quả từng câu. Trước là hỏi thẳng trong cùng lượt "
+                     "chạy, nên có thể khác số /table hiện có (MC-83 / MC-85, cài đặt khác). Các bộ khác đã dùng để "
+                     "thiết kế router; bằng chứng trên câu mới là VMLU test và MC-104 ở Bảng 2.")}
 
 
 def has_cell(block: dict[str, Any], row_id: str, column_id: str) -> bool:

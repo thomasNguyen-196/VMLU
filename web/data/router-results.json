@@ -1,6 +1,6 @@
 {
  "schema_version": 2,
- "generated_at": "2026-11-03T01:31:50.476140+00:00",
+ "generated_at": "2026-11-07T02:57:43.519545+00:00",
  "alpha": 0.05,
  "benchmark": {
   "experiment": "mc-105",
@@ -24,7 +24,8 @@
        "vi-multimodel-v1-legal-nli-150": "Qwen3.5-9B · Legal NLI: sau so với trước",
        "vi-multimodel-v1-vi-squad-200": "Qwen3.5-9B · Vi-SQuAD: sau so với trước",
        "vi-multimodel-v1-vi-drop-200": "Qwen3.5-9B · Vi-DROP: sau so với trước",
-       "vi-multimodel-v1-bidlqa-test": "Qwen3.5-9B · ViBidLQA test: sau so với trước"
+       "vi-multimodel-v1-bidlqa-test": "Qwen3.5-9B · ViBidLQA test: sau so với trước",
+       "vmlu-test": "Qwen3.5-9B · VMLU test (MC-109): sau so với trước"
       }
      },
      {
@@ -79,9 +80,9 @@
      "text": "Vẫn lệch thì hỏi S thêm hai lần, lấy đáp án nhiều phiếu nhất trong ba lần S. Hoà thì lấy lần sớm nhất; câu trả lời rỗng không được tính phiếu."
     }
    ],
-   "note": "Các lần hỏi độc lập: model không thấy câu trả lời trước, và mọi đáp án cuối do chính model viết. Mỗi câu được hỏi đủ mọi lượt rồi tính lại theo quy tắc trên, nên Trước, Sau và Luôn S so trên cùng các câu trả lời. Sau chỉ trả token cho những lượt nó thật sự dùng, nhưng vẫn tốn gấp 1,9 đến 10,2 lần Trước tuỳ ô; token từng ô nằm trong chi tiết MC-105."
+   "note": "Các lần hỏi độc lập: model không thấy câu trả lời trước, và mọi đáp án cuối do chính model viết. Mỗi câu được hỏi đủ mọi lượt rồi tính lại theo quy tắc trên, nên Trước, Sau và Luôn S so trên cùng các câu trả lời; riêng VMLU test (MC-109) chỉ hỏi lượt nào quy tắc cần, cùng đáp án cuối nhưng không có Luôn S. Sau chỉ trả token cho những lượt nó thật sự dùng, nhưng vẫn tốn gấp 1,9 đến 12,6 lần Trước tuỳ ô; token từng ô nằm trong chi tiết MC-105."
   },
-  "note": "Cùng câu và prompt với /table; trắc nghiệm tính tỷ lệ đúng, đọc hiểu tính token-F1 chấm v3. Dưới điểm Sau là chênh lệch sau trừ trước của phép thử đã đăng ký (cặp câu, Holm trên 12 ô). Cột VMLU dev lấy từ MC-104, không thuộc 12 ô đó nên không có phép thử riêng. Trước là hỏi thẳng trong cùng lượt chạy, nên có thể khác số /table hiện có (MC-83 / MC-85, cài đặt khác). Các bộ này đã dùng để thiết kế router; bằng chứng trên câu mới là MC-104 ở Bảng 2."
+  "note": "Cùng câu và prompt với /table; trắc nghiệm tính tỷ lệ đúng, đọc hiểu tính token-F1 chấm v3. Dưới điểm Sau là chênh lệch sau trừ trước của phép thử đã đăng ký (cặp câu, Holm trên 12 ô). Cột VMLU dev lấy từ MC-104, không thuộc 12 ô đó nên không có phép thử riêng. Cột VMLU test lấy từ MC-109, mới có Qwen: vmlu.ai chấm hai file trước và sau, điểm là trung bình 58 môn, và chênh lệch dưới điểm Sau chỉ là mô tả vì vmlu.ai không trả kết quả từng câu. Trước là hỏi thẳng trong cùng lượt chạy, nên có thể khác số /table hiện có (MC-83 / MC-85, cài đặt khác). Các bộ khác đã dùng để thiết kế router; bằng chứng trên câu mới là VMLU test và MC-104 ở Bảng 2."
  },
  "experiments": [
   {
@@ -3152,6 +3153,12 @@
        "label": "VMLU dev (MC-104)",
        "metric": "Tỷ lệ đúng",
        "n": 303
+      },
+      {
+       "id": "vmlu-test",
+       "label": "VMLU test (MC-109)",
+       "metric": "Tỷ lệ đúng (vmlu.ai)",
+       "n": 9833
       }
      ],
      "rows": [
@@ -3200,6 +3207,12 @@
          "score": 73.6,
          "ci": null,
          "tokens": 120.0,
+         "vs_b": null
+        },
+        "vmlu-test": {
+         "score": 67.09,
+         "ci": null,
+         "tokens": 131.7,
          "vs_b": null
         }
        }
@@ -3250,6 +3263,12 @@
          "ci": null,
          "tokens": 1032.5,
          "vs_b": 6.93
+        },
+        "vmlu-test": {
+         "score": 76.63,
+         "ci": null,
+         "tokens": 1660.4,
+         "vs_b": 9.54
         }
        }
       },
@@ -3397,6 +3416,12 @@
          "ci": null,
          "tokens": null,
          "vs_b": null
+        },
+        "vmlu-test": {
+         "score": 62.94,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
         }
        }
       }
@@ -3447,6 +3472,12 @@
        "label": "VMLU dev (MC-104)",
        "metric": "Tỷ lệ đúng",
        "n": 303
+      },
+      {
+       "id": "vmlu-test",
+       "label": "VMLU test (MC-109)",
+       "metric": "Tỷ lệ đúng (vmlu.ai)",
+       "n": 9833
       }
      ],
      "rows": [
@@ -3807,6 +3838,15 @@
      "p_kind": "đổi dấu, Holm 12 ô",
      "note": "",
      "primary": true
+    },
+    {
+     "label": "Qwen3.5-9B · VMLU test (MC-109): sau so với trước",
+     "diff": 9.54,
+     "ci": null,
+     "p": null,
+     "p_kind": "mô tả; vmlu.ai chỉ trả điểm theo môn, nên không có phép thử",
+     "note": "MC-109, không thuộc 12 ô của MC-105; điểm tổng của vmlu.ai là trung bình 58 môn",
+     "primary": false
     }
    ],
    "overview": [],
@@ -3826,7 +3866,8 @@
    "notes": [
     "Trước là câu trả lời thẳng trong cùng lượt chạy, với prompt giống hệt /table; số /table hiện có đo với cài đặt khác nên chỉ để tham khảo.",
     "Không phải câu mới: các bộ này đã dùng để thiết kế router (MC-90 – MC-95). Bằng chứng trên câu mới là MC-104.",
-    "Sửa đổi 1 (quyết định trước khi phân tích): 2 lượt hỏi thẳng của MiMo ở câu VMLU 04-0018 không trả lời trong 300 giây sau 5 lần gửi, nên được chấm là không trả lời."
+    "Sửa đổi 1 (quyết định trước khi phân tích): 2 lượt hỏi thẳng của MiMo ở câu VMLU 04-0018 không trả lời trong 300 giây sau 5 lần gửi, nên được chấm là không trả lời.",
+    "Cột VMLU test lấy từ MC-109 (chỉ Qwen), do vmlu.ai chấm, và không thuộc 12 ô đã đăng ký; chi tiết ở mục MC-109."
    ],
    "sources": [
     {
@@ -3836,6 +3877,245 @@
     {
      "path": "all_res/diagnostic_router_loop/self_loop/analysis/self_loop_report.json",
      "sha256": "f213879703b3eb31ebfb874185598a2f5b152961474029143f04a9af1d3f6e82"
+    },
+    {
+     "path": "all_res/diagnostic_router_loop/vmlu_test_loop/qwen3-5-9b-65k-prospective/summary.json",
+     "sha256": "8f71b73111b6f96296ac4b9f8b4d36ee1015b64b32a87730fb0b6c2fd96ee960"
+    },
+    {
+     "path": "docs/research/qwen-vmlu-test-server-grade-mc109-before-2026-11-07.json",
+     "sha256": "3de919df5eaa311d1aa48685b41b6634009be1b827ef4968ab72b23d38a1c49f"
+    },
+    {
+     "path": "docs/research/qwen-vmlu-test-server-grade-mc109-loop-2026-11-07.json",
+     "sha256": "75684edeac8e0fbaebaa13c9d78169b0da4dcefb88f86431853edfd6c7f62c80"
+    },
+    {
+     "path": "docs/research/qwen-vmlu-test-server-grade-mc83-2026-10-14.json",
+     "sha256": "2f398485fada9fad5ef6a009d36cc793b7b511d92f57570c590197c65fd18fba"
+    }
+   ]
+  },
+  {
+   "id": "mc-109",
+   "cards": "MC-109",
+   "title": "Vòng tự sửa của Qwen trên VMLU test (vmlu.ai chấm)",
+   "question": "Vòng tự sửa của MC-105 đổi điểm VMLU test của Qwen ra sao, khi vmlu.ai chấm trước và sau?",
+   "student": "Qwen3.5-9B (IEC); model tự viết mọi câu trả lời cuối",
+   "items": "9.833 câu VMLU test, cùng câu và prompt với /table; router chưa từng dùng các câu này khi thiết kế, vì Test không có đáp án",
+   "status": "descriptive",
+   "verdict": "Mô tả: vmlu.ai chấm trước 67,1%, sau 76,6%, tức +9,5 điểm. Nhóm STEM tăng nhiều nhất (65,2 lên 82,1). Không có phép thử theo cặp câu vì vmlu.ai chỉ trả điểm theo môn.",
+   "tables": [
+    {
+     "title": "Qwen3.5-9B · VMLU test, 9.833 câu, vmlu.ai chấm",
+     "columns": [
+      {
+       "id": "total",
+       "label": "Tổng (trung bình 58 môn)",
+       "metric": "Tỷ lệ đúng (vmlu.ai)",
+       "n": 9833
+      },
+      {
+       "id": "stem",
+       "label": "STEM",
+       "metric": "Tỷ lệ đúng (vmlu.ai)",
+       "n": 3592
+      },
+      {
+       "id": "social_science",
+       "label": "Khoa học xã hội",
+       "metric": "Tỷ lệ đúng (vmlu.ai)",
+       "n": 1738
+      },
+      {
+       "id": "humanity",
+       "label": "Nhân văn",
+       "metric": "Tỷ lệ đúng (vmlu.ai)",
+       "n": 3024
+      },
+      {
+       "id": "other",
+       "label": "Khác",
+       "metric": "Tỷ lệ đúng (vmlu.ai)",
+       "n": 1479
+      }
+     ],
+     "rows": [
+      {
+       "id": "always_B",
+       "label": "Trước: hỏi thẳng (probe, cùng lượt chạy)",
+       "role": "baseline",
+       "cells": {
+        "total": {
+         "score": 67.09,
+         "ci": null,
+         "tokens": 131.7,
+         "vs_b": null
+        },
+        "stem": {
+         "score": 65.17,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        },
+        "social_science": {
+         "score": 74.36,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        },
+        "humanity": {
+         "score": 67.14,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        },
+        "other": {
+         "score": 63.38,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        }
+       }
+      },
+      {
+       "id": "loop",
+       "label": "Sau: vòng tự sửa, hỏi theo từng vòng",
+       "role": "candidate",
+       "cells": {
+        "total": {
+         "score": 76.63,
+         "ci": null,
+         "tokens": 1660.4,
+         "vs_b": 9.54
+        },
+        "stem": {
+         "score": 82.12,
+         "ci": null,
+         "tokens": null,
+         "vs_b": 16.95
+        },
+        "social_science": {
+         "score": 79.44,
+         "ci": null,
+         "tokens": null,
+         "vs_b": 5.08
+        },
+        "humanity": {
+         "score": 72.11,
+         "ci": null,
+         "tokens": null,
+         "vs_b": 4.97
+        },
+        "other": {
+         "score": 69.74,
+         "ci": null,
+         "tokens": null,
+         "vs_b": 6.36
+        }
+       }
+      },
+      {
+       "id": "table",
+       "label": "Số /table hiện có (MC-83, cài đặt khác)",
+       "role": "reference",
+       "cells": {
+        "total": {
+         "score": 62.94,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        },
+        "stem": {
+         "score": 61.23,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        },
+        "social_science": {
+         "score": 69.54,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        },
+        "humanity": {
+         "score": 63.21,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        },
+        "other": {
+         "score": 59.03,
+         "ci": null,
+         "tokens": null,
+         "vs_b": null
+        }
+       }
+      }
+     ],
+     "note": "Điểm tổng là trung bình 58 môn, điểm nhóm là trung bình các môn trong nhóm; dưới điểm tổng là số token trung bình mỗi câu."
+    }
+   ],
+   "tests": [
+    {
+     "label": "Qwen3.5-9B · VMLU test: sau so với trước",
+     "diff": 9.54,
+     "ci": null,
+     "p": null,
+     "p_kind": "mô tả; vmlu.ai chỉ trả điểm theo môn, nên không có phép thử",
+     "note": "",
+     "primary": true
+    }
+   ],
+   "overview": [
+    {
+     "label": "VMLU test, câu mới, vmlu.ai chấm",
+     "table": 0,
+     "column": "total",
+     "tried": {
+      "row": "loop",
+      "label": "Vòng tự sửa · Qwen3.5-9B"
+     },
+     "always_b": "always_B",
+     "always_s": null,
+     "others": [],
+     "tests": [
+      {
+       "test": "Qwen3.5-9B · VMLU test: sau so với trước",
+       "label": "so với hỏi thẳng (mô tả)"
+      }
+     ]
+    }
+   ],
+   "notes": [
+    "Hỏi theo từng vòng: S chỉ được hỏi khi probe chưa chắc, S lần 2 và 3 chỉ khi S lệch B. Đáp án cuối giống như khi hỏi đủ rồi tính lại, nhưng không có dòng Luôn S vì S không được hỏi cho mọi câu.",
+    "Dừng ở vòng 1, 2 và 3: 4.928, 2.392 và 2.513 câu; 2.263 đáp án cuối khác hỏi thẳng; 113 câu để trống vì không lượt S nào cho ra chữ cái, tính là sai.",
+    "Trước là probe trong cùng lượt chạy (temperature 0, 4 token), nên cao hơn số /table hiện có (MC-83, temperature 1,0)."
+   ],
+   "sources": [
+    {
+     "path": "all_res/diagnostic_router_loop/vmlu_test_loop/qwen3-5-9b-65k-prospective/summary.json",
+     "sha256": "8f71b73111b6f96296ac4b9f8b4d36ee1015b64b32a87730fb0b6c2fd96ee960"
+    },
+    {
+     "path": "all_res/diagnostic_router_loop/vmlu_test_loop/qwen3-5-9b-65k-prospective/predictions.jsonl",
+     "sha256": "efdf5ebf95b0782ba94520a7396437bd89aacbb4f8ac19b51de38dfbe82db092"
+    },
+    {
+     "path": "docs/research/qwen-vmlu-test-server-grade-mc109-before-2026-11-07.json",
+     "sha256": "3de919df5eaa311d1aa48685b41b6634009be1b827ef4968ab72b23d38a1c49f"
+    },
+    {
+     "path": "docs/research/qwen-vmlu-test-server-grade-mc109-loop-2026-11-07.json",
+     "sha256": "75684edeac8e0fbaebaa13c9d78169b0da4dcefb88f86431853edfd6c7f62c80"
+    },
+    {
+     "path": "docs/research/qwen-vmlu-test-server-grade-mc83-2026-10-14.json",
+     "sha256": "2f398485fada9fad5ef6a009d36cc793b7b511d92f57570c590197c65fd18fba"
+    },
+    {
+     "path": "data/vi_multimodel_v2/vmlu_v2.json",
+     "sha256": "6207d8018b35996a091d07678f6a40e5da0ddbf4b9b0b8875b130ba06e547d93"
     }
    ]
   }

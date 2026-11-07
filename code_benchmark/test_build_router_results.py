@@ -89,7 +89,8 @@ class TestBuild(unittest.TestCase):
         self.assertEqual(status, {"MC-90, MC-91, MC-92": "not_met", "MC-93": "not_met", "MC-94": "partial",
                                   "MC-95": "not_met", "MC-96": "not_met", "MC-97": "descriptive", "MC-98": "not_met",
                                   "MC-100": "met", "MC-101": "not_met", "MC-102": "not_met", "MC-103": "descriptive",
-                                  "MC-104": "partial", "MC-105": "partial"})
+                                  "MC-104": "partial", "MC-105": "partial",
+                                  "MC-109": "descriptive"})
         for experiment in data["experiments"]:
             self.assertTrue(experiment["sources"])
             self.assertTrue(all(len(source["sha256"]) == 64 for source in experiment["sources"]))
@@ -106,7 +107,9 @@ class TestBuild(unittest.TestCase):
             self.assertEqual(group["label"], model)
             self.assertTrue(source["tables"][group["table"]]["title"].startswith(model))
             changes = next(row for row in group["rows"] if row["row"] == "loop")["changes"]
-            self.assertEqual(set(changes), set(brr.TABLE_DATASETS))
+            # MC-109's VMLU test adds a descriptive change for Qwen only.
+            extra = {brr.VMLU_TEST_COLUMN[0]} if model == "Qwen3.5-9B" else set()
+            self.assertEqual(set(changes), set(brr.TABLE_DATASETS) | extra)
             self.assertTrue(all(label.startswith(model) for label in changes.values()))
         line = cards["mc-94"]["overview"][0]
         cells = {row["id"]: row["cells"][line["column"]]["score"] for row in cards["mc-94"]["tables"][line["table"]]["rows"]}
