@@ -137,11 +137,17 @@
 
   (2026-11-03: configuration `270e66e9…`, manifests Muse Spark 1.3 `fac70c51…` and Muse Spark 1.2 `cebeb5bd…` (11,730 attempts each), card MC-108. Both preflights pass all four gates offline, and 12 tests pass.)
 
-- [ ] 2.9 (added 2026-11-05, at the owner's request) MC-109: the VMLU Test column of the before-and-after table for Qwen. MC-105's Qwen multiple-choice loop on the 9,833 VMLU test items, whose gold only vmlu.ai holds, with each attempt asked only when the rule needs it; MiMo later, under its own card.
+- [x] 2.9 (added 2026-11-05, at the owner's request) MC-109: the VMLU Test column of the before-and-after table for Qwen. MC-105's Qwen multiple-choice loop on the 9,833 VMLU test items, whose gold only vmlu.ai holds, with each attempt asked only when the rule needs it; MiMo later, under its own card.
   - **Build.** `diagnostic_vmlu_test_loop` holds the configuration, the items (checked row by row against the frozen v2 VMLU manifest), the possible attempts and the round-by-round rule (`plan`). `run_vmlu_test_loop` sends MC-105's Qwen requests pass by pass and writes `loop.jsonl`, `summary.json` and the two vmlu.ai submissions.
   - **Verify.** `test_vmlu_test_loop` passes. The round-by-round answer equals MC-105's replay on 3,000 random cases; through the real engine, every attempt is sent once, a technical failure is re-sent in the next pass, a fatal row stops the passes, and a second launch on the same output is refused. The offline preflight passes every gate with `endpoint_calls=0`.
 
   (2026-11-05: configuration `8d089da7…`, manifest `bbf5ad00…` (39,332 possible attempts), card MC-109; 17 tests pass.)
+  - **Result (2026-11-07).** vmlu.ai scored the before 67.09 and the loop 76.63 (+9.54, descriptive). Run record and scores in the MC-109 detail card; on `/table?condition=router`.
+- [ ] 2.10 (added 2026-11-07, at the owner's request) MC-110: the VMLU Test column of the before-and-after table for MiMo. MC-105's MiMo multiple-choice loop on the same 9,833 items, asked round by round: B-r1 and B-r2 for every item, S-r1 where they disagree, S-r2 and S-r3 where S-r1 agrees with neither.
+  - **Build.** `diagnostic_vmlu_test_loop` and `run_vmlu_test_loop` take a second student with its own configuration and registration; MiMo's request is MC-105's (OpenCode Go chat completions, one routing session per attempt). Qwen's path is unchanged.
+  - **Verify.** `test_vmlu_test_loop` passes, including MC-109's 17 tests. MiMo's round-by-round answer equals MC-105's replay on 3,000 random cases, and every attempt is sent once through the real engine. Qwen's manifest still rebuilds to `bbf5ad00…`. The offline preflight passes every gate with `endpoint_calls=0`.
+
+  (2026-11-07: configuration `b52c04fb…`, manifest `68c38f7e…` (49,165 possible attempts), card MC-110; 25 tests pass.)
 
 ## 3. Router-critic design check (10/11–17/11)
 

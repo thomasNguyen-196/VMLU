@@ -1,0 +1,18 @@
+{
+ "status": "VMLU test loop registered for MiMo",
+ "card_ids": {"vmlu_test_loop": "MC-110"},
+ "card_files": {"vmlu_test_loop": "docs/measurement_cards/MC-110-diagnostic-vmlu-test-loop-mimo.md"},
+ "registered_on": {"vmlu_test_loop": "2026-11-07"},
+ "frozen": {
+  "config_sha256": "b52c04fb554f7d6f048b190fc3bdaaef5bdf6507d83c32f5a4cc235c53b50c77",
+  "manifest_sha256": {"mimo": "68c38f7e91df8e45244d60510ad2f8a56007727d6f908dbaf52f8213aae5d33b"},
+  "manifest_note": "only the self-hash is frozen; the runner rebuilds the manifest from the frozen v2 VMLU manifest, the configuration and the campaign templates, refuses to run when the hash differs, and writes the copy it ran with to source_manifest.json"
+ },
+ "analysis": {
+  "plan_id": "vmlu-test-loop-mimo-v1",
+  "summary_keys": ["items", "final_items", "rounds", "still_needed", "complete_attempts", "final_differs_from_before", "empty_before", "empty_final", "confidence_missing", "reported_tokens", "reported_tokens_per_final_item", "latency_s_mean", "submissions"],
+  "summary_note": "confidence_missing is null for MiMo, which has no probe; how often B-r1 and B-r2 disagree is the share of items not final in round 1",
+  "scores": "vmlu.ai accuracy of submission_before.csv and submission_loop.csv, recorded in the run record after the owner submits them"
+ },
+ "amendments": []
+}

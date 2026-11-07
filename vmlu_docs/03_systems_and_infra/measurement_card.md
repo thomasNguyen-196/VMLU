@@ -2866,3 +2866,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 6 requests in flight (the owner's choice; MC-105: 4), one gate for the probe and S; passes round by round, a technical failure re-sent in the next pass, at most 6 passes per launch; no attempt sent twice; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
 | `details` | `docs/measurement_cards/MC-109-diagnostic-vmlu-test-loop.md` |
 | `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-110 — MiMo V2.6 Flash (OpenCode Go) / self-improvement loop on VMLU test, asked round by round / before and after on 9,833 items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-110` |
+| `status` | Preregistered 2026-11-07 (+07), before benchmark-item requests of this card |
+| `scope` | The 9,833 VMLU test items of MC-109 (gold withheld), with the /table VMLU Test prompts. The before is MiMo's within-run B-r1; the after is MC-105's MiMo multiple-choice loop, unchanged. Each attempt is asked only when the rule needs it: B-r1 and B-r2 for every item, S-r1 when they do not agree, S-r2 and S-r3 when S-r1 agrees with neither. Primary: vmlu.ai accuracy of the loop minus that of the before, descriptive (no item-level gold, no paired test) |
+| `harness / tools` | Direct HTTP API, no harness, no tools; chat completions, not streamed, one routing session per attempt |
+| `model / route` | MiMo V2.6 Flash (`mimo-v2.6-flash`) on MC-105's OpenCode Go route (host `opencode.ai`), the same request for B and S; credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | System prompt `Answer the user's question.`; temperature, seed and reasoning effort not sent (provider defaults); 20,000 completion tokens; 300 s timeout; no SDK retries; budget guard of 20,000,000 reported tokens (about 10–12 million projected) |
+| `workers / scheduler` | At most 6 requests in flight (MC-105's value for MiMo, the owner's choice); passes round by round, a technical failure re-sent in the next pass, at most 6 passes per launch; no attempt sent twice; breaker after 4 consecutive network failures; halt on an authentication error, a permanent provider error, a tool call or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-110-diagnostic-vmlu-test-loop-mimo.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
