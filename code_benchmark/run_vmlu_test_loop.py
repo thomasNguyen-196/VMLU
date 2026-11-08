@@ -14,7 +14,7 @@ for Qwen the probe for every item, S-r1 for the unsure ones, S-r2 and S-r3 where
 B-r2 for every item, S-r1 where they disagree, S-r2 and S-r3 where S-r1 agrees with neither. An attempt without a
 completed response is sent again in the next pass. A launch stops after the registered number of passes, after a pass
 that completes nothing, or at a fatal row (authentication, model-identity drift, budget, endpoint breaker); `--resume`
-continues from the ledger. When every item has a final answer, the two vmlu.ai submissions are written.
+continues from the ledger. An HTTP 400 is fatal too, except for MiMo under MC-110 amendment 1 (`BadRequestRule`). When every item has a final answer, the two vmlu.ai submissions are written.
 `--execute` fails closed unless the student's card heading and detail card exist, the configuration and the rebuilt
 manifest carry the registered SHA-256 values, and the route is the registered one.
 """
@@ -181,17 +181,85 @@ def make_qwen_request(student: dict[str, Any], campaign: dict[str, Any], card_id
     return limited
 
 
+_IDENTIFIER = re.compile(r"[A-Za-z0-9_.:\-]{1,64}")
+TRANSIENT_400_WAIT_SECONDS = 30  # the lane's back-off after a technical HTTP 400, as after a 503
+TRANSIENT_400_KEYS = ("id", "rule", "decided_on", "decided_by", "applies_from", "refusal_words",
+                      "max_attempts_with_400", "text")
+
+
+def error_code(exc: Exception) -> str | None:
+    """The provider's error code (or type) when it is a bare identifier. The message is never kept: it can echo
+    upstream data."""
+    for value in (getattr(exc, "code", None), getattr(exc, "type", None)):
+        if isinstance(value, str) and _IDENTIFIER.fullmatch(value):
+            return value
+    return None
+
+
+def transient_400_amendment(registration: dict[str, Any]) -> dict[str, Any] | None:
+    """The registration's amendment with rule `transient_400` (MC-110 amendment 1), checked, or None."""
+    found = [a for a in registration.get("amendments") or [] if isinstance(a, dict) and a.get("rule") == "transient_400"]
+    if not found:
+        return None
+    amendment = found[0]
+    if (len(found) > 1 or set(amendment) != set(TRANSIENT_400_KEYS) or not amendment["refusal_words"]
+            or not all(isinstance(w, str) and w for w in amendment["refusal_words"])
+            or not isinstance(amendment["max_attempts_with_400"], int) or amendment["max_attempts_with_400"] < 1):
+        raise SystemExit("Error: the transient_400 amendment must appear once with exactly the keys "
+                         f"{list(TRANSIENT_400_KEYS)}, non-empty refusal words and a positive cap")
+    return amendment
+
+
+def attempts_with_400(output: Path) -> set[str]:
+    """Run keys of the ledger's attempts that ever got an HTTP 400."""
+    path = output / "attempts.jsonl"
+    if not path.is_file():
+        return set()
+    with path.open(encoding="utf-8") as handle:
+        rows = [json.loads(line) for line in handle if line.strip()]
+    return {str(row["run_key"]) for row in rows if str(row.get("http_status")) == "400"}
+
+
+class BadRequestRule:
+    """Whether an HTTP 400 halts the run. Registered rule: always, as a permanent provider error. With MC-110
+    amendment 1 (rule `transient_400`) a 400 is a technical failure, sent again in the next pass, unless its error code
+    names a refusal (one of the amendment's words), the attempt already had a 400 (in the ledger or in this launch), or
+    more than `max_attempts_with_400` attempts of the run have had one."""
+
+    def __init__(self, amendment: dict[str, Any] | None = None, earlier: set[str] | frozenset[str] = frozenset()):
+        self.amendment = amendment
+        self.seen = set(earlier)
+        self._lock = threading.Lock()
+
+    def fatal(self, run_key: str, code: str | None) -> str | None:
+        """None when this 400 is a technical failure, else why it halts the run."""
+        if self.amendment is None:
+            return "registered halt: HTTP 400"
+        name = f"amendment {self.amendment['id']}"
+        with self._lock:
+            again = run_key in self.seen
+            self.seen.add(run_key)
+            if code and any(word.lower() in code.lower() for word in self.amendment["refusal_words"]):
+                return f"{name}: the error code {code} names a refusal"
+            if again:
+                return f"{name}: a second HTTP 400 on this attempt"
+            if len(self.seen) > self.amendment["max_attempts_with_400"]:
+                return f"{name}: more than {self.amendment['max_attempts_with_400']} attempts had an HTTP 400"
+            return None
+
+
 def session_id(card_id: str, run_key: str) -> str:
     """One OpenCode Go routing session per attempt, named by this card (MC-105 used vmlu-mc105-...)."""
     return f"vmlu-{card_id.lower().replace('-', '')}-{v1.sha256_bytes(run_key.encode('utf-8'))[:16]}"
 
 
 def make_mimo_request(student: dict[str, Any], card_id: str, guard: pr.BudgetGuard, outage: pr.OutageGuard,
-                      pin: ModelPin):
+                      pin: ModelPin, bad_request: BadRequestRule | None = None):
     """MC-105's MiMo request (the MC-103 route): direct chat completions, no streaming, one routing session per
-    attempt, behind one gate of `max_in_flight`; a fatal row halts every lane."""
+    attempt, behind one gate of `max_in_flight`; a fatal row halts every lane. `bad_request` decides an HTTP 400."""
     gate = threading.BoundedSemaphore(student["max_in_flight"])
     halt = threading.Event()
+    bad_request = bad_request or BadRequestRule()
 
     def request(client, item, shard: int, lane: int) -> dict[str, Any]:
         cap = student["max_completion_tokens"]
@@ -234,7 +302,17 @@ def make_mimo_request(student: dict[str, Any], card_id: str, guard: pr.BudgetGua
             status_code = getattr(exc, "status_code", None)
             row.update({"status": "request_error", "finish_reason": "error", "error_type": type(exc).__name__,
                         "http_status": status_code, "fatal": status_code in {400, 401, 402, 403, 404}})
+            if status_code == 400:
+                code = error_code(exc)
+                reason = bad_request.fatal(item.run_key, code)
+                row.update({"error_code": code, "fatal": reason is not None})
+                if reason:
+                    row["fatal_reason"] = reason
+                elif bad_request.amendment is not None:
+                    row["technical_400"] = f"amendment {bad_request.amendment['id']}"
         rsl._settle(row, start, guard, outage)  # noqa: SLF001
+        if row.get("technical_400"):
+            row["retry_wait_seconds"] = TRANSIENT_400_WAIT_SECONDS
         if row.get("fatal"):
             halt.set()
         return row
@@ -380,6 +458,9 @@ def main(argv: list[str] | None = None) -> int:
     else:
         endpoint, key, model_id, credential_source, route_ok, route_detail = rsl.mimo_route(student)
     gates = evaluate_gates(args.student, manifest, registration, route_ok, route_detail)
+    amendment = transient_400_amendment(registration) if args.student == "mimo" else None
+    if args.student == "mimo":
+        print(f"HTTP 400: {'amendment ' + str(amendment['id']) + ' (transient_400)' if amendment else 'registered halt'}")
     if args.student == "qwen":
         unreadable = unreadable_probes(items)
         print(f"probed prompts whose option letters cannot be read (confidence missing, so unsure): {len(unreadable)} "
@@ -409,9 +490,13 @@ def main(argv: list[str] | None = None) -> int:
         condition = pr.reconcile_resume(output, build_condition(args.student, config, manifest, registration, route),
                                         args.resume)
         guard = pr.BudgetGuard(student["budget_tokens"], pr.existing_usage(output))
+        bad_request = BadRequestRule(amendment, attempts_with_400(output) if amendment else frozenset())
+        if amendment:
+            print(f"amendment {amendment['id']} (transient_400): attempts with an earlier HTTP 400: "
+                  f"{len(bad_request.seen)} of at most {amendment['max_attempts_with_400']}", flush=True)
         base.MODEL, base.PROFILE, base.PROTOCOL, base.CARD_ID = model_id, student["profile_id"], vt.PROTOCOL_ID, card_id
         base.request = make_mimo_request(student, card_id, guard, pr.OutageGuard(student["stop_after_timeouts"]),
-                                         ModelPin(student["model_identity"]))
+                                         ModelPin(student["model_identity"]), bad_request)
         record_launch(output, args.student, resume=args.resume, note=args.note)
         with OpenAI(base_url=endpoint, api_key=key, timeout=student["timeout_seconds"],
                     max_retries=student["sdk_retries"]) as client:

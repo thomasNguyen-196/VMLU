@@ -21,6 +21,9 @@ from pathlib import Path
 from typing import Any
 from unittest import mock
 
+import httpx2
+import openai
+
 from code_benchmark import diagnostic_prospective as dp
 from code_benchmark import diagnostic_vmlu_test_loop as vt
 from code_benchmark import run_diagnostic_prospective as pr
@@ -470,6 +473,142 @@ class TestMimoRequest(EngineState):
     def test_another_model_is_fatal(self):
         row, _, _ = self.request(model="another-model")
         self.assertEqual((row["status"], row["fatal"]), ("request_error", True))
+
+
+def http_400(code: str | None = None, message: str = "upstream text that must not be kept") -> openai.BadRequestError:
+    request = httpx2.Request("POST", "https://opencode.ai/zen/go/v1/chat/completions")
+    return openai.BadRequestError(message, response=httpx2.Response(400, request=request),
+                                  body={"code": code, "message": message} if code else None)
+
+
+AMENDMENT = rvt.transient_400_amendment(rvt.load_registration(vt.REGISTRATION_PATHS["mimo"]))
+
+
+class FlakyClient(FakeClient):
+    """Answers B, except that the attempt with session `fail_session` raises `error` on its first `fails` sends."""
+
+    def __init__(self, fail_session: str, error: Exception, fails: int = 1):
+        super().__init__(("Đáp án: B", "mimo-v2.6-flash", None))
+        self.fail_session, self.error, self.fails, self.failed = fail_session, error, fails, 0
+        self.lock = threading.Lock()
+
+    def create(self, **kwargs):
+        with self.lock:
+            if kwargs["extra_headers"]["x-opencode-session"] == self.fail_session and self.failed < self.fails:
+                self.failed += 1
+                raise self.error
+        return super().create(**kwargs)
+
+
+class TestMimoBadRequest(EngineState):
+    """MC-110 amendment 1: an HTTP 400 is a technical failure unless it names a refusal, repeats on one attempt or
+    passes the cap; without the amendment it halts, as registered."""
+
+    def request(self, error: Exception, rule: rvt.BadRequestRule | None):
+        student = MIMO_CONFIG["students"]["mimo"]
+        rvt.base.MODEL = student["model_id"]
+        request = rvt.make_mimo_request(student, "MC-110", pr.BudgetGuard(10_000), pr.OutageGuard(4),
+                                        rvt.ModelPin(student["model_identity"]), rule)
+        item = vt.expand(synthetic_items(1), MIMO)[1]
+        return request(FakeClient(error), item, 0, 0), item
+
+    def test_the_registered_amendment(self):
+        assert AMENDMENT is not None
+        self.assertEqual((AMENDMENT["id"], AMENDMENT["max_attempts_with_400"]), (1, 10))
+        self.assertIsNone(rvt.transient_400_amendment({"amendments": []}))
+        for broken in ({**AMENDMENT, "refusal_words": []}, {**AMENDMENT, "max_attempts_with_400": 0},
+                       {k: v for k, v in AMENDMENT.items() if k != "text"}):
+            with self.assertRaises(SystemExit):
+                rvt.transient_400_amendment({"amendments": [broken]})
+        with self.assertRaises(SystemExit):
+            rvt.transient_400_amendment({"amendments": [AMENDMENT, AMENDMENT]})
+
+    def test_without_the_amendment_any_400_halts(self):
+        row, _ = self.request(http_400(), None)
+        self.assertEqual((row["status"], row["fatal"], row["fatal_reason"]),
+                         ("request_error", True, "registered halt: HTTP 400"))
+
+    def test_a_first_400_is_a_technical_failure_and_its_message_is_never_kept(self):
+        row, _ = self.request(http_400(), rvt.BadRequestRule(AMENDMENT))
+        self.assertEqual((row["fatal"], row["technical_400"], row["retry_wait_seconds"], row["error_code"]),
+                         (False, "amendment 1", rvt.TRANSIENT_400_WAIT_SECONDS, None))
+        self.assertNotIn("upstream text", json.dumps(row, ensure_ascii=False))
+
+    def test_a_second_400_on_one_attempt_halts(self):
+        item = vt.expand(synthetic_items(1), MIMO)[1]
+        row, _ = self.request(http_400(), rvt.BadRequestRule(AMENDMENT, {item.run_key}))
+        self.assertEqual((row["fatal"], row["fatal_reason"]), (True, "amendment 1: a second HTTP 400 on this attempt"))
+
+    def test_a_refusal_code_halts_and_is_recorded(self):
+        row, _ = self.request(http_400("content_policy_violation"), rvt.BadRequestRule(AMENDMENT))
+        self.assertEqual((row["fatal"], row["error_code"]), (True, "content_policy_violation"))
+        self.assertIn("names a refusal", row["fatal_reason"])
+
+    def test_the_cap_counts_the_ledgers_attempts(self):
+        row, _ = self.request(http_400(), rvt.BadRequestRule(AMENDMENT, {f"x:{i}" for i in range(9)}))
+        self.assertFalse(row["fatal"])
+        row, _ = self.request(http_400(), rvt.BadRequestRule(AMENDMENT, {f"x:{i}" for i in range(10)}))
+        self.assertEqual((row["fatal"], row["fatal_reason"]), (True, "amendment 1: more than 10 attempts had an HTTP 400"))
+
+    def test_attempts_with_400_reads_every_ledger_row(self):
+        self.output.mkdir(parents=True)
+        rows = [{"run_key": "a", "http_status": 400}, {"run_key": "a", "status": "complete"},
+                {"run_key": "b", "http_status": "400"}, {"run_key": "c", "http_status": 500}]
+        (self.output / "attempts.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+        self.assertEqual(rvt.attempts_with_400(self.output), {"a", "b"})
+        self.assertEqual(rvt.attempts_with_400(self.output / "none"), set())
+
+    def test_the_engine_resends_a_technical_400_in_the_next_pass(self):
+        items = vt.expand(synthetic_items(30), MIMO)
+        manifest: dict[str, Any] = {"items": [v2._item_manifest(item) for item in items]}  # noqa: SLF001
+        manifest["manifest_sha256"] = v1.sha256_bytes(v1.canonical_json(manifest))
+        rebuilt = {item.run_key: item for item in items}
+        ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
+        flaky = items[1].run_key
+        student = MIMO_CONFIG["students"]["mimo"]
+        rvt.base.MODEL = student["model_id"]
+
+        def launch(fails: int) -> tuple[str, FlakyClient]:
+            client = FlakyClient(rvt.session_id("MC-110", flaky), http_400(), fails)
+            rvt.base.request = rvt.make_mimo_request(
+                student, "MC-110", pr.BudgetGuard(10_000_000), pr.OutageGuard(4), rvt.ModelPin(student["model_identity"]),
+                rvt.BadRequestRule(AMENDMENT, rvt.attempts_with_400(self.output)))
+            with contextlib.redirect_stdout(io.StringIO()), mock.patch.object(rvt, "TRANSIENT_400_WAIT_SECONDS", 0):
+                status = rvt.run_passes(self.output, manifest, rebuilt, ids, {"runner_sha256": "test"}, client, False,
+                                        max_passes=6, threshold=None, student="mimo",
+                                        score_callback=rvt.loop_callback("mimo", "MC-110", ids, None),
+                                        runner_path=Path(rvt.__file__))
+            return status, client
+
+        status, client = launch(fails=1)
+        self.assertEqual((status, client.calls), ("complete", 60))  # 61 sends: the 400 is raised before `calls` counts
+        ledger = [json.loads(line) for line in (self.output / "attempts.jsonl").read_text().splitlines()]
+        self.assertEqual([(r["status"], r.get("technical_400")) for r in ledger if r["run_key"] == flaky],
+                         [("request_error", "amendment 1"), ("complete", None)])
+        self.assertTrue((self.output / "submission_loop.csv").is_file())
+
+    def test_the_engine_halts_when_the_same_attempt_gets_a_second_400(self):
+        items = vt.expand(synthetic_items(30), MIMO)
+        manifest: dict[str, Any] = {"items": [v2._item_manifest(item) for item in items]}  # noqa: SLF001
+        manifest["manifest_sha256"] = v1.sha256_bytes(v1.canonical_json(manifest))
+        rebuilt = {item.run_key: item for item in items}
+        ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
+        flaky = items[1].run_key
+        student = MIMO_CONFIG["students"]["mimo"]
+        rvt.base.MODEL = student["model_id"]
+        rvt.base.request = rvt.make_mimo_request(
+            student, "MC-110", pr.BudgetGuard(10_000_000), pr.OutageGuard(4), rvt.ModelPin(student["model_identity"]),
+            rvt.BadRequestRule(AMENDMENT))
+        client = FlakyClient(rvt.session_id("MC-110", flaky), http_400(), fails=2)
+        with contextlib.redirect_stdout(io.StringIO()), mock.patch.object(rvt, "TRANSIENT_400_WAIT_SECONDS", 0):
+            status = rvt.run_passes(self.output, manifest, rebuilt, ids, {"runner_sha256": "test"}, client, False,
+                                    max_passes=6, threshold=None, student="mimo",
+                                    score_callback=rvt.loop_callback("mimo", "MC-110", ids, None),
+                                    runner_path=Path(rvt.__file__))
+        self.assertEqual(status, "paused")
+        ledger = [json.loads(line) for line in (self.output / "attempts.jsonl").read_text().splitlines()]
+        self.assertEqual([(r.get("technical_400"), r.get("fatal")) for r in ledger if r["run_key"] == flaky],
+                         [("amendment 1", False), (None, True)])
 
 
 if __name__ == "__main__":

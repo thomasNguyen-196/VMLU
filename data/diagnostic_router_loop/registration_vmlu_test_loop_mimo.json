@@ -14,5 +14,16 @@
   "summary_note": "confidence_missing is null for MiMo, which has no probe; how often B-r1 and B-r2 disagree is the share of items not final in round 1",
   "scores": "vmlu.ai accuracy of submission_before.csv and submission_loop.csv, recorded in the run record after the owner submits them"
  },
- "amendments": []
+ "amendments": [
+  {
+   "id": 1,
+   "rule": "transient_400",
+   "decided_on": "2026-11-08",
+   "decided_by": "the owner (\"viết bổ sung này\", 2026-11-08 about 12:40 +07), after launches 2 and 3 each halted on one HTTP 400: 31-0032:S-r1 (2026-11-07 17:51 +07), which completed when re-sent in launch 3, and 13-0047:B-r2 (2026-11-08 00:32 +07); both were rejected in under 0.7 s, on ordinary items, and no score of this card had been computed",
+   "applies_from": "the first launch whose runner carries BadRequestRule (launch 5 or later); launches 1-4 ran under the registered halt",
+   "refusal_words": ["content", "policy", "safety", "filter", "moderation"],
+   "max_attempts_with_400": 10,
+   "text": "An HTTP 400 is no longer always a permanent provider error. It is a technical failure, recorded in the ledger and sent again in the next pass like a timeout, unless (a) the provider's error code or type contains one of the refusal words, (b) the same attempt already had an HTTP 400 (in the ledger or in this launch), or (c) more than max_attempts_with_400 attempts of the run have had one, counting the ledger's; in those cases the run halts as registered. The row records the error code when it is a bare identifier (never the message), and fatal_reason or technical_400. Prompts, the request, sampling, the model, the schedule, the loop rule, the limits, the analysis and the submissions are unchanged, and completed responses stay terminal."
+  }
+ ]
 }
