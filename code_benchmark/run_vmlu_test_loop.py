@@ -296,6 +296,30 @@ def with_timeout_terminals(output: Path, rows: dict[str, Any],
     return view, capped
 
 
+IN_FLIGHT_KEYS = ("id", "rule", "decided_on", "decided_by", "applies_from", "max_in_flight", "text")
+
+
+def in_flight_amendment(registration: dict[str, Any]) -> dict[str, Any] | None:
+    """The registration's amendment with rule `max_in_flight` (MC-110 amendment 3), checked, or None. The value is at
+    most the engine's lanes (shards x lanes)."""
+    found = [a for a in registration.get("amendments") or [] if isinstance(a, dict) and a.get("rule") == "max_in_flight"]
+    if not found:
+        return None
+    amendment = found[0]
+    value = amendment.get("max_in_flight")
+    if (len(found) > 1 or set(amendment) != set(IN_FLIGHT_KEYS) or not isinstance(value, int)
+            or isinstance(value, bool) or not 1 <= value <= base.SHARDS * base.LANES):
+        raise SystemExit("Error: the max_in_flight amendment must appear once with exactly the keys "
+                         f"{list(IN_FLIGHT_KEYS)} and a value from 1 to {base.SHARDS * base.LANES}")
+    return amendment
+
+
+def gated_student(student: dict[str, Any], amendment: dict[str, Any] | None) -> dict[str, Any]:
+    """The student settings the request gate reads. With MC-110 amendment 3 only `max_in_flight` differs; the frozen
+    configuration, its hash and the condition keep the registered value."""
+    return student if amendment is None else {**student, "max_in_flight": amendment["max_in_flight"]}
+
+
 def session_id(card_id: str, run_key: str) -> str:
     """One OpenCode Go routing session per attempt, named by this card (MC-105 used vmlu-mc105-...)."""
     return f"vmlu-{card_id.lower().replace('-', '')}-{v1.sha256_bytes(run_key.encode('utf-8'))[:16]}"
@@ -565,7 +589,12 @@ def main(argv: list[str] | None = None) -> int:
                 if (output / "attempts.jsonl").is_file() else []
             print(f"amendment {timeout_cap['id']} (timeout_cap): attempts read as empty answers after "
                   f"{timeout_cap['max_timeouts']} timeouts: {len(capped)}", flush=True)
-        base.request = make_mimo_request(student, card_id, guard, pr.OutageGuard(student["stop_after_timeouts"]),
+        in_flight = in_flight_amendment(registration)
+        if in_flight:
+            print(f"amendment {in_flight['id']} (max_in_flight): requests in flight {student['max_in_flight']} -> "
+                  f"{in_flight['max_in_flight']}", flush=True)
+        base.request = make_mimo_request(gated_student(student, in_flight), card_id, guard,
+                                         pr.OutageGuard(student["stop_after_timeouts"]),
                                          ModelPin(student["model_identity"]), bad_request)
         record_launch(output, args.student, resume=args.resume, note=args.note)
         with OpenAI(base_url=endpoint, api_key=key, timeout=student["timeout_seconds"],

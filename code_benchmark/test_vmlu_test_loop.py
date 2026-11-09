@@ -737,5 +737,69 @@ class TestMimoTimeoutCap(EngineState):
         self.assertFalse((self.output / "submission_loop.csv").exists())
 
 
+IN_FLIGHT = rvt.in_flight_amendment(rvt.load_registration(vt.REGISTRATION_PATHS["mimo"]))
+
+
+class SlowClient(FakeClient):
+    """MiMo's reply after a short wait, counting the requests in flight."""
+
+    def __init__(self):
+        super().__init__(("Đáp án: B", "mimo-v2.6-flash", None))
+        self.lock, self.now, self.most = threading.Lock(), 0, 0
+
+    def create(self, **kwargs):
+        with self.lock:
+            self.now += 1
+            self.most = max(self.most, self.now)
+        time.sleep(0.1)
+        with self.lock:
+            self.now -= 1
+        return super().create(**kwargs)
+
+
+class TestMimoInFlight(EngineState):
+    """MC-110 amendment 3: up to 12 requests in flight; only the request gate changes."""
+
+    def test_the_registered_amendment(self):
+        assert IN_FLIGHT is not None
+        self.assertEqual((IN_FLIGHT["id"], IN_FLIGHT["max_in_flight"]), (3, 12))
+        self.assertIsNone(rvt.in_flight_amendment({"amendments": [AMENDMENT, TIMEOUT_CAP]}))
+        for broken in ({**IN_FLIGHT, "max_in_flight": 0}, {**IN_FLIGHT, "max_in_flight": 13},
+                       {**IN_FLIGHT, "max_in_flight": True}, {**IN_FLIGHT, "max_in_flight": "12"},
+                       {k: v for k, v in IN_FLIGHT.items() if k != "text"}):
+            with self.assertRaises(SystemExit):
+                rvt.in_flight_amendment({"amendments": [broken]})
+        with self.assertRaises(SystemExit):
+            rvt.in_flight_amendment({"amendments": [IN_FLIGHT, IN_FLIGHT]})
+
+    def test_only_the_gate_changes(self):
+        student = MIMO_CONFIG["students"]["mimo"]
+        self.assertIs(rvt.gated_student(student, None), student)
+        self.assertEqual(rvt.gated_student(student, IN_FLIGHT), {**student, "max_in_flight": 12})
+        self.assertEqual(student["max_in_flight"], 6)  # the frozen configuration keeps the registered value
+
+    def test_the_gate_holds_six_or_twelve_requests(self):
+        def most_in_flight(student: dict[str, Any]) -> int:
+            rvt.base.MODEL = student["model_id"]
+            request = rvt.make_mimo_request(student, "MC-110", pr.BudgetGuard(10**6), pr.OutageGuard(4),
+                                            rvt.ModelPin(student["model_identity"]))
+            client = SlowClient()
+            items = [i for i in vt.expand(synthetic_items(30), MIMO) if i.replicate_id == "B-r1"][:24]
+            rows: list[dict] = []
+            threads = [threading.Thread(target=lambda it=it: rows.append(request(client, it, 0, 0))) for it in items]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+            self.assertEqual([row["status"] for row in rows], ["complete"] * 24)
+            return client.most
+
+        student = MIMO_CONFIG["students"]["mimo"]
+        six = most_in_flight(student)
+        twelve = most_in_flight(rvt.gated_student(student, IN_FLIGHT))
+        self.assertTrue(1 < six <= 6, six)
+        self.assertTrue(6 < twelve <= 12, twelve)
+
+
 if __name__ == "__main__":
     unittest.main()

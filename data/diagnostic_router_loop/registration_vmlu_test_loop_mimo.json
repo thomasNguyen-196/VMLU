@@ -34,6 +34,15 @@
    "max_timeouts": 3,
    "timeout_errors": ["APITimeoutError"],
    "text": "An attempt without a completed response that has timed out max_timeouts times or more is no longer sent. A timeout is a ledger row whose error_type is one of timeout_errors; rows blocked by the breaker or halted before sending do not count. The loop rule reads such an attempt as a completed attempt with an empty answer, as it reads a reply truncated at the 20,000-token cap, and continues by its registered steps: an empty answer agrees with no answer, so S-r1, then S-r2 and S-r3, are asked as the rule requires, and the vote ignores empty answers. An item whose B-r1 is capped has an empty before answer, and an item whose final answer is empty is submitted blank; vmlu.ai scores a blank as wrong. The ledger is not changed: summary.json lists the capped attempts (timeout_cap) and the run record reports them. Prompts, the request, the 300 s timeout, sampling, the model, the schedule, the loop rule, the limits including the breaker, the analysis and the submission format are unchanged, and completed responses stay terminal."
+  },
+  {
+   "id": 3,
+   "rule": "max_in_flight",
+   "decided_on": "2026-11-09",
+   "decided_by": "the owner (\"lên 12 luồng cho nhanh\", 2026-11-09 about 21:25 +07), after the assistant said that 12 needs an amendment because 6 is in the frozen configuration, and that it may add timeouts and spend the OpenCode Go usage window faster; at that point 9,645 of 9,833 items were final, 244 attempts were left (about 420 sends at about 54 an hour), and launch 34 had resumed on a second OpenCode Go account after the first account's monthly usage limit (HTTP 429 from 2026-11-09 19:51 +07)",
+   "applies_from": "the first launch whose runner carries in_flight_amendment (launch 35 or later); launches 1-34 ran with at most 6 in flight",
+   "max_in_flight": 12,
+   "text": "At most max_in_flight requests are in flight at once instead of the configuration's 6, so all 12 lanes of the engine (4 shards x 3 lanes) can send. Only the request gate changes: the configuration file, its SHA-256 and the frozen condition keep the registered value 6. The request, prompts, sampling, 300 s timeout, breaker (4 consecutive network failures), passes, loop rule, amendments 1 and 2, vote, analysis and submissions are unchanged; completed responses stay terminal and the ledger is not edited."
   }
  ]
 }
