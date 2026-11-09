@@ -801,5 +801,33 @@ class TestMimoInFlight(EngineState):
         self.assertTrue(6 < twelve <= 12, twelve)
 
 
+WAIT = rvt.timeout_amendment(rvt.load_registration(vt.REGISTRATION_PATHS["mimo"]))
+
+
+class TestMimoTimeout(unittest.TestCase):
+    """MC-110 amendment 4: the client waits 900 s for a response; only that wait changes."""
+
+    def test_the_registered_amendment(self):
+        assert WAIT is not None
+        self.assertEqual((WAIT["id"], WAIT["timeout_seconds"]), (4, 900))
+        self.assertIsNone(rvt.timeout_amendment({"amendments": [AMENDMENT, TIMEOUT_CAP, IN_FLIGHT]}))
+        for broken in ({**WAIT, "timeout_seconds": 59}, {**WAIT, "timeout_seconds": 1801},
+                       {**WAIT, "timeout_seconds": True}, {**WAIT, "timeout_seconds": 900.0},
+                       {**WAIT, "timeout_seconds": "900"}, {k: v for k, v in WAIT.items() if k != "applies_from"}):
+            with self.assertRaises(SystemExit):
+                rvt.timeout_amendment({"amendments": [broken]})
+        with self.assertRaises(SystemExit):
+            rvt.timeout_amendment({"amendments": [WAIT, WAIT]})
+
+    def test_only_the_wait_changes(self):
+        student = MIMO_CONFIG["students"]["mimo"]
+        self.assertEqual(rvt.request_timeout(student, None), 300)
+        self.assertEqual(rvt.request_timeout(student, WAIT), 900)
+        self.assertEqual(student["timeout_seconds"], 300)  # the frozen configuration keeps the registered value
+        with openai.OpenAI(base_url="http://127.0.0.1:9/v1", api_key="x", timeout=rvt.request_timeout(student, WAIT),
+                           max_retries=student["sdk_retries"]) as client:
+            self.assertEqual(client.timeout, 900)
+
+
 if __name__ == "__main__":
     unittest.main()

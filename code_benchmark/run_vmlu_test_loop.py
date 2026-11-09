@@ -320,6 +320,31 @@ def gated_student(student: dict[str, Any], amendment: dict[str, Any] | None) -> 
     return student if amendment is None else {**student, "max_in_flight": amendment["max_in_flight"]}
 
 
+TIMEOUT_KEYS = ("id", "rule", "decided_on", "decided_by", "applies_from", "timeout_seconds", "text")
+TIMEOUT_RANGE = (60, 1800)
+
+
+def timeout_amendment(registration: dict[str, Any]) -> dict[str, Any] | None:
+    """The registration's amendment with rule `timeout_seconds` (MC-110 amendment 4), checked, or None. The value is a
+    whole number of seconds within TIMEOUT_RANGE."""
+    found = [a for a in registration.get("amendments") or [] if isinstance(a, dict) and a.get("rule") == "timeout_seconds"]
+    if not found:
+        return None
+    amendment = found[0]
+    value = amendment.get("timeout_seconds")
+    if (len(found) > 1 or set(amendment) != set(TIMEOUT_KEYS) or not isinstance(value, int)
+            or isinstance(value, bool) or not TIMEOUT_RANGE[0] <= value <= TIMEOUT_RANGE[1]):
+        raise SystemExit("Error: the timeout_seconds amendment must appear once with exactly the keys "
+                         f"{list(TIMEOUT_KEYS)} and a value from {TIMEOUT_RANGE[0]} to {TIMEOUT_RANGE[1]} seconds")
+    return amendment
+
+
+def request_timeout(student: dict[str, Any], amendment: dict[str, Any] | None) -> int:
+    """Seconds the client waits for one response. With MC-110 amendment 4 only this wait differs; the frozen
+    configuration, its hash and the condition keep the registered value."""
+    return student["timeout_seconds"] if amendment is None else amendment["timeout_seconds"]
+
+
 def session_id(card_id: str, run_key: str) -> str:
     """One OpenCode Go routing session per attempt, named by this card (MC-105 used vmlu-mc105-...)."""
     return f"vmlu-{card_id.lower().replace('-', '')}-{v1.sha256_bytes(run_key.encode('utf-8'))[:16]}"
@@ -596,8 +621,12 @@ def main(argv: list[str] | None = None) -> int:
         base.request = make_mimo_request(gated_student(student, in_flight), card_id, guard,
                                          pr.OutageGuard(student["stop_after_timeouts"]),
                                          ModelPin(student["model_identity"]), bad_request)
+        wait = timeout_amendment(registration)
+        if wait:
+            print(f"amendment {wait['id']} (timeout_seconds): request timeout {student['timeout_seconds']} s -> "
+                  f"{wait['timeout_seconds']} s", flush=True)
         record_launch(output, args.student, resume=args.resume, note=args.note)
-        with OpenAI(base_url=endpoint, api_key=key, timeout=student["timeout_seconds"],
+        with OpenAI(base_url=endpoint, api_key=key, timeout=request_timeout(student, wait),
                     max_retries=student["sdk_retries"]) as client:
             status = run_passes(output, manifest, rebuilt, item_ids, condition, client, args.resume,
                                 max_passes=max_passes, threshold=None, student="mimo",

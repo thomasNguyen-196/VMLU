@@ -43,6 +43,15 @@
    "applies_from": "the first launch whose runner carries in_flight_amendment (launch 35 or later); launches 1-34 ran with at most 6 in flight",
    "max_in_flight": 12,
    "text": "At most max_in_flight requests are in flight at once instead of the configuration's 6, so all 12 lanes of the engine (4 shards x 3 lanes) can send. Only the request gate changes: the configuration file, its SHA-256 and the frozen condition keep the registered value 6. The request, prompts, sampling, 300 s timeout, breaker (4 consecutive network failures), passes, loop rule, amendments 1 and 2, vote, analysis and submissions are unchanged; completed responses stay terminal and the ledger is not edited."
+  },
+  {
+   "id": 4,
+   "rule": "timeout_seconds",
+   "decided_on": "2026-11-09",
+   "decided_by": "the owner (\"ok 900\", 2026-11-09 about 23:20 +07), after asking whether a longer timeout would finish the run sooner and after the assistant reported from the ledger that 12 in flight worked as amended (at most 12 requests at once, every timeout at 300-305 s, about 38 tokens per second per response, no slower than at 6) but that completed responses had not become more frequent (about 9 an hour at 6 and at 12): the attempts still open need about 11,000-20,000 reasoning tokens, 5-9 minutes at that speed, and the median rate of 37 tokens per second (28 at the 10th percentile) puts the 20,000-token cap at about 9-12 minutes. When the assistant reported (launch 43) 9,662 of 9,833 items were final, 219 attempts were left and 165 attempts had been read as empty answers under amendment 2; launch 46, the last that waited 300 s, started with 9,669 final, 208 attempts left and 178 read as empty. No score of this card had been computed.",
+   "applies_from": "the first launch whose runner carries timeout_amendment (launch 47 or later); launches 1-46 waited 300 s",
+   "timeout_seconds": 900,
+   "text": "The client waits up to timeout_seconds for one response instead of the configuration's 300 s, so a reply that reasons up to the 20,000-token cap can arrive. Only that wait changes: the configuration file, its SHA-256 and the frozen condition keep the registered value 300. A request that still gets no response within timeout_seconds is a timeout as before and counts toward amendment 2's cap of 3; attempts already read as empty answers under amendment 2 stay so and are not sent again. The request, prompts, sampling, 20,000-token cap, breaker (4 consecutive network failures), passes, loop rule, amendments 1-3, vote, analysis and submissions are unchanged; completed responses stay terminal and the ledger is not edited."
   }
  ]
 }
