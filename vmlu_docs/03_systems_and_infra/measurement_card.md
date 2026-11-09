@@ -2880,3 +2880,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 6 requests in flight (MC-105's value for MiMo, the owner's choice); passes round by round, a technical failure re-sent in the next pass, at most 6 passes per launch; no attempt sent twice; breaker after 4 consecutive network failures; halt on an authentication error, a permanent provider error, a tool call or a model-identity drift |
 | `details` | `docs/measurement_cards/MC-110-diagnostic-vmlu-test-loop-mimo.md` |
 | `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-111 — Qwen3.5-9B-65K (IEC) / Legal MC "select, then answer" / B, K, K10 (BM25's top 10), SEL (Qwen selects at most two of the top 10, then answers from them) and O on the 134 wide Legal MC items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-111` |
+| `status` | Preregistered 2026-11-09 (+07), before benchmark-item requests of this card |
+| `scope` | The 134 Legal MC items of MC-101's pool, not held out (MC-101's results motivated the test). Candidates: BM25's top 10 units of MC-101's corpus per item, in rank order, frozen (SHA-256 `c348085a…`; the first two are MC-101's K evidence; an oracle article is within them for 47 of the 53 oracle items, against 40 in the top 2). Round 1: B, K (top 2), K10 (all 10), PICK (Qwen selects at most two candidates or `Không có`) and O (MC-100's oracle provisions, 53 items), two draws each, 1,178 attempts (manifest `fb53e15f…`). Round 2: SEL, the K template with the units the same draw of PICK selected (the frozen prompt for `Không có`, MC-101's top 2 when unparsed), 268 attempts, built from the round-1 ledger. Two Holm-adjusted questions at α 0.05: the filter (PICK's selection hit against BM25's top-2 hit, 53 oracle items) and the route (always-SEL against always-B, 134 items) |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-101: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 8,000,000 reported tokens across both rounds (about 5.5 million expected) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-101; round 2 only after every round-1 attempt is complete |
+| `details` | `docs/measurement_cards/MC-111-diagnostic-legal-select.md` |
+| `outputs` | `all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/` (`round1/`, `round2/`); no upload |

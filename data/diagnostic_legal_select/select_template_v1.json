@@ -1,0 +1,7 @@
+{
+ "version": "diagnostic-legal-select-prompts-v1",
+ "head": "Dưới đây là một câu hỏi trắc nghiệm về pháp luật và {n} đoạn văn bản pháp luật, đánh số từ [1] đến [{n}]. Không cần trả lời câu hỏi. Hãy chọn tối đa hai đoạn có quy định dùng để trả lời câu hỏi. Nếu không đoạn nào có quy định đó, chọn \"Không có\". Dòng cuối cùng phải đúng một dòng có dạng `Đoạn liên quan: 3`, `Đoạn liên quan: 3, 7` hoặc `Đoạn liên quan: Không có`, không thêm ký tự hay định dạng nào khác.\n\n",
+ "candidates_header": "Các đoạn văn bản:\n\n",
+ "question_header": "\n\nCâu hỏi:\n",
+ "label": "Đoạn liên quan:"
+}
