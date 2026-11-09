@@ -89,9 +89,31 @@
   - **Preflight.** It was run offline with `python -m code_benchmark.run_legal_select`. All four gates passed: card_registered, detail_card, frozen_hashes and endpoint_identity. It printed `endpoint_calls=0`.
   - **Tests.** The same 388 tests pass, and MC-110's 34 still pass.
   - **MC-110.** It was running at the time (launch 5). Only its `measurement_card_hash` changes, and its resume treats that field as an implementation field.)
-- [ ] 4.2 Run with `--execute` on Qwen3.5-9B-65K (Q4_K_M GGUF, llama.cpp) at the IEC endpoint `llmapi.iec/v1`: openvpn3 `member-shared-tcp`, endpoint host resolved through the in-tunnel DNS 172.16.30.1. Ask the owner before opening the VPN. Verify:
+- [x] 4.2 Run with `--execute` on Qwen3.5-9B-65K (Q4_K_M GGUF, llama.cpp) at the IEC endpoint `llmapi.iec/v1`: openvpn3 `member-shared-tcp`, endpoint host resolved through the in-tunnel DNS 172.16.30.1. Ask the owner before opening the VPN. Verify:
   - every attempt of both rounds is complete;
   - one response model throughout.
 
   Append the run record, with the round-2 manifest hash, to the detail card, then close the VPN.
-- [ ] 4.3 Run the analysis once, apply the rule and report it here.
+
+  (2026-11-09: the owner said "bạn có thể chạy MC-111 task 4.2 nhưng cần quan sát xem có ảnh hướng đến Mimo process không".
+  - **Run.** One launch, 16:25 to 16:54 +07. Round 1: 1,178 of 1,178 attempts complete. Round 2: 268 of 268 SEL attempts complete; its manifest self-hash is `db3a57eb…`. There were no failures, the response model was the same throughout and the run used 5.46M tokens.
+  - **Record.** The run record, with both manifests and the output hashes, is in the detail card. The VPN was closed at 16:56.
+  - **MC-110.** MiMo ran in parallel. Its route and its error pattern stayed the same while the VPN was open.)
+- [x] 4.3 Run the analysis once, apply the rule and report it here.
+
+  (2026-11-09 21:01 +07, after the owner said "okay, chạy phân tích MC-111 task 4.3 đi". Report `analysis/legal_select_report.json`, SHA-256 `5d799c2d…`; the 16 registered keys.
+  - **Filter, 53 items with MC-100 oracle provisions:** PICK's selection hit 74.5%, BM25 top 2 75.5%, −0.9 points (95% bootstrap −11.3 to +9.4; sign-flip p = 1.0, Holm 1.0); 5 items better, 6 worse, 42 equal. **Not met: no evidence that Qwen filters better than BM25's order.**
+  - **Route, 134 items:** always-SEL 86.2%, always-B 86.6%, −0.4 points (−5.6 to +4.9; p = 1.0, Holm 1.0); 18 better, 16 worse, 100 equal; 1 clear rescue, 4 clear regressions. **Not met: always-B stays the Legal MC route.**
+  - **MC-100 stratum `wrong`, 23 items:** B 52.2%, K 65.2%, K10 54.3%, SEL 58.7%, O 80.4%. Only O beats B (+28.3; p = 0.003). Share of O's gain kept: K 46%, SEL 23%, K10 8%. SEL against O −21.7 (p = 0.017).
+  - **Stratum `right`, 25 items:** B 100%, K 94%, K10 96%, SEL 94%, O 98%.
+  - **The 78 items outside MC-100:** B 94.2%, K 96.2%, K10 95.5%, SEL 94.2%.
+  - **Selection:**
+    - 237 of 268 draws picked, 30 `none`, 1 unparsed. Most picks were 2 articles (202).
+    - Positions 1 and 2 were picked most often (167 and 131), and 37% of selections were exactly BM25's top 2.
+    - Precision on oracle items was 0.50.
+    - On the 47 items whose top 10 holds an oracle article, a draw hit it 84% of the time.
+    - On the 6 items without one, the answer was `none` in 33% of draws.
+    - SEL was right in 84.8% of draws when the selection hit and 48.1% when it missed.
+  - **Gold check:** on the two `contradicts_gold` items, SEL gave the gold's option 4 of 4 times, O the owner's option 4 of 4.
+  - **Long context:** K10 (8.3k prompt tokens) scored no better than K (1.7k).
+  - **Replication against MC-101:** pool B 86.6 (MC-101: 84.3), pool K 88.1 (84.7), `wrong` O 80.4 (84.8).)
