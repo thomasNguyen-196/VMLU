@@ -24,6 +24,16 @@
    "refusal_words": ["content", "policy", "safety", "filter", "moderation"],
    "max_attempts_with_400": 10,
    "text": "An HTTP 400 is no longer always a permanent provider error. It is a technical failure, recorded in the ledger and sent again in the next pass like a timeout, unless (a) the provider's error code or type contains one of the refusal words, (b) the same attempt already had an HTTP 400 (in the ledger or in this launch), or (c) more than max_attempts_with_400 attempts of the run have had one, counting the ledger's; in those cases the run halts as registered. The row records the error code when it is a bare identifier (never the message), and fatal_reason or technical_400. Prompts, the request, sampling, the model, the schedule, the loop rule, the limits, the analysis and the submissions are unchanged, and completed responses stay terminal."
+  },
+  {
+   "id": 2,
+   "rule": "timeout_cap",
+   "decided_on": "2026-11-09",
+   "decided_by": "the owner (option \"Sửa đổi 2: tính là không trả lời\", 2026-11-09 about 13:15 +07), after launches 4 and 5 each paused on the breaker (2026-11-09 01:55 and 11:14 +07, four consecutive 300 s timeouts each time while other attempts completed). At that point 275 of the 9,833 items had no final answer and 358 attempts were still needed; 201 of them had timed out at least once and 57 three times or more, mostly high-school chemistry, biology, physics and mathematics items, where MiMo reasons longer than the timeout allows (about 47 tokens per second, so a 20,000-token reply needs about 7 minutes). No score of this card had been computed.",
+   "applies_from": "launch 6, the first launch whose runner carries with_timeout_terminals; timeouts recorded in the ledger by launches 1-5 count toward the cap",
+   "max_timeouts": 3,
+   "timeout_errors": ["APITimeoutError"],
+   "text": "An attempt without a completed response that has timed out max_timeouts times or more is no longer sent. A timeout is a ledger row whose error_type is one of timeout_errors; rows blocked by the breaker or halted before sending do not count. The loop rule reads such an attempt as a completed attempt with an empty answer, as it reads a reply truncated at the 20,000-token cap, and continues by its registered steps: an empty answer agrees with no answer, so S-r1, then S-r2 and S-r3, are asked as the rule requires, and the vote ignores empty answers. An item whose B-r1 is capped has an empty before answer, and an item whose final answer is empty is submitted blank; vmlu.ai scores a blank as wrong. The ledger is not changed: summary.json lists the capped attempts (timeout_cap) and the run record reports them. Prompts, the request, the 300 s timeout, sampling, the model, the schedule, the loop rule, the limits including the breaker, the analysis and the submission format are unchanged, and completed responses stay terminal."
   }
  ]
 }

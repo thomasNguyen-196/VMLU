@@ -611,5 +611,131 @@ class TestMimoBadRequest(EngineState):
                          [("amendment 1", False), (None, True)])
 
 
+TIMEOUT_CAP = rvt.timeout_cap_amendment(rvt.load_registration(vt.REGISTRATION_PATHS["mimo"]))
+
+
+class TestMimoTimeoutCap(EngineState):
+    """MC-110 amendment 2: an attempt that timed out `max_timeouts` times is read as an empty answer, never sent
+    again; the ledger is unchanged and the rule goes on by its registered steps."""
+
+    def write_ledger(self, rows: list[dict[str, Any]]) -> None:
+        self.output.mkdir(parents=True)
+        (self.output / "attempts.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+
+    def test_the_registered_amendment(self):
+        assert TIMEOUT_CAP is not None
+        self.assertEqual((TIMEOUT_CAP["id"], TIMEOUT_CAP["max_timeouts"], TIMEOUT_CAP["timeout_errors"]),
+                         (2, 3, ["APITimeoutError"]))
+        self.assertIsNone(rvt.timeout_cap_amendment({"amendments": [AMENDMENT]}))
+        for broken in ({**TIMEOUT_CAP, "max_timeouts": 0}, {**TIMEOUT_CAP, "max_timeouts": True},
+                       {**TIMEOUT_CAP, "timeout_errors": []}, {k: v for k, v in TIMEOUT_CAP.items() if k != "text"}):
+            with self.assertRaises(SystemExit):
+                rvt.timeout_cap_amendment({"amendments": [broken]})
+        with self.assertRaises(SystemExit):
+            rvt.timeout_cap_amendment({"amendments": [TIMEOUT_CAP, TIMEOUT_CAP]})
+
+    def test_only_attempts_with_enough_timeouts_and_no_answer_are_capped(self):
+        def row(key: str, status: str = "request_error", error: str | None = "APITimeoutError") -> dict[str, Any]:
+            item, replicate = key.split(":")
+            return {"run_key": key, "item_id": item, "replicate_id": replicate, "status": status, "error_type": error,
+                    "raw_response": "Đáp án: C" if status == "complete" else ""}
+        ledger = ([row("01-0001:B-r1")] * 3 + [row("01-0002:B-r1")] * 2 + [row("01-0003:B-r1")] * 3
+                  + [row("01-0003:B-r1", "complete", None)] + [row("01-0004:B-r1", error="endpoint_unresponsive")] * 4
+                  + [row("01-0005:S-r1")] * 4)
+        self.write_ledger(ledger)
+        latest = {r["run_key"]: r for r in ledger}
+        self.assertIs(rvt.with_timeout_terminals(self.output, latest, None)[0], latest)
+        view, capped = rvt.with_timeout_terminals(self.output, latest, TIMEOUT_CAP)
+        self.assertEqual(capped, ["01-0001:B-r1", "01-0005:S-r1"])
+        self.assertEqual((view["01-0001:B-r1"]["status"], view["01-0001:B-r1"]["raw_response"],
+                          view["01-0001:B-r1"]["terminal"]), ("complete", "", "amendment 2: 3 timeouts"))
+        self.assertEqual(view["01-0003:B-r1"]["raw_response"], "Đáp án: C")
+        self.assertEqual(latest["01-0001:B-r1"]["status"], "request_error")  # the rows passed in are not changed
+        states = {s.item_id: s for s in vt.plan(["01-0001"], {**view, "x": {**view["01-0001:B-r1"],
+                                                                         "replicate_id": "B-r2", "raw_response": "B"}},
+                                               None, "mimo")}
+        self.assertEqual((states["01-0001"].predictions, states["01-0001"].needed), ({"B-r1": "", "B-r2": "B"},
+                                                                                       ("S-r1",)))
+
+    def test_the_engine_stops_sending_a_capped_attempt_and_the_rule_goes_on(self):
+        items = vt.expand(synthetic_items(30), MIMO)
+        manifest: dict[str, Any] = {"items": [v2._item_manifest(item) for item in items]}  # noqa: SLF001
+        manifest["manifest_sha256"] = v1.sha256_bytes(v1.canonical_json(manifest))
+        rebuilt = {item.run_key: item for item in items}
+        ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
+        slow = {f"{vt.DATASET}:01-0001:B-r1", f"{vt.DATASET}:01-0002:S-r1"}
+        sent: Counter[str] = Counter()
+        lock = threading.Lock()
+
+        def request(client, item, shard, lane):
+            with lock:
+                sent[item.run_key] += 1
+            index = int(item.item_id.split("-")[1])
+            row = rvt._base_row(item, "MC-110", shard, lane, "fake")  # noqa: SLF001
+            if item.run_key in slow:
+                row.update({"status": "request_error", "finish_reason": "error", "error_type": "APITimeoutError",
+                            "fatal": False})
+            else:
+                letter = {"B-r1": "A", "B-r2": "A" if index % 3 == 0 else "B", "S-r1": "B" if index % 3 == 1 else "C",
+                          "S-r2": "C", "S-r3": "D"}[item.replicate_id]
+                raw = letter if item.replicate_id.startswith("B") else f"Lời giải.\nĐáp án: {letter}"
+                row.update({"status": "complete", "raw_response": raw, "total_tokens": 10})
+            row.update({"latency_s": 0.001, "finished_at": rvt.base.now()})
+            return row
+
+        rvt.base.MODEL = MIMO_CONFIG["students"]["mimo"]["model_id"]
+        rvt.base.request = request
+        with contextlib.redirect_stdout(io.StringIO()):
+            status = rvt.run_passes(self.output, manifest, rebuilt, ids, {"runner_sha256": "test"}, None, False,
+                                    max_passes=6, threshold=None, student="mimo",
+                                    score_callback=rvt.loop_callback("mimo", "MC-110", ids, None, TIMEOUT_CAP),
+                                    runner_path=Path(rvt.__file__), timeout_cap=TIMEOUT_CAP)
+        self.assertEqual(status, "complete")
+        self.assertEqual({key: sent[key] for key in slow}, dict.fromkeys(slow, 3))
+        self.assertEqual({count for key, count in sent.items() if key not in slow}, {1})
+        ledger = [json.loads(line) for line in (self.output / "attempts.jsonl").read_text().splitlines()]
+        self.assertEqual(sum(r["status"] == "complete" for r in ledger if r["run_key"] in slow), 0)
+        summary = json.loads((self.output / "summary.json").read_text())
+        self.assertEqual((summary["final_items"], summary["timeout_cap"]["capped_attempts"],
+                          summary["timeout_cap"]["capped_by_replicate"]), (30, 2, {"B-r1": 1, "S-r1": 1}))
+        self.assertNotIn("B-r1", {k: v for k, v in summary["complete_attempts"].items() if v == 30})
+        with (self.output / "submission_before.csv").open() as handle:
+            before = {row["id"]: row["answer"] for row in csv.DictReader(handle)}
+        with (self.output / "submission_loop.csv").open() as handle:
+            loop = {row["id"]: row["answer"] for row in csv.DictReader(handle)}
+        # 01-0001: B-r1 capped (empty), B-r2 B, S-r1 B agrees -> B. 01-0002: S-r1 capped, S-r2 C, S-r3 D -> vote C.
+        self.assertEqual((before["01-0001"], loop["01-0001"], loop["01-0002"]), ("", "B", "C"))
+
+    def test_without_the_amendment_a_slow_attempt_is_sent_every_pass(self):
+        items = vt.expand(synthetic_items(3), MIMO)
+        manifest: dict[str, Any] = {"items": [v2._item_manifest(item) for item in items]}  # noqa: SLF001
+        manifest["manifest_sha256"] = v1.sha256_bytes(v1.canonical_json(manifest))
+        rebuilt = {item.run_key: item for item in items}
+        ids = [item.item_id for item in items if item.replicate_id == "B-r1"]
+        slow = f"{vt.DATASET}:01-0001:B-r1"
+        sent: Counter[str] = Counter()
+
+        def request(client, item, shard, lane):
+            sent[item.run_key] += 1
+            row = rvt._base_row(item, "MC-110", shard, lane, "fake")  # noqa: SLF001
+            if item.run_key == slow:
+                row.update({"status": "request_error", "finish_reason": "error", "error_type": "APITimeoutError",
+                            "fatal": False})
+            else:
+                row.update({"status": "complete", "raw_response": "A", "total_tokens": 10})
+            row.update({"latency_s": 0.001, "finished_at": rvt.base.now()})
+            return row
+
+        rvt.base.MODEL = MIMO_CONFIG["students"]["mimo"]["model_id"]
+        rvt.base.request = request
+        with contextlib.redirect_stdout(io.StringIO()):
+            status = rvt.run_passes(self.output, manifest, rebuilt, ids, {"runner_sha256": "test"}, None, False,
+                                    max_passes=4, threshold=None, student="mimo",
+                                    score_callback=rvt.loop_callback("mimo", "MC-110", ids, None),
+                                    runner_path=Path(rvt.__file__))
+        self.assertEqual((status, sent[slow]), ("stalled", 2))
+        self.assertFalse((self.output / "submission_loop.csv").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

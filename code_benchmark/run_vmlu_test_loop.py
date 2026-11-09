@@ -248,6 +248,54 @@ class BadRequestRule:
             return None
 
 
+TIMEOUT_CAP_KEYS = ("id", "rule", "decided_on", "decided_by", "applies_from", "max_timeouts", "timeout_errors", "text")
+
+
+def timeout_cap_amendment(registration: dict[str, Any]) -> dict[str, Any] | None:
+    """The registration's amendment with rule `timeout_cap` (MC-110 amendment 2), checked, or None."""
+    found = [a for a in registration.get("amendments") or [] if isinstance(a, dict) and a.get("rule") == "timeout_cap"]
+    if not found:
+        return None
+    amendment = found[0]
+    if (len(found) > 1 or set(amendment) != set(TIMEOUT_CAP_KEYS) or not amendment["timeout_errors"]
+            or not all(isinstance(e, str) and e for e in amendment["timeout_errors"])
+            or not isinstance(amendment["max_timeouts"], int) or isinstance(amendment["max_timeouts"], bool)
+            or amendment["max_timeouts"] < 1):
+        raise SystemExit("Error: the timeout_cap amendment must appear once with exactly the keys "
+                         f"{list(TIMEOUT_CAP_KEYS)}, non-empty timeout error types and a positive cap")
+    return amendment
+
+
+def timeouts_by_attempt(output: Path, errors: list[str] | tuple[str, ...]) -> Counter[str]:
+    """How many times each attempt of the ledger timed out (rows whose error type is one of `errors`)."""
+    path = output / "attempts.jsonl"
+    if not path.is_file():
+        return Counter()
+    with path.open(encoding="utf-8") as handle:
+        rows = [json.loads(line) for line in handle if line.strip()]
+    return Counter(str(row["run_key"]) for row in rows
+                   if row.get("status") != "complete" and row.get("error_type") in errors)
+
+
+def with_timeout_terminals(output: Path, rows: dict[str, Any],
+                           amendment: dict[str, Any] | None) -> tuple[dict[str, Any], list[str]]:
+    """(rows for the loop rule, capped run keys). With MC-110 amendment 2 (rule `timeout_cap`), an attempt without a
+    completed response that has timed out `max_timeouts` times or more is read by the rule as a completed attempt with
+    an empty answer, as a reply truncated at the token cap is; it is never sent again. The ledger is not changed."""
+    if amendment is None:
+        return rows, []
+    counts = timeouts_by_attempt(output, amendment["timeout_errors"])
+    capped = sorted(key for key, n in counts.items() if n >= amendment["max_timeouts"]
+                    and key in rows and rows[key].get("status") != "complete")
+    if not capped:
+        return rows, []
+    view = dict(rows)
+    for key in capped:
+        view[key] = {**rows[key], "status": "complete", "raw_response": "",
+                     "terminal": f"amendment {amendment['id']}: {counts[key]} timeouts"}
+    return view, capped
+
+
 def session_id(card_id: str, run_key: str) -> str:
     """One OpenCode Go routing session per attempt, named by this card (MC-105 used vmlu-mc105-...)."""
     return f"vmlu-{card_id.lower().replace('-', '')}-{v1.sha256_bytes(run_key.encode('utf-8'))[:16]}"
@@ -351,12 +399,15 @@ def _mean(values: list[float]) -> float | None:
     return round(statistics.fmean(values), 2) if values else None
 
 
-def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: float | None):
+def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: float | None,
+                  timeout_cap: dict[str, Any] | None = None):
     """After each pass: loop.jsonl and summary.json; the two submissions once every item has a final answer. The
-    before is B-r1 for both students; the probe confidence exists for Qwen only."""
+    before is B-r1 for both students; the probe confidence exists for Qwen only. With MC-110 amendment 2 the rule
+    reads capped attempts as empty answers, and the summary lists them; the counts of completed attempts do not."""
     def write(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], rows: dict[str, Any],
               meta: dict[str, Any]) -> None:
-        states = vt.plan(item_ids, rows, threshold, student)
+        view, capped = with_timeout_terminals(output, rows, timeout_cap)
+        states = vt.plan(item_ids, view, threshold, student)
         complete = [row for row in rows.values() if row.get("status") == "complete"]
         records = [{"item_id": s.item_id, "final_replicate": s.final, "rounds": s.rounds, "answer": s.answer,
                     "before": s.predictions.get("B-r1"), "confidence": s.confidence, "predictions": s.predictions,
@@ -385,6 +436,12 @@ def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: fl
                                            and row.get("latency_s") is not None]) for arm in ("B", "S")},
             "gold": "withheld; accuracy comes only from vmlu.ai",
         }
+        if timeout_cap is not None:
+            summary["timeout_cap"] = {"amendment": timeout_cap["id"], "max_timeouts": timeout_cap["max_timeouts"],
+                                      "capped_attempts": len(capped),
+                                      "capped_by_replicate": dict(sorted(Counter(k.rsplit(":", 1)[1]
+                                                                                 for k in capped).items())),
+                                      "capped_run_keys": capped}
         if len(decided) == len(states):
             write_csv_atomic(output / "submission_before.csv",
                              [{"id": s.item_id, "answer": s.predictions["B-r1"]} for s in states], ["id", "answer"])
@@ -398,18 +455,25 @@ def loop_callback(student: str, card_id: str, item_ids: list[str], threshold: fl
 
 def run_passes(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], item_ids: list[str],
                condition: dict[str, Any], client, resume: bool, *, max_passes: int, threshold: float | None,
-               score_callback, runner_path: Path, execute=None, student: str = "qwen") -> str:
-    """Send what the rule needs, pass after pass. Returns complete, paused, stalled or incomplete."""
+               score_callback, runner_path: Path, execute=None, student: str = "qwen",
+               timeout_cap: dict[str, Any] | None = None) -> str:
+    """Send what the rule needs, pass after pass. Returns complete, paused, stalled or incomplete. With MC-110
+    amendment 2 the rule reads capped attempts as empty answers (`with_timeout_terminals`), so they are not sent."""
     execute = execute or base.execute
     resume_next = resume
-    for number in range(1, max_passes + 1):
+
+    def view() -> tuple[dict[str, Any], dict[str, Any]]:
         rows = base.load_rows(output, manifest)
-        states = vt.plan(item_ids, rows, threshold, student)
+        return rows, with_timeout_terminals(output, rows, timeout_cap)[0]
+
+    for number in range(1, max_passes + 1):
+        rows, ruled = view()
+        states = vt.plan(item_ids, ruled, threshold, student)
         send = [rebuilt[f"{vt.DATASET}:{s.item_id}:{r}"] for s in states for r in s.needed]
         keys = [item.run_key for item in send]
         if len(set(keys)) != len(keys) or any((rows.get(key) or {}).get("status") == "complete" for key in keys):
             raise SystemExit("Error: a pass would send one attempt twice or re-send a completed one")
-        done = sum(row.get("status") == "complete" for row in rows.values())
+        done = sum(row.get("status") == "complete" for row in ruled.values())
         print(f"pass {number}: final {sum(s.final is not None for s in states)}/{len(states)}; sending {len(send)} "
               f"{dict(sorted(Counter(item.replicate_id for item in send).items()))}", flush=True)
         if not send:
@@ -419,9 +483,9 @@ def run_passes(output: Path, manifest: dict[str, Any], rebuilt: dict[str, Any], 
         resume_next = True
         if json.loads((output / "run.json").read_text(encoding="utf-8")).get("status") == "paused":
             return "paused"
-        if sum(row.get("status") == "complete" for row in base.load_rows(output, manifest).values()) == done:
+        if sum(row.get("status") == "complete" for row in view()[1].values()) == done:
             return "stalled"
-    states = vt.plan(item_ids, base.load_rows(output, manifest), threshold, student)
+    states = vt.plan(item_ids, view()[1], threshold, student)
     return "complete" if all(s.final is not None for s in states) else "incomplete"
 
 
@@ -495,6 +559,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"amendment {amendment['id']} (transient_400): attempts with an earlier HTTP 400: "
                   f"{len(bad_request.seen)} of at most {amendment['max_attempts_with_400']}", flush=True)
         base.MODEL, base.PROFILE, base.PROTOCOL, base.CARD_ID = model_id, student["profile_id"], vt.PROTOCOL_ID, card_id
+        timeout_cap = timeout_cap_amendment(registration)
+        if timeout_cap:
+            capped = with_timeout_terminals(output, base.load_rows(output, manifest), timeout_cap)[1] \
+                if (output / "attempts.jsonl").is_file() else []
+            print(f"amendment {timeout_cap['id']} (timeout_cap): attempts read as empty answers after "
+                  f"{timeout_cap['max_timeouts']} timeouts: {len(capped)}", flush=True)
         base.request = make_mimo_request(student, card_id, guard, pr.OutageGuard(student["stop_after_timeouts"]),
                                          ModelPin(student["model_identity"]), bad_request)
         record_launch(output, args.student, resume=args.resume, note=args.note)
@@ -502,8 +572,8 @@ def main(argv: list[str] | None = None) -> int:
                     max_retries=student["sdk_retries"]) as client:
             status = run_passes(output, manifest, rebuilt, item_ids, condition, client, args.resume,
                                 max_passes=max_passes, threshold=None, student="mimo",
-                                score_callback=loop_callback(args.student, card_id, item_ids, None),
-                                runner_path=Path(__file__))
+                                score_callback=loop_callback(args.student, card_id, item_ids, None, timeout_cap),
+                                runner_path=Path(__file__), timeout_cap=timeout_cap)
         print(f"loop_status={status} output={output}", flush=True)
         return 0 if status == "complete" else 1
     endpoint, key = str(env["OPENAI_BASE_URL"]), str(env["OPENAI_API_KEY"])
