@@ -829,5 +829,35 @@ class TestMimoTimeout(unittest.TestCase):
             self.assertEqual(client.timeout, 900)
 
 
+BUDGET = rvt.budget_amendment(rvt.load_registration(vt.REGISTRATION_PATHS["mimo"]), MIMO_CONFIG["students"]["mimo"])
+
+
+class TestMimoBudget(unittest.TestCase):
+    """MC-110 amendment 5: the budget guard halts at 50,000,000 reported tokens; only that cap changes."""
+
+    def test_the_registered_amendment(self):
+        student = MIMO_CONFIG["students"]["mimo"]
+        assert BUDGET is not None
+        self.assertEqual((BUDGET["id"], BUDGET["budget_tokens"]), (5, 50_000_000))
+        self.assertIsNone(rvt.budget_amendment({"amendments": [AMENDMENT, TIMEOUT_CAP, IN_FLIGHT, WAIT]}, student))
+        for broken in ({**BUDGET, "budget_tokens": student["budget_tokens"]},          # does not raise the cap
+                       {**BUDGET, "budget_tokens": 10_000_000}, {**BUDGET, "budget_tokens": rvt.BUDGET_MAX + 1},
+                       {**BUDGET, "budget_tokens": True}, {**BUDGET, "budget_tokens": 50_000_000.0},
+                       {**BUDGET, "budget_tokens": "50000000"}, {k: v for k, v in BUDGET.items() if k != "text"}):
+            with self.assertRaises(SystemExit):
+                rvt.budget_amendment({"amendments": [broken]}, student)
+        with self.assertRaises(SystemExit):
+            rvt.budget_amendment({"amendments": [BUDGET, BUDGET]}, student)
+
+    def test_only_the_cap_changes(self):
+        student = MIMO_CONFIG["students"]["mimo"]
+        self.assertEqual(rvt.budget_cap(student, None), 20_000_000)
+        self.assertEqual(rvt.budget_cap(student, BUDGET), 50_000_000)
+        self.assertEqual(student["budget_tokens"], 20_000_000)  # the frozen configuration keeps the registered value
+        used = 20_230_710  # reported tokens when launch 47 halted on the registered budget
+        self.assertTrue(pr.BudgetGuard(rvt.budget_cap(student, None), used).exhausted())
+        self.assertFalse(pr.BudgetGuard(rvt.budget_cap(student, BUDGET), used).exhausted())
+
+
 if __name__ == "__main__":
     unittest.main()

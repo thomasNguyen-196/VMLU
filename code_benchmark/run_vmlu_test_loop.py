@@ -345,6 +345,31 @@ def request_timeout(student: dict[str, Any], amendment: dict[str, Any] | None) -
     return student["timeout_seconds"] if amendment is None else amendment["timeout_seconds"]
 
 
+BUDGET_KEYS = ("id", "rule", "decided_on", "decided_by", "applies_from", "budget_tokens", "text")
+BUDGET_MAX = 100_000_000
+
+
+def budget_amendment(registration: dict[str, Any], student: dict[str, Any]) -> dict[str, Any] | None:
+    """The registration's amendment with rule `budget_tokens` (MC-110 amendment 5), checked, or None. The value is a
+    whole number of reported tokens above the configuration's budget and at most BUDGET_MAX: it only raises the guard."""
+    found = [a for a in registration.get("amendments") or [] if isinstance(a, dict) and a.get("rule") == "budget_tokens"]
+    if not found:
+        return None
+    amendment = found[0]
+    value = amendment.get("budget_tokens")
+    if (len(found) > 1 or set(amendment) != set(BUDGET_KEYS) or not isinstance(value, int)
+            or isinstance(value, bool) or not student["budget_tokens"] < value <= BUDGET_MAX):
+        raise SystemExit("Error: the budget_tokens amendment must appear once with exactly the keys "
+                         f"{list(BUDGET_KEYS)} and a value above {student['budget_tokens']} and at most {BUDGET_MAX}")
+    return amendment
+
+
+def budget_cap(student: dict[str, Any], amendment: dict[str, Any] | None) -> int:
+    """Reported tokens at which the budget guard halts the run. With MC-110 amendment 5 only this cap differs; the
+    frozen configuration, its hash and the condition keep the registered value."""
+    return student["budget_tokens"] if amendment is None else amendment["budget_tokens"]
+
+
 def session_id(card_id: str, run_key: str) -> str:
     """One OpenCode Go routing session per attempt, named by this card (MC-105 used vmlu-mc105-...)."""
     return f"vmlu-{card_id.lower().replace('-', '')}-{v1.sha256_bytes(run_key.encode('utf-8'))[:16]}"
@@ -602,7 +627,11 @@ def main(argv: list[str] | None = None) -> int:
                  "endpoint_host": urlsplit(endpoint).hostname, "base_url_sha256": v1.sha256_bytes(endpoint.encode())}
         condition = pr.reconcile_resume(output, build_condition(args.student, config, manifest, registration, route),
                                         args.resume)
-        guard = pr.BudgetGuard(student["budget_tokens"], pr.existing_usage(output))
+        budget = budget_amendment(registration, student)
+        guard = pr.BudgetGuard(budget_cap(student, budget), pr.existing_usage(output))
+        if budget:
+            print(f"amendment {budget['id']} (budget_tokens): budget guard {student['budget_tokens']:,} -> "
+                  f"{budget['budget_tokens']:,} reported tokens; already used {guard.used:,}", flush=True)
         bad_request = BadRequestRule(amendment, attempts_with_400(output) if amendment else frozenset())
         if amendment:
             print(f"amendment {amendment['id']} (transient_400): attempts with an earlier HTTP 400: "
