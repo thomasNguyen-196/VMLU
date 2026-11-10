@@ -2908,3 +2908,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 12 requests in flight; breaker after 4 consecutive network failures; HTTP 400 as MC-110's amendment 1, counted in this ledger; at most 12 passes per launch; a pass whose rows neither complete nor time out ends the launch; the runner refuses to send an attempt outside the 183 |
 | `details` | `docs/measurement_cards/MC-110b-diagnostic-vmlu-test-loop-mimo-retry900.md` |
 | `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash-retry900/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-110c — MiMo V2.6 Flash (OpenCode Go) / MC-110's 538 attempts without an answer (183 timeouts, 355 cut by the 20,000-token cap) asked again with a 40,000-token cap / before and after on the 9,833 VMLU test items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-110c` |
+| `status` | Preregistered 2026-11-10 (+07), before benchmark-item requests of this card; a recovery of MC-110 that supersedes MC-110b (stopped by the owner's choice during its first pass) and reuses MC-110b's 17 replies that stopped below 20,000 tokens; MC-110's and MC-110b's text, outputs and submissions stay unchanged |
+| `scope` | MC-110's 9,833 items, manifest, prompts and rule. Candidates: MC-110's 183 attempts capped after three timeouts at 300 s and its 355 replies cut at 20,000 completion tokens (B-r1 99, B-r2 101, S-r1 120, S-r2 105, S-r3 113, on 154 items), asked again round by round under MC-110's rule, each only when the rule still needs it; every other attempt is MC-110's completed row. Descriptive vmlu.ai comparisons: the loop minus the before, and each against MC-110's submission |
+| `harness / tools` | As MC-110: direct HTTP API, no harness, no tools; chat completions, not streamed, one routing session per attempt, named by this card |
+| `model / route` | As MC-110: MiMo V2.6 Flash (`mimo-v2.6-flash`, 131,072 output tokens listed) on OpenCode Go (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | As MC-110 (system prompt `Answer the user's question.`, provider defaults, no SDK retries) except: `max_completion_tokens` 40,000; 1,800 s timeout; an attempt that times out three times here is read as an empty answer; budget guard of 20,000,000 reported tokens (about 10 to 15 million expected) |
+| `workers / scheduler` | At most 12 requests in flight; breaker after 4 consecutive network failures; HTTP 400 as MC-110's amendment 1, counted in this ledger; at most 12 passes per launch; a pass whose rows neither complete nor time out ends the launch; the runner refuses to send a non-candidate or a reused attempt |
+| `details` | `docs/measurement_cards/MC-110c-diagnostic-vmlu-test-loop-mimo-40k.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash-40k/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
