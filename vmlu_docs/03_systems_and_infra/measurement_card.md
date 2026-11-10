@@ -2894,3 +2894,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-101; round 2 only after every round-1 attempt is complete |
 | `details` | `docs/measurement_cards/MC-111-diagnostic-legal-select.md` |
 | `outputs` | `all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/` (`round1/`, `round2/`); no upload |
+
+## MC-110b — MiMo V2.6 Flash (OpenCode Go) / MC-110's 183 timed-out attempts asked again with a 900 s wait / before and after on the 9,833 VMLU test items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-110b` |
+| `status` | Preregistered 2026-11-10 (+07), before benchmark-item requests of this card; a recovery of MC-110, whose text, outputs and submissions stay unchanged |
+| `scope` | MC-110's 9,833 items, manifest, prompts and rule. Only the 183 attempts MC-110 read as empty answers under its amendment 2 (three timeouts each, all at the 300 s wait: B-r1 38, B-r2 41, S-r1 36, S-r2 32, S-r3 36, on 77 items) are asked again, round by round under MC-110's rule, each only when the rule still needs it; every other attempt is MC-110's completed row. Descriptive vmlu.ai comparisons: the loop minus the before, and each against MC-110's submission |
+| `harness / tools` | As MC-110: direct HTTP API, no harness, no tools; chat completions, not streamed, one routing session per attempt, named by this card |
+| `model / route` | As MC-110: MiMo V2.6 Flash (`mimo-v2.6-flash`) on OpenCode Go (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | As MC-110 (system prompt `Answer the user's question.`, provider defaults, 20,000 completion tokens, no SDK retries) except: 900 s timeout; an attempt that times out three times here is read as an empty answer; budget guard of 5,000,000 reported tokens |
+| `workers / scheduler` | At most 12 requests in flight; breaker after 4 consecutive network failures; HTTP 400 as MC-110's amendment 1, counted in this ledger; at most 12 passes per launch; a pass whose rows neither complete nor time out ends the launch; the runner refuses to send an attempt outside the 183 |
+| `details` | `docs/measurement_cards/MC-110b-diagnostic-vmlu-test-loop-mimo-retry900.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash-retry900/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
