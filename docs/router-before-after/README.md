@@ -1,14 +1,15 @@
 # Trước và sau router: OMP, full tools, API trực tiếp và vòng tự sửa
 
-Báo cáo ngày 2026-11-03, cập nhật ngày 2026-11-07 với VMLU Test của Qwen (MC-109). File này đặt các điều kiện đo **trước khi có router** (OMP không tools, OMP full tools, API trực tiếp) cạnh kết quả **sau khi dùng router** (vòng tự sửa của MC-105), trên cùng các bộ dữ liệu của trang `/table`. Mọi con số được chép từ hai file mà `/table` hiển thị; báo cáo này không chấm lại gì (xem [Nguồn số liệu](#nguồn-số-liệu)).
+Báo cáo ngày 2026-11-03, cập nhật ngày 2026-11-07 với VMLU Test của Qwen (MC-109) và ngày 2026-11-11 với VMLU Test của MiMo (MC-110c). File này đặt các điều kiện đo **trước khi có router** (OMP không tools, OMP full tools, API trực tiếp) cạnh kết quả **sau khi dùng router** (vòng tự sửa của MC-105), trên cùng các bộ dữ liệu của trang `/table`. Mọi con số được chép từ hai file mà `/table` hiển thị; báo cáo này không chấm lại gì (xem [Nguồn số liệu](#nguồn-số-liệu)).
 
 ## Tóm tắt
 
 - **Sau router chỉ có cho Qwen3.5-9B và MiMo V2.6 Flash** (MC-105). MC-108 (Muse Spark 1.3 và 1.2) đã **dừng hẳn** ngày 2026-11-04, ở 1.639 và 2.165 lượt, vì bộ lọc nội dung của Meta liên tục từ chối prompt suy luận từng bước. Muse sẽ không có số sau (xem [Muse Spark: vì sao không có số sau](#muse-spark-vì-sao-không-có-số-sau)).
 - **Vòng tự sửa tốt hơn hỏi thẳng rõ ràng ở 6/12 ô đã đăng ký**: VMLU valid, Vi-DROP và ViBidLQA test, ở cả hai model. Mức tăng lớn nhất ở Vi-DROP: Qwen +15,4 điểm, MiMo +22,0 điểm token-F1. Qwen còn tăng +12,1 điểm ở VMLU valid.
 - **VMLU Test của Qwen (MC-109): 67,09% trước, 76,63% sau, tức +9,54 điểm** theo điểm vmlu.ai. Router chưa từng dùng 9.833 câu này lúc thiết kế, vì Test không có đáp án. vmlu.ai chỉ trả điểm theo môn nên không làm được phép thử theo cặp câu. Nhóm STEM tăng nhiều nhất (+16,95), nhất là các môn toán và vật lý (xem [VMLU Test của Qwen theo nhóm môn](#vmlu-test-của-qwen-theo-nhóm-môn-mc-109)).
+- **VMLU Test của MiMo (MC-110c): 76,32% trước, 80,71% sau, tức +4,39 điểm** theo điểm vmlu.ai. MC-110c là MC-110 (trần 20.000 token) cộng với việc hỏi lại 538 lượt không ra câu trả lời ở trần 40.000 token; hai file của MC-110 không được nộp. MiMo hỏi thẳng đã gần bằng Qwen sau vòng tự sửa (76,32 so với 76,63), nên mức tăng chỉ bằng khoảng một nửa của Qwen (xem [VMLU Test của MiMo theo nhóm môn](#vmlu-test-của-mimo-theo-nhóm-môn-mc-110c)).
 - **Vòng tự sửa không giúp ở Legal MC, Legal NLI và Vi-SQuAD.** Với Qwen ở Legal MC, sau còn thấp hơn trước 4,1 điểm (không có ý nghĩa thống kê, p = 0,55), vì suy luận từng bước (S) kém hỏi thẳng ở bộ này.
-- **So với ba điều kiện của /table**, vòng tự sửa cao hơn điều kiện tốt nhất ở 14/15 ô (dưới Legal NLI của Qwen). Đây chỉ là so sánh mô tả: route, cài đặt và lượt chạy khác nhau, không có phép thử.
+- **So với ba điều kiện của /table**, vòng tự sửa cao hơn điều kiện tốt nhất ở 15/16 ô (dưới Legal NLI của Qwen). Đây chỉ là so sánh mô tả: route, cài đặt và lượt chạy khác nhau, không có phép thử.
 - **Full tools không phải là cách cải thiện.** Với Muse và MiMo, full tools gần ngang OMP không tools. Với Qwen, full tools thấp hơn hẳn (VMLU valid 58,7% so với 69,6%).
 - **Chi phí:** vòng tự sửa tốn 1,9 đến 10,2 lần số token của hỏi thẳng, tuỳ ô. Ở Vi-DROP, chỉ dùng S (luôn S) còn cao hơn vòng tự sửa và rẻ hơn.
 - **Trên câu mới (MC-104)**, vòng tự sửa của Qwen nâng trắc nghiệm từ 69,0% lên 76,3% (đạt). Với MiMo chỉ thêm 2,2 điểm, chưa chắc (không đạt).
@@ -20,8 +21,8 @@ Báo cáo ngày 2026-11-03, cập nhật ngày 2026-11-07 với VMLU Test của 
 | **OMP · không tools** | Coding agent `omp` 18.0.0, JSON mode | Tools tắt; system prompt tối giản; mỗi câu một process, không giữ lịch sử. Temperature 1,0; thinking auto; không gửi seed. Trần output 4.096 token cho trắc nghiệm và 2.048 cho đọc hiểu; 4 workers. | VMLU: MC-62 (Muse 1.3), MC-74 + MC-79 (Muse 1.2), MC-63 (MiMo), MC-70 (Qwen). Legal và đọc hiểu: MC-53, MC-73, MC-54, MC-72 |
 | **OMP · full tools** | Coding agent `omp` với đủ bộ tools (read, bash, web_search…) | System prompt mặc định của coding agent. Yêu cầu temperature 1,0, nhưng không xác minh được giá trị thực; reasoning effort không ghim. 20.000 token mỗi lượt; 12 workers. Timeout và cách chạy lại khác nhau giữa các model (300 đến 3.600 giây). **Chỉ mô tả, không dùng để xếp hạng.** Không chạy Legal MC. | MC-86 / R2 (Muse 1.3), MC-87 / R3 (Muse 1.2), MC-88 (Qwen), MC-89 (MiMo) |
 | **API trực tiếp** | API của model, không qua harness (Muse qua 9Router) | Gửi temperature 1; reasoning theo mặc định của provider; trần 20.000 token output (MC-80 dùng trần nhỏ hơn); 12 workers. | MC-80 / MC-82 (Muse 1.3), MC-84 (Muse 1.2), MC-83 (Qwen), MC-85 (MiMo) |
-| **Trước router** (hỏi thẳng B, cùng lượt chạy) | Qwen: IEC endpoint. MiMo: OpenCode Go | Prompt giống hệt /table. Qwen trắc nghiệm: probe với temperature 0, seed 42, 4 token, đọc log-probability. Qwen đọc hiểu: temperature 1,0. MiMo: mặc định của provider. | MC-105 (VMLU Dev: MC-104; VMLU Test của Qwen: MC-109) |
-| **Sau router** (vòng tự sửa) | Như dòng trước | Xem phần dưới. Mọi câu trả lời cuối do chính model viết. | MC-105 (VMLU Dev: MC-104; VMLU Test của Qwen: MC-109) |
+| **Trước router** (hỏi thẳng B, cùng lượt chạy) | Qwen: IEC endpoint. MiMo: OpenCode Go | Prompt giống hệt /table. Qwen trắc nghiệm: probe với temperature 0, seed 42, 4 token, đọc log-probability. Qwen đọc hiểu: temperature 1,0. MiMo: mặc định của provider. | MC-105 (VMLU Dev: MC-104; VMLU Test: MC-109 với Qwen, MC-110c với MiMo) |
+| **Sau router** (vòng tự sửa) | Như dòng trước | Xem phần dưới. Mọi câu trả lời cuối do chính model viết. | MC-105 (VMLU Dev: MC-104; VMLU Test: MC-109 với Qwen, MC-110c với MiMo) |
 
 ### Vòng tự sửa (dòng "Sau") chạy thế nào
 
@@ -33,8 +34,8 @@ Báo cáo ngày 2026-11-03, cập nhật ngày 2026-11-07 với VMLU Test của 
 
 Mỗi câu được hỏi đủ mọi lượt, rồi quy tắc trên được tính lại từ các câu trả lời đã ghi. Nhờ vậy "Trước", "Sau" và "Luôn S" được so trên cùng một tập câu trả lời. Các lần hỏi độc lập với nhau: model không thấy câu trả lời trước của chính nó.
 
-Riêng VMLU Test của Qwen (MC-109), để đỡ tốn lượt, mỗi lần hỏi chỉ được gửi khi quy tắc cần đến:
-- S chỉ được hỏi khi probe chưa chắc;
+Riêng VMLU Test (MC-109 của Qwen, MC-110c của MiMo), để đỡ tốn lượt, mỗi lần hỏi chỉ được gửi khi quy tắc cần đến:
+- S chỉ được hỏi khi probe chưa chắc (Qwen) hoặc khi hai lần B lệch nhau (MiMo);
 - S lần 2 và 3 chỉ được hỏi khi S lệch B.
 
 Vì các lần hỏi độc lập, đáp án cuối vẫn đúng như khi hỏi đủ rồi tính lại; phần kiểm thử đã đối chiếu điều này trên 3.000 trường hợp ngẫu nhiên. Nhưng S không được hỏi cho mọi câu, nên ô này không có dòng "Luôn S".
@@ -47,7 +48,7 @@ Cách đọc bảng:
 - Ô có ✓ là phép thử chính đạt: p sau hiệu chỉnh Holm trên 12 ô nhỏ hơn 0,05 và sau cao hơn trước. Trắc nghiệm dùng McNemar chính xác; đọc hiểu dùng phép thử đổi dấu trên chênh lệch F1 theo cặp câu.
 - "Sau − điều kiện /table cao nhất" lấy điểm cao nhất trong ba dòng OMP không tools, OMP full tools và API trực tiếp. Dòng này chỉ để mô tả, không có phép thử.
 - Cột "Thẻ đo" ghi hai thẻ khi các cột VMLU lấy từ thẻ đầu và các cột còn lại lấy từ thẻ sau.
-- VMLU Test chỉ vmlu.ai chấm được. Router mới chạy trên Test cho Qwen (MC-109): chủ dự án nộp file trước và file sau lên vmlu.ai. Điểm tổng của vmlu.ai là trung bình cộng của 58 môn. vmlu.ai không trả kết quả từng câu, nên ô này không có phép thử. MiMo sẽ chạy sau, theo thẻ đo riêng.
+- VMLU Test chỉ vmlu.ai chấm được. Router đã chạy trên Test cho Qwen (MC-109) và MiMo (MC-110c): chủ dự án nộp file trước và file sau lên vmlu.ai. Điểm tổng của vmlu.ai là trung bình cộng của 58 môn. vmlu.ai không trả kết quả từng câu, nên ô này không có phép thử.
 
 ### Qwen3.5-9B-65K
 
@@ -71,13 +72,13 @@ Cách đọc bảng:
 | OMP · không tools | MC-63 / MC-54 | 76,20 | 80,24 | 83,17 | 81,51 | 86,67 | 86,97 | 50,67 | 74,84 |
 | OMP · full tools | MC-89 | 79,60 | — ² | 82,84 | — | 87,33 | 83,23 | 52,33 | 71,05 |
 | API trực tiếp | MC-85 | 77,68 | 79,84 | 81,85 | 89,73 | 88,00 | 86,83 | 58,38 | 75,63 |
-| Trước router: hỏi thẳng B, cùng lượt chạy | MC-105 (Dev: MC-104) | — | 77,82 | 81,85 | 91,78 | 89,33 | 88,95 | 53,99 | 72,92 |
-| **Sau router: vòng tự sửa** | MC-105 (Dev: MC-104) | — | **83,20** | **83,83** | **92,47** | **88,67** | **91,29** | **76,02** | **78,08** |
-| Sau − trước (điểm) | phép thử chính | — | **+5,38** ✓ | +1,98 | +0,69 | −0,66 | +2,34 | **+22,03** ✓ | **+5,16** ✓ |
-| p sau Holm (12 ô) | | — | < 0,001 | — ¹ | 1,00 | 1,00 | 0,13 | < 0,001 | < 0,001 |
-| Sau − điều kiện /table cao nhất (mô tả) | | — | +2,96 | +0,66 | +2,74 | +0,67 | +4,32 | +17,64 | +2,45 |
+| Trước router: hỏi thẳng B, cùng lượt chạy | MC-105 (Dev: MC-104, Test: MC-110c) | 76,32 ⁶ | 77,82 | 81,85 | 91,78 | 89,33 | 88,95 | 53,99 | 72,92 |
+| **Sau router: vòng tự sửa** | MC-105 (Dev: MC-104, Test: MC-110c) | **80,71** ⁶ | **83,20** | **83,83** | **92,47** | **88,67** | **91,29** | **76,02** | **78,08** |
+| Sau − trước (điểm) | phép thử chính | +4,39 ⁶ | **+5,38** ✓ | +1,98 | +0,69 | −0,66 | +2,34 | **+22,03** ✓ | **+5,16** ✓ |
+| p sau Holm (12 ô) | | — ⁶ | < 0,001 | — ¹ | 1,00 | 1,00 | 0,13 | < 0,001 | < 0,001 |
+| Sau − điều kiện /table cao nhất (mô tả) | | +1,11 | +2,96 | +0,66 | +2,74 | +0,67 | +4,32 | +17,64 | +2,45 |
 | Luôn S (tham khảo) | MC-105 | — | 82,39 | 83,83 | 91,78 | 89,33 | 90,56 | 77,61 | 76,60 |
-| Token/câu: trước → sau | | — | 383 → 1217 | 363 → 1021 | 453 → 1169 | 494 → 1034 | 519 → 1489 | 477 → 2234 | 389 → 1406 |
+| Token/câu: trước → sau | | 866 → 3115 | 383 → 1217 | 363 → 1021 | 453 → 1169 | 494 → 1034 | 519 → 1489 | 477 → 2234 | 389 → 1406 |
 
 ### Muse Spark 1.3
 
@@ -107,6 +108,11 @@ Chú thích:
    - "Trước" là probe của cùng lượt chạy (temperature 0, seed 42, 4 token, như chú thích 3). "Sau" là vòng tự sửa, hỏi theo từng vòng.
    - vmlu.ai chỉ trả điểm theo môn, không theo câu, nên không làm được McNemar; +9,54 là chênh lệch mô tả. Tính theo số câu, file trước đúng 6.623 và file sau đúng 7.565 trên 9.833 câu (+942).
    - Trong file sau có 113 câu để trống vì cả ba lần S đều bị cắt ở trần 4.096 token; các câu này tính là sai.
+6. VMLU Test của MiMo lấy từ MC-110c, do vmlu.ai chấm. MC-110 chạy vòng tự sửa trên đủ 9.833 câu (2026-11-07 đến 2026-11-10) với trần 20.000 token. Có 538 lượt hỏi không ra câu trả lời: 183 lượt quá thời gian chờ ba lần, 355 lượt bị cắt ở trần. MC-110c (2026-11-10) hỏi lại các lượt đó với trần 40.000 token, cùng quy tắc, và dùng lại 17 câu trả lời của MC-110b (dừng giữa chừng) vốn đã xong dưới 20.000 token. Hai file của MC-110 không được nộp lên vmlu.ai.
+   - "Trước" là B lần 1 của cùng lượt chạy, với mặc định của nhà cung cấp. "Sau" là vòng tự sửa, hỏi theo từng vòng.
+   - vmlu.ai chỉ trả điểm theo môn; +4,39 là chênh lệch mô tả. Tính theo số câu, file trước đúng 7.542 và file sau đúng 7.975 trên 9.833 câu (+433).
+   - File sau có 39 câu để trống: ở cả 39 câu, không lượt S nào cho ra chữ cái, và gần như mọi lượt S đó đều suy nghĩ hết trần 40.000 token. File trước có 210 câu để trống: 143 lượt nhà cung cấp trả về rỗng ngay lập tức, 57 lượt hết trần 40.000 token và 10 lượt có chữ nhưng không đọc được chữ cái. Các câu để trống tính là sai.
+   - Token/câu tính trên các lượt mà đáp án cuối dùng. Cả ba lượt chạy (MC-110, MC-110b, MC-110c) đã trả 39,8 triệu token, vì các lượt bị cắt ở 20.000 token được hỏi lại.
 
 ## Bằng chứng trên câu mới (MC-104)
 
@@ -152,16 +158,40 @@ VMLU Test là bằng chứng thứ hai trên câu mới cho router, sau MC-104: 
 - **Chi phí:** 1.660 token/câu, so với 132 khi chỉ hỏi thẳng (12,6 lần). Lượt S ở Test dài hơn ở Valid (trung bình 1.316 so với 830 token output), nên tổng thời gian chạy khoảng 22 giờ ở 6 luồng.
 - **So với MiMo (chỉ mô tả, khác route và cài đặt):** Qwen sau vòng tự sửa (76,63) ngang mức MiMo hỏi thẳng trên /table: 76,20 với OMP không tools và 77,68 với API trực tiếp.
 
+## VMLU Test của MiMo theo nhóm môn (MC-110c)
+
+Điểm do vmlu.ai chấm hai file của MC-110c mà chủ dự án nộp ngày 2026-11-11. Điểm của mỗi nhóm là trung bình các môn trong nhóm.
+
+| Nhóm môn | Số môn | Số câu | Trước: hỏi thẳng | Sau: vòng tự sửa | Sau − trước |
+|---|---:|---:|---:|---:|---:|
+| STEM | 21 | 3.592 | 81,57 | 86,69 | **+5,12** |
+| Khoa học xã hội | 10 | 1.738 | 79,28 | 82,39 | +3,11 |
+| Nhân văn | 18 | 3.024 | 71,07 | 75,69 | +4,62 |
+| Khác | 9 | 1.479 | 71,33 | 74,92 | +3,59 |
+| **Tổng** (trung bình 58 môn) | 58 | 9.833 | 76,32 | **80,71** | **+4,39** |
+
+- **52/58 môn tăng.** Tăng nhiều nhất:
+  - vật lý THPT +13,34 (72,22 → 85,56);
+  - giáo dục mầm non +10,79;
+  - kiến trúc máy tính +8,89;
+  - xác suất thống kê +8,62;
+  - khoa học tiểu học +8,34.
+- **3 môn giảm:** luật hành chính −3,33, kỹ thuật môi trường −0,59 và quản trị kinh doanh −0,57. Ba môn không đổi: lịch sử THPT, tư tưởng Hồ Chí Minh và địa lý THCS.
+- **Vòng tự sửa dừng ở vòng nào:** vòng 1 (hai lần B trùng nhau) 7.838 câu (80%), vòng 2 (S trùng một B) 1.638 câu (17%), vòng 3 (bỏ phiếu) 357 câu (4%). Có 1.100 đáp án cuối (11%) khác B lần 1. Mức tăng ở Test (+4,39) thấp hơn ở Valid (+5,38).
+- **Chi phí:** 3.115 token/câu, so với 866 khi chỉ hỏi thẳng (3,6 lần). MiMo là model thinking, nên ngay cả hỏi thẳng cũng tốn nhiều token hơn Qwen. Các câu khó nhất (nhiều ở sinh, hoá, lý THPT) suy nghĩ tới hàng chục nghìn token mỗi lượt.
+- **So với Qwen (cùng câu, khác model):** MiMo hỏi thẳng (76,32) gần bằng Qwen sau vòng tự sửa (76,63). Sau vòng tự sửa MiMo cao hơn Qwen ở 51/58 môn. Ở sinh học THPT, vòng tự sửa nâng MiMo từ 72,22 lên 79,44, còn Qwen không đổi (67,78).
+
 ## Nhận xét
 
 - **Nơi router giúp.** Vi-DROP (cần tính toán trên đoạn văn), VMLU và ViBidLQA test tăng rõ ở cả hai model. Phần lớn lợi ích đến từ suy luận từng bước (S): ở Vi-DROP, chỉ dùng S (luôn S) đã cao hơn vòng tự sửa.
 - **Nơi router không giúp.** Ở Legal MC, Legal NLI và Vi-SQuAD, hỏi thẳng đã gần trần. Với Qwen, S còn kém B ở Legal (Legal MC: luôn S 82,9% so với B 91,1%), nên vòng lặp càng dùng S thì càng tụt.
 - **Full tools và router là hai hướng khác nhau.** Cho model dùng tools không nâng điểm ở bộ nào một cách nhất quán, và làm Qwen tụt mạnh. Router giữ nguyên prompt và model, chỉ quyết định khi nào hỏi thêm.
-- **Model mạnh hơn được lợi ít hơn.** MiMo tự suy nghĩ sẵn khi hỏi thẳng, nên S giúp MiMo ít hơn Qwen ở VMLU valid: luôn S hơn hỏi thẳng 4,6 điểm ở MiMo, so với 10,5 điểm ở Qwen. MC-108 định hỏi liệu Muse, đã trên 90% ở VMLU, có còn được lợi không. Câu hỏi đó vẫn không có câu trả lời, vì MC-108 đã dừng hẳn.
+- **Model mạnh hơn được lợi ít hơn.** MiMo tự suy nghĩ sẵn khi hỏi thẳng, nên S giúp MiMo ít hơn Qwen ở VMLU valid: luôn S hơn hỏi thẳng 4,6 điểm ở MiMo, so với 10,5 điểm ở Qwen. Ở VMLU Test cũng vậy: vòng tự sửa thêm 4,39 điểm cho MiMo, so với 9,54 điểm cho Qwen. MC-108 định hỏi liệu Muse, đã trên 90% ở VMLU, có còn được lợi không. Câu hỏi đó vẫn không có câu trả lời, vì MC-108 đã dừng hẳn.
 
 ## Giới hạn khi so sánh
 
-- **Không phải câu mới, trừ VMLU Test.** Các bộ khác của /table đã dùng để thiết kế router trên Qwen. Bằng chứng trên câu mới là MC-104 và VMLU Test của Qwen (MC-109).
+- **Không phải câu mới, trừ VMLU Test.** Các bộ khác của /table đã dùng để thiết kế router trên Qwen. Bằng chứng trên câu mới là MC-104 và VMLU Test (MC-109 của Qwen, MC-110c của MiMo).
+- **VMLU Test của MiMo là bản hỏi lại, không phải MC-110 đã đăng ký.** MC-110c giữ nguyên quy tắc của MC-110, chỉ hỏi lại các lượt không ra câu trả lời với trần 40.000 token. Hai file của MC-110 (trần 20.000 token) chưa được vmlu.ai chấm; chúng khác file của MC-110c ở 42 câu (trước) và 60 câu (sau).
 - **"Trước" có hai nghĩa.** Phép thử chính so với hỏi thẳng trong cùng lượt chạy. Ba dòng OMP, full tools và API trực tiếp đo ở route, temperature, trần token, số workers và thời điểm khác. Chênh lệch giữa chúng và dòng "Sau" vì vậy không chỉ do router.
 - **Full tools chỉ mô tả.** Timeout và cách chạy lại khác nhau giữa bốn model. Riêng MiMo có 46 câu không xong trong ngân sách thời gian, được ghi đáp án rỗng.
 - **Bộ chấm v3 được áp dụng sau khi đã xem dữ liệu.** Đọc hiểu ở đây dùng token-F1 v3: bỏ dấu `*` và backtick rồi chấm như v2. Số đăng ký của các thẻ cũ là v2. V2 trừ điểm câu trả lời in đậm dù đúng chữ, nên làm điểm đọc hiểu của Muse Spark 1.2 và MiMo thấp đi. Muse Spark 1.3 và Qwen gần như không đổi.
@@ -185,9 +215,10 @@ MC-108 chạy đúng vòng tự sửa của MiMo trong MC-105 cho Muse Spark 1.3
 ## Nguồn số liệu
 
 - Ba điều kiện trước router: `web/data/benchmark-reports.json` (build lúc 2026-10-30 07:14 UTC), qua cùng logic ghép bảng của `/table` (`web/lib/benchmark-matrix.ts`).
-- Trước và sau router: `web/data/router-results.json` (build lúc 2026-11-03 01:31 UTC), bảng "Trước / sau" của `/table?condition=router`. File này đọc từ các báo cáo phân tích đã đăng ký:
+- Trước và sau router: `web/data/router-results.json` (build lúc 2026-11-11 02:23 UTC), bảng "Trước / sau" của `/table?condition=router`. File này đọc từ các báo cáo phân tích đã đăng ký:
   - `all_res/diagnostic_router_loop/table_loop/analysis/table_loop_report.json` (MC-105), SHA-256 `8b9a526b…`;
   - `all_res/diagnostic_router_loop/self_loop/analysis/self_loop_report.json` (MC-104), SHA-256 `f2138797…`.
 - VMLU Test của Qwen (MC-109): điểm vmlu.ai mà chủ dự án gửi lại ngày 2026-11-07. Bản gốc lưu ở `all_res/diagnostic_router_loop/vmlu_test_loop/qwen3-5-9b-65k-prospective/vmlu_ai_scores_before.json` và `vmlu_ai_scores_loop.json`, cạnh hai file đã nộp `submission_before.csv` và `submission_loop.csv`. Bản có kèm SHA-256 của file nộp lưu ở `docs/research/qwen-vmlu-test-server-grade-mc109-{before,loop}-2026-11-07.json`, cùng mẫu với các điểm vmlu.ai trước đó. Từ ngày 2026-11-07, `/table?condition=router` hiển thị số này: cột VMLU test ở Bảng 1, một dòng ở Bảng 2 và mục chi tiết MC-109.
-- Thẻ đo: `measurement_card.md` và `docs/measurement_cards/` (MC-80 đến MC-89, MC-104, MC-105, MC-108, MC-109).
+- VMLU Test của MiMo (MC-110c): điểm vmlu.ai mà chủ dự án gửi lại ngày 2026-11-11. Bản gốc lưu ở `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash-40k/vmlu_ai_scores_{before,loop}.json`, cạnh hai file đã nộp. Bản có kèm SHA-256 của file nộp lưu ở `docs/research/mimo-vmlu-test-server-grade-mc110c-{before,loop}-2026-11-11.json`. Từ ngày 2026-11-11, `/table?condition=router` hiển thị số này: cột VMLU test của MiMo ở Bảng 1, một dòng ở Bảng 2 và mục chi tiết MC-110, MC-110c.
+- Thẻ đo: `measurement_card.md` và `docs/measurement_cards/` (MC-80 đến MC-89, MC-104, MC-105, MC-108, MC-109, MC-110, MC-110b, MC-110c).
 - Hai file JSON trên được sinh tự động; nếu chúng được build lại, các số ở đây cần được đối chiếu lại.

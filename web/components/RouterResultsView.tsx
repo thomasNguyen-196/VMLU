@@ -293,7 +293,7 @@ export function RouterResultsView({ results, error }: { results: RouterResults |
     return <p role="alert" className="rounded-xl border border-reject/40 bg-reject-soft p-4 text-[13px] text-reject">Không đọc được dữ liệu router: {error ?? "chưa có file data/router-results.json"}.</p>;
   }
   return <section aria-labelledby="router-title">
-    <h2 id="router-title" className="font-disp text-[21px] font-semibold">Router và chẩn đoán (MC-90 – MC-105, MC-109)</h2>
+    <h2 id="router-title" className="font-disp text-[21px] font-semibold">Router và chẩn đoán (MC-90 – MC-105, MC-109, MC-110c)</h2>
     <p className="mt-1 max-w-4xl text-[12.5px] leading-relaxed text-ink-2">Các thí nghiệm tìm cách hỏi model tốt hơn cho từng câu, gom vào hai bảng: Bảng 1 là trước / sau trên đúng các bộ của /table, Bảng 2 cho mỗi thí nghiệm vài dòng, mỗi dòng một tập câu riêng. Bảng đầy đủ, phép so sánh, ghi chú và nguồn của từng thẻ đo nằm ở mục chi tiết cuối trang. Mọi con số lấy từ báo cáo phân tích đã đăng ký của từng thẻ đo.</p>
     <p className="mt-2 max-w-4xl text-[11.5px] leading-relaxed text-ink-3">B: hỏi thẳng · S: suy luận từng bước · Q: trích câu trong đoạn văn rồi đáp · K: kèm bằng chứng do BM25 tự tìm · O: kèm sẵn đúng bằng chứng, chỉ để đo trần. CI95 là khoảng tin cậy 95%; p dưới {fmtNum(results.alpha)} nghĩa là khác biệt khó xảy ra do may rủi. Ở Bảng 1 và 2, số xanh / đỏ là phép so sánh chính có p dưới {fmtNum(results.alpha)}, cách thử hơn / kém mốc; trong bảng chi tiết, số xanh / đỏ chỉ là hơn / kém dòng B. Chữ đậm là cách đang được thử.</p>
     <BenchmarkTable results={results} />
