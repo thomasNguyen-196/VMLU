@@ -2936,3 +2936,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight, breaker after 4 consecutive network failures, as MC-91 to MC-111 |
 | `details` | `docs/measurement_cards/MC-112-diagnostic-legal-agent.md` |
 | `outputs` | `all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/`; no upload |
+
+## MC-113 — Qwen3.5-9B-65K (IEC) in omp 18.0.0 with read/grep/glob over MC-112's local folder of legal texts / Legal MC: OMPF (MC-112's search-required task) on the 134 wide Legal MC items, against MC-112's DSHF and MC-111's B and O
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-113` |
+| `status` | Preregistered 2026-11-13 (+07), before benchmark-item requests of this card; a smoke test of four questions (MC-112's three smoke questions with the search-required instruction, plus one answer-cap check; no benchmark item) ran before registration |
+| `scope` | The 134 Legal MC items of MC-101's pool, not held out. MC-112's corpus folder (310 files, folder SHA-256 `5f3240a2…`) and provisions (`472e131c…`), reused by hash; provisions used only by the analysis. One arm, OMPF, two draws, 268 attempts (manifest `1fadcab9…`); each task is MC-112's DSHF task byte for byte. DSHF is MC-112's (scores `01084c90…`), B and O are MC-111's (round-1 scores `4e755671…`); none is re-run. Two Holm-adjusted questions at α 0.05: OMPF against MC-112's DSHF (the harness) and OMPF against MC-111's B; both cross cards and need more than a 2.24-point difference |
+| `harness / tools` | omp 18.0.0 (`~/.local/bin/omp`, SHA-256 `69065aef…`), configuration `omp_config_v1.json` (`2a7a7063…`): tools read, grep and glob only; omp's request retries, update check, memory, titles, extensions, skills, rules and LSP off; its coding-agent system prompt (SHA-256 `3d04a885…`), read window, grep output, output spill, session and compaction as shipped. One bubblewrap sandbox per attempt with a fresh home, no network, the folder read-only as the working directory; the only way out is a per-attempt proxy that adds temperature 1.0, the key and the gateway header, records every request, checks the request shape (keys, answer cap, system-prompt hash, task) and forwards nothing after a technical failure |
+| `model / route` | As MC-112: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; Chat Completions with streaming; the response model id is the alias `Qwen3.5-9B-65K` |
+| `sampling / limits` | Temperature 1.0 requested by the proxy; effective value unverified; seed and reasoning field omitted; `max_completion_tokens` 4,096 (at most 512 on omp's short-summary compaction request), context 65,024; 300 s per request, 30 requests and 3 hours per attempt; no retries; budget guard 70,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight, breaker after 4 consecutive network failures, as MC-91 to MC-112 |
+| `details` | `docs/measurement_cards/MC-113-diagnostic-legal-agent-omp.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_omp/run/qwen3-5-9b-65k-omp/`; no upload |

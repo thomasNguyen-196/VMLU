@@ -1,0 +1,53 @@
+{
+ "card_ids": {
+  "legal-agent-omp": "MC-113"
+ },
+ "card_files": {
+  "legal-agent-omp": "docs/measurement_cards/MC-113-diagnostic-legal-agent-omp.md"
+ },
+ "frozen": {
+  "legal_agent_omp_protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+  "omp_config_sha256": "2a7a7063648e16b6f4823b58cfb2c3beae02f45919380c1543f83231afe55faf",
+  "omp_binary_sha256": "69065aefe916fe28a09a4a1396446f16a776b5b56af0867cb4db0f452d842851",
+  "agent_prompts_sha256": "3f760fd1d7aa2ac4326b0301be35c41cea655830ce00ed52ad102a0d09e79508",
+  "provisions_sha256": "472e131cbd7996d7e5142173ffd4adb34271fe40e9e22bcbe778815a11107a84",
+  "added_documents_sha256": "02f05301179e0c889d672bc8682e53c6845a273a050ce0d4bd86f6f0b4a2a782",
+  "offsite_documents_sha256": "ee180ea22105c801cdfcb7f84695af858f18f69ecf9028d1d8de45268a763f59",
+  "mc101_sources_sha256": "852286d55e97cd9d5c8226665e7cebfe52607fd8f36a6e76dbd4dd2556479737",
+  "mc101_corpus_sha256": "66e4a349320420afb83aa6e3af71c478c0f89cd38b063aa46185386074af678a",
+  "oracle_evidence_sha256": "367632d7243855d8818dac7d7d34207a2b718f0723d389a0204c296eda5275bb",
+  "folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+  "mc111_scores_sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+  "mc112_manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345",
+  "mc112_scores_sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+  "manifest_sha256": "1fadcab9196276400d64b96fe7f65b400c9eb062c137001c2e1817e41ce15453"
+ },
+ "manifest_file_sha256": "a4c5eef0d009ce5317093a89b34aedd00c4b63d204a60a44c7e44cfc7d3bf6ee",
+ "system_prompt_sha256": "3d04a8857168d98333d2b6917594d1727ad30319f9db6d1a443e10c290c5ee90",
+ "smoke_questions_sha256": "764e940611fdb8cce9d9f0cb25339171c2054dfce5466fb7375d5f15879263eb",
+ "smoke_report_sha256": "20c27051a5afc246bfcb57c17b02069c963a30f3034b2383d018bd9ffe50312c",
+ "code": {
+  "code_benchmark/run_legal_agent_omp.py": "d64509a2959881ba8eb9666658b8b3217c93cd6aea2c0152c6bf144a2b83b13a",
+  "code_benchmark/omp_trajectory.py": "be50224130856c511e3d14a364d1c204a1fca76bc5e47150ddd6b608cb17f291",
+  "code_benchmark/analyze_legal_agent_omp.py": "cc4c08c35d2378b625d79f57e2bf90b19c2f17d6ca54200f8232927ed5e1f0d1"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-omp-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_scores_sha256",
+   "mc112_scores_sha256",
+   "questions",
+   "rules",
+   "behaviour",
+   "retrieval",
+   "by_retrieval",
+   "against_O",
+   "gold_check",
+   "context"
+  ]
+ }
+}

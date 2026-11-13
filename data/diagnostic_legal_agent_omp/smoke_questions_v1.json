@@ -1,0 +1,17 @@
+{
+ "version": "diagnostic-legal-agent-omp-smoke-v1",
+ "purpose": "MC-113's smoke test before registration (design §10). smoke-1 to smoke-3 are MC-112's smoke questions (written for the smoke, not drawn from any benchmark), each sent with MC-112's DSHF instruction; smoke-4 asks for a long numbered list on the synthetic folder to check that the gateway stops an answer at omp's max_completion_tokens (4,096). No score is computed.",
+ "base": "data/diagnostic_legal_agent/smoke_questions_v1.json",
+ "base_sha256": "83204047a8fe3961c716c8fc67a31031b3cdf3f11d7ca66c484f66dcaa9d30bd",
+ "instruction_arm": "DSHF",
+ "questions": [
+  "smoke-1",
+  "smoke-2",
+  "smoke-3"
+ ],
+ "cap_check": {
+  "id": "smoke-4",
+  "folder": "synthetic",
+  "prompt": "Hãy viết lần lượt các số tự nhiên từ 1 đến 3000, mỗi số trên một dòng, không thêm lời giải thích nào."
+ }
+}

@@ -1,0 +1,50 @@
+{
+ "version": "diagnostic-legal-agent-omp-config-v1",
+ "config.yml": {
+  "modelRoles": {
+   "default": "iec/Qwen3.5-9B-65K",
+   "smol": "iec/Qwen3.5-9B-65K",
+   "slow": "iec/Qwen3.5-9B-65K",
+   "plan": "iec/Qwen3.5-9B-65K",
+   "task": "iec/Qwen3.5-9B-65K",
+   "tiny": "iec/Qwen3.5-9B-65K",
+   "commit": "iec/Qwen3.5-9B-65K",
+   "advisor": "iec/Qwen3.5-9B-65K",
+   "designer": "iec/Qwen3.5-9B-65K",
+   "vision": "iec/Qwen3.5-9B-65K"
+  },
+  "memory": {
+   "backend": "off"
+  },
+  "retry": {
+   "enabled": false
+  },
+  "startup": {
+   "checkUpdate": false
+  },
+  "setupVersion": 2
+ },
+ "models.yml": {
+  "providers": {
+   "iec": {
+    "baseUrl": "http://127.0.0.1:18080/v1",
+    "apiKey": "IEC_API_KEY",
+    "api": "openai-completions",
+    "authHeader": true,
+    "disableStrictTools": true,
+    "models": [
+     {
+      "id": "Qwen3.5-9B-65K",
+      "name": "Qwen3.5-9B-65K (IEC gateway)",
+      "reasoning": false,
+      "input": [
+       "text"
+      ],
+      "contextWindow": 65024,
+      "maxTokens": 4096
+     }
+    ]
+   }
+  }
+ }
+}
