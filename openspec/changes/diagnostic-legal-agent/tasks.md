@@ -110,6 +110,16 @@ Model and endpoint for every request task below: Qwen3.5-9B-65K (Q4_K_M GGUF on 
   - **Card.** The root block is appended at the end of `measurement_card.md`, and `build_benchmark_reports.card_index` parses it.
   - **Registration.** `registration.json` holds the 13 frozen hashes, the manifest file hash, the smoke report hash and the 13 report keys.
   - **Preflight.** With a fresh folder rebuild, all 7 gates pass, with `endpoint_calls=0`.)
-- [ ] 5.2 With the owner's go, commit `pre-register MC-112` before any benchmark-item request.
-- [ ] 5.3 With the owner's go and the VPN open, launch as a `systemd-run --user` unit. On completion, append the run record (facts of execution only) to the detail card.
-- [ ] 5.4 Run the registered analysis once and record its report hash in the run record.
+- [x] 5.2 With the owner's go, commit `pre-register MC-112` before any benchmark-item request.
+
+  (2026-11-13: the owner said "commit rồi chạy đi". Committed as `b894881` on dev, holding only the MC-112 hunk of `measurement_card.md`.)
+- [x] 5.3 With the owner's go and the VPN open, launch as a `systemd-run --user` unit. On completion, append the run record (facts of execution only) to the detail card.
+
+  (2026-11-13:
+  - **Launch 1.** 11:24 +07. The machine shut down at 12:38 with 517 of 536 attempts complete.
+  - **Launch 2.** `--resume` at 14:03, after the owner said "continue". It finished 536 of 536 by 14:06, with no technical failure, 27.1M tokens and 1,972 requests.
+  - **VPN.** Closed by the watcher at 14:06:56.
+  - **Run record.** Appended to the detail card.)
+- [x] 5.4 Run the registered analysis once and record its report hash in the run record.
+
+  (2026-11-13 14:07 +07: report `5da875d1…`, with the 13 registered keys.)
