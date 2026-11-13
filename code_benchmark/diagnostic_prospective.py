@@ -37,8 +37,9 @@ CAMPAIGN_ARMS = ("B", "S", "O", "K", "KS")
 # Arms a replicate id may carry: the campaign's, plus Q ("trích rồi đáp", openspec change diagnostic-llm-router)
 # and K10, PICK and SEL ("chọn rồi trả lời", openspec change diagnostic-legal-select), whose prompts those changes
 # build themselves. K10 and SEL are scored as frozen MC answers; PICK (a selection, not an answer) is never passed
-# to the scorer.
-ARMS = CAMPAIGN_ARMS + ("Q", "K10", "PICK", "SEL")
+# to the scorer. DSH and DSHF (Qwen in DeepSeek Harness over a legal corpus folder, openspec change
+# diagnostic-legal-agent) are scored as frozen MC answers on dsh's final text.
+ARMS = CAMPAIGN_ARMS + ("Q", "K10", "PICK", "SEL", "DSH", "DSHF")
 REASONING_ARMS = frozenset({"S", "KS"})
 # Arms scored from the text after the last final-answer label: the reasoning arms and Q.
 FINAL_LABEL_ARMS = REASONING_ARMS | {"Q"}

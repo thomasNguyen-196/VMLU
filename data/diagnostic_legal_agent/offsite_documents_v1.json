@@ -1,0 +1,30 @@
+{
+ "version": 1,
+ "purpose": "Texts taken from sites other than hethongphapluat.com for the MC-112 corpus folder, by the owner's rule of 2026-11-12: use another site when hethongphapluat.com withholds a passage an item needs and a full text of the document exists elsewhere; record the source. Found by the gold-aware coverage audit and a follow-up source search.",
+ "store": "all_res/diagnostic_legal_agent/offsite",
+ "documents": [
+  {
+   "replaces_url": "https://hethongphapluat.com/quy-chuan-ky-thuat-quoc-gia-qcvn-113-2024-bgtvt-ve-yeu-cau-ky-thuat-va-phuong-phap-thu-vanh-banh-xe-mo-to-xe-gan-may.html",
+   "source_url": "https://static3.luatvietnam.vn/uploaded/others/2025/01/15/qcvn_113_2024_bgtvt_1501093505.docx",
+   "reader": "docx",
+   "items": ["LG-0107"],
+   "reason": "hethongphapluat.com's page stops at mục 2.2.1 behind its paywall; the item needs mục 2.3.1. The DOCX is the full regulation as issued with Thông tư 48/2024/TT-BGTVT. No official copy was reachable (vbpl.vn attachments 404, datafiles.chinhphu.vn has other QCVNs of the same circular but not this one)."
+  },
+  {
+   "replaces_url": "https://hethongphapluat.com/thong-tu-68-2025-tt-btc-ve-bieu-mau-su-dung-trong-dang-ky-doanh-nghiep-dang-ky-ho-kinh-doanh-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "source_url": "https://luatvietnam.vn/tai-chinh/thong-tu-68-2025-tt-btc-bieu-mau-dang-ky-doanh-nghiep-va-ho-kinh-doanh-404358-d1.html",
+   "reader": "luatvietnam-html",
+   "items": ["LG-0130"],
+   "reason": "hethongphapluat.com shows the three articles only; the annex of forms (Phụ lục I, Mẫu số 14) is in its paid attachments. The official signed PDF (datafiles.chinhphu.vn/cpp/files/vbpq/2025/7/68-btc.pdf) is a scan without a text layer; luatvietnam.vn carries the full text with the annexes."
+  },
+  {
+   "file": "du-thao-nghi-dinh-quy-dinh-che-do-phu-cap-uu-dai-theo-nghe-doi-voi-vien-chuc-nguoi-lao-dong-cong-tac-trong-cac-co-so-giao-duc-cong-lap-2025.txt",
+   "doc_id": "Dự thảo (Số: /2025/NĐ-CP)",
+   "title": "Dự thảo Nghị định quy định chế độ phụ cấp ưu đãi theo nghề đối với viên chức, người lao động công tác trong các cơ sở giáo dục công lập (năm 2025)",
+   "source_url": "https://cdn.thuvienphapluat.vn/phap-luat/2022-2/PH/140525/du-thao.pdf",
+   "reader": "pdf",
+   "items": ["LG-0070"],
+   "reason": "The item asks about the 2025 draft (Điều 5); hethongphapluat.com has no page for it and no official copy was found. The PDF has a text layer and the DỰ THẢO stamp; a DOCX copy of the same draft loses the law names of the preamble. The issued Nghị định 182/2026/NĐ-CP, already in the corpus, differs from the draft on this point."
+  }
+ ]
+}

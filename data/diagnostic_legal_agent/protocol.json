@@ -1,0 +1,90 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-agent",
+ "protocol_version": 1,
+ "phase": "legal-agent",
+ "dataset": "vi-multimodel-v1-legal-mc-146",
+ "pool_size": 134,
+ "arms": [
+  "DSH",
+  "DSHF"
+ ],
+ "draws": 2,
+ "corpus": {
+  "folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+  "files": 310,
+  "folder": "all_res/diagnostic_legal_agent/corpus_v1",
+  "workdir": "/work/van-ban-phap-luat"
+ },
+ "harness": {
+  "name": "DeepSeek Harness (dsh)",
+  "version": "0.2.2-rc.1",
+  "install": "~/tools/dsh-0.2.2-rc.1-patched",
+  "lockfile_sha256": "ef8381acc897799d7a4544e640be118420bd325802b17c749d9fb7cdb70140ea",
+  "node": "~/.nvm/versions/node/v24.20.0",
+  "node_version": "v24.20.0",
+  "profile": "data/diagnostic_legal_agent/dsh_profile_v1.yml",
+  "profile_id": "diagnostic-legal-agent-dsh-profile-v1",
+  "invocation": "dsh --profile headless --json <task>",
+  "tools": [
+   "glob",
+   "grep",
+   "read"
+  ],
+  "context_window": 65024,
+  "max_tokens": 4096,
+  "api_protocol": "openai-chat-completions"
+ },
+ "proxy": {
+  "temperature": 1.0,
+  "request_timeout_seconds": 300,
+  "request_cap": 30,
+  "wall_clock_seconds": 10800,
+  "gateway_header": "the campaign transport's gateway_header, as MC-90 to MC-111 sent it",
+  "expected_response_model": "Qwen3.5-9B-65K"
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 50000000
+ },
+ "reference": {
+  "card": "MC-111",
+  "scores": "all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/round1/scores.jsonl",
+  "scores_sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+  "arms": [
+   "B",
+   "O"
+  ],
+  "between_card_b_gap_points": 2.24
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-v1",
+  "alpha": 0.05,
+  "margin_points": 2.24,
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7
+  },
+  "questions": [
+   "DSHF_vs_DSH",
+   "DSH_vs_B",
+   "DSHF_vs_B"
+  ]
+ },
+ "smoke": {
+  "report": "all_res/diagnostic_legal_agent/smoke/20261112T170115Z/smoke_report.json",
+  "sha256": "e9db8bcd5458e768802fcd60b5e17cd689f3cc62f81ec25764f575aed0e3b5c7",
+  "run_at": "2026-11-13T00:01:15+07:00",
+  "tokens_per_attempt": {
+   "smoke-1 (DSHF, 3-file folder)": 7170,
+   "smoke-2 (DSHF, corpus)": 9988,
+   "smoke-3 (DSH, corpus)": 1036
+  },
+  "response_model": "Qwen3.5-9B-65K",
+  "budget_basis": "The smoke's own projection (268 x 9,988 + 268 x 1,036, x 1.5) is 4.4 million tokens, but its questions are easy; a Legal MC item with two greps and two reads of up to 50 KiB re-sends about 80,000 tokens over five requests. That scenario for every DSHF attempt and for half of the DSH attempts gives about 32 million; x 1.5, rounded: 50,000,000."
+ }
+}

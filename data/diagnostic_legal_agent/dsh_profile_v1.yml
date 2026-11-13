@@ -1,0 +1,92 @@
+# MC-112 profile `diagnostic-legal-agent-dsh-profile-v1`: dsh headless 0.2.2-rc.1 over Qwen3.5-9B-65K.
+# Layered over the shipped headless + base bundles; each row below replaces the whole row of the same id.
+#
+# It is the 2026-11-11 probe's patch with one change: the route's `baseURL` is the relay inside the attempt's
+# sandbox, which forwards to the proxy outside it (code_benchmark/dsh_relay.py, code_benchmark/dsh_proxy.py).
+# The proxy adds temperature 1.0 and the endpoint key; dsh itself holds only a dummy key.
+# ── model route ────────────────────────────────────────────────────────────────
+- id: llm-pi-ai
+  config:
+    providers:
+      iec:
+        displayName: IEC Qwen
+        api: openai-completions
+        baseURL: http://127.0.0.1:18080/v1   # the in-sandbox relay
+        apiKeyEnv: IEC_API_KEY
+        retryPolicy:
+          mode: normal
+          maxRetries: 0          # failures surface to our runner, as in MC-111
+        compat:
+          maxTokensField: max_tokens   # llama.cpp's own field; max_completion_tokens is unverified there
+          supportsStore: false         # drop the OpenAI-only `store` field
+        models:
+          - id: Qwen3.5-9B-65K
+            name: Qwen3.5-9B-65K
+            contextWindow: 65024   # what the gateway reports
+            maxTokens: 4096        # MC-111's per-response cap
+            reasoningEfforts: false
+
+- id: agent-default-model
+  config:
+    provider: iec
+    model: Qwen3.5-9B-65K
+
+# No DeepSeek routes: they would fetch DeepSeek's model list over the network.
+- id: llm-deepseek
+  disabled: true
+- id: llm-deepseek-account
+  disabled: true
+
+# ── tools: only glob, grep, read ───────────────────────────────────────────────
+- id: tool-fs
+  config:
+    read: true
+    readImage: false
+    write: false
+    edit: false
+    applyPatch: false
+
+- id: tool-bash
+  disabled: true
+- id: tool-jobs
+  disabled: true
+- id: tool-skill
+  disabled: true
+- id: tool-subagent
+  disabled: true
+- id: tool-subagent-fork
+  disabled: true
+- id: tool-subagent-control
+  disabled: true
+- id: tool-workflow
+  disabled: true
+- id: tool-todo
+  disabled: true
+- id: tool-goal
+  disabled: true
+- id: tool-working-directory
+  disabled: true
+- id: plan-mode
+  disabled: true
+- id: mcp-resources
+  disabled: true
+
+# No web at all (search and fetch).
+- id: tool-web
+  disabled: true
+- id: web
+  disabled: true
+- id: web-search-deepseek
+  disabled: true
+- id: web-deepseek-api
+  disabled: true
+- id: web-fetch-http
+  disabled: true
+
+# ── leaks and extra model calls ────────────────────────────────────────────────
+# AGENTS.md / CLAUDE.md loading (the MC-22 / MC-29 leak class).
+- id: agent-instructions
+  disabled: true
+# An extra model request per session that writes a title from the question.
+- id: session-title-llm
+  disabled: true

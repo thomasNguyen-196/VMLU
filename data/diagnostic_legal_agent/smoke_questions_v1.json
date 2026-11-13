@@ -1,0 +1,29 @@
+{
+ "version": "diagnostic-legal-agent-smoke-v1",
+ "purpose": "MC-112's smoke test before registration (design §10): questions written for the smoke, not drawn from any benchmark. It checks tool calling on the IEC endpoint, the proxy, the read format and step costs. No score is computed.",
+ "synthetic_folder": {
+  "quy-che-clb-co-tuong-hoa-binh.txt": "Quy chế hoạt động Câu lạc bộ Cờ tướng Hòa Bình (văn bản giả định, chỉ dùng để chạy thử)\nSố hiệu: 01/QC-CLB\n\nĐiều 1. Phạm vi\nQuy chế này quy định hoạt động của Câu lạc bộ Cờ tướng Hòa Bình.\n\nĐiều 2. Hội viên\n1. Người từ đủ 10 tuổi trở lên được đăng ký làm hội viên.\n2. Hội viên đóng hội phí 20.000 đồng mỗi tháng.\n\nĐiều 3. Sinh hoạt\nCâu lạc bộ sinh hoạt vào tối thứ Bảy hằng tuần.\n",
+  "noi-quy-thu-vien-phuong-an-binh.txt": "Nội quy Thư viện phường An Bình (văn bản giả định, chỉ dùng để chạy thử)\nSố hiệu: 02/NQ-TV\n\nĐiều 1. Giờ mở cửa\nThư viện mở cửa từ 8 giờ đến 17 giờ, từ thứ Hai đến thứ Sáu.\n\nĐiều 2. Mượn sách\nMỗi bạn đọc được mượn tối đa 03 cuốn sách trong 14 ngày.\n",
+  "quy-dinh-san-bong-to-dan-pho-3.txt": "Quy định sử dụng sân bóng Tổ dân phố 3 (văn bản giả định, chỉ dùng để chạy thử)\nSố hiệu: 03/QĐ-TDP\n\nĐiều 1. Đặt sân\nNgười sử dụng đặt sân trước ít nhất 01 ngày.\n\nĐiều 2. Phí sử dụng\nPhí sử dụng sân là 100.000 đồng mỗi giờ.\n"
+ },
+ "questions": [
+  {
+   "id": "smoke-1",
+   "folder": "synthetic",
+   "arm": "DSHF",
+   "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Quy chế hoạt động Câu lạc bộ Cờ tướng Hòa Bình, hội viên đóng hội phí bao nhiêu mỗi tháng?\n\nA. 10.000 đồng\nB. 20.000 đồng\nC. 50.000 đồng\nD. Không phải đóng hội phí\nĐáp án: "
+  },
+  {
+   "id": "smoke-2",
+   "folder": "corpus",
+   "arm": "DSHF",
+   "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Luật Giám định tư pháp 2012, trong trường hợp thông thường, người được đề nghị bổ nhiệm giám định viên tư pháp phải có thời gian hoạt động thực tế chuyên môn ở lĩnh vực được đào tạo từ đủ bao nhiêu năm trở lên?\n\nA. 02 năm\nB. 03 năm\nC. 05 năm\nD. 10 năm\nĐáp án: "
+  },
+  {
+   "id": "smoke-3",
+   "folder": "corpus",
+   "arm": "DSH",
+   "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Luật Thể dục, thể thao 2006, phạm vi điều chỉnh của Luật gồm nội dung nào sau đây?\n\nA. Chỉ quy định về thể thao thành tích cao\nB. Tổ chức và hoạt động thể dục, thể thao; quyền và nghĩa vụ của tổ chức, cá nhân tham gia hoạt động thể dục, thể thao\nC. Chỉ quy định về giáo dục thể chất trong nhà trường\nD. Chỉ quy định về kinh doanh dịch vụ thể thao\nĐáp án: "
+  }
+ ]
+}

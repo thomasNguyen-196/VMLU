@@ -1,0 +1,6 @@
+{
+ "version": "diagnostic-legal-agent-prompts-v1",
+ "separator": "\n\n",
+ "DSH": "Thư mục làm việc hiện tại chứa toàn văn các văn bản pháp luật Việt Nam, mỗi file `.txt` là một văn bản. Bạn có thể dùng các công cụ glob, grep và read để tra cứu các văn bản này nếu thấy cần.",
+ "DSHF": "Thư mục làm việc hiện tại chứa toàn văn các văn bản pháp luật Việt Nam, mỗi file `.txt` là một văn bản. Trước khi trả lời, bạn phải dùng công cụ grep để tìm và công cụ read để đọc quy định pháp luật dùng để trả lời câu hỏi dưới đây. Chỉ trả lời sau khi đã đọc quy định đó."
+}

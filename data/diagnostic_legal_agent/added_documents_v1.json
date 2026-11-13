@@ -1,0 +1,58 @@
+{
+ "version": 1,
+ "purpose": "Documents added to MC-101's 303 for the MC-112 corpus folder, found by the gold-aware coverage audit of 2026-11-12. Each was needed for an item whose governing provision the MC-101 corpus lacked. Titles are the page's own heading (h1).",
+ "stores": {
+  "mc100": "all_res/diagnostic_legal_oracle/sources",
+  "mc112": "all_res/diagnostic_legal_agent/sources"
+ },
+ "documents": [
+  {
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-11-vbhn-vpqh-nam-2022-hop-nhat-luat-so-huu-tri-tue-do-van-phong-quoc-hoi-ban-hanh.html",
+   "doc_id": "11/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 11/VBHN-VPQH năm 2022 hợp nhất Luật Sở hữu trí tuệ do Văn phòng Quốc hội ban hành",
+   "store": "mc100",
+   "items": ["LG-0116"],
+   "reason": "MC-100's oracle provision (Điều 87) is in this 2022 consolidated text; the corpus held the 2005 law and the 2025 consolidated text, whose Điều 87 khoản 7 differs."
+  },
+  {
+   "url": "https://hethongphapluat.com/thong-tu-219-2013-tt-btc-huong-dan-luat-thue-gia-tri-gia-tang-va-nghi-dinh-209-2013-nd-cp-do-bo-truong-bo-tai-chinh-ban-hanh.html",
+   "doc_id": "219/2013/TT-BTC",
+   "title": "Thông tư 219/2013/TT-BTC hướng dẫn Luật thuế giá trị gia tăng và Nghị định 209/2013/NĐ-CP do Bộ trưởng Bộ Tài chính ban hành",
+   "store": "mc100",
+   "items": ["LG-0036"],
+   "reason": "One of MC-100's two oracle provisions for the item (Điều 15) is in this circular, which the MC-101 corpus lacked; the item's other provision (Thông tư 96/2015/TT-BTC Điều 4) was already in the corpus."
+  },
+  {
+   "url": "https://hethongphapluat.com/thong-bao-176-tb-vptw-d577f96e495efdd882b29061fab7657f.html",
+   "doc_id": "176-TB/VPTW",
+   "title": "Thông báo 176-TB/VPTW năm 2025 kết luận của đồng chí Tổng bí thư Tô Lâm tại buổi làm việc với đại diện Đảng ủy Chính phủ và các ban, bộ, ngành Trung ương về đánh giá kết quả thực hiện các nghị quyết của Trung ương về công tác chăm sóc sức khoẻ nhân dân và định hướng công tác thời gian tới do Văn phòng Ban Chấp hành Trung ương ban hành",
+   "store": "mc112",
+   "items": ["LG-0007"],
+   "reason": "The notice the item cites (mục 2.1); it has no articles, so MC-101's article reader could not hold it."
+  },
+  {
+   "url": "https://hethongphapluat.com/nghi-dinh-68-2025-nd-cp-sua-doi-nghi-dinh-118-2021-nd-cp-huong-dan-luat-xu-ly-vi-pham-hanh-chinh.html",
+   "doc_id": "68/2025/NĐ-CP",
+   "title": "Nghị định 68/2025/NĐ-CP sửa đổi Nghị định 118/2021/NĐ-CP hướng dẫn Luật Xử lý vi phạm hành chính",
+   "store": "mc112",
+   "items": ["LG-0013"],
+   "reason": "Điều 1 khoản 4 rewrites Điều 9 of Nghị định 118/2021; the corpus held only the 2021 text."
+  },
+  {
+   "url": "https://hethongphapluat.com/quyet-dinh-982-qd-ubtdtt-nam-2007-ban-hanh-luat-bong-da-do-bo-truong-chu-nhiem-uy-ban-the-duc-the-thao-ban-hanh.html",
+   "doc_id": "982-QĐ/UBTDTT",
+   "title": "Quyết định 982-QĐ/UBTDTT năm 2007 ban hành Luật Bóng đá do Bộ trưởng - Chủ nhiệm Ủy ban Thể dục Thể thao ban hành",
+   "store": "mc112",
+   "items": ["LG-0042"],
+   "reason": "The attached Luật Bóng đá (Luật V, Trọng tài) governs the item; it was not in the corpus."
+  },
+  {
+   "url": "https://hethongphapluat.com/quyet-dinh-04-qd-chq-nam-2025-quy-dinh-chuc-nang-nhiem-vu-quyen-han-va-co-cau-to-chuc-cua-ban-quan-ly-rui-ro-thuoc-cuc-hai-quan.html",
+   "doc_id": "04/QĐ-CHQ",
+   "title": "Quyết định 04/QĐ-CHQ năm 2025 quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Ban Quản lý rủi ro thuộc Cục Hải quan",
+   "store": "mc112",
+   "items": ["LG-0096"],
+   "reason": "Điều 2 governs the item; the decision was not in the corpus."
+  }
+ ]
+}

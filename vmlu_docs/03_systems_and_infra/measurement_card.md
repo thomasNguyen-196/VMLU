@@ -2922,3 +2922,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 12 requests in flight; breaker after 4 consecutive network failures; HTTP 400 as MC-110's amendment 1, counted in this ledger; at most 12 passes per launch; a pass whose rows neither complete nor time out ends the launch; the runner refuses to send a non-candidate or a reused attempt |
 | `details` | `docs/measurement_cards/MC-110c-diagnostic-vmlu-test-loop-mimo-40k.md` |
 | `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash-40k/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-112 — Qwen3.5-9B-65K (IEC) in DeepSeek Harness (dsh 0.2.2-rc.1) with glob/grep/read over a complete local folder of legal texts / Legal MC: DSH (search allowed) and DSHF (search required) on the 134 wide Legal MC items, against MC-111's B and O
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-112` |
+| `status` | Preregistered 2026-11-13 (+07), before benchmark-item requests of this card; a smoke test of three questions written for it (no benchmark item) ran before registration |
+| `scope` | The 134 Legal MC items of MC-101's pool, not held out. Corpus folder of 310 whole-text files (folder SHA-256 `5f3240a2…`), complete and gold-aware; per-item provisions with anchor lines (`472e131c…`) used only by the analysis. DSH and DSHF, two draws each, 536 attempts (manifest `6e760d34…`). B and O are MC-111's (round-1 scores `4e755671…`), not re-run. Three Holm-adjusted questions at α 0.05: DSHF against DSH; DSH and DSHF against MC-111's B, which need more than a 2.24-point gain (the gap between MC-101's and MC-111's B) |
+| `harness / tools` | dsh 0.2.2-rc.1 headless (lockfile `ef8381ac…`, node v24.20.0), profile `diagnostic-legal-agent-dsh-profile-v1`: tools glob, grep and read only; web, bash, sub-agents, AGENTS.md and titles off; compaction as shipped. One bubblewrap sandbox per attempt, no network, the folder read-only as the working directory; the only way out is a per-attempt proxy that adds temperature 1.0, the key and the gateway header, and records every request |
+| `model / route` | As MC-90 and MC-93 to MC-111: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; Chat Completions with streaming (MC-111: Responses API); the response model id is the alias `Qwen3.5-9B-65K` |
+| `sampling / limits` | Temperature 1.0 requested by the proxy; effective value unverified; seed and reasoning field omitted; `max_tokens` 4,096, context 65,024; 300 s per request, 30 requests and 3 hours per attempt; no retries; budget guard 50,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight, breaker after 4 consecutive network failures, as MC-91 to MC-111 |
+| `details` | `docs/measurement_cards/MC-112-diagnostic-legal-agent.md` |
+| `outputs` | `all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/`; no upload |
