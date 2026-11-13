@@ -125,6 +125,8 @@ Model and endpoint for every request task below: Qwen3.5-9B-65K (Q4_K_M GGUF on 
   Show the card to the owner.
 
   (2026-11-13, the owner said "okay": root block appended after MC-112; detail card written; `registration.json` holds the 15 frozen hashes, the manifest file, the system prompt, the smoke questions and report, the runner, parser and analysis, and the 14 report keys. Full preflight with a fresh folder rebuild: all eight gates pass, `endpoint_calls=0`.)
-- [ ] 4.2 With the owner's go, commit `pre-register MC-113` before any benchmark-item request. Stage only the MC-113 hunk of `measurement_card.md`.
-- [ ] 4.3 With the owner's go and the VPN open, launch as a `systemd-run --user` unit. When it completes, append the run record (facts of execution only) to the detail card.
-- [ ] 4.4 Run the registered analysis once and record its report hash in the run record.
+- [x] 4.2 With the owner's go, commit `pre-register MC-113` before any benchmark-item request. Stage only the MC-113 hunk of `measurement_card.md`.
+- [x] 4.3 With the owner's go and the VPN open, launch as a `systemd-run --user` unit. When it completes, append the run record (facts of execution only) to the detail card.
+- [x] 4.4 Run the registered analysis once and record its report hash in the run record.
+
+  (2026-11-13: the owner said "yes". Pre-registered as `9e8906f`. Unit `mc113-legal-agent-omp-launch1` ran 21:38:47–22:52 +07: 268/268 final in one launch (267 `complete`, 1 `answer_cap`), no technical failure, 1,308 requests, 21.9M tokens. omp cancelled 12 parallel handoff requests at the end of 12 attempts, all of which completed (run record). Analysis run once at 22:52; report `b28270cb…`. Run record appended to the detail card.)
