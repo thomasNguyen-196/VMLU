@@ -1,0 +1,18 @@
+{
+ "version": "diagnostic-legal-agent-prompts-v2",
+ "purpose": "MC-114's prompts, by reference: MC-112's two instructions and separator, and MC-96's closed-book prompt, each read from its own file and checked by SHA-256, so they are reused byte for byte. An agent task is the arm's instruction, the separator (a blank line), then the item prompt: the frozen MC prompt (part M) or MC-96's closed-book prompt on the item's question (part S). OMPF sends DSHF's task. C sends the closed-book prompt alone; O sends the item's frozen reading prompt with its own passage; B sends the frozen MC prompt.",
+ "instructions": {
+  "file": "data/diagnostic_legal_agent/agent_prompts_v1.json",
+  "sha256": "3f760fd1d7aa2ac4326b0301be35c41cea655830ce00ed52ad102a0d09e79508"
+ },
+ "closed_book": {
+  "file": "data/diagnostic_k2/protocol.json",
+  "key": "prompts.closed_book",
+  "sha256": "a8c5d481739dace26b88f7b5c36086315f5c07f471944f2da4bde7b63fb8ccdc"
+ },
+ "instruction_of": {
+  "DSH": "DSH",
+  "DSHF": "DSHF",
+  "OMPF": "DSHF"
+ }
+}

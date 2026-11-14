@@ -1,0 +1,39 @@
+{
+ "version": "diagnostic-legal-agent-v2-smoke",
+ "purpose": "MC-114 smoke test (design §10): questions written for the smoke, drawn from no benchmark, on corpus_v2 articles that no MC-114 item uses (Luật Đấu thầu 2023 Điều 22 and 27, which no ViBidLQA row of any split names; Luật Khiếu nại 2011 Điều 9, which no VMLU audit provision cites). Each runs once with DSHF and once with OMPF. No score is computed; the run sets the budget and checks both harnesses on corpus_v2.",
+ "questions": [
+  {
+   "id": "smoke-s1",
+   "kind": "span",
+   "question": "Cộng đồng dân cư, tổ, nhóm thợ tại địa phương được giao thực hiện gói thầu thuộc chương trình mục tiêu quốc gia khi giá gói thầu không quá bao nhiêu?",
+   "provisions": [
+    {
+     "file": "luat-dau-thau-2023.txt",
+     "anchor_line": "Điều 27. Tham gia thực hiện của cộng đồng"
+    }
+   ]
+  },
+  {
+   "id": "smoke-s2",
+   "kind": "span",
+   "question": "Trong hình thức đấu thầu hạn chế, những nhà thầu nào được mời tham dự thầu?",
+   "provisions": [
+    {
+     "file": "luat-dau-thau-2023.txt",
+     "anchor_line": "Điều 22. Đấu thầu hạn chế"
+    }
+   ]
+  },
+  {
+   "id": "smoke-m1",
+   "kind": "mc",
+   "prompt": "Chỉ đưa ra chữ cái đứng trước câu trả lời đúng (A, B, C, D hoặc E) của câu hỏi trắc nghiệm sau: \nTheo Luật Khiếu nại năm 2011, thời hiệu khiếu nại là bao nhiêu ngày kể từ ngày nhận được hoặc biết được quyết định hành chính, hành vi hành chính?\n\nA. 30 ngày\nB. 45 ngày\nC. 60 ngày\nD. 90 ngày\nĐáp án: ",
+   "provisions": [
+    {
+     "file": "luat-khieu-nai-2011.txt",
+     "anchor_line": "Điều 9. Thời hiệu khiếu nại"
+    }
+   ]
+  }
+ ]
+}

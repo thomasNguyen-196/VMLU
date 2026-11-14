@@ -1,0 +1,112 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-agent-v2",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-legal-agent-v2",
+ "purpose": "MC-114: MC-112's dsh arms (DSH, DSHF) and MC-113's omp arm (OMPF) on new items over corpus_v2, to settle forcing (DSHF vs DSH) and the harness (OMPF vs DSHF) with enough items. Part M: the 112 VMLU law items, pooled in the tests with MC-112/113's 134 Legal MC items. Part S: 400 closed-book ViBidLQA items (Luật Đấu thầu 2023).",
+ "parts": {
+  "M": {
+   "arms": ["DSH", "DSHF", "OMPF", "B"],
+   "datasets": ["vmlu-mqa-dev", "vi-multimodel-v1-vmlu-valid"],
+   "items": 112,
+   "task": "multiple_choice"
+  },
+  "S": {
+   "arms": ["DSH", "DSHF", "OMPF", "C", "O"],
+   "datasets": ["bidlqa-train", "bidlqa-val", "vi-multimodel-v1-bidlqa-test"],
+   "usable": 926,
+   "size": 400,
+   "sample_salt": "legal-agent-v2-bidlqa|",
+   "task": "reading"
+  }
+ },
+ "draws": 2,
+ "corpus": {
+  "folder": "all_res/diagnostic_legal_agent_v2/corpus_v2",
+  "folder_sha256": "2b40c1c75650a9af9203922f0f6d7a7c9ff4a27203910f5c95133b9bd2897987",
+  "workdir": "/work/van-ban-phap-luat"
+ },
+ "prompts": "data/diagnostic_legal_agent_v2/agent_prompts_v2.json",
+ "harnesses": {
+  "dsh": {
+   "arms": ["DSH", "DSHF"],
+   "protocol": "data/diagnostic_legal_agent/protocol.json",
+   "protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+   "registration": "data/diagnostic_legal_agent/registration.json",
+   "registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3"
+  },
+  "omp": {
+   "arms": ["OMPF"],
+   "protocol": "data/diagnostic_legal_agent_omp/protocol.json",
+   "protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+   "registration": "data/diagnostic_legal_agent_omp/registration.json",
+   "registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745"
+  }
+ },
+ "direct": {
+  "arms": ["B", "C", "O"],
+  "request": "the campaign request of MC-90 to MC-111 (run_diagnostic_prospective.make_request with data/diagnostic_prospective_v1/protocol.json)"
+ },
+ "reference": {
+  "mc112_scores": {
+   "card": "MC-112",
+   "path": "all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/scores.jsonl",
+   "sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69"
+  },
+  "mc113_scores": {
+   "card": "MC-113",
+   "path": "all_res/diagnostic_legal_agent_omp/run/qwen3-5-9b-65k-omp/scores.jsonl",
+   "sha256": "303902b7b48035e3540c9a84e862b37d4b8825faf8c76699dac7b09dc75c103e"
+  },
+  "mc96_scores": {
+   "card": "MC-96",
+   "path": "all_res/diagnostic_k2/heldout/qwen3-5-9b-65k-prospective/scores.jsonl",
+   "sha256": "ce3148e0fb2f88c770fe2fb35f5ef38ddb7857e4d7e20caf5b574c465e4755d7"
+  }
+ },
+ "scoring": {
+  "multiple_choice": "the frozen MC extractor and scorer (score_vi_multimodel) on the agent's final text or B's response",
+  "reading": "vi-reading-v3 (vi_reading_v3.rescore_row): token-F1 primary, EM and gold-token recall descriptive; vi-reading-v2 values kept beside",
+  "terminal_statuses_score": 0
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 550000000
+ },
+ "smoke": {
+  "questions": "data/diagnostic_legal_agent_v2/smoke_questions_v2.json",
+  "reports": [
+   {"path": "all_res/diagnostic_legal_agent_v2/smoke/20261114T135954Z/smoke_report.json",
+    "sha256": "45ed162bbc446f54f11de09047652f42335ff0187459c7d84f12c326f0e30209",
+    "note": "run 1: 5 of 6 attempts complete; smoke-s1 with dsh ended technical (the proxy's first upstream connection timed out after 132 s, right after a VPN connect that took 19 minutes)"},
+   {"path": "all_res/diagnostic_legal_agent_v2/smoke/20261114T144335Z/smoke_report.json",
+    "sha256": "d2e70a7d2f755c74fbf4153e6cebe5b73a0dbaf5a3a29b3638e2cf2774fdd487",
+    "note": "run 2, the whole smoke again with the owner's go: 6 of 6 complete"}
+  ],
+  "budget_basis": "As MC-113: the earlier cards' real cost on Legal MC, scaled by what the smoke shows. Over both smoke runs a span attempt cost 2.12 times an MC attempt in dsh (mean 26,078 against 12,330 tokens) and 2.25 times in omp (94,642 against 42,057). Part M at MC-112/113's per-attempt cost on the 134 Legal MC items (DSH 5,337; DSHF 95,908; OMPF 81,637) and MC-111's B (235): 41.0 million over 224 attempts per arm. Part S at those costs times the ratio of its harness (DSH and DSHF 2.12, OMPF 2.25) over 800 attempts per arm, with C and O at MC-96's cost (163 and 840): 319.1 million. Projection 360.1 million; x 1.5 = 540.1 million; rounded up: 550,000,000."
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-v2",
+  "alpha": 0.05,
+  "multiplicity": "holm within each part",
+  "margin_points": 2.24,
+  "bootstrap": {"resamples": 2000, "seed": 7},
+  "sign_flip": {"resamples": 20000, "seed": 7},
+  "part_M": {
+   "items": "pooled 246: MC-112/113's 134 Legal MC items (DSH and DSHF from MC-112, OMPF from MC-113) and this card's 112 VMLU items",
+   "questions": {"M1": ["OMPF", "DSHF"], "M2": ["DSHF", "DSH"]},
+   "margin_on": ["M1"],
+   "stale_gold_items": {
+    "rule": "descriptive only: VMLU items whose audit note says the current law in corpus_v2 gives another answer, no listed answer, or repeals the provision the gold follows (fixed from the audit notes before any request)",
+    "items": ["37-0055", "38-0001", "38-0002", "38-0003", "38-0004", "38-0005", "41-0003", "41-0007", "42-0016",
+              "42-0018", "42-0019", "45-0011", "45-0013"]
+   }
+  },
+  "part_S": {
+   "items": "this card's 400 ViBidLQA items",
+   "metric": "token_f1 (vi-reading-v3), in points",
+   "questions": {"S1": ["OMPF", "DSHF"], "S2": ["DSHF", "DSH"], "S3": ["DSHF", "C"]},
+   "margin_on": []
+  }
+ }
+}

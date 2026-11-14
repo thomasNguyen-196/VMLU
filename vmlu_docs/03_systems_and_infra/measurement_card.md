@@ -2950,3 +2950,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight, breaker after 4 consecutive network failures, as MC-91 to MC-112 |
 | `details` | `docs/measurement_cards/MC-113-diagnostic-legal-agent-omp.md` |
 | `outputs` | `all_res/diagnostic_legal_agent_omp/run/qwen3-5-9b-65k-omp/`; no upload |
+
+## MC-114 — Qwen3.5-9B-65K (IEC) in dsh 0.2.2-rc.1 and omp 18.0.0 over a local folder of legal texts (corpus_v2) / new items: DSH, DSHF and OMPF on the 112 VMLU law MC items (pooled with the 134 Legal MC items) and on 400 closed-book ViBidLQA items, against B, C and O
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-114` |
+| `status` | Preregistered 2026-11-14 (+07), before benchmark-item requests of this card; a smoke test of three questions (no benchmark item) ran twice before registration, the first with one technical failure |
+| `scope` | Part M: the 112 VMLU law items (`vmlu-mqa-dev` 33, `vi-multimodel-v1-vmlu-valid` 79), arms DSH, DSHF, OMPF and B. Part S: 400 of 926 usable ViBidLQA items on Luật Đấu thầu 2023 (train 256, val 62, test 82), asked closed-book, arms DSH, DSHF, OMPF, C and O. Two draws, 4,896 attempts (manifest `426d390f…`). Folder corpus_v2: 335 files, SHA-256 `2b40c1c7…`; provisions `b40416ae…` used only by the analysis. Part M: two Holm-adjusted questions on 246 pooled items (with MC-112's and MC-113's Legal MC scores, by hash): OMPF against DSHF with a 2.24-point margin, and DSHF against DSH. Part S, token-F1 (vi-reading-v3): three Holm-adjusted questions, OMPF against DSHF, DSHF against DSH, DSHF against C |
+| `harness / tools` | DSH and DSHF: MC-112's dsh 0.2.2-rc.1 install, profile, sandbox and proxy, unedited; tools glob, grep, read. OMPF: MC-113's omp 18.0.0 binary (`69065aef…`), configuration (`2a7a7063…`), sandbox and proxy checks, system prompt `3d04a885…`; each task is DSHF's byte for byte. The folder read-only at `/work/van-ban-phap-luat`. B, C and O: the campaign request, no tools |
+| `model / route` | As MC-112 and MC-113: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; agents through Chat Completions with streaming, response model id the alias `Qwen3.5-9B-65K`; direct arms through the Responses API |
+| `sampling / limits` | Temperature 1.0 requested everywhere (by the proxy for agents); effective value unverified; seed and reasoning field omitted. Agents: 4,096 completion tokens, context 65,024, 300 s per request, 30 requests and 3 hours per attempt, no retries. Direct: system `Answer the user's question.`, `max_output_tokens` 4,096. Budget guard 550,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-113 |
+| `details` | `docs/measurement_cards/MC-114-diagnostic-legal-agent-v2.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_v2/run/qwen3-5-9b-65k-legal-agent-v2/`; no upload |
