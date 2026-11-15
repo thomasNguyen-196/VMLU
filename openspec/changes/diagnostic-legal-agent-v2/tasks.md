@@ -81,9 +81,15 @@ Model and endpoint for every request task below: Qwen3.5-9B-65K (Q4_K_M GGUF on 
 - [x] 5.1 Write the MC-114 root block (appended to `measurement_card.md`, staging only its hunk), the detail card and `registration.json`. The full preflight must show every gate passing.
 
   (2026-11-14: root block appended, detail card `docs/measurement_cards/MC-114-diagnostic-legal-agent-v2.md` and `registration.json` (21 frozen hashes, smoke reports, code, 12 report keys) written. Preflight: all 7 gates PASS, endpoint_calls=0. Tests: 312 OK; ruff clean.)
-- [ ] 5.2 Commit `pre-register MC-114` with the owner's go.
+- [x] 5.2 Commit `pre-register MC-114` with the owner's go.
+
+  (2026-11-14: `a56ea7a`, owner "yes"; only the MC-114 root hunk staged.)
 
 ## 6. Run and analysis
 
-- [ ] 6.1 Run as a `systemd-run --user` unit with a VPN watcher. Interrupted launches resume with `--resume` as new units.
+- [x] 6.1 Run as a `systemd-run --user` unit with a VPN watcher. Interrupted launches resume with `--resume` as new units.
+
+  (Launch 1, unit `mc114-legal-agent-v2-launch1`, 2026-11-14 22:00:36 to 2026-11-15 05:18:51 +07: 4,896 of 4,896 attempts final, no technical failure, 131.4M of 550M tokens. Watcher `mc114-watch` closed the VPN at 05:19:39.)
 - [ ] 6.2 Add the run record to the detail card. Run the analysis once and commit the record and the report hash.
+
+  (2026-11-15: run record appended; analysis run once at 10:06 +07, report SHA-256 `6c063d47…`. Commit waits for the owner's go.)
