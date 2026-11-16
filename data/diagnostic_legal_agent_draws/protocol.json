@@ -1,0 +1,245 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-agent-draws",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-legal-agent-draws",
+ "purpose": "MC-115: draws 3 and 4 of DSHF, OMPF and each part's no-tool baseline (B on Part M, C on Part S) on MC-114's 646 analysis items, each in the condition of its draws 1-2, to halve the draw-to-draw noise of the agent comparisons.",
+ "parts": {
+  "M": {
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B"
+   ],
+   "task": "multiple_choice",
+   "items": 246,
+   "sources": {
+    "vi-multimodel-v1-legal-mc-146": "134 items; DSHF from MC-112, OMPF from MC-113, B from MC-111 (draws 1-2)",
+    "vmlu-mqa-dev, vi-multimodel-v1-vmlu-valid": "112 items; DSHF, OMPF and B from MC-114 (draws 1-2)"
+   }
+  },
+  "S": {
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "C"
+   ],
+   "task": "reading",
+   "items": 400,
+   "sources": {
+    "bidlqa-train, bidlqa-val, vi-multimodel-v1-bidlqa-test": "400 items; DSHF, OMPF and C from MC-114 (draws 1-2)"
+   }
+  }
+ },
+ "draws": [
+  3,
+  4
+ ],
+ "corpora": {
+  "v1": {
+   "folder": "all_res/diagnostic_legal_agent/corpus_v1",
+   "folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+   "datasets": [
+    "vi-multimodel-v1-legal-mc-146"
+   ],
+   "rebuild": false
+  },
+  "v2": {
+   "folder": "all_res/diagnostic_legal_agent_v2/corpus_v2",
+   "folder_sha256": "2b40c1c75650a9af9203922f0f6d7a7c9ff4a27203910f5c95133b9bd2897987",
+   "datasets": "other",
+   "rebuild": true
+  }
+ },
+ "workdir": "/work/van-ban-phap-luat",
+ "sources": {
+  "mc112": {
+   "card": "MC-112",
+   "protocol": "data/diagnostic_legal_agent/protocol.json",
+   "protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+   "registration": "data/diagnostic_legal_agent/registration.json",
+   "registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3",
+   "manifest": "data/diagnostic_legal_agent/manifest_v1.json",
+   "manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345"
+  },
+  "mc113": {
+   "card": "MC-113",
+   "protocol": "data/diagnostic_legal_agent_omp/protocol.json",
+   "protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+   "registration": "data/diagnostic_legal_agent_omp/registration.json",
+   "registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745",
+   "manifest": "data/diagnostic_legal_agent_omp/manifest_v1.json",
+   "manifest_file_sha256": "a4c5eef0d009ce5317093a89b34aedd00c4b63d204a60a44c7e44cfc7d3bf6ee"
+  },
+  "mc114": {
+   "card": "MC-114",
+   "protocol": "data/diagnostic_legal_agent_v2/protocol.json",
+   "protocol_sha256": "c9cd7c9a15cf372959869a75c434f1229316a1206cae023b300e2570fdaf495b",
+   "registration": "data/diagnostic_legal_agent_v2/registration.json",
+   "registration_sha256": "6d4bd3b706cf460ad597e748f69dacd5104140f7986b3c1f3bda5ac70cb0ad97",
+   "manifest": "data/diagnostic_legal_agent_v2/manifest_v1.json",
+   "manifest_file_sha256": "7aa051ca08481cbc0d6c16264453b0c5c9dd0a0a8b7fb63b66db12bf78d7532e"
+  }
+ },
+ "harnesses": {
+  "dsh": {
+   "arms": [
+    "DSH",
+    "DSHF"
+   ],
+   "protocol": "data/diagnostic_legal_agent/protocol.json",
+   "protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+   "registration": "data/diagnostic_legal_agent/registration.json",
+   "registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3"
+  },
+  "omp": {
+   "arms": [
+    "OMPF"
+   ],
+   "protocol": "data/diagnostic_legal_agent_omp/protocol.json",
+   "protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+   "registration": "data/diagnostic_legal_agent_omp/registration.json",
+   "registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745"
+  }
+ },
+ "direct": {
+  "arms": [
+   "B",
+   "C"
+  ],
+  "request": "the campaign request of MC-90 to MC-111 (run_diagnostic_prospective.make_request with data/diagnostic_prospective_v1/protocol.json)"
+ },
+ "reference": {
+  "mc111_scores": {
+   "card": "MC-111",
+   "path": "all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/round1/scores.jsonl",
+   "sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+   "arms": [
+    "B"
+   ]
+  },
+  "mc112_scores": {
+   "card": "MC-112",
+   "path": "all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/scores.jsonl",
+   "sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+   "arms": [
+    "DSHF"
+   ]
+  },
+  "mc113_scores": {
+   "card": "MC-113",
+   "path": "all_res/diagnostic_legal_agent_omp/run/qwen3-5-9b-65k-omp/scores.jsonl",
+   "sha256": "303902b7b48035e3540c9a84e862b37d4b8825faf8c76699dac7b09dc75c103e",
+   "arms": [
+    "OMPF"
+   ]
+  },
+  "mc114_scores": {
+   "card": "MC-114",
+   "path": "all_res/diagnostic_legal_agent_v2/run/qwen3-5-9b-65k-legal-agent-v2/scores.jsonl",
+   "sha256": "793723d7b8d5b492e2beacecafcb130597c97a148e16d857af9b493bfe1137c3",
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B",
+    "C"
+   ]
+  }
+ },
+ "scoring": {
+  "multiple_choice": "the frozen MC extractor and scorer (score_vi_multimodel) on the agent's final text or B's response",
+  "reading": "vi-reading-v3 (vi_reading_v3.rescore_row): token-F1 primary, EM and gold-token recall descriptive; vi-reading-v2 values kept beside",
+  "terminal_statuses_score": 0
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 270000000
+ },
+ "budget_basis": "The earlier cards' real reported tokens per attempt: Legal MC DSHF 95,908 and OMPF 81,637 (MC-112/113), B 235 (MC-111); MC-114 Part M DSHF 98,625, OMPF 65,912, B 138; Part S DSHF 56,981, OMPF 57,649, C 155. Legal MC 268 attempts per arm, Part M VMLU 224, Part S 800: 176.4 million; x 1.5 = 264.6 million; rounded up, 270 million.",
+ "smoke": {
+  "questions": [
+   {
+    "file": "data/diagnostic_legal_agent/smoke_questions_v1.json",
+    "id": "smoke-2",
+    "corpus": "v1"
+   },
+   {
+    "file": "data/diagnostic_legal_agent_v2/smoke_questions_v2.json",
+    "id": "smoke-s2",
+    "corpus": "v2"
+   }
+  ],
+  "arms": [
+   "DSHF",
+   "OMPF"
+  ],
+  "reports": [
+   {
+    "path": "all_res/diagnostic_legal_agent_draws/smoke/20261116T074049Z/smoke_report.json",
+    "sha256": "46d24a6b9292c6aa64c4fcfbf88def9702569e32cd328b7274b91e849524850c"
+   }
+  ]
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-draws",
+  "alpha": 0.05,
+  "multiplicity": "holm within each part",
+  "item_score": "mean over draws 1-4",
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7
+  },
+  "part_M": {
+   "questions": {
+    "M1": [
+     "OMPF",
+     "DSHF"
+    ],
+    "M2": [
+     "DSHF",
+     "B"
+    ],
+    "M3": [
+     "OMPF",
+     "B"
+    ]
+   },
+   "margin_points": 2.24,
+   "margin_on": [
+    "M1",
+    "M2",
+    "M3"
+   ],
+   "metric": "correct"
+  },
+  "part_S": {
+   "questions": {
+    "S1": [
+     "OMPF",
+     "DSHF"
+    ],
+    "S2": [
+     "DSHF",
+     "C"
+    ],
+    "S3": [
+     "OMPF",
+     "C"
+    ]
+   },
+   "margin_points": 0.0,
+   "margin_on": [],
+   "metric": "token_f1 (vi-reading-v3), in points"
+  },
+  "beside_not_tested": [
+   "the six comparisons on draws 3-4 alone",
+   "each arm's drift: mean of draws 3-4 minus mean of draws 1-2, with a bootstrap CI",
+   "each arm's draw-to-draw disagreement (Part M) and within-item SD",
+   "Part M comparisons by source (Legal MC, VMLU law)"
+  ]
+ }
+}

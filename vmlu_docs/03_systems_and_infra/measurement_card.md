@@ -2964,3 +2964,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-113 |
 | `details` | `docs/measurement_cards/MC-114-diagnostic-legal-agent-v2.md` |
 | `outputs` | `all_res/diagnostic_legal_agent_v2/run/qwen3-5-9b-65k-legal-agent-v2/`; no upload |
+
+## MC-115 — Qwen3.5-9B-65K (IEC) in dsh 0.2.2-rc.1 and omp 18.0.0 over the local folders of legal texts / draws 3 and 4 of DSHF, OMPF and the no-tool baselines (B, C) on MC-114's 646 analysis items (246 MC, 400 closed-book ViBidLQA), each in the condition of its draws 1–2
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-115` |
+| `status` | Preregistered 2026-11-16 (+07), before benchmark-item requests of this card; a smoke test of four attempts (no benchmark item) ran once before registration, 4 of 4 complete |
+| `scope` | Two more draws (`-r3`, `-r4`) on the items of MC-114's analysis. Part M: 246 MC items (134 Legal MC, as MC-112/113; 112 VMLU law, as MC-114), arms DSHF, OMPF, B. Part S: 400 closed-book ViBidLQA items, arms DSHF, OMPF, C. 3,876 attempts (manifest `81f28256…`); every task is its arm's draw-1 task byte for byte. Folder per item: corpus_v1 (`5f3240a2…`) for Legal MC, corpus_v2 (`2b40c1c7…`) for the rest. Item score = mean over draws 1–4, draws 1–2 read from MC-111's to MC-114's score files by hash. Part M, Holm over 3, 2.24-point margin: OMPF against DSHF, DSHF against B, OMPF against B. Part S, token-F1 (vi-reading-v3), Holm over 3: OMPF against DSHF, DSHF against C, OMPF against C. Draws 3–4 alone and each arm's drift reported beside |
+| `harness / tools` | As MC-114: MC-112's dsh 0.2.2-rc.1 install, profile, sandbox and proxy (tools glob, grep, read); MC-113's omp 18.0.0 binary (`69065aef…`), configuration (`2a7a7063…`), sandbox, proxy checks and system prompt `3d04a885…`. The item's folder read-only at `/work/van-ban-phap-luat`. B and C: the campaign request, no tools |
+| `model / route` | As MC-112 to MC-114: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; agents through Chat Completions with streaming, response model id the alias `Qwen3.5-9B-65K`; direct arms through the Responses API |
+| `sampling / limits` | Temperature 1.0 requested everywhere (by the proxy for agents); effective value unverified; seed and reasoning field omitted. Agents: 4,096 completion tokens, context 65,024, 300 s per request, 30 requests and 3 hours per attempt, no retries. Direct: system `Answer the user's question.`, `max_output_tokens` 4,096. Budget guard 270,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-114 |
+| `details` | `docs/measurement_cards/MC-115-diagnostic-legal-agent-draws.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_draws/run/qwen3-5-9b-65k-legal-agent-draws/`; no upload |

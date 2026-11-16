@@ -1,0 +1,49 @@
+{
+ "card_ids": {
+  "legal-agent-draws": "MC-115"
+ },
+ "card_files": {
+  "legal-agent-draws": "docs/measurement_cards/MC-115-diagnostic-legal-agent-draws.md"
+ },
+ "frozen": {
+  "corpus_v1_folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+  "corpus_v2_folder_sha256": "2b40c1c75650a9af9203922f0f6d7a7c9ff4a27203910f5c95133b9bd2897987",
+  "legal_agent_draws_protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+  "manifest_sha256": "81f28256325be76407198a5828d1c52fb06310246cc2b1dba97a401c7e23fae0",
+  "mc111_scores_sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+  "mc112_manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345",
+  "mc112_protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+  "mc112_registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3",
+  "mc112_scores_sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+  "mc113_manifest_file_sha256": "a4c5eef0d009ce5317093a89b34aedd00c4b63d204a60a44c7e44cfc7d3bf6ee",
+  "mc113_protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+  "mc113_registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745",
+  "mc113_scores_sha256": "303902b7b48035e3540c9a84e862b37d4b8825faf8c76699dac7b09dc75c103e",
+  "mc114_manifest_file_sha256": "7aa051ca08481cbc0d6c16264453b0c5c9dd0a0a8b7fb63b66db12bf78d7532e",
+  "mc114_protocol_sha256": "c9cd7c9a15cf372959869a75c434f1229316a1206cae023b300e2570fdaf495b",
+  "mc114_registration_sha256": "6d4bd3b706cf460ad597e748f69dacd5104140f7986b3c1f3bda5ac70cb0ad97",
+  "mc114_scores_sha256": "793723d7b8d5b492e2beacecafcb130597c97a148e16d857af9b493bfe1137c3"
+ },
+ "manifest_file_sha256": "217ceab48a3e2e49fbc9e8ca0326b812ec226460670dd5072ac93e7ffb7da218",
+ "smoke_reports_sha256": {
+  "20261116T074049Z": "46d24a6b9292c6aa64c4fcfbf88def9702569e32cd328b7274b91e849524850c"
+ },
+ "code": {
+  "code_benchmark/run_legal_agent_draws.py": "6735034bb8dd6f2449c23b819da7e3c2eef19ed6cda540e96cfbba786104501b",
+  "code_benchmark/diagnostic_legal_agent_draws.py": "59b6584fa04a44277fac6ab9d8452e7924e256898e8dba7e28550d626061d6ac",
+  "code_benchmark/analyze_legal_agent_draws.py": "31ecdf260f901bab55145a9dd39050591712d39a9caebe6daf8e143c6e00157b"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-draws",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "part_M",
+   "part_S",
+   "beside_not_tested"
+  ]
+ }
+}
