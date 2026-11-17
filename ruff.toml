@@ -11,9 +11,12 @@ line-length = 120
 
 # Legacy scripts are historical records (openai==0.28.0 era, frozen code):
 # not gated, and their unused imports document the original research setup.
+# The ViNumQA Kaggle notebooks (MC-106, MC-107) are records of what ran on Kaggle:
+# each cell re-imports on purpose so it runs on its own; they are not edited after the run.
 exclude = [
     ".venv",
     "code_benchmark/legacy",
+    "notebooks/*.ipynb",
 ]
 
 [lint]

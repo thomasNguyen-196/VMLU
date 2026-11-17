@@ -1,0 +1,282 @@
+{
+ "version": 2,
+ "purpose": "Documents added to corpus_v1's 310 files for the MC-114 corpus folder (corpus_v2): the pages the VMLU law-item coverage audit (2026-11-14) needed, and Luật Đấu thầu 2023 with its Nghị định 24/2024 for the ViBidLQA closed-book items. Titles are each page's own heading (h1).",
+ "stores": {
+  "mc114": "all_res/diagnostic_legal_agent_v2/sources"
+ },
+ "documents": [
+  {
+   "url": "https://hethongphapluat.com/luat-dau-thau-2023.html",
+   "doc_id": "22/2023/QH15",
+   "title": "Luật Đấu thầu 2023",
+   "store": "mc114",
+   "items": [],
+   "reason": "ViBidLQA closed-book: the Luật Đấu thầu items' governing articles (answer spans verbatim in the official text)."
+  },
+  {
+   "url": "https://hethongphapluat.com/nghi-dinh-24-2024-nd-cp-huong-dan-luat-dau-thau-ve-lua-chon-nha-thau.html",
+   "doc_id": "24/2024/NĐ-CP",
+   "title": "Nghị định 24/2024/NĐ-CP hướng dẫn Luật Đấu thầu về lựa chọn nhà thầu",
+   "store": "mc114",
+   "items": [],
+   "reason": "ViBidLQA closed-book: the Luật Đấu thầu items' governing articles (answer spans verbatim in the official text)."
+  },
+  {
+   "url": "https://hethongphapluat.com/hien-phap-2013.html",
+   "doc_id": "Hiến pháp 2013",
+   "title": "Hiến pháp 2013",
+   "store": "mc114",
+   "items": [
+    "37-0029",
+    "38-0016",
+    "38-0018"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-can-bo-cong-chuc-2008.html",
+   "doc_id": "22/2008/QH12",
+   "title": "Luật cán bộ, công chức 2008",
+   "store": "mc114",
+   "items": [
+    "37-0056"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-dau-tu-2005.html",
+   "doc_id": "59/2005/QH11",
+   "title": "Luật Đầu tư 2005",
+   "store": "mc114",
+   "items": [
+    "41-0001",
+    "41-0003",
+    "41-0015"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-doanh-nghiep-2005.html",
+   "doc_id": "60/2005/QH11",
+   "title": "Luật Doanh nghiệp 2005",
+   "store": "mc114",
+   "items": [
+    "41-0007",
+    "41-0014"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-giao-duc-2005.html",
+   "doc_id": "38/2005/QH11",
+   "title": "Luật Giáo dục 2005",
+   "store": "mc114",
+   "items": [
+    "42-0006",
+    "42-0008",
+    "42-0009",
+    "42-0010",
+    "42-0011",
+    "42-0012",
+    "42-0013",
+    "42-0014",
+    "42-0016",
+    "42-0018",
+    "42-0019",
+    "42-0020",
+    "42-0021"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-giao-duc-2019.html",
+   "doc_id": "43/2019/QH14",
+   "title": "Luật giáo dục 2019",
+   "store": "mc114",
+   "items": [
+    "42-0016",
+    "42-0018",
+    "42-0019"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-giao-duc-sua-doi-nam-2009.html",
+   "doc_id": "44/2009/QH12",
+   "title": "Luật giáo dục sửa đổi năm 2009",
+   "store": "mc114",
+   "items": [
+    "42-0022"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-hop-tac-xa-2003.html",
+   "doc_id": "18/2003/QH11",
+   "title": "Luật Hợp tác xã 2003",
+   "store": "mc114",
+   "items": [
+    "41-0013"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-khieu-nai-2011.html",
+   "doc_id": "02/2011/QH13",
+   "title": "Luật khiếu nại 2011",
+   "store": "mc114",
+   "items": [
+    "37-0054",
+    "45-0002",
+    "45-0008"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-pha-san-2004.html",
+   "doc_id": "21/2004/QH11",
+   "title": "Luật Phá sản 2004",
+   "store": "mc114",
+   "items": [
+    "41-0013",
+    "41-0016"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-thuong-mai-2005.html",
+   "doc_id": "36/2005/QH11",
+   "title": "Luật Thương mại 2005",
+   "store": "mc114",
+   "items": [
+    "41-0005",
+    "41-0012"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-to-cao-2011.html",
+   "doc_id": "03/2011/QH13",
+   "title": "Luật tố cáo 2011",
+   "store": "mc114",
+   "items": [
+    "37-0053"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-to-cao-2018.html",
+   "doc_id": "25/2018/QH14",
+   "title": "Luật Tố cáo 2018",
+   "store": "mc114",
+   "items": [
+    "37-0053"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-to-chuc-chinh-phu-2015.html",
+   "doc_id": "76/2015/QH13",
+   "title": "Luật tổ chức Chính phủ 2015",
+   "store": "mc114",
+   "items": [
+    "37-0051"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-trong-tai-thuong-mai-2010.html",
+   "doc_id": "54/2010/QH12",
+   "title": "Luật Trọng tài thương mại 2010",
+   "store": "mc114",
+   "items": [
+    "41-0011",
+    "41-0017"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/luat-vien-chuc-2010.html",
+   "doc_id": "58/2010/QH12",
+   "title": "Luật viên chức 2010",
+   "store": "mc114",
+   "items": [
+    "42-0003",
+    "42-0004",
+    "42-0005"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/nghi-dinh-01-2016-nd-cp-quy-dinh-chuc-nang-nhiem-vu-quyen-han-va-co-cau-to-chuc-cua-bao-hiem-xa-hoi-viet-nam.html",
+   "doc_id": "01/2016/NĐ-CP",
+   "title": "Nghị định 01/2016/NĐ-CP quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Bảo hiểm xã hội Việt Nam",
+   "store": "mc114",
+   "items": [
+    "45-0013"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/nghi-dinh-108-2006-nd-cp-huong-dan-luat-dau-tu.html",
+   "doc_id": "108/2006/NĐ-CP",
+   "title": "Nghị định 108/2006/NĐ-CP Hướng dẫn Luật Đầu tư",
+   "store": "mc114",
+   "items": [
+    "41-0015"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/nghi-dinh-167-2013-nd-cp-quy-dinh-xu-phat-vi-pham-hanh-chinh-trong-linh-vuc-an-ninh-trat-tu-an-toan-xa-hoi-phong-chong-te-nan-xa-hoi-phong-va-chua-chay-phong-chong-bao-luc-gia-dinh.html",
+   "doc_id": "167/2013/NĐ-CP",
+   "title": "Nghị định 167/2013/NĐ-CP quy định xử phạt vi phạm hành chính trong lĩnh vực an ninh, trật tự, an toàn xã hội; phòng, chống tệ nạn xã hội; phòng và chữa cháy; phòng, chống bạo lực gia đình",
+   "store": "mc114",
+   "items": [
+    "37-0055"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/nghi-quyet-02-2018-nq-hdtp-huong-dan-ap-dung-dieu-65-cua-bo-luat-hinh-su-ve-an-treo-do-hoi-dong-tham-phan-toa-an-nhan-dan-toi-cao-ban-hanh.html",
+   "doc_id": "02/2018/NQ-HĐTP",
+   "title": "Nghị quyết 02/2018/NQ-HĐTP hướng dẫn áp dụng Điều 65 của Bộ luật Hình sự về án treo do Hội đồng Thẩm phán Tòa án nhân dân tối cao ban hành",
+   "store": "mc114",
+   "items": [
+    "40-0002"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/phap-lenh-trong-tai-thuong-mai-nam-2003.html",
+   "doc_id": "08/2003/PL-UBTVQH11",
+   "title": "Pháp lệnh Trọng tài Thương mại năm 2003",
+   "store": "mc114",
+   "items": [
+    "41-0011",
+    "41-0017"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/quyet-dinh-391-qd-btc-nam-2025-quy-dinh-chuc-nang-nhiem-vu-quyen-han-va-co-cau-to-chuc-cua-bao-hiem-xa-hoi-viet-nam-thuoc-bo-tai-chinh.html",
+   "doc_id": "391/QĐ-BTC",
+   "title": "Quyết định 391/QĐ-BTC năm 2025 quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Bảo hiểm xã hội Việt Nam thuộc Bộ Tài chính",
+   "store": "mc114",
+   "items": [
+    "45-0013"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  },
+  {
+   "url": "https://hethongphapluat.com/van-ban-hop-nhat-52-vbhn-vpqh-nam-2025-hop-nhat-hien-phap-nuoc-cong-hoa-xa-hoi-chu-nghia-viet-nam-do-van-phong-quoc-hoi-ban-hanh.html",
+   "doc_id": "52/VBHN-VPQH",
+   "title": "Văn bản hợp nhất 52/VBHN-VPQH năm 2025 hợp nhất Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam do Văn phòng Quốc hội ban hành",
+   "store": "mc114",
+   "items": [
+    "37-0029"
+   ],
+   "reason": "Governing provision for VMLU law items, located by the gold-aware coverage audit of 2026-11-14; not in corpus_v1."
+  }
+ ]
+}

@@ -1,0 +1,72 @@
+{
+ "status": "legal-select registered",
+ "card_ids": {
+  "legal-select": "MC-111"
+ },
+ "card_files": {
+  "legal-select": "docs/measurement_cards/MC-111-diagnostic-legal-select.md"
+ },
+ "registered_on": {
+  "legal-select": "2026-11-09"
+ },
+ "frozen": {
+  "legal_select_protocol_sha256": "7b8c338aee23c2596a8c5c4937da75cdeda05448a980ee7edc0fad9ddf15e8a1",
+  "select_template_sha256": "1112aaca37e78d8bd6152f2fbe886114331946fdcd864d396db3e7d01d8c490e",
+  "candidates_sha256": "c348085a8f9c2cd8c7266824a7415ad440f75792fa3f615ec844d99ec135fb24",
+  "campaign_protocol_sha256": "fe1b1b89d19a93d74dc4b364c64a3308f0c7b6601cf61e90a69533238d80e137",
+  "prompt_templates_sha256": "9bcada89b93a1e011f32379278dae1a8c829cecc2b1c2be4a5740a7ef7df9481",
+  "legal_retrieval_protocol_sha256": "c24205ce8805f017bc09d482d6fc97220c96bb4330ea6cf38cf323634153bcc8",
+  "sources_sha256": "852286d55e97cd9d5c8226665e7cebfe52607fd8f36a6e76dbd4dd2556479737",
+  "corpus_sha256": "66e4a349320420afb83aa6e3af71c478c0f89cd38b063aa46185386074af678a",
+  "retrieval_config_sha256": "136bac9395d3fe14b14c2df0d777e0450f9ce1af0064e286670add79adce440e",
+  "k_evidence_sha256": "97d058b2a9d3d3ac7ed819e8f62254974cd404d817feafc578417f951cd4006a",
+  "oracle_evidence_sha256": "367632d7243855d8818dac7d7d34207a2b718f0723d389a0204c296eda5275bb",
+  "mc100_manifest_sha256": "4eb235e6f3ece13bbbd40e0f968c9b5444bc87cf8372c31dd4a19ca4b5cd9ab8",
+  "source_sha256": {
+   "B-r1": "efdd024049e0e26d44e23dc9ff014032f3cfaa7e5517c500aef9d7c5a18a4a26",
+   "B-r2": "e77896487615d99c2e5ab4236996973e36c031704d4cd3a0b98b2ff1e6a3e75b"
+  },
+  "manifest_sha256": "fb53e15f424e6d18fbba058e4e0cad5797bb1d5cdfb6f3fb334703d6435a6ee7"
+ },
+ "mc100": {
+  "registration": "data/diagnostic_legal_oracle/registration.json",
+  "manifest_sha256": "4eb235e6f3ece13bbbd40e0f968c9b5444bc87cf8372c31dd4a19ca4b5cd9ab8",
+  "owner_review_sha256": "9e69313c9bfc1a590ca55a69add0302f2c33a423ab8553cce2607cffe77a71c2"
+ },
+ "mc101": {
+  "registration": "data/diagnostic_legal_retrieval/registration.json",
+  "manifest_sha256": "fb0559644e26ef68e00320a818cd4cdc04683e37911c0556279ebe81e882f94a",
+  "scores_sha256": "1384e9ec3ce8136514f9012fced2772fe2241bb892ec6f7613a0f82b3e0aeb9e"
+ },
+ "rounds": {
+  "1": {
+   "manifest": "data/diagnostic_legal_select/manifest_round1_v1.json",
+   "attempts": 1178
+  },
+  "2": {
+   "manifest": "manifest_round2.json in the round-2 output directory, built from the round-1 ledger and recorded in the run record",
+   "attempts": 268
+  }
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-select-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "round1_manifest_sha256",
+   "round2_manifest_sha256",
+   "candidates_sha256",
+   "scores_sha256",
+   "filter",
+   "route",
+   "rules",
+   "mc100_strata",
+   "outside_mc100",
+   "selection",
+   "by_selection",
+   "gold_check",
+   "descriptive",
+   "replication"
+  ]
+ }
+}

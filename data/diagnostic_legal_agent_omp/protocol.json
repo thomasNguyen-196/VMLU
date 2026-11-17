@@ -1,0 +1,144 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-agent-omp",
+ "protocol_version": 1,
+ "phase": "legal-agent-omp",
+ "dataset": "vi-multimodel-v1-legal-mc-146",
+ "pool_size": 134,
+ "arms": [
+  "OMPF"
+ ],
+ "draws": 2,
+ "instruction_arm": "DSHF",
+ "mc112": {
+  "card": "MC-112",
+  "protocol": "data/diagnostic_legal_agent/protocol.json",
+  "registration": "data/diagnostic_legal_agent/registration.json",
+  "manifest": "data/diagnostic_legal_agent/manifest_v1.json",
+  "manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345",
+  "scores": "all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/scores.jsonl",
+  "scores_sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+  "arms": [
+   "DSHF",
+   "DSH"
+  ]
+ },
+ "corpus": {
+  "folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+  "files": 310,
+  "folder": "all_res/diagnostic_legal_agent/corpus_v1",
+  "workdir": "/work/van-ban-phap-luat"
+ },
+ "harness": {
+  "name": "omp (oh-my-pi coding agent)",
+  "version": "omp/18.0.0",
+  "binary": "~/.local/bin/omp",
+  "binary_sha256": "69065aefe916fe28a09a4a1396446f16a776b5b56af0867cb4db0f452d842851",
+  "config": "data/diagnostic_legal_agent_omp/omp_config_v1.json",
+  "config_sha256": "2a7a7063648e16b6f4823b58cfb2c3beae02f45919380c1543f83231afe55faf",
+  "argv": [
+   "-p",
+   "--model",
+   "iec/Qwen3.5-9B-65K",
+   "--mode",
+   "json",
+   "--tools",
+   "read,grep,glob",
+   "--auto-approve",
+   "--thinking",
+   "off",
+   "--max-time",
+   "10800",
+   "--no-title",
+   "--no-extensions",
+   "--no-skills",
+   "--no-rules",
+   "--no-lsp",
+   "--cwd",
+   "/work/van-ban-phap-luat"
+  ],
+  "invocation": "omp -p --model iec/Qwen3.5-9B-65K --mode json --tools read,grep,glob --auto-approve --thinking off --max-time 10800 --no-title --no-extensions --no-skills --no-rules --no-lsp --cwd /work/van-ban-phap-luat <task>",
+  "tools": [
+   "read",
+   "grep",
+   "glob"
+  ],
+  "context_window": 65024,
+  "max_completion_tokens": 4096,
+  "body_keys": [
+   "chat_template_kwargs",
+   "max_completion_tokens",
+   "messages",
+   "model",
+   "preserve_thinking",
+   "stream",
+   "stream_options",
+   "tool_choice",
+   "tools"
+  ],
+  "probe_system_prompt_sha256": "3d04a8857168d98333d2b6917594d1727ad30319f9db6d1a443e10c290c5ee90",
+  "api_protocol": "openai-chat-completions",
+  "thinking": "off",
+  "max_time_seconds": 10800,
+  "session": "kept in the attempt's fresh home (no --no-session), so omp's artifact:// spill read-back works as shipped",
+  "compaction": "as shipped. Offline (scripted server): it fires once the reported context passes about 56,800 tokens (between 56,000 and 57,000); the handoff method sends a model request with the same system prompt and tools plus tool_choice none and the 4,096 cap; if that fails, a short-summary request with no tools, another system prompt and a cap of 512; shaking replaces old tool results with stubs. Compaction requests count toward the request cap."
+ },
+ "proxy": {
+  "temperature": 1.0,
+  "request_timeout_seconds": 300,
+  "request_cap": 30,
+  "wall_clock_seconds": 10860,
+  "gateway_header": "the campaign transport's gateway_header, as MC-90 to MC-111 sent it",
+  "expected_response_model": "Qwen3.5-9B-65K",
+  "system_prompt_sha256": "3d04a8857168d98333d2b6917594d1727ad30319f9db6d1a443e10c290c5ee90"
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 70000000
+ },
+ "reference": {
+  "card": "MC-111",
+  "scores": "all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/round1/scores.jsonl",
+  "scores_sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+  "arms": [
+   "B",
+   "O"
+  ],
+  "between_card_b_gap_points": 2.24
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-omp-v1",
+  "alpha": 0.05,
+  "margin_points": 2.24,
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7
+  },
+  "questions": [
+   "OMPF_vs_DSHF",
+   "OMPF_vs_B"
+  ]
+ },
+ "smoke": {
+  "report": "all_res/diagnostic_legal_agent_omp/smoke/20261113T142416Z/smoke_report.json",
+  "sha256": "20c27051a5afc246bfcb57c17b02069c963a30f3034b2383d018bd9ffe50312c",
+  "run_at": "2026-11-13T21:24:16+07:00",
+  "vpn": "opened 21:24:14, closed 21:25:34 (+07)",
+  "tokens_per_attempt": {
+   "smoke-1 (OMPF instruction, 3-file folder)": 12854,
+   "smoke-2 (OMPF instruction, corpus)": 15601,
+   "smoke-3 (OMPF instruction, corpus)": 49272,
+   "smoke-4 (cap check, no instruction)": 20738
+  },
+  "response_model": "Qwen3.5-9B-65K",
+  "system_prompt_sha256": "3d04a8857168d98333d2b6917594d1727ad30319f9db6d1a443e10c290c5ee90",
+  "system_prompt_note": "All four first requests carried the probe's system prompt hash; the task arrived byte for byte; only the eight probe keys were received; temperature 1.0 was sent; no reasoning text came back.",
+  "cap_check": "smoke-4's last request stopped with finish_reason length at 4,096 completion tokens; the attempt mapped to answer_cap. The gateway honours omp's max_completion_tokens.",
+  "tool_calls": "smoke-1 and smoke-2: two greps each, then the letter. smoke-3: a read of the folder (directory listing) and a read of one file, then 'Đáp án: B'. smoke-4: one glob and two failed reads, then the capped answer.",
+  "budget_basis": "MC-112's DSHF used 25,703,365 tokens over its 268 attempts. The same smoke questions cost 1.79x (smoke-1: 12,854 vs 7,170) and 1.56x (smoke-2: 15,601 vs 9,988) in omp, mostly omp's larger system prompt and tool schemas re-sent on every request. Projection at the larger ratio: 25.7M x 1.79 = 46.1M; x 1.5 = 69.1M; rounded up: 70,000,000."
+ }
+}

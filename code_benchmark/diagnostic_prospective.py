@@ -34,9 +34,14 @@ TEMPLATES_PATH = DATA_DIR / "prompt_templates_v1.json"
 REGISTRATION_PATH = DATA_DIR / "registration.json"
 PROTOCOL_ID = "vmlu-diagnostic-prospective-v1"
 CAMPAIGN_ARMS = ("B", "S", "O", "K", "KS")
-# Arms a replicate id may carry: the campaign's, plus Q ("trích rồi đáp", openspec change diagnostic-llm-router),
-# whose prompts that change builds itself.
-ARMS = CAMPAIGN_ARMS + ("Q",)
+# Arms a replicate id may carry: the campaign's, plus Q ("trích rồi đáp", openspec change diagnostic-llm-router)
+# and K10, PICK and SEL ("chọn rồi trả lời", openspec change diagnostic-legal-select), whose prompts those changes
+# build themselves. K10 and SEL are scored as frozen MC answers; PICK (a selection, not an answer) is never passed
+# to the scorer. DSH and DSHF (Qwen in DeepSeek Harness over a legal corpus folder, openspec change
+# diagnostic-legal-agent) are scored as frozen MC answers on dsh's final text. OMPF (MC-112's DSHF task inside omp,
+# openspec change diagnostic-legal-agent-omp) is scored the same way on omp's final text. C (closed-book ViBidLQA:
+# MC-96's closed-book prompt without tools, openspec change diagnostic-legal-agent-v2) is scored like B.
+ARMS = CAMPAIGN_ARMS + ("Q", "K10", "PICK", "SEL", "DSH", "DSHF", "OMPF", "C")
 REASONING_ARMS = frozenset({"S", "KS"})
 # Arms scored from the text after the last final-answer label: the reasoning arms and Q.
 FINAL_LABEL_ARMS = REASONING_ARMS | {"Q"}

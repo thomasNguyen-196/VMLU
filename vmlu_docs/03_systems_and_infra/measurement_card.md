@@ -2838,3 +2838,169 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | At most 4 requests in flight for Qwen and 6 for MiMo; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
 | `details` | `docs/measurement_cards/MC-105-diagnostic-table-loop.md` |
 | `outputs` | `all_res/diagnostic_router_loop/table_loop/`; no upload |
+
+## MC-106 — ViNumQA / Qwen3-1.7B / Kaggle GPU development smoke
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-106` |
+| `status` | Registered 2026-10-31 (+07), before inference/training of this condition; operational pilot |
+| `scope` | P on 32 deterministically selected validation questions, followed by G_all QLoRA capped at 20 optimizer steps. Test remains closed; no teacher or B/C execution |
+| `model / route` | Hugging Face Qwen/Qwen3-1.7B at revision `70d244cc86ccca08cf5af4e1e306ecf908b1ad5e`, run privately on Kaggle with requested T4 shape and one visible CUDA device |
+| `limits` | 4,096 context, 256 output tokens, greedy inference, seed 42; rank-16 QLoRA, micro-batch 1, accumulation 8, LR 2e-4; session capped at 1,800 s |
+| `scoring` | `finqa-vinumqa-string-rowalias-v1`, pinned FinQA EA/PA adapter; invalid outputs remain in the denominator |
+| `details` | `docs/measurement_cards/MC-106-vinumqa-gpu-smoke.md` |
+| `outputs` | `all_res/vinumqa_distill_v1/mc106_gpu_smoke/` plus private Kaggle version output |
+
+## MC-107 — ViNumQA / FP16 eval-only / P against G_all step 20 from version 6
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-107` |
+| `status` | Prepared 2026-10-31 (+07), before this condition's inference; save-only for manual execution |
+| `scope` | P and the existing G_all step-20 adapter on the same 32 validation items; both FP16, no training and no final test |
+| `model / source` | Qwen/Qwen3-1.7B at revision `70d244cc86ccca08cf5af4e1e306ecf908b1ad5e`; G_all restored from pinned notebook output version 6 and verified by source-condition and adapter hashes |
+| `limits` | One visible GPU, sequential arms, non-thinking, greedy, seed 42, 4,096 context and 256 output tokens |
+| `scoring` | `finqa-vinumqa-string-rowalias-v1`; paired EA/PA/validity and rescues/regressions; n=32 development smoke |
+| `details` | `docs/measurement_cards/MC-107-vinumqa-fp16-eval32.md` |
+| `outputs` | Separate `mc107-vinumqa-fp16-eval32-v1` working namespace; `paired_eval_summary.json` |
+
+## MC-108 — Muse Spark 1.3 and Muse Spark 1.2 (OpenCode Go) / self-improvement loop on the /table suite / before and after on 2,346 items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-108` |
+| `status` | Preregistered 2026-11-03 (+07), before benchmark-item requests of this card |
+| `scope` | The 2,346 items of the seven columns of the /table before-and-after table (VMLU dev 303, VMLU valid 744, Legal MC 146, Legal NLI 150, Vi-SQuAD 200, Vi-DROP 200, ViBidLQA test 603), for each of two students. Every item is answered B twice and S three times. The before is the within-run B with the frozen /table prompt; the after is MC-105's MiMo loop, unchanged and with nothing fitted to Muse, replayed from the logged answers, and the student writes every final answer. Primary: loop against B in each of 14 student and dataset cells, Holm over the 14. Not held-out: the loop was designed on these items for Qwen and MiMo |
+| `harness / tools` | Direct HTTP API, no harness, no tools; OpenAI Responses API, not streamed, one routing session per attempt |
+| `model / route` | Muse Spark 1.3 Contributor (`muse-spark-1.3-contributor`) and Muse Spark 1.2 Contributor (`muse-spark-1.2-contributor`) on the direct OpenCode Go route of MC-98 and MC-102 (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | System prompt `Answer the user's question.`; temperature, seed and reasoning effort not sent (provider defaults); `max_output_tokens=20000`; 300 s timeout; no SDK retries; budget guards of 30,000,000 reported tokens each (about 20 million projected each) |
+| `workers / scheduler` | At most 8 requests in flight per student; breaker after 4 consecutive network failures; halt on an authentication error, a permanent provider error, a tool call or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-108-diagnostic-table-loop-muse.md` |
+| `outputs` | `all_res/diagnostic_router_loop/table_loop_muse/`; no upload |
+
+## MC-109 — Qwen3.5-9B-65K (IEC) / self-improvement loop on VMLU test, asked round by round / before and after on 9,833 items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-109` |
+| `status` | Preregistered 2026-11-05 (+07), before benchmark-item requests of this card |
+| `scope` | The 9,833 VMLU test items (gold withheld), with the /table VMLU Test prompts. The before is Qwen's within-run probe (B-r1); the after is MC-105's Qwen multiple-choice loop, unchanged. Each attempt is asked only when the rule needs it: the probe for every item, S-r1 when the confidence is below 0.80 or missing, S-r2 and S-r3 when S-r1 disagrees. Primary: vmlu.ai accuracy of the loop minus that of the before, descriptive (no item-level gold, no paired test) |
+| `harness / tools` | Direct HTTP API, no harness, no tools |
+| `model / route` | Qwen3.5-9B-65K on the IEC endpoint (VPN, in-process tunnel DNS) with the campaign transport (Responses API) for S; B-r1 is the MC-43 chat-completions probe with letter log-probabilities. Credentials are never written to outputs |
+| `sampling / limits` | S: temperature 1.0 and 4,096 output tokens; the probe at temperature 0, seed 42, 4 tokens, top 20 log-probabilities. 300 s timeout, no SDK retries; budget guard of 20,000,000 reported tokens (about 10–12 million projected) |
+| `workers / scheduler` | At most 6 requests in flight (the owner's choice; MC-105: 4), one gate for the probe and S; passes round by round, a technical failure re-sent in the next pass, at most 6 passes per launch; no attempt sent twice; breaker after 4 consecutive network failures; halt on an authentication error or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-109-diagnostic-vmlu-test-loop.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-110 — MiMo V2.6 Flash (OpenCode Go) / self-improvement loop on VMLU test, asked round by round / before and after on 9,833 items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-110` |
+| `status` | Preregistered 2026-11-07 (+07), before benchmark-item requests of this card |
+| `scope` | The 9,833 VMLU test items of MC-109 (gold withheld), with the /table VMLU Test prompts. The before is MiMo's within-run B-r1; the after is MC-105's MiMo multiple-choice loop, unchanged. Each attempt is asked only when the rule needs it: B-r1 and B-r2 for every item, S-r1 when they do not agree, S-r2 and S-r3 when S-r1 agrees with neither. Primary: vmlu.ai accuracy of the loop minus that of the before, descriptive (no item-level gold, no paired test) |
+| `harness / tools` | Direct HTTP API, no harness, no tools; chat completions, not streamed, one routing session per attempt |
+| `model / route` | MiMo V2.6 Flash (`mimo-v2.6-flash`) on MC-105's OpenCode Go route (host `opencode.ai`), the same request for B and S; credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | System prompt `Answer the user's question.`; temperature, seed and reasoning effort not sent (provider defaults); 20,000 completion tokens; 300 s timeout; no SDK retries; budget guard of 20,000,000 reported tokens (about 10–12 million projected) |
+| `workers / scheduler` | At most 6 requests in flight (MC-105's value for MiMo, the owner's choice); passes round by round, a technical failure re-sent in the next pass, at most 6 passes per launch; no attempt sent twice; breaker after 4 consecutive network failures; halt on an authentication error, a permanent provider error, a tool call or a model-identity drift |
+| `details` | `docs/measurement_cards/MC-110-diagnostic-vmlu-test-loop-mimo.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-111 — Qwen3.5-9B-65K (IEC) / Legal MC "select, then answer" / B, K, K10 (BM25's top 10), SEL (Qwen selects at most two of the top 10, then answers from them) and O on the 134 wide Legal MC items
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-111` |
+| `status` | Preregistered 2026-11-09 (+07), before benchmark-item requests of this card |
+| `scope` | The 134 Legal MC items of MC-101's pool, not held out (MC-101's results motivated the test). Candidates: BM25's top 10 units of MC-101's corpus per item, in rank order, frozen (SHA-256 `c348085a…`; the first two are MC-101's K evidence; an oracle article is within them for 47 of the 53 oracle items, against 40 in the top 2). Round 1: B, K (top 2), K10 (all 10), PICK (Qwen selects at most two candidates or `Không có`) and O (MC-100's oracle provisions, 53 items), two draws each, 1,178 attempts (manifest `fb53e15f…`). Round 2: SEL, the K template with the units the same draw of PICK selected (the frozen prompt for `Không có`, MC-101's top 2 when unparsed), 268 attempts, built from the round-1 ledger. Two Holm-adjusted questions at α 0.05: the filter (PICK's selection hit against BM25's top-2 hit, 53 oracle items) and the route (always-SEL against always-B, 134 items) |
+| `harness / tools` | Direct API, no harness, no tools; OpenAI Responses API, streaming |
+| `model / route` | As MC-90 and MC-93 to MC-101: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; self-reported `/home/llm/llama.cpp/models/Qwen3.5-9B-Q4_K_M.gguf` |
+| `sampling / limits` | Temperature 1.0 requested; effective value unverified; seed and reasoning field omitted; `max_output_tokens=4096`; 300 s timeout; no SDK retries; budget guard 8,000,000 reported tokens across both rounds (about 5.5 million expected) |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes) with at most 4 simultaneous requests and a breaker after 4 consecutive network failures, as MC-91 to MC-101; round 2 only after every round-1 attempt is complete |
+| `details` | `docs/measurement_cards/MC-111-diagnostic-legal-select.md` |
+| `outputs` | `all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/` (`round1/`, `round2/`); no upload |
+
+## MC-110b — MiMo V2.6 Flash (OpenCode Go) / MC-110's 183 timed-out attempts asked again with a 900 s wait / before and after on the 9,833 VMLU test items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-110b` |
+| `status` | Preregistered 2026-11-10 (+07), before benchmark-item requests of this card; a recovery of MC-110, whose text, outputs and submissions stay unchanged |
+| `scope` | MC-110's 9,833 items, manifest, prompts and rule. Only the 183 attempts MC-110 read as empty answers under its amendment 2 (three timeouts each, all at the 300 s wait: B-r1 38, B-r2 41, S-r1 36, S-r2 32, S-r3 36, on 77 items) are asked again, round by round under MC-110's rule, each only when the rule still needs it; every other attempt is MC-110's completed row. Descriptive vmlu.ai comparisons: the loop minus the before, and each against MC-110's submission |
+| `harness / tools` | As MC-110: direct HTTP API, no harness, no tools; chat completions, not streamed, one routing session per attempt, named by this card |
+| `model / route` | As MC-110: MiMo V2.6 Flash (`mimo-v2.6-flash`) on OpenCode Go (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | As MC-110 (system prompt `Answer the user's question.`, provider defaults, 20,000 completion tokens, no SDK retries) except: 900 s timeout; an attempt that times out three times here is read as an empty answer; budget guard of 5,000,000 reported tokens |
+| `workers / scheduler` | At most 12 requests in flight; breaker after 4 consecutive network failures; HTTP 400 as MC-110's amendment 1, counted in this ledger; at most 12 passes per launch; a pass whose rows neither complete nor time out ends the launch; the runner refuses to send an attempt outside the 183 |
+| `details` | `docs/measurement_cards/MC-110b-diagnostic-vmlu-test-loop-mimo-retry900.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash-retry900/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-110c — MiMo V2.6 Flash (OpenCode Go) / MC-110's 538 attempts without an answer (183 timeouts, 355 cut by the 20,000-token cap) asked again with a 40,000-token cap / before and after on the 9,833 VMLU test items scored by vmlu.ai
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-110c` |
+| `status` | Preregistered 2026-11-10 (+07), before benchmark-item requests of this card; a recovery of MC-110 that supersedes MC-110b (stopped by the owner's choice during its first pass) and reuses MC-110b's 17 replies that stopped below 20,000 tokens; MC-110's and MC-110b's text, outputs and submissions stay unchanged |
+| `scope` | MC-110's 9,833 items, manifest, prompts and rule. Candidates: MC-110's 183 attempts capped after three timeouts at 300 s and its 355 replies cut at 20,000 completion tokens (B-r1 99, B-r2 101, S-r1 120, S-r2 105, S-r3 113, on 154 items), asked again round by round under MC-110's rule, each only when the rule still needs it; every other attempt is MC-110's completed row. Descriptive vmlu.ai comparisons: the loop minus the before, and each against MC-110's submission |
+| `harness / tools` | As MC-110: direct HTTP API, no harness, no tools; chat completions, not streamed, one routing session per attempt, named by this card |
+| `model / route` | As MC-110: MiMo V2.6 Flash (`mimo-v2.6-flash`, 131,072 output tokens listed) on OpenCode Go (host `opencode.ai`); credential from the local OpenCode auth store, never written to outputs |
+| `sampling / limits` | As MC-110 (system prompt `Answer the user's question.`, provider defaults, no SDK retries) except: `max_completion_tokens` 40,000; 1,800 s timeout; an attempt that times out three times here is read as an empty answer; budget guard of 20,000,000 reported tokens (about 10 to 15 million expected) |
+| `workers / scheduler` | At most 12 requests in flight; breaker after 4 consecutive network failures; HTTP 400 as MC-110's amendment 1, counted in this ledger; at most 12 passes per launch; a pass whose rows neither complete nor time out ends the launch; the runner refuses to send a non-candidate or a reused attempt |
+| `details` | `docs/measurement_cards/MC-110c-diagnostic-vmlu-test-loop-mimo-40k.md` |
+| `outputs` | `all_res/diagnostic_router_loop/vmlu_test_loop/mimo-v2-6-flash-40k/`; two vmlu.ai submission files, submitted by the owner; the runner uploads nothing |
+
+## MC-112 — Qwen3.5-9B-65K (IEC) in DeepSeek Harness (dsh 0.2.2-rc.1) with glob/grep/read over a complete local folder of legal texts / Legal MC: DSH (search allowed) and DSHF (search required) on the 134 wide Legal MC items, against MC-111's B and O
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-112` |
+| `status` | Preregistered 2026-11-13 (+07), before benchmark-item requests of this card; a smoke test of three questions written for it (no benchmark item) ran before registration |
+| `scope` | The 134 Legal MC items of MC-101's pool, not held out. Corpus folder of 310 whole-text files (folder SHA-256 `5f3240a2…`), complete and gold-aware; per-item provisions with anchor lines (`472e131c…`) used only by the analysis. DSH and DSHF, two draws each, 536 attempts (manifest `6e760d34…`). B and O are MC-111's (round-1 scores `4e755671…`), not re-run. Three Holm-adjusted questions at α 0.05: DSHF against DSH; DSH and DSHF against MC-111's B, which need more than a 2.24-point gain (the gap between MC-101's and MC-111's B) |
+| `harness / tools` | dsh 0.2.2-rc.1 headless (lockfile `ef8381ac…`, node v24.20.0), profile `diagnostic-legal-agent-dsh-profile-v1`: tools glob, grep and read only; web, bash, sub-agents, AGENTS.md and titles off; compaction as shipped. One bubblewrap sandbox per attempt, no network, the folder read-only as the working directory; the only way out is a per-attempt proxy that adds temperature 1.0, the key and the gateway header, and records every request |
+| `model / route` | As MC-90 and MC-93 to MC-111: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; Chat Completions with streaming (MC-111: Responses API); the response model id is the alias `Qwen3.5-9B-65K` |
+| `sampling / limits` | Temperature 1.0 requested by the proxy; effective value unverified; seed and reasoning field omitted; `max_tokens` 4,096, context 65,024; 300 s per request, 30 requests and 3 hours per attempt; no retries; budget guard 50,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight, breaker after 4 consecutive network failures, as MC-91 to MC-111 |
+| `details` | `docs/measurement_cards/MC-112-diagnostic-legal-agent.md` |
+| `outputs` | `all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/`; no upload |
+
+## MC-113 — Qwen3.5-9B-65K (IEC) in omp 18.0.0 with read/grep/glob over MC-112's local folder of legal texts / Legal MC: OMPF (MC-112's search-required task) on the 134 wide Legal MC items, against MC-112's DSHF and MC-111's B and O
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-113` |
+| `status` | Preregistered 2026-11-13 (+07), before benchmark-item requests of this card; a smoke test of four questions (MC-112's three smoke questions with the search-required instruction, plus one answer-cap check; no benchmark item) ran before registration |
+| `scope` | The 134 Legal MC items of MC-101's pool, not held out. MC-112's corpus folder (310 files, folder SHA-256 `5f3240a2…`) and provisions (`472e131c…`), reused by hash; provisions used only by the analysis. One arm, OMPF, two draws, 268 attempts (manifest `1fadcab9…`); each task is MC-112's DSHF task byte for byte. DSHF is MC-112's (scores `01084c90…`), B and O are MC-111's (round-1 scores `4e755671…`); none is re-run. Two Holm-adjusted questions at α 0.05: OMPF against MC-112's DSHF (the harness) and OMPF against MC-111's B; both cross cards and need more than a 2.24-point difference |
+| `harness / tools` | omp 18.0.0 (`~/.local/bin/omp`, SHA-256 `69065aef…`), configuration `omp_config_v1.json` (`2a7a7063…`): tools read, grep and glob only; omp's request retries, update check, memory, titles, extensions, skills, rules and LSP off; its coding-agent system prompt (SHA-256 `3d04a885…`), read window, grep output, output spill, session and compaction as shipped. One bubblewrap sandbox per attempt with a fresh home, no network, the folder read-only as the working directory; the only way out is a per-attempt proxy that adds temperature 1.0, the key and the gateway header, records every request, checks the request shape (keys, answer cap, system-prompt hash, task) and forwards nothing after a technical failure |
+| `model / route` | As MC-112: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; Chat Completions with streaming; the response model id is the alias `Qwen3.5-9B-65K` |
+| `sampling / limits` | Temperature 1.0 requested by the proxy; effective value unverified; seed and reasoning field omitted; `max_completion_tokens` 4,096 (at most 512 on omp's short-summary compaction request), context 65,024; 300 s per request, 30 requests and 3 hours per attempt; no retries; budget guard 70,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight, breaker after 4 consecutive network failures, as MC-91 to MC-112 |
+| `details` | `docs/measurement_cards/MC-113-diagnostic-legal-agent-omp.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_omp/run/qwen3-5-9b-65k-omp/`; no upload |
+
+## MC-114 — Qwen3.5-9B-65K (IEC) in dsh 0.2.2-rc.1 and omp 18.0.0 over a local folder of legal texts (corpus_v2) / new items: DSH, DSHF and OMPF on the 112 VMLU law MC items (pooled with the 134 Legal MC items) and on 400 closed-book ViBidLQA items, against B, C and O
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-114` |
+| `status` | Preregistered 2026-11-14 (+07), before benchmark-item requests of this card; a smoke test of three questions (no benchmark item) ran twice before registration, the first with one technical failure |
+| `scope` | Part M: the 112 VMLU law items (`vmlu-mqa-dev` 33, `vi-multimodel-v1-vmlu-valid` 79), arms DSH, DSHF, OMPF and B. Part S: 400 of 926 usable ViBidLQA items on Luật Đấu thầu 2023 (train 256, val 62, test 82), asked closed-book, arms DSH, DSHF, OMPF, C and O. Two draws, 4,896 attempts (manifest `426d390f…`). Folder corpus_v2: 335 files, SHA-256 `2b40c1c7…`; provisions `b40416ae…` used only by the analysis. Part M: two Holm-adjusted questions on 246 pooled items (with MC-112's and MC-113's Legal MC scores, by hash): OMPF against DSHF with a 2.24-point margin, and DSHF against DSH. Part S, token-F1 (vi-reading-v3): three Holm-adjusted questions, OMPF against DSHF, DSHF against DSH, DSHF against C |
+| `harness / tools` | DSH and DSHF: MC-112's dsh 0.2.2-rc.1 install, profile, sandbox and proxy, unedited; tools glob, grep, read. OMPF: MC-113's omp 18.0.0 binary (`69065aef…`), configuration (`2a7a7063…`), sandbox and proxy checks, system prompt `3d04a885…`; each task is DSHF's byte for byte. The folder read-only at `/work/van-ban-phap-luat`. B, C and O: the campaign request, no tools |
+| `model / route` | As MC-112 and MC-113: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; agents through Chat Completions with streaming, response model id the alias `Qwen3.5-9B-65K`; direct arms through the Responses API |
+| `sampling / limits` | Temperature 1.0 requested everywhere (by the proxy for agents); effective value unverified; seed and reasoning field omitted. Agents: 4,096 completion tokens, context 65,024, 300 s per request, 30 requests and 3 hours per attempt, no retries. Direct: system `Answer the user's question.`, `max_output_tokens` 4,096. Budget guard 550,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-113 |
+| `details` | `docs/measurement_cards/MC-114-diagnostic-legal-agent-v2.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_v2/run/qwen3-5-9b-65k-legal-agent-v2/`; no upload |
+
+## MC-115 — Qwen3.5-9B-65K (IEC) in dsh 0.2.2-rc.1 and omp 18.0.0 over the local folders of legal texts / draws 3 and 4 of DSHF, OMPF and the no-tool baselines (B, C) on MC-114's 646 analysis items (246 MC, 400 closed-book ViBidLQA), each in the condition of its draws 1–2
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-115` |
+| `status` | Preregistered 2026-11-16 (+07), before benchmark-item requests of this card; a smoke test of four attempts (no benchmark item) ran once before registration, 4 of 4 complete |
+| `scope` | Two more draws (`-r3`, `-r4`) on the items of MC-114's analysis. Part M: 246 MC items (134 Legal MC, as MC-112/113; 112 VMLU law, as MC-114), arms DSHF, OMPF, B. Part S: 400 closed-book ViBidLQA items, arms DSHF, OMPF, C. 3,876 attempts (manifest `81f28256…`); every task is its arm's draw-1 task byte for byte. Folder per item: corpus_v1 (`5f3240a2…`) for Legal MC, corpus_v2 (`2b40c1c7…`) for the rest. Item score = mean over draws 1–4, draws 1–2 read from MC-111's to MC-114's score files by hash. Part M, Holm over 3, 2.24-point margin: OMPF against DSHF, DSHF against B, OMPF against B. Part S, token-F1 (vi-reading-v3), Holm over 3: OMPF against DSHF, DSHF against C, OMPF against C. Draws 3–4 alone and each arm's drift reported beside |
+| `harness / tools` | As MC-114: MC-112's dsh 0.2.2-rc.1 install, profile, sandbox and proxy (tools glob, grep, read); MC-113's omp 18.0.0 binary (`69065aef…`), configuration (`2a7a7063…`), sandbox, proxy checks and system prompt `3d04a885…`. The item's folder read-only at `/work/van-ban-phap-luat`. B and C: the campaign request, no tools |
+| `model / route` | As MC-112 to MC-114: Qwen3.5-9B-65K via the IEC internal gateway through the openvpn3 `member-shared-tcp` tunnel; agents through Chat Completions with streaming, response model id the alias `Qwen3.5-9B-65K`; direct arms through the Responses API |
+| `sampling / limits` | Temperature 1.0 requested everywhere (by the proxy for agents); effective value unverified; seed and reasoning field omitted. Agents: 4,096 completion tokens, context 65,024, 300 s per request, 30 requests and 3 hours per attempt, no retries. Direct: system `Answer the user's question.`, `max_output_tokens` 4,096. Budget guard 270,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-114 |
+| `details` | `docs/measurement_cards/MC-115-diagnostic-legal-agent-draws.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_draws/run/qwen3-5-9b-65k-legal-agent-draws/`; no upload |

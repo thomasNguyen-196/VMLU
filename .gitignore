@@ -96,3 +96,6 @@ web/.contract-test.ts
 
 # tools/seed_db.ps1 scratch on the deploy PC (committed bytes of the measurement card)
 /.seed/
+
+# Reference papers kept locally for the thesis (not redistributed)
+/vmlu_docs/papers/

@@ -1,0 +1,65 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-select",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-legal-select",
+ "purpose": "Given BM25's top 10 legal units for a Legal MC item, does Qwen3.5-9B select the article that governs the question better than BM25's top 2 (filter), and does answering from its own selection beat the closed-book prompt on the pool (route)?",
+ "dataset": "vi-multimodel-v1-legal-mc-146",
+ "pool": {
+  "description": "the 134 Legal MC items of MC-101's pool (the MC-100 pool); not held out: MC-101's results motivated this test",
+  "size": 134,
+  "from": "data/diagnostic_legal_retrieval/protocol.json, pool"
+ },
+ "reuse": {
+  "mc101": "data/diagnostic_legal_retrieval: its corpus, retrieval configuration and frozen K evidence, checked by hash",
+  "mc100": "data/diagnostic_legal_oracle: its strata, support labels, oracle provisions and owner review, checked against what MC-100 registered"
+ },
+ "candidates": {
+  "file": "data/diagnostic_legal_select/candidates_v1.jsonl",
+  "depth": 10,
+  "order": "BM25 rank order, rank 1 first",
+  "consistency": "each record's first two units equal the item's MC-101 K evidence"
+ },
+ "selection": {
+  "template": "data/diagnostic_legal_select/select_template_v1.json",
+  "max_picks": 2,
+  "candidate_format": "the campaign's evidence_item format joined by its evidence_separator",
+  "question_block": "the item's question and options exactly as the frozen B prompt carries them (diagnostic_retrieval.mc_query)",
+  "parser": "NFC, backticks and * stripped; the last line starting with 'Đoạn liên quan:' (case-insensitive); its integers 1..10 in the order written, duplicates dropped, at most two; with no such integer, a line containing 'không có' is an empty selection; anything else is unparsed",
+  "fallback": "an unparsed selection sends BM25's top 2 (the K evidence) to step 2 and counts as a miss for the filter question; an empty selection sends the frozen B prompt",
+  "final": "a completed step 1 is final even when unparsed; only technical failures are re-sent"
+ },
+ "arms": {
+  "B": "the item's frozen main-v1 MC prompt",
+  "K": "the campaign evidence block with MC-101's top-2 units, then the frozen prompt",
+  "K10": "the campaign evidence block with the 10 candidates, then the frozen prompt",
+  "PICK": "step 1 of SEL: the selection prompt",
+  "SEL": "step 2 of SEL: the campaign evidence block with the selected units, then the frozen prompt; the frozen prompt alone when the selection is empty; MC-101's top 2 when it is unparsed",
+  "O": "the campaign evidence block with MC-100's oracle provisions, then the frozen prompt; items with provisions only"
+ },
+ "rounds": {
+  "1": ["B", "K", "K10", "PICK", "O"],
+  "2": ["SEL"],
+  "rule": "round 2 starts only when every round-1 attempt is complete; draw r of SEL uses draw r of PICK; the round-2 manifest is built from the round-1 rows, self-hashed, recorded and rebuilt on resume"
+ },
+ "draws": 2,
+ "templates": "data/diagnostic_prospective_v1/prompt_templates_v1.json",
+ "analysis": {
+  "plan_id": "diagnostic-legal-select-v1",
+  "item_score": "the mean over the two draws: correctness for an answer arm, selection hit for PICK",
+  "selection_hit": "the selection holds an oracle article: same document number (NFC, case, spaces, Đ/D folded) and article, any part counting; an empty or unparsed selection is a miss",
+  "questions": {
+   "filter": "on the 53 items with MC-100 oracle provisions: PICK's selection hit against BM25's top-2 hit",
+   "route": "on the 134 items: always-SEL against always-B"
+  },
+  "statistics": "mean per-item difference; percentile bootstrap 95% interval (2,000 resamples, seed 7); two-sided sign-flip p-value (20,000 resamples, seed 7)",
+  "multiplicity": "Holm over the two p-values",
+  "alpha": 0.05,
+  "rule": "a question is met when the left mean exceeds the right and its Holm-adjusted p-value is below alpha; route met means SEL should be the Legal MC route, otherwise always-B stays",
+  "descriptive": "per MC-100 stratum on supports_gold items and on the items outside MC-100: B, K, K10, SEL and O with SEL-K, SEL-K10, K10-K and SEL-O, and in stratum wrong the share of O's gain kept by K, K10 and SEL; selection counts, positions, the share selecting exactly [1] and [2], precision, recall within reach and 'Không có' on items without an oracle article in the top 10; SEL's accuracy when its selection hits and misses; each arm's options on contradicts_gold items; the share answering A; mean tokens per arm (SEL with both steps); this run's B, K and O beside MC-101's"
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 8000000
+ }
+}

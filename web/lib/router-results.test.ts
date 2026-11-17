@@ -9,17 +9,30 @@ describe("router results", () => {
     const data = parseRouterResults(raw());
     expect(data.experiments.map((experiment) => experiment.cards)).toEqual(
       ["MC-90, MC-91, MC-92", "MC-93", "MC-94", "MC-95", "MC-96", "MC-97", "MC-98", "MC-100", "MC-101", "MC-102", "MC-103",
-        "MC-104", "MC-105"]);
+        "MC-104", "MC-105", "MC-109", "MC-110, MC-110c"]);
     const status = Object.fromEntries(data.experiments.map((experiment) => [experiment.cards, experiment.status]));
-    expect([status["MC-94"], status["MC-100"], status["MC-102"], status["MC-103"], status["MC-104"], status["MC-105"]])
-      .toEqual(["partial", "met", "not_met", "descriptive", "partial", "partial"]);
+    expect([status["MC-94"], status["MC-100"], status["MC-102"], status["MC-103"], status["MC-104"], status["MC-105"],
+      status["MC-109"], status["MC-110, MC-110c"]]).toEqual(
+      ["partial", "met", "not_met", "descriptive", "partial", "partial", "descriptive", "descriptive"]);
     const table = data.experiments.find((experiment) => experiment.id === "mc-105")!;
     expect(table.tables.map((block) => block.rows.map((row) => row.id))).toEqual(
       [["always_B", "loop", "always_S", "always_vote", "table"], ["always_B", "loop", "always_S", "always_vote", "table"]]);
     expect(table.tests.filter((entry) => entry.primary)).toHaveLength(12);
     const v2 = data.experiments.find((experiment) => experiment.id === "mc-94")!.tables[0].rows.find((row) => row.id === "v2")!;
     expect(v2.cells.vmlu.score).toBe(76.67);
-    expect(data.experiments.every((experiment) => experiment.sources.every((source) => source.path.startsWith("all_res/")))).toBe(true);
+    // Sources are registered outputs under all_res/, vmlu.ai grades kept in docs/research/, or frozen manifests in data/.
+    expect(data.experiments.every((experiment) => experiment.sources.every((source) =>
+      ["all_res/", "docs/research/", "data/"].some((root) => source.path.startsWith(root))))).toBe(true);
+    // MC-109: Qwen's loop on VMLU test, scored by vmlu.ai; descriptive, so its test has no p.
+    const test109 = data.experiments.find((experiment) => experiment.id === "mc-109")!;
+    const total = Object.fromEntries(test109.tables[0].rows.map((row) => [row.id, row.cells.total.score]));
+    expect(total).toEqual({ always_B: 67.09, loop: 76.63, table: 62.94 });
+    expect([test109.tests[0].diff, test109.tests[0].p]).toEqual([9.54, null]);
+    // MC-110c: MiMo's loop on VMLU test (MC-110 with its unanswered attempts asked again at 40,000 tokens).
+    const test110 = data.experiments.find((experiment) => experiment.id === "mc-110c")!;
+    const mimoTotal = Object.fromEntries(test110.tables[0].rows.map((row) => [row.id, row.cells.total.score]));
+    expect(mimoTotal).toEqual({ always_B: 76.32, loop: 80.71, table: 77.68 });
+    expect([test110.tests[0].diff, test110.tests[0].p]).toEqual([4.39, null]);
   });
 
   test("the vote explainer carries the funnel and the worked examples that MC-104 reports", () => {
@@ -50,8 +63,16 @@ describe("router results", () => {
     expect(card("mc-105").tables[qwen.table].title.startsWith("Qwen3.5-9B")).toBe(true);
     expect(card("mc-105").tables[mimo.table].title.startsWith("MiMo V2.6 Flash")).toBe(true);
     const loop = qwen.rows.find((row) => row.row === "loop")!;
-    expect(Object.keys(loop.changes)).toHaveLength(6);
+    expect(Object.keys(loop.changes)).toHaveLength(7);
     expect(loop.changes["vmlu-dev"]).toBeUndefined();
+    // VMLU test comes from MC-109 (Qwen) and MC-110c (MiMo); each change is descriptive (no p).
+    const vmluTest = namedTest(card("mc-105"), loop.changes["vmlu-test"]);
+    expect([vmluTest.diff, vmluTest.p, vmluTest.primary]).toEqual([9.54, null, false]);
+    const mimoTest = namedTest(card("mc-105"), mimo.rows[1].changes["vmlu-test"]);
+    expect([mimoTest.label.startsWith("MiMo V2.6 Flash"), mimoTest.diff, mimoTest.p, mimoTest.primary])
+      .toEqual([true, 4.39, null, false]);
+    expect(card("mc-105").tables[mimo.table].rows.filter((row) => row.cells["vmlu-test"]).map((row) => row.id))
+      .toEqual(["always_B", "loop", "table"]);
     const vmlu = namedTest(card("mc-105"), loop.changes["vi-multimodel-v1-vmlu-valid"]);
     expect([vmlu.label.startsWith("Qwen3.5-9B"), vmlu.diff, vmlu.primary, vmlu.p! < data.alpha]).toEqual([true, 12.1, true, true]);
     expect(Object.values(mimo.rows[1].changes).every((label) => label.startsWith("MiMo V2.6 Flash"))).toBe(true);
@@ -65,7 +86,8 @@ describe("router results", () => {
     // Bảng 2: every other card has lines, and a line's numbers are that card's cells on one column.
     expect(Object.fromEntries(data.experiments.map((experiment) => [experiment.cards, experiment.overview.length]))).toEqual({
       "MC-90, MC-91, MC-92": 2, "MC-93": 1, "MC-94": 1, "MC-95": 1, "MC-96": 1, "MC-97": 1, "MC-98": 1, "MC-100": 2,
-      "MC-101": 2, "MC-102": 1, "MC-103": 2, "MC-104": 4, "MC-105": 0 });
+      "MC-101": 2, "MC-102": 1, "MC-103": 2, "MC-104": 4, "MC-105": 0, "MC-109": 1,
+      "MC-110, MC-110c": 1 });
     const v2 = card("mc-94");
     const line = v2.overview[0];
     expect([line.tried.row, line.column]).toEqual(["v2", "vmlu"]);
@@ -97,8 +119,8 @@ describe("router results", () => {
     expect(() => parseRouterResults(unknownChange)).toThrow(/has no test/);
     const otherColumns = raw();
     const mimoTable = card(otherColumns, "mc-105").tables[1];
-    mimoTable.columns.pop();
-    for (const row of mimoTable.rows) delete row.cells["vmlu-dev"];
+    const droppedColumn = mimoTable.columns.pop();
+    for (const row of mimoTable.rows) delete row.cells[droppedColumn.id];
     expect(() => parseRouterResults(otherColumns)).toThrow(/same columns/);
     const noSteps = raw();
     noSteps.benchmark.method.steps = [];

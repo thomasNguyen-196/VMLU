@@ -1,0 +1,66 @@
+{
+ "status": "VMLU test loop registered for MiMo",
+ "card_ids": {"vmlu_test_loop": "MC-110"},
+ "card_files": {"vmlu_test_loop": "docs/measurement_cards/MC-110-diagnostic-vmlu-test-loop-mimo.md"},
+ "registered_on": {"vmlu_test_loop": "2026-11-07"},
+ "frozen": {
+  "config_sha256": "b52c04fb554f7d6f048b190fc3bdaaef5bdf6507d83c32f5a4cc235c53b50c77",
+  "manifest_sha256": {"mimo": "68c38f7e91df8e45244d60510ad2f8a56007727d6f908dbaf52f8213aae5d33b"},
+  "manifest_note": "only the self-hash is frozen; the runner rebuilds the manifest from the frozen v2 VMLU manifest, the configuration and the campaign templates, refuses to run when the hash differs, and writes the copy it ran with to source_manifest.json"
+ },
+ "analysis": {
+  "plan_id": "vmlu-test-loop-mimo-v1",
+  "summary_keys": ["items", "final_items", "rounds", "still_needed", "complete_attempts", "final_differs_from_before", "empty_before", "empty_final", "confidence_missing", "reported_tokens", "reported_tokens_per_final_item", "latency_s_mean", "submissions"],
+  "summary_note": "confidence_missing is null for MiMo, which has no probe; how often B-r1 and B-r2 disagree is the share of items not final in round 1",
+  "scores": "vmlu.ai accuracy of submission_before.csv and submission_loop.csv, recorded in the run record after the owner submits them"
+ },
+ "amendments": [
+  {
+   "id": 1,
+   "rule": "transient_400",
+   "decided_on": "2026-11-08",
+   "decided_by": "the owner (\"viết bổ sung này\", 2026-11-08 about 12:40 +07), after launches 2 and 3 each halted on one HTTP 400: 31-0032:S-r1 (2026-11-07 17:51 +07), which completed when re-sent in launch 3, and 13-0047:B-r2 (2026-11-08 00:32 +07); both were rejected in under 0.7 s, on ordinary items, and no score of this card had been computed",
+   "applies_from": "the first launch whose runner carries BadRequestRule (launch 5 or later); launches 1-4 ran under the registered halt",
+   "refusal_words": ["content", "policy", "safety", "filter", "moderation"],
+   "max_attempts_with_400": 10,
+   "text": "An HTTP 400 is no longer always a permanent provider error. It is a technical failure, recorded in the ledger and sent again in the next pass like a timeout, unless (a) the provider's error code or type contains one of the refusal words, (b) the same attempt already had an HTTP 400 (in the ledger or in this launch), or (c) more than max_attempts_with_400 attempts of the run have had one, counting the ledger's; in those cases the run halts as registered. The row records the error code when it is a bare identifier (never the message), and fatal_reason or technical_400. Prompts, the request, sampling, the model, the schedule, the loop rule, the limits, the analysis and the submissions are unchanged, and completed responses stay terminal."
+  },
+  {
+   "id": 2,
+   "rule": "timeout_cap",
+   "decided_on": "2026-11-09",
+   "decided_by": "the owner (option \"Sửa đổi 2: tính là không trả lời\", 2026-11-09 about 13:15 +07), after launches 4 and 5 each paused on the breaker (2026-11-09 01:55 and 11:14 +07, four consecutive 300 s timeouts each time while other attempts completed). At that point 275 of the 9,833 items had no final answer and 358 attempts were still needed; 201 of them had timed out at least once and 57 three times or more, mostly high-school chemistry, biology, physics and mathematics items, where MiMo reasons longer than the timeout allows (about 47 tokens per second, so a 20,000-token reply needs about 7 minutes). No score of this card had been computed.",
+   "applies_from": "launch 6, the first launch whose runner carries with_timeout_terminals; timeouts recorded in the ledger by launches 1-5 count toward the cap",
+   "max_timeouts": 3,
+   "timeout_errors": ["APITimeoutError"],
+   "text": "An attempt without a completed response that has timed out max_timeouts times or more is no longer sent. A timeout is a ledger row whose error_type is one of timeout_errors; rows blocked by the breaker or halted before sending do not count. The loop rule reads such an attempt as a completed attempt with an empty answer, as it reads a reply truncated at the 20,000-token cap, and continues by its registered steps: an empty answer agrees with no answer, so S-r1, then S-r2 and S-r3, are asked as the rule requires, and the vote ignores empty answers. An item whose B-r1 is capped has an empty before answer, and an item whose final answer is empty is submitted blank; vmlu.ai scores a blank as wrong. The ledger is not changed: summary.json lists the capped attempts (timeout_cap) and the run record reports them. Prompts, the request, the 300 s timeout, sampling, the model, the schedule, the loop rule, the limits including the breaker, the analysis and the submission format are unchanged, and completed responses stay terminal."
+  },
+  {
+   "id": 3,
+   "rule": "max_in_flight",
+   "decided_on": "2026-11-09",
+   "decided_by": "the owner (\"lên 12 luồng cho nhanh\", 2026-11-09 about 21:25 +07), after the assistant said that 12 needs an amendment because 6 is in the frozen configuration, and that it may add timeouts and spend the OpenCode Go usage window faster; at that point 9,645 of 9,833 items were final, 244 attempts were left (about 420 sends at about 54 an hour), and launch 34 had resumed on a second OpenCode Go account after the first account's monthly usage limit (HTTP 429 from 2026-11-09 19:51 +07)",
+   "applies_from": "the first launch whose runner carries in_flight_amendment (launch 35 or later); launches 1-34 ran with at most 6 in flight",
+   "max_in_flight": 12,
+   "text": "At most max_in_flight requests are in flight at once instead of the configuration's 6, so all 12 lanes of the engine (4 shards x 3 lanes) can send. Only the request gate changes: the configuration file, its SHA-256 and the frozen condition keep the registered value 6. The request, prompts, sampling, 300 s timeout, breaker (4 consecutive network failures), passes, loop rule, amendments 1 and 2, vote, analysis and submissions are unchanged; completed responses stay terminal and the ledger is not edited."
+  },
+  {
+   "id": 4,
+   "rule": "timeout_seconds",
+   "decided_on": "2026-11-09",
+   "decided_by": "the owner (\"ok 900\", 2026-11-09 about 23:20 +07), after asking whether a longer timeout would finish the run sooner and after the assistant reported from the ledger that 12 in flight worked as amended (at most 12 requests at once, every timeout at 300-305 s, about 38 tokens per second per response, no slower than at 6) but that completed responses had not become more frequent (about 9 an hour at 6 and at 12): the attempts still open need about 11,000-20,000 reasoning tokens, 5-9 minutes at that speed, and the median rate of 37 tokens per second (28 at the 10th percentile) puts the 20,000-token cap at about 9-12 minutes. When the assistant reported (launch 43) 9,662 of 9,833 items were final, 219 attempts were left and 165 attempts had been read as empty answers under amendment 2; launch 46, the last that waited 300 s, started with 9,669 final, 208 attempts left and 178 read as empty. No score of this card had been computed.",
+   "applies_from": "the first launch whose runner carries timeout_amendment (launch 47 or later); launches 1-46 waited 300 s",
+   "timeout_seconds": 900,
+   "text": "The client waits up to timeout_seconds for one response instead of the configuration's 300 s, so a reply that reasons up to the 20,000-token cap can arrive. Only that wait changes: the configuration file, its SHA-256 and the frozen condition keep the registered value 300. A request that still gets no response within timeout_seconds is a timeout as before and counts toward amendment 2's cap of 3; attempts already read as empty answers under amendment 2 stay so and are not sent again. The request, prompts, sampling, 20,000-token cap, breaker (4 consecutive network failures), passes, loop rule, amendments 1-3, vote, analysis and submissions are unchanged; completed responses stay terminal and the ledger is not edited."
+  },
+  {
+   "id": 5,
+   "rule": "budget_tokens",
+   "decided_on": "2026-11-10",
+   "decided_by": "the owner (\"nâng trần lên 50tr\", 2026-11-10 about 08:20 +07), after the assistant reported that launch 47 had halted at 01:22 +07 on the registered budget guard (fatal row 10-0193:S-r3, error budget_cap) with 20,230,710 reported tokens: about 13.5 million for B-r1 and B-r2 (projected about 7.7 million) and about 6.7 million for S (projected 2-4 million). 9,773 of 9,833 items were final; 60 items needed 91 attempts (S-r1 28, S-r2 31, S-r3 32), and 183 attempts had been read as empty answers under amendment 2. The assistant estimated 110-147 more attempts at about 14,000-20,000 tokens each (launch 47: mean 14,141, 137 of 236 completed responses cut at the 20,000-token cap), so 1.6-3 million more tokens, and suggested 24,000,000; the owner chose 50,000,000. No score of this card had been computed.",
+   "applies_from": "the first launch whose runner carries budget_amendment (launch 48 or later); launches 1-47 halted at the registered 20,000,000",
+   "budget_tokens": 50000000,
+   "text": "The budget guard halts the run at budget_tokens reported tokens instead of the configuration's 20,000,000, counted as before over the completed attempts in the ledger (the latest row per attempt). Only that cap changes: the configuration file, its SHA-256 and the frozen condition keep the registered value 20,000,000. The attempt that met the guard in launch 47 was not sent and is sent again like any attempt without a completed response; a budget_cap row is not a timeout under amendment 2. The request, prompts, sampling, 20,000-token cap, 900 s wait (amendment 4), breaker (4 consecutive network failures), passes, loop rule, amendments 1-4, vote, analysis and submissions are unchanged; completed responses stay terminal and the ledger is not edited."
+  }
+ ]
+}

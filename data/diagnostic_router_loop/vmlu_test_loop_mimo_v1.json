@@ -1,0 +1,78 @@
+{
+ "loop_id": "vmlu-test-loop-mimo-v1",
+ "protocol_id": "vmlu-diagnostic-vmlu-test-loop",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-router-loop, task 2.10",
+ "purpose": "The VMLU Test column of the /table before-and-after table for MiMo: MiMo's within-run direct answer (before, B-r1) and MC-105's self-improvement loop (after) on the 9,833 VMLU test items, whose gold only vmlu.ai holds. Each attempt is asked only when the loop's rule needs it, so the final answer is the one MC-105's offline replay would choose from the same attempts. MC-109 did the same for Qwen.",
+ "items": {
+  "source": "the frozen vi-multimodel v2 VMLU manifest data/vi_multimodel_v2/vmlu_v2.json, test split, the items and prompts of the /table VMLU Test runs (MC-83 direct)",
+  "vmlu_manifest_sha256": "553fbd77e318eade604911998251e3a32abf743577c28101f8698632eef6b24a",
+  "dataset_id": "vi-multimodel-v2-vmlu-test",
+  "count": 9833,
+  "gold": "withheld: only vmlu.ai scores the test split"
+ },
+ "arms": {
+  "mimo": [
+   "B-r1",
+   "B-r2",
+   "S-r1",
+   "S-r2",
+   "S-r3"
+  ]
+ },
+ "arm_meaning": {
+  "B": "the frozen v2 VMLU prompt, byte for byte the /table VMLU Test prompt, asked twice (B-r1, B-r2) as in MC-105",
+  "S": "the campaign step-by-step template of data/diagnostic_prospective_v1/prompt_templates_v1.json, as in MC-90 to MC-105 and MC-109"
+ },
+ "schedule": {
+  "rule": "round by round: B-r1 and B-r2 for every item; S-r1 only when B-r1 and B-r2 do not agree; S-r2 and S-r3 only when S-r1 agrees with neither",
+  "passes": "each pass sends every attempt the rule needs from the completed attempts so far; an attempt without a completed response (a technical failure, not a fatal one) is sent again in the next pass; a launch stops after max_passes passes, after a pass that completes nothing, or at any fatal row",
+  "max_passes": 6,
+  "equivalence": "the attempts are independent requests, so the final answer equals the one diagnostic_table_loop.choose (MC-105's replay) returns on the same attempts; the attempts the rule never needs are not sent"
+ },
+ "students": {
+  "mimo": {
+   "profile_id": "mimo-v2-6-flash",
+   "model_id": "mimo-v2.6-flash",
+   "provider": "OpenCode Go",
+   "endpoint_host": "opencode.ai",
+   "api_protocol": "openai-chat-completions",
+   "stream": false,
+   "system_prompt": "Answer the user's question.",
+   "max_completion_tokens": 20000,
+   "timeout_seconds": 300,
+   "sdk_retries": 0,
+   "model_identity": "mimo",
+   "route": "MC-105's MiMo route (the MC-103 request): OpenCode Go chat completions, no streaming, system prompt Answer the user's question., 20,000 completion tokens, 300 s timeout, no SDK retries, one x-opencode-session per attempt; the same request for B and S",
+   "max_in_flight": 6,
+   "max_in_flight_source": "MC-105's registered value for MiMo, the owner's choice on 2026-11-07",
+   "stop_after_timeouts": 4,
+   "budget_tokens": 20000000,
+   "budget_source": "projected from MC-105's MiMo VMLU valid rounds and usage: about 7.7 million for the two B answers and 2 to 4 million for S; 20,000,000 as for MC-109"
+  }
+ },
+ "loop": {
+  "agreement": "router v2's normalized-answer-v1 (diagnostic_router.answers_agree): both parsed letters non-empty and equal",
+  "rule": "MC-104 and MC-105 for MiMo's multiple choice: round 1 keeps B-r1 when B-r1 and B-r2 agree; round 2 keeps S-r1 when it agrees with one of them; round 3 takes the majority of S-r1 to S-r3 (a tie to the earliest; an empty answer casts no vote; with no answer S-r1 is final)",
+  "final_answer": "always one of the student's own logged answers"
+ },
+ "reference": {
+  "table_conditions": {
+   "mimo": "MC-85 (direct API, 77.68 on vmlu.ai), MC-63 (OMP without tools, 76.20) and MC-89 (OMP full tools, 79.60), as /table shows them"
+  },
+  "valid_rounds": "MC-105 on VMLU valid, MiMo: round 1 611, round 2 115, round 3 17 of the 743 items with both B answers",
+  "qwen_test": "MC-109: Qwen's loop on the same items, 67.09 before and 76.63 after on vmlu.ai"
+ },
+ "analysis": {
+  "plan_id": "vmlu-test-loop-mimo-v1",
+  "outputs": "the runner writes loop.jsonl (per item: the attempts the rule read, their letters, the rounds and the final answer), summary.json, and, once every item has a final answer, submission_before.csv (B-r1) and submission_loop.csv (the loop), both id,answer for vmlu.ai",
+  "scores": "accuracy on vmlu.ai for the two submissions, entered from vmlu.ai's reply; the owner submits them",
+  "primary": "the loop's accuracy minus the before's accuracy on vmlu.ai, descriptive: with item-level gold withheld there is no paired test",
+  "descriptive": [
+   "the rounds the loop used, beside MC-105's MiMo VMLU valid rounds",
+   "how many final answers differ from B-r1, and how often B-r1 and B-r2 disagree",
+   "mean reported tokens per item, both B answers included, and latency",
+   "the /table VMLU Test numbers of MC-85, MC-63 and MC-89 beside the two scores, and MC-109's Qwen scores"
+  ]
+ }
+}

@@ -1,0 +1,20 @@
+{
+  "card_id": "MC-107",
+  "phase": "development_fp16_eval_only",
+  "saved_without_execution": true,
+  "notebook_source_sha256": "14b5e6854c663a4c12c97339b7f267bb1464c80ea3caca742043e4f8a24c5cc0",
+  "execution_ast_sha256": "48ad2d0467a1a22d66a944bc2f76077873cdcc3b4d4282045231deb266a6d5d2",
+  "detail_sha256": "f3daeeb44d86e95370a91e631254ccc14763faff8ff75a37d6787df96f7fd519",
+  "measurement_card_hash": "edb42f15393ccc530d5e62de07c750eb997f241cb06e0da1cf106ca2ccfc88cf",
+  "source_notebook_version": 6,
+  "source_training_condition_hash": "2bc1a7d7d347e1ddad1fb7714d8ddd020121c7e5bff4aa8962bd92677d8aeb95",
+  "source_adapter_sha256": "11a5904761c3d5fc00964262e0b97b311593de4a192592cdb8ce4e829dbded1e",
+  "requested_precision": "float16",
+  "validation_n": 32,
+  "train_arms": [],
+  "eval_arms": [
+    "G_all"
+  ],
+  "run_P": true,
+  "final_test_enabled": false
+}

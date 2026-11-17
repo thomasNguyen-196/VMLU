@@ -1,0 +1,17 @@
+{
+ "status": "VMLU test loop registered",
+ "card_ids": {"vmlu_test_loop": "MC-109"},
+ "card_files": {"vmlu_test_loop": "docs/measurement_cards/MC-109-diagnostic-vmlu-test-loop.md"},
+ "registered_on": {"vmlu_test_loop": "2026-11-05"},
+ "frozen": {
+  "config_sha256": "8d089da71f295d2c10d620ce5fbf1f387ab9d37bdcb67cc848129b0efe27656d",
+  "manifest_sha256": {"qwen": "bbf5ad005884668883e61f4af5320188c8f11f52fdfe90b2eb5386528e9a5866"},
+  "manifest_note": "only the self-hash is frozen; the runner rebuilds the manifest from the frozen v2 VMLU manifest, the configuration and the campaign templates, refuses to run when the hash differs, and writes the copy it ran with to source_manifest.json"
+ },
+ "analysis": {
+  "plan_id": "vmlu-test-loop-v1",
+  "summary_keys": ["items", "final_items", "rounds", "still_needed", "complete_attempts", "final_differs_from_before", "empty_before", "empty_final", "confidence_missing", "reported_tokens", "reported_tokens_per_final_item", "latency_s_mean", "submissions"],
+  "scores": "vmlu.ai accuracy of submission_before.csv and submission_loop.csv, recorded in the run record after the owner submits them"
+ },
+ "amendments": []
+}

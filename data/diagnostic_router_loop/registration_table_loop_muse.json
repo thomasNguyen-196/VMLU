@@ -1,0 +1,144 @@
+{
+ "status": "Muse table loop registered; stopped for good on 2026-11-04 by the owner (amendment 4's stop rule), incomplete; the registered analysis is not run",
+ "card_ids": {
+  "table_loop_muse": "MC-108"
+ },
+ "card_files": {
+  "table_loop_muse": "docs/measurement_cards/MC-108-diagnostic-table-loop-muse.md"
+ },
+ "registered_on": {
+  "table_loop_muse": "2026-11-03"
+ },
+ "frozen": {
+  "config_sha256": "270e66e93ea6d8419c9b4de6b9d319c7d44090cbd7c7b8de8abb220531588393",
+  "manifest_sha256": {
+   "muse13": "fac70c51bc2da3fd69fe54881aa68ebf78d1b55568ec814d71224c22ceb0f54b",
+   "muse12": "cebeb5bdbdb4298a73adcb0a643534dd0e5f5a945d31982eb69bcecf77d31f68"
+  }
+ },
+ "analysis": {
+  "plan_id": "table-loop-muse-v1",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "mc105_report_sha256",
+   "datasets",
+   "primary",
+   "beside_mc105",
+   "cost"
+  ]
+ },
+ "amendments": [
+  {
+   "id": 1,
+   "decided_on": "2026-11-04",
+   "decided_by": "the owner, after the account block of 2026-11-03 was lifted and before any further benchmark request",
+   "students": [
+    "muse13",
+    "muse12"
+   ],
+   "held_out_items": [
+    "vi-multimodel-v1-vi-drop-200:1467",
+    "vi-multimodel-v1-vi-squad-200:2629"
+   ],
+   "rule": "attempts of a held-out item without a completed response are not sent by either student; completed rows already in the ledger are kept; a refused attempt is never re-sent",
+   "reason": "the provider's content filter refused the step-by-step (S) prompt of Vi-DROP 1467 (HTTP 400 content_policy_violation, Muse Spark 1.2, S-r1 and S-r2, 2026-11-03 15:06 +07) and once refused the S-r2 prompt of Vi-SQuAD 2629 (HTTP 400, code not logged, Muse Spark 1.3, 14:59 +07); about four refusals in ten minutes were followed by 403 user_blocked on both models",
+   "safeguards": "the attempts of one item are never in flight together, so a refusal pauses the run before the item's next prompt is sent; remaining attempts are sent replicate by replicate (all B-r1, then B-r2, up to S-r3), which changes only when an attempt is sent; the provider's error code is logged from the error body; a new refusal pauses the run and no launch follows without the owner",
+   "scoring": "not yet decided: before the analysis the owner chooses between scoring the held-out and refused attempts as no answer (the item stays, as chosen on 2026-11-03) and leaving the held-out items out of every policy of both students; the analysis fails closed until then",
+   "card_text": "appended to the detail card with the run record, because the detail card's SHA-256 is part of the frozen run condition"
+  },
+  {
+   "id": 2,
+   "decided_on": "2026-11-04",
+   "decided_by": "the owner, after Muse Spark 1.2 refused vi-drop-200:3101:S-r1 at 16:08 +07 and before any further benchmark request",
+   "students": [
+    "muse13",
+    "muse12"
+   ],
+   "held_out_items": [
+    "vi-multimodel-v1-vi-drop-200:1137",
+    "vi-multimodel-v1-vi-drop-200:1467",
+    "vi-multimodel-v1-vi-drop-200:1573",
+    "vi-multimodel-v1-vi-drop-200:193",
+    "vi-multimodel-v1-vi-drop-200:2166",
+    "vi-multimodel-v1-vi-drop-200:2662",
+    "vi-multimodel-v1-vi-drop-200:2741",
+    "vi-multimodel-v1-vi-drop-200:3101",
+    "vi-multimodel-v1-vi-drop-200:4112",
+    "vi-multimodel-v1-vi-drop-200:4229",
+    "vi-multimodel-v1-vi-drop-200:4574",
+    "vi-multimodel-v1-vi-drop-200:4622",
+    "vi-multimodel-v1-vi-drop-200:5039",
+    "vi-multimodel-v1-vi-drop-200:5511",
+    "vi-multimodel-v1-vi-drop-200:583",
+    "vi-multimodel-v1-vi-drop-200:5954",
+    "vi-multimodel-v1-vi-drop-200:6124",
+    "vi-multimodel-v1-vi-drop-200:6207",
+    "vi-multimodel-v1-vi-drop-200:6579",
+    "vi-multimodel-v1-vi-drop-200:6593",
+    "vi-multimodel-v1-vi-drop-200:6643",
+    "vi-multimodel-v1-vi-drop-200:7048",
+    "vi-multimodel-v1-vi-drop-200:7110",
+    "vi-multimodel-v1-vi-drop-200:713",
+    "vi-multimodel-v1-vi-drop-200:7552",
+    "vi-multimodel-v1-vi-drop-200:7581",
+    "vi-multimodel-v1-vi-drop-200:7624",
+    "vi-multimodel-v1-vi-drop-200:8021",
+    "vi-multimodel-v1-vi-drop-200:8024",
+    "vi-multimodel-v1-vi-drop-200:8105",
+    "vi-multimodel-v1-vi-drop-200:8405",
+    "vi-multimodel-v1-vi-drop-200:8891",
+    "vi-multimodel-v1-vi-drop-200:9295",
+    "vi-multimodel-v1-vi-drop-200:9380",
+    "vi-multimodel-v1-vi-drop-200:9750"
+   ],
+   "selection": {
+    "dataset_id": "vi-multimodel-v1-vi-drop-200",
+    "pattern": "quân đội|quân lực|quân giải phóng|quân sự|chiến tranh|chiến dịch|chiến trận|trận đánh|tấn công|binh sĩ|binh lính|lính|vũ khí|bom|đạn|tên lửa|máy bay chiến đấu|thương vong|tử trận|thiệt hại|giết|thảm sát|xe tăng|pháo|chất nổ|thuốc nổ|hóa chất|hoá chất|điều chế|chất độc|ma túy|ma tuý",
+    "flags": "IGNORECASE",
+    "applied_to": "the passage of the item's prompt (the text after the instruction paragraph); the same items for both students"
+   },
+   "rule": "as amendment 1: attempts of a held-out item without a completed response are not sent; completed rows are kept; a refused attempt is never re-sent",
+   "reason": "every refusal so far was an S prompt on a war or weapons passage: Muse Spark 1.2 had 3 refusals in 13 sent S prompts on Vi-DROP passages matching the pattern and none in 274 S prompts on other Vi-SQuAD and Vi-DROP passages; Vi-SQuAD passages matching the pattern had 1 refusal in 110 and stay in",
+   "scoring": "as amendment 1: decided by the owner before the analysis"
+  },
+  {
+   "id": 3,
+   "decided_on": "2026-11-04",
+   "decided_by": "the owner, after Muse Spark 1.2 refused vi-drop-200:5218:S-r1 at 16:16 +07 and before any further benchmark request",
+   "students": [
+    "muse13",
+    "muse12"
+   ],
+   "held_out_items": [],
+   "held_out_datasets": [
+    "vi-multimodel-v1-vi-drop-200"
+   ],
+   "rule": "as amendment 1, for every Vi-DROP item: attempts without a completed response are not sent; completed rows are kept; a refused attempt is never re-sent",
+   "reason": "Vi-DROP 5218 (an airliner crash with 100 deaths) was refused although amendment 2's pattern did not match it, the second refusal within eight minutes; across both students the S prompts of Vi-DROP had 4 refusals in 124 sent, against 1 in 362 for Vi-SQuAD and none in 996 for VMLU; a keyword screen cannot predict the filter",
+   "consequence": "Vi-DROP is left out of Muse's before and after; the primary analysis then has 12 cells (6 datasets x 2 students), and how the plan's 14 tests change is decided by the owner before the analysis",
+   "scoring": "as amendment 1: decided by the owner before the analysis"
+  },
+  {
+   "id": 4,
+   "decided_on": "2026-11-04",
+   "decided_by": "the owner, after Muse Spark 1.2 refused vi-squad-200:1855:S-r1 at 16:23 +07 (the third refusal in 15 minutes) and before any further benchmark request",
+   "students": [],
+   "held_out_items": [],
+   "stopped_students": [
+    "muse12"
+   ],
+   "stop_rule": {
+    "student": "muse13",
+    "after": "2026-11-04T09:39:37+00:00",
+    "rule": "the first content-filter refusal (HTTP 400) of a muse13 attempt sent after this time stops MC-108 for good: the run pauses on it as before and the runner then refuses every further launch"
+   },
+   "reason": "Muse Spark 1.2 refused 3 of 142 S prompts sent on 2026-11-04 (none of 705 B prompts), the last on a harmless weather-forecast passage, so neither the passage nor a keyword screen predicts a refusal; Muse Spark 1.3 refused none of 101 S and 518 B prompts that day and 1 S prompt in all",
+   "consequence": "Muse Spark 1.2 is reported as stopped at 2,165 of 10,725 sendable attempts; what its analysis reports, and the primary tests' count, are decided by the owner before the analysis",
+   "scoring": "as amendment 1: decided by the owner before the analysis"
+  }
+ ]
+}
