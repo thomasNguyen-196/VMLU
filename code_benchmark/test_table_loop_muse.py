@@ -170,6 +170,122 @@ class TestRequest(EngineState):
         self.assertEqual((row["status"], row["fatal"], row["retry_wait_seconds"]), ("request_error", False, 5))
 
 
+class Refused(Exception):
+    status_code = 400
+    body = {"code": "content_policy_violation", "message": "echoed upstream text"}
+
+
+class TestAmendment1(EngineState):
+    """Amendment 1: held-out items are not sent, a refusal halts before the item's next prompt, and the provider's
+    error code (never its message) is logged."""
+
+    def test_the_registration_holds_out_the_refused_items_and_amendment_2s_drop_passages(self):
+        registration = rtm.load_registration()
+        first, second, third = registration["amendments"][:3]
+        self.assertEqual(set(first["held_out_items"]),
+                         {"vi-multimodel-v1-vi-drop-200:1467", "vi-multimodel-v1-vi-squad-200:2629"})
+        self.assertEqual(len(second["held_out_items"]), 35)
+        self.assertIn("vi-multimodel-v1-vi-drop-200:3101", second["held_out_items"])
+        self.assertEqual(third["held_out_datasets"], ["vi-multimodel-v1-vi-drop-200"])
+
+    @unittest.skipUnless(HAS_MANIFESTS, "frozen manifests not present")
+    def test_amendment_3_holds_out_all_of_vi_drop_and_vi_squad_2629_for_both_students(self):
+        registration = rtm.load_registration()
+        for student in tm.STUDENTS:
+            manifest = tm.load_frozen_manifest(student)
+            drop = {f"{item['dataset_id']}:{item['item_id']}" for item in manifest["items"]
+                    if item["dataset_id"] == "vi-multimodel-v1-vi-drop-200"}
+            self.assertEqual(len(drop), 200)
+            self.assertEqual(rtm.held_out_items(registration, student, manifest),
+                             drop | {"vi-multimodel-v1-vi-squad-200:2629"})
+
+    def test_amendment_4_stops_muse12_and_muse13_at_its_next_refusal(self):
+        registration = rtm.load_registration()
+        after = registration["amendments"][3]["stop_rule"]["after"]
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            self.assertIn("stopped muse12", rtm.launch_blocked(registration, "muse12", output) or "")
+            self.assertIsNone(rtm.launch_blocked(registration, "muse13", output))
+            ledger = output / "attempts.jsonl"
+            before = {"run_key": "a:1:S-r1", "http_status": 400, "started_at": "2026-11-04T09:23:01+00:00"}
+            ledger.write_text(json.dumps(before) + "\n", encoding="utf-8")
+            self.assertIsNone(rtm.launch_blocked(registration, "muse13", output))  # refusals before the rule count not
+            later = {"run_key": "a:2:S-r1", "http_status": 400, "started_at": after.replace("09:39:37", "10:00:00")}
+            with ledger.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(later) + "\n")
+            self.assertIn("a:2:S-r1", rtm.launch_blocked(registration, "muse13", output) or "")
+
+    def test_a_held_out_dataset_the_manifest_lacks_fails_closed(self):
+        registration = {"amendments": [{"students": ["muse13"], "held_out_datasets": ["nope"]}]}
+        with self.assertRaises(SystemExit):
+            rtm.held_out_items(registration, "muse13", {"items": [{"dataset_id": "d", "item_id": "1"}]})
+
+    @unittest.skipUnless(HAS_MANIFESTS, "frozen manifests not present")
+    def test_amendment_2s_pattern_reproduces_its_item_list(self):
+        import re
+        selection = rtm.load_registration()["amendments"][1]["selection"]
+        manifest, rebuilt = tm.build_manifest("muse12")
+        items = dp.verify_manifest_rows(manifest, rebuilt)
+        found = sorted({f"{item.dataset_id}:{item.item_id}" for item in items
+                        if item.dataset_id == selection["dataset_id"]
+                        and re.search(selection["pattern"], item.prompt.split("\n\n", 1)[1], flags=re.IGNORECASE)})
+        self.assertEqual(found, rtm.load_registration()["amendments"][1]["held_out_items"])
+
+    def test_held_out_items_are_not_sendable_and_an_unknown_key_fails_closed(self):
+        manifest = {"items": [{"dataset_id": "d", "item_id": "1"}, {"dataset_id": "d", "item_id": "2"}]}
+        items = [READING.__class__(**{**READING.__dict__, "dataset_id": "d", "item_id": item_id, "replicate_id": rep})
+                 for item_id in ("1", "2") for rep in ("B-r1", "S-r1")]
+        kept = rtm.sendable(items, {"d:1"}, manifest)
+        self.assertEqual([(item.item_id, item.replicate_id) for item in kept], [("2", "B-r1"), ("2", "S-r1")])
+        with self.assertRaises(SystemExit):
+            rtm.sendable(items, {"d:9"}, manifest)
+
+    def test_a_refusal_logs_the_code_halts_the_run_and_the_next_attempt_is_not_sent(self):
+        config = CONFIG["students"]["muse12"]
+        request = rtm.make_muse_request(config, "MC-108", pr.BudgetGuard(10_000), pr.OutageGuard(4),
+                                        rtm.ModelPin(config["model_identity"]))
+        refused = SimpleNamespace(responses=FakeResponses(Refused()))
+        row = request(refused, READING, 0, 0)
+        self.assertEqual((row["http_status"], row["provider_error_code"], row["fatal"]),
+                         (400, "content_policy_violation", True))
+        self.assertNotIn("echoed upstream text", json.dumps(row, ensure_ascii=False))
+        later = SimpleNamespace(responses=FakeResponses(response()))
+        row = request(later, READING.__class__(**{**READING.__dict__, "replicate_id": "S-r2"}), 0, 1)
+        self.assertEqual(row["error_type"], "halted_before_send")
+        self.assertIsNone(later.responses.kwargs)
+
+    def test_two_attempts_of_one_item_are_never_in_flight_together(self):
+        import threading
+        config = CONFIG["students"]["muse13"]
+        request = rtm.make_muse_request(config, "MC-108", pr.BudgetGuard(10_000), pr.OutageGuard(4),
+                                        rtm.ModelPin(config["model_identity"]))
+        release, counter = threading.Event(), {"now": 0, "most": 0, "calls": 0}
+        lock = threading.Lock()
+
+        class Slow:
+            def create(self, **_kwargs):
+                with lock:
+                    counter["now"] += 1
+                    counter["calls"] += 1
+                    counter["most"] = max(counter["most"], counter["now"])
+                release.wait(5)
+                with lock:
+                    counter["now"] -= 1
+                return response()
+
+        client = SimpleNamespace(responses=Slow())
+        attempts = [READING.__class__(**{**READING.__dict__, "replicate_id": rep}) for rep in ("S-r1", "S-r2")]
+        threads = [threading.Thread(target=request, args=(client, item, 0, lane)) for lane, item in enumerate(attempts)]
+        for thread in threads:
+            thread.start()
+        threads[0].join(0.3)
+        self.assertEqual(counter["calls"], 1)
+        release.set()
+        for thread in threads:
+            thread.join(5)
+        self.assertEqual((counter["calls"], counter["most"]), (2, 1))
+
+
 class TestGates(unittest.TestCase):
     def test_gates(self):
         manifest = {"config_sha256": "c", "manifest_sha256": "m"}

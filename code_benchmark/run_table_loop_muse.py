@@ -65,6 +65,59 @@ def load_registration(path: Path = tm.REGISTRATION_PATH) -> dict[str, Any]:
     return registration
 
 
+def held_out_items(registration: dict[str, Any], student: str, manifest: dict[str, Any]) -> set[str]:
+    """Item keys (`dataset:item_id`) that the registration's amendments hold out for this student, listed one by one
+    or as whole datasets: their attempts without a completed response are not sent."""
+    held: set[str] = set()
+    for amendment in registration.get("amendments") or []:
+        if student in (amendment.get("students") or []):
+            held.update(amendment.get("held_out_items") or [])
+            datasets = set(amendment.get("held_out_datasets") or [])
+            if datasets - {item["dataset_id"] for item in manifest["items"]}:
+                raise SystemExit(f"Error: held-out datasets not in the manifest: {sorted(datasets)}")
+            held.update(f"{item['dataset_id']}:{item['item_id']}" for item in manifest["items"]
+                        if item["dataset_id"] in datasets)
+    return held
+
+
+def sendable(items: list[v1.EvalItem], held: set[str], manifest: dict[str, Any]) -> list[v1.EvalItem]:
+    """The items this launch may send. Fails closed on a held-out key the manifest does not have, so a typo cannot
+    hold out nothing."""
+    known = {f"{item['dataset_id']}:{item['item_id']}" for item in manifest["items"]}
+    if held - known:
+        raise SystemExit(f"Error: held-out items not in the manifest: {sorted(held - known)}")
+    return [item for item in items if f"{item.dataset_id}:{item.item_id}" not in held]
+
+
+def launch_blocked(registration: dict[str, Any], student: str, output: Path) -> str | None:
+    """Why the amendments forbid any further launch of this student, or None. A student can be stopped outright, or
+    stopped for good by its first content-filter refusal (HTTP 400) sent after a recorded time."""
+    for amendment in registration.get("amendments") or []:
+        if student in (amendment.get("stopped_students") or []):
+            return f"amendment {amendment['id']} stopped {student}"
+        rule = amendment.get("stop_rule") or {}
+        if rule.get("student") != student:
+            continue
+        ledger = output / "attempts.jsonl"
+        rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()
+                if line.strip()] if ledger.is_file() else []
+        refused = [row["run_key"] for row in rows if row.get("http_status") == 400
+                   and str(row.get("started_at", "")) > rule["after"]]
+        if refused:
+            return f"amendment {amendment['id']}: {student} was refused after {rule['after']} ({refused[0]})"
+    return None
+
+
+def provider_code(exc: Exception) -> str | None:
+    """The provider's error code from an SDK exception body, when it is a short identifier. The message is never
+    kept: it can echo upstream data."""
+    body = getattr(exc, "body", None)
+    code = body.get("code") if isinstance(body, dict) else None
+    if code is None and isinstance(body, dict) and isinstance(body.get("error"), dict):
+        code = body["error"].get("code")
+    return code if isinstance(code, str) and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", code) else None
+
+
 def evaluate_gates(student: str, manifest: dict[str, Any], registration: dict[str, Any], route_ok: bool,
                    route_detail: str, *, card_text: str | None = None, root: Path = ROOT) -> list[Gate]:
     card_id = (registration.get("card_ids") or {}).get(tm.PHASE)
@@ -162,14 +215,22 @@ def make_muse_request(student: dict[str, Any], card_id: str, guard: pr.BudgetGua
         except Exception as exc:  # noqa: BLE001 - never serialize SDK messages: they can echo upstream data
             status_code = getattr(exc, "status_code", None)
             row.update({"status": "request_error", "finish_reason": "error", "error_type": type(exc).__name__,
-                        "http_status": status_code, "fatal": status_code in {400, 401, 402, 403, 404}})
+                        "http_status": status_code, "provider_error_code": provider_code(exc),
+                        "fatal": status_code in {400, 401, 402, 403, 404}})
         rsl._settle(row, start, guard, outage)  # noqa: SLF001
         if row.get("fatal"):
             halt.set()
         return row
 
+    item_locks: dict[str, threading.Lock] = {}
+    locks_guard = threading.Lock()
+
     def limited(client, item, shard: int, lane: int) -> dict[str, Any]:
-        with gate:  # waiting here is not part of the measured latency: the clock starts inside `request`
+        # One attempt of an item in flight at a time (amendment 1): a refusal halts the run before the item's next
+        # prompt is sent. Waiting here and at the gate is not part of the measured latency.
+        with locks_guard:
+            lock = item_locks.setdefault(f"{item.dataset_id}:{item.item_id}", threading.Lock())
+        with lock, gate:
             return request(client, item, shard, lane)
     return limited
 
@@ -248,11 +309,17 @@ def main(argv: list[str] | None = None) -> int:
     if manifest != tm.load_frozen_manifest(args.student):
         raise SystemExit(f"Error: the rebuilt {args.student} manifest differs from the frozen one")
     items = dp.verify_manifest_rows(manifest, rebuilt)
+    held = held_out_items(registration, args.student, manifest)
+    # Replicate-major order (all B-r1, then B-r2, ..., S-r3; stable within a replicate) keeps the attempts of one item
+    # apart, so the per-item lock of amendment 1 rarely makes a lane wait. Each attempt is independent: the order
+    # changes when an attempt is sent, not what is sent.
+    to_send = sorted(sendable(items, held, manifest), key=lambda item: item.replicate_id)
     endpoint, key, credential_source, route_ok, route_detail = muse_route(student)
     gates = evaluate_gates(args.student, manifest, registration, route_ok, route_detail)
     print(f"student={args.student} phase={tm.PHASE} items={manifest['item_count']} attempts={manifest['n']} "
           f"datasets={manifest['dataset_counts']}")
     print(f"manifest_sha256={manifest['manifest_sha256']} config_sha256={manifest['config_sha256']}")
+    print(f"held_out_items={len(held)} held_out_attempts={len(items) - len(to_send)} sendable_attempts={len(to_send)}")
     print("gates: " + " ".join(f"{gate.name}={'PASS' if gate.ok else 'FAIL'}" for gate in gates))
     for gate in gates:
         if not gate.ok:
@@ -265,6 +332,9 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("Error: execution gates failed: " + "; ".join(f"{g.name} ({g.detail})" for g in failed))
     card_id = str(registration["card_ids"][tm.PHASE])
     output = OUTPUT_ROOT / student["profile_id"]
+    blocked = launch_blocked(registration, args.student, output)
+    if blocked:
+        raise SystemExit(f"Error: no further launch: {blocked}")
     route = {"model_id": student["model_id"], "credential_source": credential_source,
              "endpoint_host": urlsplit(endpoint).hostname, "base_url_sha256": v1.sha256_bytes(endpoint.encode())}
     condition = pr.reconcile_resume(output, build_condition(args.student, config, manifest, registration, route),
@@ -273,10 +343,12 @@ def main(argv: list[str] | None = None) -> int:
     base.MODEL, base.PROFILE, base.PROTOCOL, base.CARD_ID = student["model_id"], student["profile_id"], tm.PROTOCOL_ID, card_id
     base.request = make_muse_request(student, card_id, guard, pr.OutageGuard(student["stop_after_timeouts"]),
                                      ModelPin(student["model_identity"]))
-    record_launch(output, args.student, resume=args.resume, note=args.note)
+    held_note = (f"; held out by amendment(s) of {tm.REGISTRATION_PATH.name} (SHA-256 "
+                 f"{v1.sha256_file(tm.REGISTRATION_PATH)}): {sorted(held)}") if held else ""
+    record_launch(output, args.student, resume=args.resume, note=args.note + held_note)
     with OpenAI(base_url=endpoint, api_key=key, timeout=student["timeout_seconds"],
                 max_retries=student["sdk_retries"]) as client:
-        base.execute(output, manifest, rebuilt, items, condition, client, args.resume,
+        base.execute(output, manifest, rebuilt, to_send, condition, client, args.resume,
                      score_callback=score_callback(args.student, card_id), runner_path=Path(__file__),
                      work_stealing=True)
     return 0
