@@ -187,6 +187,7 @@ VMLU Test là bằng chứng thứ hai trên câu mới cho router, sau MC-104: 
 - **Nơi router không giúp.** Ở Legal MC, Legal NLI và Vi-SQuAD, hỏi thẳng đã gần trần. Với Qwen, S còn kém B ở Legal (Legal MC: luôn S 82,9% so với B 91,1%), nên vòng lặp càng dùng S thì càng tụt.
 - **Full tools và router là hai hướng khác nhau.** Cho model dùng tools không nâng điểm ở bộ nào một cách nhất quán, và làm Qwen tụt mạnh. Router giữ nguyên prompt và model, chỉ quyết định khi nào hỏi thêm.
 - **Model mạnh hơn được lợi ít hơn.** MiMo tự suy nghĩ sẵn khi hỏi thẳng, nên S giúp MiMo ít hơn Qwen ở VMLU valid: luôn S hơn hỏi thẳng 4,6 điểm ở MiMo, so với 10,5 điểm ở Qwen. Ở VMLU Test cũng vậy: vòng tự sửa thêm 4,39 điểm cho MiMo, so với 9,54 điểm cho Qwen. MC-108 định hỏi liệu Muse, đã trên 90% ở VMLU, có còn được lợi không. Câu hỏi đó vẫn không có câu trả lời, vì MC-108 đã dừng hẳn.
+- **Cần hỏi bao nhiêu lần.** Phân tích sau (post hoc) [`pareto.md`](pareto.md) so điểm với token của hỏi thẳng, 2 vòng, 3 vòng, luôn S và bỏ phiếu 3 S, chỉ dùng các lượt hỏi đã ghi. Với trắc nghiệm của Qwen, 2 vòng (chưa chắc thì lấy S-r1) giữ khoảng 85% mức tăng của 3 vòng mà chỉ tốn khoảng một nửa số token thêm. Với đọc hiểu, luôn S rẻ hơn và tốt ngang hai cách còn lại.
 
 ## Giới hạn khi so sánh
 
