@@ -35,14 +35,20 @@ Model and endpoint for every request task below: Qwen3.5-9B-65K (Q4_K_M GGUF on 
 - [x] 3.1 Root block MC-115 in `measurement_card.md`, the detail card and `registration.json`.
 
   (2026-11-16: offline preflight, all 8 gates PASS, endpoint_calls=0; 24 new tests, test_suite 287, test_parsing, ruff and bandit OK.)
-- [ ] 3.2 With the owner's go, commit `pre-register MC-115`. Every preflight gate must pass.
+- [x] 3.2 With the owner's go, commit `pre-register MC-115`. Every preflight gate must pass.
+
+  (2026-11-16: owner "yes"; commit `9fa37e9`, local. Only the MC-115 hunk of `measurement_card.md` staged.)
 
 ## 4. Run (needs the VPN; ask the owner first)
 
-- [ ] 4.1 Launch `--execute --tunnel-dns <in-tunnel DNS>` as a `systemd-run --user` unit with a VPN watcher; `--resume` after a technical stop.
-- [ ] 4.2 Record the run in the detail card: start, end, outcomes, volume, model ids, proxy checks.
+- [x] 4.1 Launch `--execute --tunnel-dns <in-tunnel DNS>` as a `systemd-run --user` unit with a VPN watcher; `--resume` after a technical stop.
+
+  (2026-11-16 15:01:46 to 2026-11-17 00:20:59 +07, one launch, 3,876/3,876, no technical failure; VPN closed by `mc115-watch` at 00:21:51.)
+- [x] 4.2 Record the run in the detail card: start, end, outcomes, volume, model ids, proxy checks.
 
 ## 5. Analysis and record
 
-- [ ] 5.1 Run the analysis once; record the report's SHA-256 and the results in the card.
+- [x] 5.1 Run the analysis once; record the report's SHA-256 and the results in the card.
+
+  (2026-11-17 ~00:25 +07: report `45ed6b6c…`. M1 OMPF − DSHF −7.42 [−10.87; −3.76], Holm .0003, worse; M2 DSHF − B +3.46 [−0.30; 7.52], Holm .091, no clear difference; M3 OMPF − B −3.96 [−7.22; −0.61], Holm .053, no clear difference; S1 OMPF − DSHF −2.62 [−4.72; −0.42], Holm .023, worse; S2 DSHF − C +17.37, S3 OMPF − C +14.76, both Holm .0001, better.)
 - [ ] 5.2 Update the thesis draft (§4.8) and Notion with the outcome, as for MC-114.
