@@ -1,0 +1,24 @@
+{
+  "card_id": "MC-106",
+  "phase": "development_gpu_smoke",
+  "label": "mc106-vinumqa-gpu-smoke-v1",
+  "notebook_ref": "tungnguyen05/vinumqa-baseline-setup-p-g-b-c",
+  "notebook_source_sha256": "9b7fd96d28ebb7401ee562f635f0b9a9a45f8f93ca03e9925cb0bfde05b937e6",
+  "execution_ast_sha256": "57056761bc5bbe2681b36db403f3dc528698b2a0180d6fd75a5dca7e2287ed43",
+  "detail_sha256": "98ef93dc6fa8c93593ea5bc7c4ba6e44a7818e1f3a8e53a2d36d9e64395a4074",
+  "measurement_card_hash": "7104a84685ce0d726eec72858bfa2924346197e030003eddb11ebcd9cb18b791",
+  "model_id": "Qwen/Qwen3-1.7B",
+  "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "data_commit": "281bdcd70abde7753d95014dbd9babec7f97f3fd",
+  "source_hashes": {
+    "train": "81d44c30d47d96202810f3b4a829382ec110aae6cbd3e9366a4e46253001108e",
+    "valid": "07eadf7d185c5d42211c624f3b32402802edf57fe5b6fe64337778a0d5524c4d",
+    "test": "8a62a31ac8ab5276054b24fdab89262230078fe4754c817262311c5b30b623db"
+  },
+  "validation_selection": "first32_sorted_sha256_item_id",
+  "max_optimizer_steps": 20,
+  "session_timeout_seconds": 1800,
+  "requested_machine_shape": "NvidiaTeslaT4",
+  "cuda_visible_devices": "0",
+  "test_enabled": false
+}

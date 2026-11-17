@@ -2839,6 +2839,32 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `details` | `docs/measurement_cards/MC-105-diagnostic-table-loop.md` |
 | `outputs` | `all_res/diagnostic_router_loop/table_loop/`; no upload |
 
+## MC-106 — ViNumQA / Qwen3-1.7B / Kaggle GPU development smoke
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-106` |
+| `status` | Registered 2026-10-31 (+07), before inference/training of this condition; operational pilot |
+| `scope` | P on 32 deterministically selected validation questions, followed by G_all QLoRA capped at 20 optimizer steps. Test remains closed; no teacher or B/C execution |
+| `model / route` | Hugging Face Qwen/Qwen3-1.7B at revision `70d244cc86ccca08cf5af4e1e306ecf908b1ad5e`, run privately on Kaggle with requested T4 shape and one visible CUDA device |
+| `limits` | 4,096 context, 256 output tokens, greedy inference, seed 42; rank-16 QLoRA, micro-batch 1, accumulation 8, LR 2e-4; session capped at 1,800 s |
+| `scoring` | `finqa-vinumqa-string-rowalias-v1`, pinned FinQA EA/PA adapter; invalid outputs remain in the denominator |
+| `details` | `docs/measurement_cards/MC-106-vinumqa-gpu-smoke.md` |
+| `outputs` | `all_res/vinumqa_distill_v1/mc106_gpu_smoke/` plus private Kaggle version output |
+
+## MC-107 — ViNumQA / FP16 eval-only / P against G_all step 20 from version 6
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-107` |
+| `status` | Prepared 2026-10-31 (+07), before this condition's inference; save-only for manual execution |
+| `scope` | P and the existing G_all step-20 adapter on the same 32 validation items; both FP16, no training and no final test |
+| `model / source` | Qwen/Qwen3-1.7B at revision `70d244cc86ccca08cf5af4e1e306ecf908b1ad5e`; G_all restored from pinned notebook output version 6 and verified by source-condition and adapter hashes |
+| `limits` | One visible GPU, sequential arms, non-thinking, greedy, seed 42, 4,096 context and 256 output tokens |
+| `scoring` | `finqa-vinumqa-string-rowalias-v1`; paired EA/PA/validity and rescues/regressions; n=32 development smoke |
+| `details` | `docs/measurement_cards/MC-107-vinumqa-fp16-eval32.md` |
+| `outputs` | Separate `mc107-vinumqa-fp16-eval32-v1` working namespace; `paired_eval_summary.json` |
+
 ## MC-108 — Muse Spark 1.3 and Muse Spark 1.2 (OpenCode Go) / self-improvement loop on the /table suite / before and after on 2,346 items
 
 | Field | Condition |
