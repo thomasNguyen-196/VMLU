@@ -38,11 +38,15 @@ Model and endpoint for every request task below: `mimo-v2.6-flash` through OpenC
 - [x] 3.1 Root block MC-116 in `measurement_card.md`, the detail card and `registration.json` (with the report keys).
 
   (2026-11-19: offline preflight, all 8 gates PASS, endpoint_calls=0.)
-- [ ] 3.2 With the owner's go, commit `pre-register MC-116`. Every preflight gate must pass.
+- [x] 3.2 With the owner's go, commit `pre-register MC-116`. Every preflight gate must pass.
+
+  (2026-11-19, owner "yes": commit db0b7ca on dev, all 8 gates PASS.)
 
 ## 4. Run (OpenCode Go; ask the owner first)
 
 - [ ] 4.1 Launch `--execute` as a `systemd-run --user` unit; `--resume` after a technical stop or a usage limit.
+
+  (2026-11-19: launch 1, unit `mc116-mimo-launch1`, started 10:50 +07. At 12:56 +07: 779 of 3,876 attempts recorded, no duplicate run key; 5 technical (network: `RemoteDisconnected`/`SSLEOFError` from the provider between 12:28 and 12:33 +07), left for `--resume`; 10 complete at the 16,000 cap (`answer_cap`).)
 - [ ] 4.2 Record the run in the detail card: start, end, outcomes, volume, model ids, cost estimate, halts.
 
 ## 5. Analysis and record
