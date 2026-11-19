@@ -238,16 +238,4 @@ def convert_md_to_docx(md_path, docx_path):
 if __name__ == "__main__":
     src = "docs/GITHUB_ISSUE_UPPER_BOUND_18_BATCHES.md"
     dst_main = "vmlu_docs/02_upper_bound_campaign/Bao_Cao_Upper_Bound_2137_Cau.docx"
-    dst_root = "report_upper_bound_2137_cau.docx"
     convert_md_to_docx(src, dst_main)
-    import shutil
-    shutil.copyfile(dst_main, dst_root)
-    # Also update/preserve legacy aliases for convenience
-    for alias_name in [
-        "vmlu_docs/02_upper_bound_campaign/Bao_Cao_Upper_Bound_1837_Cau.docx",
-        "vmlu_docs/02_upper_bound_campaign/Bao_Cao_Upper_Bound_1589_Cau.docx",
-        "report_upper_bound_1837_cau.docx",
-        "report_upper_bound_1589_cau.docx"
-    ]:
-        shutil.copyfile(dst_main, alias_name)
-    print("Generated 2137 docx reports and updated aliases successfully.")
