@@ -1,0 +1,341 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-agent-mimo",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-legal-agent-mimo",
+ "purpose": "MC-116: MC-115's forced-search agent arms (DSHF in dsh, OMPF in omp) and each part's no-tool baseline (B on Part M, C on Part S) on the same 646 items and folders, two draws, with MiMo-V2.6-Flash in place of Qwen3.5-9B: does the harness gap (OMPF below DSHF) hold on a second model?",
+ "model": {
+  "profile_id": "mimo-v2-6-flash",
+  "model_id": "mimo-v2.6-flash",
+  "provider": "OpenCode Go",
+  "endpoint_host": "opencode.ai",
+  "endpoint_root": "https://opencode.ai/zen/go/v1",
+  "credential": "the OpenCode Go credential that run_router_labels.resolve_route finds for profile mimo-v2-6-flash (never written to a file)",
+  "session_header": "x-opencode-session",
+  "session": "one routing session per try of an attempt",
+  "extra_headers": {
+   "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+   "Referer": "https://opencode.ai/",
+   "Origin": "https://opencode.ai"
+  },
+  "thinking": "the provider's default. On this route neither thinking.type=disabled nor reasoning_effort low/medium/high nor thinking.budget_tokens changed the reasoning length (probe 2026-11-19, 2 synthetic questions); OpenCode Go lists effort_updates=false and returns no reasoning text, only reasoning_tokens",
+  "model_identity": "mimo",
+  "expected_response_model": "mimo-v2.6-flash"
+ },
+ "parts": {
+  "M": {
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B"
+   ],
+   "task": "multiple_choice",
+   "items": 246,
+   "sources": {
+    "vi-multimodel-v1-legal-mc-146": "134 items; DSHF from MC-112, OMPF from MC-113, B from MC-111 (draws 1-2)",
+    "vmlu-mqa-dev, vi-multimodel-v1-vmlu-valid": "112 items; DSHF, OMPF and B from MC-114 (draws 1-2)"
+   }
+  },
+  "S": {
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "C"
+   ],
+   "task": "reading",
+   "items": 400,
+   "sources": {
+    "bidlqa-train, bidlqa-val, vi-multimodel-v1-bidlqa-test": "400 items; DSHF, OMPF and C from MC-114 (draws 1-2)"
+   }
+  }
+ },
+ "draws": [
+  1,
+  2
+ ],
+ "corpora": {
+  "v1": {
+   "folder": "all_res/diagnostic_legal_agent/corpus_v1",
+   "folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+   "datasets": [
+    "vi-multimodel-v1-legal-mc-146"
+   ],
+   "rebuild": false
+  },
+  "v2": {
+   "folder": "all_res/diagnostic_legal_agent_v2/corpus_v2",
+   "folder_sha256": "2b40c1c75650a9af9203922f0f6d7a7c9ff4a27203910f5c95133b9bd2897987",
+   "datasets": "other",
+   "rebuild": true
+  }
+ },
+ "workdir": "/work/van-ban-phap-luat",
+ "sources": {
+  "mc112": {
+   "card": "MC-112",
+   "protocol": "data/diagnostic_legal_agent/protocol.json",
+   "protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+   "registration": "data/diagnostic_legal_agent/registration.json",
+   "registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3",
+   "manifest": "data/diagnostic_legal_agent/manifest_v1.json",
+   "manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345"
+  },
+  "mc113": {
+   "card": "MC-113",
+   "protocol": "data/diagnostic_legal_agent_omp/protocol.json",
+   "protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+   "registration": "data/diagnostic_legal_agent_omp/registration.json",
+   "registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745",
+   "manifest": "data/diagnostic_legal_agent_omp/manifest_v1.json",
+   "manifest_file_sha256": "a4c5eef0d009ce5317093a89b34aedd00c4b63d204a60a44c7e44cfc7d3bf6ee"
+  },
+  "mc114": {
+   "card": "MC-114",
+   "protocol": "data/diagnostic_legal_agent_v2/protocol.json",
+   "protocol_sha256": "c9cd7c9a15cf372959869a75c434f1229316a1206cae023b300e2570fdaf495b",
+   "registration": "data/diagnostic_legal_agent_v2/registration.json",
+   "registration_sha256": "6d4bd3b706cf460ad597e748f69dacd5104140f7986b3c1f3bda5ac70cb0ad97",
+   "manifest": "data/diagnostic_legal_agent_v2/manifest_v1.json",
+   "manifest_file_sha256": "7aa051ca08481cbc0d6c16264453b0c5c9dd0a0a8b7fb63b66db12bf78d7532e"
+  }
+ },
+ "mc115": {
+  "card": "MC-115",
+  "protocol": "data/diagnostic_legal_agent_draws/protocol.json",
+  "protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+  "manifest": "data/diagnostic_legal_agent_draws/manifest_v1.json",
+  "manifest_file_sha256": "217ceab48a3e2e49fbc9e8ca0326b812ec226460670dd5072ac93e7ffb7da218",
+  "use": "every MC-116 task must equal MC-115's task of the same item and arm"
+ },
+ "harnesses": {
+  "dsh": {
+   "arms": [
+    "DSHF"
+   ],
+   "base_protocol": "data/diagnostic_legal_agent/protocol.json",
+   "base_protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+   "harness": {
+    "profile": "data/diagnostic_legal_agent_mimo/dsh_profile_mimo_v1.yml",
+    "profile_sha256": "42071a07c92cbfb344cfd5c14c4fb71fcf4321d77e1d40067f2180d8c643569c",
+    "profile_id": "diagnostic-legal-agent-dsh-profile-mimo-v1",
+    "context_window": 65024,
+    "max_tokens": 16000,
+    "token_field": "max_completion_tokens"
+   },
+   "proxy": {
+    "request_timeout_seconds": 600,
+    "expected_response_model": "mimo-v2.6-flash",
+    "gateway_header": "the model block's extra_headers plus the per-try session header"
+   }
+  },
+  "omp": {
+   "arms": [
+    "OMPF"
+   ],
+   "base_protocol": "data/diagnostic_legal_agent_omp/protocol.json",
+   "base_protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+   "harness": {
+    "config": "data/diagnostic_legal_agent_mimo/omp_config_mimo_v1.json",
+    "config_sha256": "13c15b2a70c1de0ee6f1bce9c1fe54cd15625cd753e377390b3fecdf459a3ee2",
+    "argv": [
+     "-p",
+     "--model",
+     "zengo/mimo-v2.6-flash",
+     "--mode",
+     "json",
+     "--tools",
+     "read,grep,glob",
+     "--auto-approve",
+     "--thinking",
+     "off",
+     "--max-time",
+     "10800",
+     "--no-title",
+     "--no-extensions",
+     "--no-skills",
+     "--no-rules",
+     "--no-lsp",
+     "--cwd",
+     "/work/van-ban-phap-luat"
+    ],
+    "invocation": "omp -p --model zengo/mimo-v2.6-flash --mode json --tools read,grep,glob --auto-approve --thinking off --max-time 10800 --no-title --no-extensions --no-skills --no-rules --no-lsp --cwd /work/van-ban-phap-luat <task>",
+    "context_window": 65024,
+    "max_completion_tokens": 16000,
+    "body_keys": [
+     "max_completion_tokens",
+     "messages",
+     "model",
+     "store",
+     "stream",
+     "stream_options",
+     "tool_choice",
+     "tools"
+    ],
+    "probe_system_prompt_sha256": "616bebaf0a0bb1562ec72683c4665b62f58f4bc4ba092d855d489da006a36174",
+    "compaction": "as MC-113: offline with this configuration (scripted server, 2026-11-19) it fires between 56,000 and 57,000 reported tokens, the same point as MC-113's configuration"
+   },
+   "proxy": {
+    "request_timeout_seconds": 600,
+    "expected_response_model": "mimo-v2.6-flash",
+    "system_prompt_sha256": "616bebaf0a0bb1562ec72683c4665b62f58f4bc4ba092d855d489da006a36174",
+    "gateway_header": "the model block's extra_headers plus the per-try session header"
+   }
+  }
+ },
+ "direct": {
+  "arms": [
+   "B",
+   "C"
+  ],
+  "api_protocol": "openai-chat-completions",
+  "stream": false,
+  "system_prompt": "Answer the user's question.",
+  "temperature": 1.0,
+  "max_completion_tokens": 16000,
+  "timeout_seconds": 600,
+  "sdk_retries": 0,
+  "note": "MiMo's direct request of MC-103 to MC-110 (chat completions, the same system prompt, one session per attempt), with this card's cap and temperature 1.0 so every arm sends the same two"
+ },
+ "reference": {
+  "mc111_scores": {
+   "card": "MC-111",
+   "path": "all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/round1/scores.jsonl",
+   "sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+   "arms": [
+    "B"
+   ]
+  },
+  "mc112_scores": {
+   "card": "MC-112",
+   "path": "all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/scores.jsonl",
+   "sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+   "arms": [
+    "DSHF"
+   ]
+  },
+  "mc113_scores": {
+   "card": "MC-113",
+   "path": "all_res/diagnostic_legal_agent_omp/run/qwen3-5-9b-65k-omp/scores.jsonl",
+   "sha256": "303902b7b48035e3540c9a84e862b37d4b8825faf8c76699dac7b09dc75c103e",
+   "arms": [
+    "OMPF"
+   ]
+  },
+  "mc114_scores": {
+   "card": "MC-114",
+   "path": "all_res/diagnostic_legal_agent_v2/run/qwen3-5-9b-65k-legal-agent-v2/scores.jsonl",
+   "sha256": "793723d7b8d5b492e2beacecafcb130597c97a148e16d857af9b493bfe1137c3",
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B",
+    "C"
+   ]
+  },
+  "mc115_scores": {
+   "card": "MC-115",
+   "path": "all_res/diagnostic_legal_agent_draws/run/qwen3-5-9b-65k-legal-agent-draws/scores.jsonl",
+   "sha256": "654407b365314ce3367b4a8bf265d03f4c59b24a487bf9d1b5bb212f67774593",
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B",
+    "C"
+   ]
+  }
+ },
+ "scoring": {
+  "multiple_choice": "the frozen MC extractor and scorer (score_vi_multimodel) on the agent's final text or B's response",
+  "reading": "vi-reading-v3 (vi_reading_v3.rescore_row): token-F1 primary, EM and gold-token recall descriptive; vi-reading-v2 values kept beside",
+  "terminal_statuses_score": 0
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "budget_tokens": 470000000,
+  "rate_limit": "an HTTP 429 from the provider (a rate or usage limit) halts the launch; its attempt is technical and --resume re-runs it after the limit resets"
+ },
+ "smoke": {
+  "questions": [
+   {
+    "file": "data/diagnostic_legal_agent/smoke_questions_v1.json",
+    "id": "smoke-2",
+    "corpus": "v1"
+   },
+   {
+    "file": "data/diagnostic_legal_agent_v2/smoke_questions_v2.json",
+    "id": "smoke-s2",
+    "corpus": "v2"
+   }
+  ],
+  "arms": [
+   "DSHF",
+   "OMPF"
+  ],
+  "direct": [
+   "B",
+   "C"
+  ],
+  "reports": [
+   {
+    "path": "all_res/diagnostic_legal_agent_mimo/smoke/20261119T034032Z/smoke_report.json",
+    "sha256": "a4bafda5de0a2b73ef09dfac068934e5d4c50782ec52fcfad564497ae846aaef",
+    "note": "2026-11-19, owner's go: 6 of 6 complete, no HTTP error; model id mimo-v2.6-flash on every request; omp's system prompt as pinned; largest completion 172 tokens (cap 16,000); 4,232 to 53,216 tokens per agent attempt, 14 to 19 s"
+   }
+  ],
+  "budget_basis": "As MC-113 to MC-115: the earlier cards' real cost, scaled by what the smoke shows. On the same two smoke questions, MiMo's tokens over Qwen's (MC-115's smoke report 46d24a6b) were 0.138 in dsh (20,823 against 150,984), 3.189 in omp (91,066 against 28,556; MiMo called two tools at once on its first turn and one result was about 24,800 characters), 1.717 for B (237 against MC-114's 138) and 0.961 for C (149 against 155). MC-115's real mean tokens per attempt (Part M DSHF 102,964, OMPF 95,823, B 191; Part S DSHF 55,253, OMPF 57,355, C 155) times its attempt counts (492 per Part M arm, 800 per Part S arm) times those ratios: 310.0 million; x 1.5 = 465.1 million; rounded up: 470,000,000. One smoke attempt per cell makes the ratios rough; the guard only stops a runaway run."
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-mimo",
+  "alpha": 0.05,
+  "multiplicity": "holm within each part",
+  "item_score": "mean over MiMo's draws 1-2",
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7
+  },
+  "part_M": {
+   "questions": {
+    "M1": [
+     "OMPF",
+     "DSHF"
+    ],
+    "M2": [
+     "DSHF",
+     "B"
+    ]
+   },
+   "margin_points": 2.24,
+   "margin_on": [
+    "M1",
+    "M2"
+   ],
+   "metric": "correct"
+  },
+  "part_S": {
+   "questions": {
+    "S1": [
+     "OMPF",
+     "DSHF"
+    ],
+    "S2": [
+     "DSHF",
+     "C"
+    ]
+   },
+   "margin_points": 0.0,
+   "margin_on": [],
+   "metric": "token_f1 (vi-reading-v3), in points"
+  },
+  "beside_not_tested": [
+   "Qwen's same comparisons on the same items: draws 1-2 (MC-111 to MC-114) and draws 1-4 (with MC-115)",
+   "the model difference in the harness gap: per item, MiMo's OMPF-DSHF minus Qwen's OMPF-DSHF on draws 1-2, with a bootstrap CI",
+   "MiMo minus Qwen per arm on draws 1-2",
+   "Part M comparisons by source (Legal MC, VMLU law)",
+   "per arm: outcomes, requests, tool calls, reported and reasoning tokens per attempt"
+  ]
+ }
+}

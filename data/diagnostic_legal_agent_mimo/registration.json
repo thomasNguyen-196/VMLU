@@ -1,0 +1,54 @@
+{
+ "card_ids": {
+  "legal-agent-mimo": "MC-116"
+ },
+ "card_files": {
+  "legal-agent-mimo": "docs/measurement_cards/MC-116-diagnostic-legal-agent-mimo.md"
+ },
+ "frozen": {
+  "corpus_v1_folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+  "corpus_v2_folder_sha256": "2b40c1c75650a9af9203922f0f6d7a7c9ff4a27203910f5c95133b9bd2897987",
+  "dsh_profile_sha256": "42071a07c92cbfb344cfd5c14c4fb71fcf4321d77e1d40067f2180d8c643569c",
+  "legal_agent_mimo_protocol_sha256": "8eaf86f5ac35bf342be139678b76769b31e42b866b837a735dba8be73e895dfb",
+  "manifest_sha256": "c81a6fc919ef12dbf5e4c5cfe1e4526a7f31bb5a2c0e3e48452fd7ec7cd94f0f",
+  "mc111_scores_sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+  "mc112_manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345",
+  "mc112_protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+  "mc112_registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3",
+  "mc112_scores_sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+  "mc113_manifest_file_sha256": "a4c5eef0d009ce5317093a89b34aedd00c4b63d204a60a44c7e44cfc7d3bf6ee",
+  "mc113_protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+  "mc113_registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745",
+  "mc113_scores_sha256": "303902b7b48035e3540c9a84e862b37d4b8825faf8c76699dac7b09dc75c103e",
+  "mc114_manifest_file_sha256": "7aa051ca08481cbc0d6c16264453b0c5c9dd0a0a8b7fb63b66db12bf78d7532e",
+  "mc114_protocol_sha256": "c9cd7c9a15cf372959869a75c434f1229316a1206cae023b300e2570fdaf495b",
+  "mc114_registration_sha256": "6d4bd3b706cf460ad597e748f69dacd5104140f7986b3c1f3bda5ac70cb0ad97",
+  "mc114_scores_sha256": "793723d7b8d5b492e2beacecafcb130597c97a148e16d857af9b493bfe1137c3",
+  "mc115_manifest_file_sha256": "217ceab48a3e2e49fbc9e8ca0326b812ec226460670dd5072ac93e7ffb7da218",
+  "mc115_protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+  "mc115_scores_sha256": "654407b365314ce3367b4a8bf265d03f4c59b24a487bf9d1b5bb212f67774593",
+  "omp_config_sha256": "13c15b2a70c1de0ee6f1bce9c1fe54cd15625cd753e377390b3fecdf459a3ee2"
+ },
+ "manifest_file_sha256": "841929df5470aa6e88bf270f744614df6c43b1567b243548a0a93d4565464e7a",
+ "smoke_reports_sha256": {
+  "20261119T034032Z": "a4bafda5de0a2b73ef09dfac068934e5d4c50782ec52fcfad564497ae846aaef"
+ },
+ "code": {
+  "code_benchmark/run_legal_agent_mimo.py": "d180376a03b95b39dc541b1c7041dc80881fcb5cd37547b0b792906eb5f2eaa3",
+  "code_benchmark/diagnostic_legal_agent_mimo.py": "7b216e8876d751ff734e4702655b3aa75deb88417d836ce4ef9a7a903c401232",
+  "code_benchmark/analyze_legal_agent_mimo.py": "a205d25460c8ffc73c3c7e427604510c57fb5e038c9c49447ee46b7f4ad41085"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-mimo",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "part_M",
+   "part_S",
+   "beside_not_tested"
+  ]
+ }
+}

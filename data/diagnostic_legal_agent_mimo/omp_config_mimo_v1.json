@@ -1,0 +1,50 @@
+{
+ "version": "diagnostic-legal-agent-omp-config-mimo-v1",
+ "config.yml": {
+  "modelRoles": {
+   "default": "zengo/mimo-v2.6-flash",
+   "smol": "zengo/mimo-v2.6-flash",
+   "slow": "zengo/mimo-v2.6-flash",
+   "plan": "zengo/mimo-v2.6-flash",
+   "task": "zengo/mimo-v2.6-flash",
+   "tiny": "zengo/mimo-v2.6-flash",
+   "commit": "zengo/mimo-v2.6-flash",
+   "advisor": "zengo/mimo-v2.6-flash",
+   "designer": "zengo/mimo-v2.6-flash",
+   "vision": "zengo/mimo-v2.6-flash"
+  },
+  "memory": {
+   "backend": "off"
+  },
+  "retry": {
+   "enabled": false
+  },
+  "startup": {
+   "checkUpdate": false
+  },
+  "setupVersion": 2
+ },
+ "models.yml": {
+  "providers": {
+   "zengo": {
+    "baseUrl": "http://127.0.0.1:18080/v1",
+    "apiKey": "IEC_API_KEY",
+    "api": "openai-completions",
+    "authHeader": true,
+    "disableStrictTools": true,
+    "models": [
+     {
+      "id": "mimo-v2.6-flash",
+      "name": "mimo-v2.6-flash (OpenCode Go)",
+      "reasoning": false,
+      "input": [
+       "text"
+      ],
+      "contextWindow": 65024,
+      "maxTokens": 16000
+     }
+    ]
+   }
+  }
+ }
+}
