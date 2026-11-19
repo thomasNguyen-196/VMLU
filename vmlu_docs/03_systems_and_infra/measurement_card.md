@@ -3004,3 +3004,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-114 |
 | `details` | `docs/measurement_cards/MC-115-diagnostic-legal-agent-draws.md` |
 | `outputs` | `all_res/diagnostic_legal_agent_draws/run/qwen3-5-9b-65k-legal-agent-draws/`; no upload |
+
+## MC-116 — MiMo-V2.6-Flash (OpenCode Go) in dsh 0.2.2-rc.1 and omp 18.0.0 over the local folders of legal texts / MC-115's arms DSHF, OMPF and the no-tool baselines (B, C) on the same 646 items (246 MC, 400 closed-book ViBidLQA), two draws, with MiMo in place of Qwen3.5-9B
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-116` |
+| `status` | Preregistered 2026-11-19 (+07), before benchmark-item requests of this card; a smoke test of six attempts (no benchmark item) ran once before registration, 6 of 6 complete |
+| `scope` | MC-115's items, folders, arms and tasks with a second model. Part M: 246 MC items (134 Legal MC on corpus_v1, 112 VMLU law on corpus_v2), arms DSHF, OMPF, B. Part S: 400 closed-book ViBidLQA items on corpus_v2, arms DSHF, OMPF, C. Draws 1–2: 3,876 attempts (manifest `c81a6fc9…`); every task equals MC-115's. Item score = mean over the two draws. Part M, Holm over 2, 2.24-point margin: OMPF against DSHF, DSHF against B. Part S, token-F1 (vi-reading-v3), Holm over 2: OMPF against DSHF, DSHF against C. Qwen's same comparisons (MC-111 to MC-115) and the per-item model difference in the harness gap reported beside |
+| `harness / tools` | MC-112's dsh 0.2.2-rc.1 install, sandbox and proxy with profile `42071a07…` (MC-112's, model route replaced); MC-113's omp 18.0.0 binary (`69065aef…`), sandbox and proxy checks with configuration `13c15b2a…` (MC-113's, model route replaced), request shape with `store`, system prompt `616bebaf…`. Tools glob, grep, read. The item's folder read-only at `/work/van-ban-phap-luat`. B and C: MiMo's direct request, no tools |
+| `model / route` | `mimo-v2.6-flash` through OpenCode Go (`https://opencode.ai/zen/go/v1`), as MC-103 to MC-110; no VPN; one `x-opencode-session` per try. Agents: chat completions with streaming; direct arms: chat completions without streaming, system `Answer the user's question.`. Response model id `mimo-v2.6-flash`, pinned from the smoke test |
+| `sampling / limits` | Thinking at the provider's default; it cannot be set on this route (probe 2026-11-19: disabled, effort low/medium/high and a thinking budget did not change reasoning length). Temperature 1.0 sent everywhere (by the proxy for agents); the provider says thinking mode ignores it; seed omitted. 16,000 completion tokens per response (thinking included); context 65,024 declared to both harnesses; 600 s per request; 30 requests and 3 hours per attempt; no retries. An HTTP 429 or 401/402/403/404 halts the launch without scoring; a 400 naming no content policy is technical. Budget guard 470,000,000 reported tokens |
+| `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-115 |
+| `details` | `docs/measurement_cards/MC-116-diagnostic-legal-agent-mimo.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_mimo/run/mimo-v2-6-flash-legal-agent/`; no upload |
