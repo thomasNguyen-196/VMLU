@@ -258,6 +258,25 @@ def load_registration(path: Path = lp.REGISTRATION_PATH) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
 
 
+BUDGET_AMENDMENT_KEYS = frozenset({"id", "rule", "date", "budget_tokens", "basis", "authorized"})
+
+
+def budget_tokens(spec: dict[str, Any], registration: dict[str, Any], model: str) -> int:
+    """The model's budget guard: the protocol's, or the registration's `budget_tokens` amendment (MC-117 amendment 1).
+    The guard only decides when a run stops; it is not part of the inference condition, so the condition file keeps the
+    protocol's value and `--resume` is not refused. An amendment may only raise a model's budget."""
+    found = [a for a in registration.get("amendments") or [] if isinstance(a, dict) and a.get("rule") == "budget_tokens"]
+    if not found:
+        return int(spec["budget_tokens"])
+    amendment = found[0]
+    value = (amendment.get("budget_tokens") or {}).get(model) if isinstance(amendment.get("budget_tokens"), dict) else None
+    if (len(found) > 1 or set(amendment) != BUDGET_AMENDMENT_KEYS or not isinstance(value, int)
+            or isinstance(value, bool) or value < int(spec["budget_tokens"])):
+        raise _fail(f"the budget_tokens amendment must appear once with exactly the keys {sorted(BUDGET_AMENDMENT_KEYS)} "
+                    f"and an integer budget for {model} no lower than the protocol's {spec['budget_tokens']}")
+    return value
+
+
 def smoke_problems(protocol: dict[str, Any], model: str, root: Path = ROOT) -> list[str]:
     """The model's registered smoke reports: each hashes as registered, every attempt completed, and the first
     system message matched the model's pin."""
@@ -500,7 +519,9 @@ def main(argv: list[str] | None = None) -> int:
     resume = bool(args.resume) and (output / "condition.json").is_file()
     condition = pr.reconcile_resume(output, build_condition(protocol, model, omp_protocol, manifest, registration,
                                                             route.endpoint), resume)
-    guard = pr.BudgetGuard(spec["budget_tokens"], pr.existing_usage(output))
+    budget = budget_tokens(spec, registration, model)
+    guard = pr.BudgetGuard(budget, pr.existing_usage(output))
+    print(f"budget_tokens={budget} used={guard.used} model={model}", flush=True)
     outage = pr.OutageGuard(operational["stop_after_timeouts"])
     pr.base.MODEL, pr.base.PROFILE, pr.base.PROTOCOL, pr.base.CARD_ID = (
         route.proxy.model, spec["profile_id"], lp.PROTOCOL_ID, card_id)
@@ -509,7 +530,7 @@ def main(argv: list[str] | None = None) -> int:
     with (output / "operator_events.jsonl").open("a", encoding="utf-8") as ledger:
         ledger.write(json.dumps({"at": pr.base.now(), "model": model, "resume": resume,
                                  "runner_sha256": v1.sha256_file(Path(__file__)), "operational": operational,
-                                 "note": args.note}, ensure_ascii=False) + "\n")
+                                 "budget_tokens": budget, "note": args.note}, ensure_ascii=False) + "\n")
     items = dp.verify_manifest_rows(manifest, rebuilt)
     context = AttemptContext(model=model, omp=omp, omp_protocol=omp_protocol, docs=docs,
                              corpus_of=manifest["corpus_of"], output=output, proxy=route.proxy,

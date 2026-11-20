@@ -61,5 +61,18 @@
    "part_S",
    "beside_not_tested"
   ]
- }
+ },
+ "amendments": [
+  {
+   "id": "MC-117 amendment 1",
+   "rule": "budget_tokens",
+   "date": "2026-11-20",
+   "budget_tokens": {
+    "qwen": 250000000,
+    "mimo": 170000000
+   },
+   "basis": "Launch 1 (21:44 +07) after about 55 min, on the same items and draws as the registered OMPF runs: Qwen's OMPS used 140,521 reported tokens per attempt against OMPF's 79,864 (145 attempts, ratio 1.76); MiMo's 89,238 against 85,814 (169 attempts, ratio 1.04). The smoke test (one attempt per question) had given 0.77 and 0.65. Projected totals: Qwen 93.0M x 1.76 = 163.7M, MiMo 103.4M x 1.04 = 107.5M, so Qwen would stop at the 110M guard with about 60% of its attempts done and MiMo would end near it. New guards by the registered rule with the observed ratio: x 1.5, rounded up: Qwen 245.6M -> 250M, MiMo 161.3M -> 170M. The guard only decides when a run stops; no inference setting, item, prompt or limit changes, and no attempt is re-run because of it. Scores were not looked at.",
+   "authorized": "owner, 2026-11-20 about 22:50 +07: 'Amendment nâng trần (Recommended)'"
+  }
+ ]
 }

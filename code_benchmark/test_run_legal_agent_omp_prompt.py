@@ -105,6 +105,21 @@ class TestRowsAndHalts(unittest.TestCase):
         self.assertEqual((second["error_type"], second["shard"], second["lane"]), ("halted_before_send", 1, 2))
         self.assertEqual(second["model_id"], "Qwen3.5-9B-65K")
 
+    def test_budget_amendment(self):
+        spec = {"budget_tokens": 110_000_000}
+        self.assertEqual(rlp.budget_tokens(spec, {}, "qwen"), 110_000_000)
+        amendment = {"id": "MC-117 amendment 1", "rule": "budget_tokens", "date": "2026-11-20",
+                     "budget_tokens": {"qwen": 250_000_000, "mimo": 170_000_000}, "basis": "b", "authorized": "a"}
+        registration = {"amendments": [amendment]}
+        self.assertEqual(rlp.budget_tokens(spec, registration, "qwen"), 250_000_000)
+        self.assertEqual(rlp.budget_tokens(spec, registration, "mimo"), 170_000_000)
+        for broken in ({**amendment, "extra": 1}, {**amendment, "budget_tokens": {"qwen": 100}},
+                       {**amendment, "budget_tokens": {"mimo": 170_000_000}}):
+            with self.assertRaises(SystemExit):
+                rlp.budget_tokens(spec, {"amendments": [broken]}, "qwen")
+        with self.assertRaises(SystemExit):
+            rlp.budget_tokens(spec, {"amendments": [amendment, amendment]}, "qwen")
+
     def test_session_id(self):
         self.assertTrue(rlp.session_id("mimo", "d:1:OMPS-r1", 2).startswith("vmlu-mc117-mimo-"))
         self.assertTrue(rlp.session_id("mimo", "d:1:OMPS-r1", 2).endswith("-t2"))
