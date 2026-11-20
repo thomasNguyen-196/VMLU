@@ -44,12 +44,20 @@ Model and endpoint for every request task below: `mimo-v2.6-flash` through OpenC
 
 ## 4. Run (OpenCode Go; ask the owner first)
 
-- [ ] 4.1 Launch `--execute` as a `systemd-run --user` unit; `--resume` after a technical stop or a usage limit.
+- [x] 4.1 Launch `--execute` as a `systemd-run --user` unit; `--resume` after a technical stop or a usage limit.
 
   (2026-11-19: launch 1, unit `mc116-mimo-launch1`, started 10:50 +07. At 12:56 +07: 779 of 3,876 attempts recorded, no duplicate run key; 5 technical (network: `RemoteDisconnected`/`SSLEOFError` from the provider between 12:28 and 12:33 +07), left for `--resume`; 10 complete at the 16,000 cap (`answer_cap`).)
-- [ ] 4.2 Record the run in the detail card: start, end, outcomes, volume, model ids, cost estimate, halts.
+
+  (Launch 1 halted at 18:36 +07 after 2,941 complete: at 18:30–18:31 OpenCode Go sent two HTTP 200 streams with no model-bearing chunk (one dsh request idled 300 s), and MC-112's proxy reads a missing model id as `model_drift`, which is fatal. The halted-before-send row that followed has no `shard`, `lane`, `model_id` or `protocol_id` (`_blocked_row`), so the engine's progress print raised `KeyError` and the 3 attempts still in flight were never written to the ledger; their `try-1` folders stay on disk and they re-run as `try-2` with fresh sessions. Resume 2 (16:06 UTC) was refused before any request (`checkpoint condition drift`, the same row); the row was moved verbatim to `halted_rows_unloadable.jsonl`, the original ledger kept as `attempts.launch1-original.jsonl` (see `ledger_repair_20261119.json`). Resume 3, unit `mc116-mimo-resume3`, from 23:10 +07 with the registered runner unchanged; the 8 technical attempts re-ran and completed.)
+
+  (Resume 3 halted at 23:31 +07 after 2,969 complete, the same way: `BIDLQA-TR-1293:OMPF-r2`'s third request got a 30,645-byte stream with one chunk and no model id after 924 s, as `OMPF-r1` had in launch 1; omp re-sent and answered, but the proxy had recorded `model_drift`. From 00:01 +07 on 2026-11-20 the unit `mc116-mimo-relauncher` (`all_res/diagnostic_legal_agent_mimo/run/mc116_relauncher.py`, operational, owner's go to resume after stalls) repeats the manual step: it moves `halted_before_send` rows aside (backup and note each time) and resumes only when every fatal row since the last launch is such a row or a `model_drift` whose drift records all lack a model id. Any other halt (429, 401–404, a real model change, budget, outage) stops it; at most 6 launches.)
+- [x] 4.2 Record the run in the detail card: start, end, outcomes, volume, model ids, cost estimate, halts.
+
+  (2026-11-20: complete at 06:44 +07, 3,876 of 3,876 final; run record appended to the detail card. 175.9M reported tokens of 470M; cost estimate USD 8.94; `mimo-v2.6-flash` in every attempt.)
 
 ## 5. Analysis and record
 
-- [ ] 5.1 Run the analysis once; record the report's SHA-256 and the results in the card.
+- [x] 5.1 Run the analysis once; record the report's SHA-256 and the results in the card.
+
+  (2026-11-20 ~09:35 +07: report `b6f8a7cb…`. M1 OMPF − DSHF +5.69 [3.05; 8.54], Holm p 0.0002, OMPF better; M2 DSHF − B +4.07 [−0.41; 8.74], Holm p 0.109, no clear difference; S1 OMPF − DSHF +7.36 [4.90; 9.65], Holm p 0.0001, OMPF better; S2 DSHF − C +26.47, Holm p 0.0001, DSHF better. Beside: the harness gap reverses from Qwen's (−8.94 M, −4.28 S on draws 1–2); MiMo minus Qwen in the gap +14.63 [9.15; 20.12] M and +11.64 [7.71; 15.43] S.)
 - [ ] 5.2 Update the thesis draft and Notion with the outcome, as for MC-115.
