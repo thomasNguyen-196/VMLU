@@ -68,6 +68,7 @@ A diagnostic condition with external tools, outside VLSP 2025's rules, as in MC-
   - `code_benchmark/run_legal_agent_omp_prompt.py`: runner with `--model qwen|mimo`, self-test, smoke test;
   - `code_benchmark/analyze_legal_agent_omp_prompt.py`;
   - their tests.
+- **Changed:** `code_benchmark/diagnostic_prospective.py` gains the arm id `OMPS` (appended to `ARMS`, scored like OMPF), as MC-112 to MC-114 added DSH, DSHF, OMPF and C.
 - **New data** in `data/diagnostic_legal_agent_omp_prompt/`: the protocol, both dsh prompt texts, the manifest and the registration.
 - **Requests:**
   - Qwen: 1,292 agent attempts on IEC, with the VPN open during its run.

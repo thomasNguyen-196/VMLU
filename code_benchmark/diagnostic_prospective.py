@@ -40,8 +40,9 @@ CAMPAIGN_ARMS = ("B", "S", "O", "K", "KS")
 # to the scorer. DSH and DSHF (Qwen in DeepSeek Harness over a legal corpus folder, openspec change
 # diagnostic-legal-agent) are scored as frozen MC answers on dsh's final text. OMPF (MC-112's DSHF task inside omp,
 # openspec change diagnostic-legal-agent-omp) is scored the same way on omp's final text. C (closed-book ViBidLQA:
-# MC-96's closed-book prompt without tools, openspec change diagnostic-legal-agent-v2) is scored like B.
-ARMS = CAMPAIGN_ARMS + ("Q", "K10", "PICK", "SEL", "DSH", "DSHF", "OMPF", "C")
+# MC-96's closed-book prompt without tools, openspec change diagnostic-legal-agent-v2) is scored like B. OMPS (OMPF's
+# task in omp with dsh's system prompt, openspec change diagnostic-legal-agent-omp-prompt) is scored like OMPF.
+ARMS = CAMPAIGN_ARMS + ("Q", "K10", "PICK", "SEL", "DSH", "DSHF", "OMPF", "C", "OMPS")
 REASONING_ARMS = frozenset({"S", "KS"})
 # Arms scored from the text after the last final-answer label: the reasoning arms and Q.
 FINAL_LABEL_ARMS = REASONING_ARMS | {"Q"}

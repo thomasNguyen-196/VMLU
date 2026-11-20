@@ -1,0 +1,65 @@
+{
+ "card_ids": {
+  "legal-agent-omp-prompt": "MC-117"
+ },
+ "card_files": {
+  "legal-agent-omp-prompt": "docs/measurement_cards/MC-117-diagnostic-legal-agent-omp-prompt.md"
+ },
+ "frozen": {
+  "corpus_v1_folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+  "corpus_v2_folder_sha256": "2b40c1c75650a9af9203922f0f6d7a7c9ff4a27203910f5c95133b9bd2897987",
+  "legal_agent_omp_prompt_protocol_sha256": "cc03b7eecfd71662bde1369c35dbd76f05ec4e1285f212a96b2d78fa54e23e25",
+  "manifest_sha256": "8952e67265af75c88231cd9d502cf7baa81d1f48c5666273ce7f9955fb56dc84",
+  "mc111_scores_sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+  "mc112_manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345",
+  "mc112_protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+  "mc112_registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3",
+  "mc112_scores_sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+  "mc113_manifest_file_sha256": "a4c5eef0d009ce5317093a89b34aedd00c4b63d204a60a44c7e44cfc7d3bf6ee",
+  "mc113_protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+  "mc113_registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745",
+  "mc113_scores_sha256": "303902b7b48035e3540c9a84e862b37d4b8825faf8c76699dac7b09dc75c103e",
+  "mc114_manifest_file_sha256": "7aa051ca08481cbc0d6c16264453b0c5c9dd0a0a8b7fb63b66db12bf78d7532e",
+  "mc114_protocol_sha256": "c9cd7c9a15cf372959869a75c434f1229316a1206cae023b300e2570fdaf495b",
+  "mc114_registration_sha256": "6d4bd3b706cf460ad597e748f69dacd5104140f7986b3c1f3bda5ac70cb0ad97",
+  "mc114_scores_sha256": "793723d7b8d5b492e2beacecafcb130597c97a148e16d857af9b493bfe1137c3",
+  "mc115_manifest_file_sha256": "217ceab48a3e2e49fbc9e8ca0326b812ec226460670dd5072ac93e7ffb7da218",
+  "mc115_protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+  "mc115_scores_sha256": "654407b365314ce3367b4a8bf265d03f4c59b24a487bf9d1b5bb212f67774593",
+  "mc116_scores_sha256": "18c86a134779fa859247fee54e963052169360eaafdaccb011b7d98d27a05cab",
+  "mimo_base_protocol_sha256": "8eaf86f5ac35bf342be139678b76769b31e42b866b837a735dba8be73e895dfb",
+  "mimo_prompt_sha256": "54d89951230a8b4a14f8b9b231a480ddfca31cf1929169074b141bc165d62d6c",
+  "qwen_base_protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+  "qwen_prompt_sha256": "d6bd65aa82408826439600dabebac6df2cc89635d5f97c25809870a218f80402"
+ },
+ "manifest_file_sha256": "b4fef5462c506fdea6e93a307935304e05bb783e1e93cc3eb7ef13b9d31e3057",
+ "prompt_files_sha256": {
+  "qwen": "d6bd65aa82408826439600dabebac6df2cc89635d5f97c25809870a218f80402",
+  "mimo": "54d89951230a8b4a14f8b9b231a480ddfca31cf1929169074b141bc165d62d6c"
+ },
+ "smoke_reports_sha256": {
+  "qwen/20261120T143232Z": "fe4e289778f608c42d9784723088bd67c735dd83afde6e02ec91f769df1dae2a",
+  "mimo/20261120T143032Z": "8dc9d37b559f67fce53673a0f8c13841cccf66f054688ec86e75b65f1f7c9112"
+ },
+ "code": {
+  "code_benchmark/run_legal_agent_omp_prompt.py": "8d1744c5239aa64f468eec77734c2688cc7d7e8513600f2d3f79842c63e82f70",
+  "code_benchmark/diagnostic_legal_agent_omp_prompt.py": "d650f1d0261bc77ee6587207a0ea28347f5dddd61e834ea7753cf663b5ee9eaf",
+  "code_benchmark/analyze_legal_agent_omp_prompt.py": "b9bc77ab5589671f244e4e656f0f23fd73c300ffba462a3429b761210afd0a53",
+  "code_benchmark/harness_flow.py": "f2e8c2196b18e9319db76786ad2bb262ada1ab7d5dc13d56a069d893999937ce",
+  "code_benchmark/analyze_harness_flows.py": "0922c723e83dcf7385510eeacce90734a0d54f0be5868df54e6bd4555aafae65",
+  "code_benchmark/diagnostic_prospective.py": "42c76a7a4e40a606c3c089fc3f73a017d549b1b9fbc0606391b835d2690d5885"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-omp-prompt",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "reference_sha256",
+   "part_M",
+   "part_S",
+   "beside_not_tested"
+  ]
+ }
+}

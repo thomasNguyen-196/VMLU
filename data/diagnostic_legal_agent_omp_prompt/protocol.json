@@ -1,0 +1,254 @@
+{
+ "protocol_id": "vmlu-diagnostic-legal-agent-omp-prompt",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-legal-agent-omp-prompt",
+ "purpose": "MC-117: OMPS, omp 18.0.0 as OMPF with --system-prompt set to dsh's system prompt for the model, for Qwen3.5-9B (MC-115's route) and MiMo-V2.6-Flash (MC-116's route), draws 1-2 on MC-115's 646 items: does omp's default system prompt carry the model x harness interaction (omp below dsh with Qwen, above with MiMo)?",
+ "arm": "OMPS",
+ "parts": {
+  "M": {
+   "items": 246,
+   "task": "multiple_choice",
+   "note": "134 Legal MC items on corpus_v1 and 112 VMLU law items on corpus_v2"
+  },
+  "S": {
+   "items": 400,
+   "task": "reading",
+   "note": "400 ViBidLQA items, closed-book, on corpus_v2"
+  }
+ },
+ "draws": [
+  1,
+  2
+ ],
+ "corpora": {
+  "v1": {
+   "folder": "all_res/diagnostic_legal_agent/corpus_v1",
+   "folder_sha256": "5f3240a216be2eb48c88fb7873d03076071ff7462a37bb627317b0ca70b4f3f3",
+   "datasets": [
+    "vi-multimodel-v1-legal-mc-146"
+   ],
+   "rebuild": false
+  },
+  "v2": {
+   "folder": "all_res/diagnostic_legal_agent_v2/corpus_v2",
+   "folder_sha256": "2b40c1c75650a9af9203922f0f6d7a7c9ff4a27203910f5c95133b9bd2897987",
+   "datasets": "other",
+   "rebuild": true
+  }
+ },
+ "workdir": "/work/van-ban-phap-luat",
+ "sources": {
+  "mc112": {
+   "card": "MC-112",
+   "protocol": "data/diagnostic_legal_agent/protocol.json",
+   "protocol_sha256": "42ec6e9b7ca1a54833f9660271ade3d9266afbfbb15db8cee1e5ccf6cd55787f",
+   "registration": "data/diagnostic_legal_agent/registration.json",
+   "registration_sha256": "e5a48051432e1b57adfa14e5caabdff4ea32bbcccebba2092a40bf69f01221d3",
+   "manifest": "data/diagnostic_legal_agent/manifest_v1.json",
+   "manifest_file_sha256": "ca4560d65419ed52d7e4d4daa4709367cbb9a787a3955a6317339282b4f87345"
+  },
+  "mc113": {
+   "card": "MC-113",
+   "protocol": "data/diagnostic_legal_agent_omp/protocol.json",
+   "protocol_sha256": "23965e31b48d152a7eeec2aed43e2b3dd490e41f2760d35405da19205f3cf889",
+   "registration": "data/diagnostic_legal_agent_omp/registration.json",
+   "registration_sha256": "4d2bfe0920053151169a892c4dc74e380fec870e1a536164a427ded5b6597745",
+   "manifest": "data/diagnostic_legal_agent_omp/manifest_v1.json",
+   "manifest_file_sha256": "a4c5eef0d009ce5317093a89b34aedd00c4b63d204a60a44c7e44cfc7d3bf6ee"
+  },
+  "mc114": {
+   "card": "MC-114",
+   "protocol": "data/diagnostic_legal_agent_v2/protocol.json",
+   "protocol_sha256": "c9cd7c9a15cf372959869a75c434f1229316a1206cae023b300e2570fdaf495b",
+   "registration": "data/diagnostic_legal_agent_v2/registration.json",
+   "registration_sha256": "6d4bd3b706cf460ad597e748f69dacd5104140f7986b3c1f3bda5ac70cb0ad97",
+   "manifest": "data/diagnostic_legal_agent_v2/manifest_v1.json",
+   "manifest_file_sha256": "7aa051ca08481cbc0d6c16264453b0c5c9dd0a0a8b7fb63b66db12bf78d7532e"
+  }
+ },
+ "mc115": {
+  "card": "MC-115",
+  "protocol": "data/diagnostic_legal_agent_draws/protocol.json",
+  "protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+  "manifest": "data/diagnostic_legal_agent_draws/manifest_v1.json",
+  "manifest_file_sha256": "217ceab48a3e2e49fbc9e8ca0326b812ec226460670dd5072ac93e7ffb7da218",
+  "use": "every OMPS task must equal MC-115's OMPF task of the same item"
+ },
+ "models": {
+  "qwen": {
+   "model_id": "Qwen3.5-9B-65K",
+   "profile_id": "qwen3-5-9b-65k-omps",
+   "route_card": "MC-115",
+   "base_protocol": "data/diagnostic_legal_agent_draws/protocol.json",
+   "base_protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+   "route": "IEC Qwen3.5-9B-65K through the openvpn3 member-shared-tcp tunnel; endpoint and key from .env OPENAI_BASE_URL and OPENAI_API_KEY; the in-tunnel resolver shim (--tunnel-dns 172.16.30.1); MC-115's omp proxy settings",
+   "prompt_file": "data/diagnostic_legal_agent_omp_prompt/dsh_system_prompt_qwen.txt",
+   "prompt_sha256": "d6bd65aa82408826439600dabebac6df2cc89635d5f97c25809870a218f80402",
+   "offline_capture_system_sha256": "b868301fac931575b14eb1cd119ed86096469e77078d883e5b09eeaaa5c7d4eb",
+   "system_prompt_sha256": "b868301fac931575b14eb1cd119ed86096469e77078d883e5b09eeaaa5c7d4eb",
+   "budget_tokens": 110000000
+  },
+  "mimo": {
+   "model_id": "mimo-v2.6-flash",
+   "profile_id": "mimo-v2-6-flash-omps",
+   "route_card": "MC-116",
+   "base_protocol": "data/diagnostic_legal_agent_mimo/protocol.json",
+   "base_protocol_sha256": "8eaf86f5ac35bf342be139678b76769b31e42b866b837a735dba8be73e895dfb",
+   "route": "OpenCode Go mimo-v2.6-flash, MC-116's headers and one x-opencode-session per try; MC-116's omp proxy settings and provider-error rules",
+   "prompt_file": "data/diagnostic_legal_agent_omp_prompt/dsh_system_prompt_mimo.txt",
+   "prompt_sha256": "54d89951230a8b4a14f8b9b231a480ddfca31cf1929169074b141bc165d62d6c",
+   "offline_capture_system_sha256": "32a4340550396808b3407169253b37ac0ad0c2d660257a1ea008fda45ad23937",
+   "system_prompt_sha256": "32a4340550396808b3407169253b37ac0ad0c2d660257a1ea008fda45ad23937",
+   "budget_tokens": 110000000
+  }
+ },
+ "reference": {
+  "mc111_scores": {
+   "card": "MC-111",
+   "path": "all_res/diagnostic_legal_select/run/qwen3-5-9b-65k-prospective/round1/scores.jsonl",
+   "sha256": "4e7556716f761c7a55baeb3bd6ed83939136fc9e073452a53f89b8c7aa0f52f0",
+   "arms": [
+    "B"
+   ]
+  },
+  "mc112_scores": {
+   "card": "MC-112",
+   "path": "all_res/diagnostic_legal_agent/run/qwen3-5-9b-65k-dsh/scores.jsonl",
+   "sha256": "01084c90f1cc3230892e6ee6ac3de12792183455200c6e3da79dd6210a2abe69",
+   "arms": [
+    "DSHF"
+   ]
+  },
+  "mc113_scores": {
+   "card": "MC-113",
+   "path": "all_res/diagnostic_legal_agent_omp/run/qwen3-5-9b-65k-omp/scores.jsonl",
+   "sha256": "303902b7b48035e3540c9a84e862b37d4b8825faf8c76699dac7b09dc75c103e",
+   "arms": [
+    "OMPF"
+   ]
+  },
+  "mc114_scores": {
+   "card": "MC-114",
+   "path": "all_res/diagnostic_legal_agent_v2/run/qwen3-5-9b-65k-legal-agent-v2/scores.jsonl",
+   "sha256": "793723d7b8d5b492e2beacecafcb130597c97a148e16d857af9b493bfe1137c3",
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B",
+    "C"
+   ]
+  },
+  "mc115_scores": {
+   "card": "MC-115",
+   "path": "all_res/diagnostic_legal_agent_draws/run/qwen3-5-9b-65k-legal-agent-draws/scores.jsonl",
+   "sha256": "654407b365314ce3367b4a8bf265d03f4c59b24a487bf9d1b5bb212f67774593",
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B",
+    "C"
+   ]
+  },
+  "mc116_scores": {
+   "card": "MC-116",
+   "path": "all_res/diagnostic_legal_agent_mimo/run/mimo-v2-6-flash-legal-agent/scores.jsonl",
+   "sha256": "18c86a134779fa859247fee54e963052169360eaafdaccb011b7d98d27a05cab",
+   "arms": [
+    "DSHF",
+    "OMPF",
+    "B",
+    "C"
+   ]
+  }
+ },
+ "scoring": {
+  "multiple_choice": "the frozen MC extractor and scorer (score_vi_multimodel) on the agent's final text or B's response",
+  "reading": "vi-reading-v3 (vi_reading_v3.rescore_row): token-F1 primary, EM and gold-token recall descriptive; vi-reading-v2 values kept beside",
+  "terminal_statuses_score": 0
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "stall": "a proxied stream that ends with no chunk naming a model is recorded as network (stream_stalled), not model_drift; an attempt that ends without an answer after one is technical and re-run by --resume",
+  "blocked_rows": "a row written without a request carries its run key, shard, lane, model id, protocol id, profile id and card id",
+  "launch": "one systemd-run --user unit per model; Qwen's with the VPN open for its whole run"
+ },
+ "smoke": {
+  "questions": [
+   {
+    "file": "data/diagnostic_legal_agent/smoke_questions_v1.json",
+    "id": "smoke-2",
+    "corpus": "v1"
+   },
+   {
+    "file": "data/diagnostic_legal_agent_v2/smoke_questions_v2.json",
+    "id": "smoke-s2",
+    "corpus": "v2"
+   }
+  ],
+  "arm": "OMPS",
+  "reports": {
+   "qwen": [
+    {
+     "path": "all_res/diagnostic_legal_agent_omp_prompt/smoke/qwen/20261120T143232Z/smoke_report.json",
+     "sha256": "fe4e289778f608c42d9784723088bd67c735dd83afde6e02ec91f769df1dae2a"
+    }
+   ],
+   "mimo": [
+    {
+     "path": "all_res/diagnostic_legal_agent_omp_prompt/smoke/mimo/20261120T143032Z/smoke_report.json",
+     "sha256": "8dc9d37b559f67fce53673a0f8c13841cccf66f054688ec86e75b65f1f7c9112"
+    }
+   ]
+  },
+  "budget_basis": {
+   "qwen": "Design §5: the real OMPF tokens per attempt, scaled by the smoke ratio, times 1.5. MC-115's OMPF used 93,028,797 tokens in 1,292 attempts (72,004 each). On the same two smoke questions OMPS used 21,916 tokens (8,230 + 13,686) against OMPF's 28,556 in MC-115's smoke report 46d24a6b (8,807 + 19,749): ratio 0.7675. 72,004 x 1,292 x 0.7675 x 1.5 = 107.1 million; rounded up, 110 million.",
+   "mimo": "Design §5: the real OMPF tokens per attempt, scaled by the smoke ratio, times 1.5. MC-116's OMPF used 103,726,564 tokens in 1,296 attempts (80,036 each). On the same two smoke questions OMPS used 58,978 tokens (20,514 + 38,464) against OMPF's 91,066 in MC-116's smoke report a4bafda5 (37,850 + 53,216): ratio 0.6476. 80,036 x 1,292 x 0.6476 x 1.5 = 100.5 million; rounded up, 110 million."
+  },
+  "note": "2026-11-20, with the owner's go: both smoke questions completed for both models, with no stall; the first system message was dsh's prompt plus omp's blocks and equalled the offline capture (Qwen b868301f, 1,104 characters; MiMo 32a43405, 1,108); response models Qwen3.5-9B-65K and mimo-v2.6-flash; body keys as OMPF. MiMo's smoke ran first; Qwen's ran with the VPN open, closed afterwards."
+ },
+ "analysis": {
+  "plan_id": "diagnostic-legal-agent-omp-prompt",
+  "alpha": 0.05,
+  "multiplicity": "holm over P1-P3 within each part",
+  "item_score": "mean over draws 1-2",
+  "bootstrap": {
+   "resamples": 2000,
+   "seed": 7
+  },
+  "sign_flip": {
+   "resamples": 20000,
+   "seed": 7
+  },
+  "part_M": {
+   "metric": "correct",
+   "margin_points": 2.24
+  },
+  "part_S": {
+   "metric": "token_f1 (vi-reading-v3), in points",
+   "margin_points": 0.0
+  },
+  "tests": {
+   "P1": "Qwen OMPS - OMPF",
+   "P2": "MiMo OMPS - OMPF",
+   "P3": "per item, MiMo's (OMPS - OMPF) - Qwen's (OMPS - OMPF)"
+  },
+  "comparators": {
+   "qwen": {
+    "OMPF": "mc113_scores (Legal MC) and mc114_scores (other items), draws 1-2",
+    "DSHF": "mc112_scores and mc114_scores, draws 1-2"
+   },
+   "mimo": {
+    "OMPF": "mc116_scores, draws 1-2",
+    "DSHF": "mc116_scores, draws 1-2"
+   }
+  },
+  "beside_not_tested": [
+   "the remaining interaction: (OMPS - DSHF) of MiMo minus that of Qwen, against +14.63 (M) and +11.64 (S), with the share removed",
+   "P1 with Qwen's OMPF draws 1-4 (mc115_scores added)",
+   "action flows (harness_flow): per model and arm, model actions, what the harness showed back, harness-initiated actions, the answer's source, and the first divergence of OMPS from OMPF on the same item and draw; mechanism indicators: the share of read windows the model chose and the share of answers straight after a grep",
+   "the step split of analyze_legal_agent_interaction for OMPS",
+   "outcomes, requests, tool calls and tokens per model"
+  ]
+ }
+}
