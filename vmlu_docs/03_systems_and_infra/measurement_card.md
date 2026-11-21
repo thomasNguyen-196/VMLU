@@ -3018,3 +3018,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | Engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight across both harnesses and the direct arms, breaker after 4 consecutive technical failures, as MC-91 to MC-115 |
 | `details` | `docs/measurement_cards/MC-116-diagnostic-legal-agent-mimo.md` |
 | `outputs` | `all_res/diagnostic_legal_agent_mimo/run/mimo-v2-6-flash-legal-agent/`; no upload |
+
+## MC-117 — omp 18.0.0 with dsh's system prompt (OMPS) for Qwen3.5-9B (IEC) and MiMo-V2.6-Flash (OpenCode Go) / MC-115's 646 items (246 MC, 400 closed-book ViBidLQA), two draws: does omp's default system prompt carry the model × harness interaction?
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-117` |
+| `status` | Preregistered 2026-11-20 (+07), before benchmark-item requests of this card. A smoke test of four attempts (no benchmark item) ran once before registration: 4 of 4 complete |
+| `scope` | One new arm, OMPS: OMPF with omp's default system prompt body replaced by dsh's prompt for the same model, verbatim (`--system-prompt`; Qwen `d6bd65aa…`, MiMo `54d89951…`). omp still appends its `<workstation>` and `<critical>` blocks. MC-115's 646 items and tasks, draws 1–2, for Qwen3.5-9B-65K and mimo-v2.6-flash: 1,292 attempts per model, 2,584 in all (manifest `8952e672…`). Part M (246 MC, margin 2.24) and Part S (400 ViBidLQA, token-F1, vi-reading-v3), each with Holm over three tests: P1 Qwen's OMPS − OMPF; P2 MiMo's OMPS − OMPF; P3 the per-item model difference in that change. Comparators are the registered score files (MC-112 to MC-114 for Qwen, MC-116 for MiMo). Reported beside: the remaining interaction against +14.63 and +11.64, and the action flows (`harness_flow.py`) |
+| `harness / tools` | MC-113's omp 18.0.0 binary (`69065aef…`), sandbox and proxy subclass. Configuration MC-113's (`2a7a7063…`) for Qwen and MC-116's (`13c15b2a…`) for MiMo, plus `--system-prompt`. First system message pinned from the smoke test: Qwen `b868301f…` (1,104 characters), MiMo `32a43405…` (1,108). Tools glob, grep, read. The item's folder read-only at `/work/van-ban-phap-luat` |
+| `model / route` | Qwen: MC-115's route, IEC `Qwen3.5-9B-65K` through the openvpn3 `member-shared-tcp` tunnel, not thinking. MiMo: MC-116's route, OpenCode Go `mimo-v2.6-flash`, one `x-opencode-session` per try, thinking at the provider's default. Chat completions with streaming. Response model ids pinned |
+| `sampling / limits` | As each model's OMPF: temperature 1.0 added by the proxy; 4,096 completion tokens (Qwen) or 16,000 (MiMo); context 65,024; 300 s (Qwen) or 600 s (MiMo) per request; 30 requests and 3 hours per attempt; no retries. A stream that ends with no model id is a technical stall, not a model change. Budget guard 110,000,000 reported tokens per model |
+| `workers / scheduler` | One run per model, each a `systemd-run --user` unit; engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight per run, breaker after 4 consecutive technical failures, as MC-91 to MC-116 |
+| `details` | `docs/measurement_cards/MC-117-diagnostic-legal-agent-omp-prompt.md` |
+| `outputs` | `all_res/diagnostic_legal_agent_omp_prompt/run/{qwen3-5-9b-65k-omps,mimo-v2-6-flash-omps}/`; no upload |
