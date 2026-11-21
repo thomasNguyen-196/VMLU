@@ -63,4 +63,12 @@ Arm for every request task below: OMPS, which is omp 18.0.0 as OMPF with `--syst
   - **Part M:** P1 +4.27, no clear difference; P2 −2.85, OMPS worse; P3 −7.11, Holm 0.035, the prompt carries part of the interaction. The remaining interaction is 7.52 of 14.63 (48.6% removed).
   - **Part S:** P1 +5.74, OMPS better; P2 −9.00, OMPS worse; P3 −14.74, Holm 0.0002. The remaining interaction is −3.10 [−7.11, 0.85] of 11.64.
   - **Flows.** Qwen chose its read window in 81.8% of reads in OMPS, against 59.9% in OMPF and 79.3% in DSHF.
-- [ ] 5.2 Update the thesis draft and Notion, with the owner's go.
+- [x] 5.2 Update the thesis draft and Notion, with the owner's go.
+
+  (2026-11-21, owner "okay tiếp tục các công việc theo thứ tự".)
+  - **Thesis draft** (local, untracked by design): ch. 4 gains §4.8.4–4.8.10 (MC-115, MC-116, the step split, the action flows, MC-117, the exploratory follow-up) with tables 4.22–4.27; ch. 3 gains §3.7.8, §3.10 and §3.11 additions; ch. 1's contributions are updated.
+  - **Notion core page:** §21 added; the appendix is now §22, with these commits, hashes, cards and paths.
+  - **Exploratory follow-up:** `explore_legal_agent_omp_prompt.py` (4 tests), report `5e9c7111…`, doc `docs/research/legal-agent-omp-prompt-followup-2026-11-21.md`.
+    - The main finding is format compliance on MC. Scored strictly by the prompt's own rule ("only the letter"), omp beats dsh for both models (Qwen +12.6, MiMo +10.4), and the MC interaction is −2.2 [−9.8, 5.1]. omp's default prompt has "Format MUST match ask; prose brief"; dsh's has no format line.
+    - Verbatim first system messages, with a component table: `docs/research/system-prompts-2026-11-21/`.
+  - **Six-cell action flows:** `analyze_harness_flows_mc117.py` (1 test), report `56788384…`, doc `docs/research/legal-agent-flows-mc117-2026-11-21.md`. The registered `analyze_harness_flows.py` is unchanged (`0922c723…`).)
