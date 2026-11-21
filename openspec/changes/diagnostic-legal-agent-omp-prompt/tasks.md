@@ -45,10 +45,22 @@ Arm for every request task below: OMPS, which is omp 18.0.0 as OMPF with `--syst
 
 ## 4. Run (ask the owner first)
 
-- [ ] 4.1 Launch both models as `systemd-run --user` units (Qwen with the VPN), and use `--resume` after technical stops.
-- [ ] 4.2 Record the runs in the detail card.
+- [x] 4.1 Launch both models as `systemd-run --user` units (Qwen with the VPN), and use `--resume` after technical stops.
+
+  (2026-11-20 at 21:44 +07, after `15c3659`, owner's go "commit rồi chạy".)
+  - **Amendment 1 (`f329118`).** Budget guards raised to 250M (Qwen) and 170M (MiMo): Qwen's OMPS used 1.76× OMPF's tokens. Only the guard changed; the condition stayed the same.
+  - **Resumes.** The relauncher resumed Qwen after the 110M pause and MiMo after 8 network failures.
+  - **Complete.** Qwen 1,292/1,292 at 03:50 and MiMo 1,292/1,292 at 05:16 on 2026-11-21. The VPN was closed.
+- [x] 4.2 Record the runs in the detail card.
+
+  (Run record appended 2026-11-21.)
 
 ## 5. Analysis and record
 
-- [ ] 5.1 Run the analysis once, and record the report's SHA-256 and the results.
+- [x] 5.1 Run the analysis once, and record the report's SHA-256 and the results.
+
+  (2026-11-21 about 05:20 +07, report `bfd544bd…`.)
+  - **Part M:** P1 +4.27, no clear difference; P2 −2.85, OMPS worse; P3 −7.11, Holm 0.035, the prompt carries part of the interaction. The remaining interaction is 7.52 of 14.63 (48.6% removed).
+  - **Part S:** P1 +5.74, OMPS better; P2 −9.00, OMPS worse; P3 −14.74, Holm 0.0002. The remaining interaction is −3.10 [−7.11, 0.85] of 11.64.
+  - **Flows.** Qwen chose its read window in 81.8% of reads in OMPS, against 59.9% in OMPF and 79.3% in DSHF.
 - [ ] 5.2 Update the thesis draft and Notion, with the owner's go.
