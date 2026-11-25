@@ -1,0 +1,202 @@
+{
+ "protocol_id": "vmlu-diagnostic-reading-agent",
+ "protocol_version": 1,
+ "change": "openspec/changes/diagnostic-reading-agent",
+ "purpose": "MC-118: the legal-agent design (DSHF, OMPF, OMPS and the direct arms C and O, two draws) on the 400 Reading-400 items, the agent finding each passage in a long-file corpus of every viSQuAD and Vi-DROP passage, for Qwen3.5-9B-65K (MC-115's route) and MiMo-V2.6-Flash (MC-116's route). Registered score: gold-token recall; token-F1 beside; a blind judge on a 600-answer sample.",
+ "arms": [
+  "DSHF",
+  "OMPF",
+  "OMPS",
+  "C",
+  "O"
+ ],
+ "draws": [
+  1,
+  2
+ ],
+ "items": {
+  "manifest": "data/eval_set_manifest.csv",
+  "manifest_sha256": "ba44c583b1f5ca83b4903bde3e36affcab9cec57676158c436c09507d9cd0abc",
+  "gold": "data/gold/review_gold_agreed.csv",
+  "gold_sha256": "b0fb3ce7439a00192cf3934933e5fcd88aec5664b5eeb2544a216d803e6a4fc8",
+  "loader": "vi_multimodel._load_reading400 (dataset ids vi-multimodel-v1-vi-squad-200 and vi-multimodel-v1-vi-drop-200)",
+  "count": 400
+ },
+ "sources": {
+  "squad": {
+   "file": "vmlu_squad_v1/vi_squad_benchmark_question_only.json",
+   "sha256": "bf92bb3da75caa246c236bb071d745be6f60f5ae01e2855f74d7c1ffaf8aa5d9"
+  },
+  "drop": {
+   "file": "vmlu_drop_v1/vi_drop_benchmark_3309_question_only.json",
+   "sha256": "b3e46758c9099a710141df2dddd5851b2f333123a5b2a835bdb2c23a7a658f42"
+  }
+ },
+ "corpus": {
+  "folder": "all_res/diagnostic_reading_agent/corpus_v1",
+  "folder_sha256": "cc9b461c0401413d464ce23fd3d0c3bb597e11eb879ecb6eaa9914a2730bbeb4",
+  "index": "data/diagnostic_reading_agent/corpus_index_v1.json",
+  "index_sha256": "67de96e1561611cedb56951a56ab3fb1f89c6efc05e751877da3033078eacb1d",
+  "passages": 2284,
+  "files": 46,
+  "group_size": 50,
+  "rebuild": true,
+  "layout": "every distinct context of the two source files, deduplicated on vi_multimodel.normalized_key, outer whitespace trimmed, ordered by the SHA-256 of that key, 50 to a file (bai-viet-NN.txt), each under '## Đoạn NNNN' and followed by a blank line; one sentence per line (diagnostic_reading_agent.wrap: the whitespace after . ! ? … becomes a line break, a longer sentence breaks at its last space before 600 characters), so only whitespace changes and no line reaches omp's 768-character line cut",
+  "line_layout_decision": "owner, 2026-11-25: 'Mỗi câu một dòng (Recommended)', after the paging check found omp cutting 19% of the one-line passages at 768 characters (the legal corpus: 0.3%) and showing 200-line files whole"
+ },
+ "workdir": "/work/bai-viet",
+ "prompts": {
+  "file": "data/diagnostic_reading_agent/agent_prompts_v1.json",
+  "sha256": "3f0a2c202e6558efeb76bfdc0fd6b631dc35ecc6be4b479dc32f1f936b33c7bd"
+ },
+ "models": {
+  "qwen": {
+   "model_id": "Qwen3.5-9B-65K",
+   "profile_id": "qwen3-5-9b-65k-reading-agent",
+   "route_card": "MC-115",
+   "base_protocol": "data/diagnostic_legal_agent_draws/protocol.json",
+   "base_protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+   "route": "IEC Qwen3.5-9B-65K through the openvpn3 member-shared-tcp tunnel; endpoint and key from .env OPENAI_BASE_URL and OPENAI_API_KEY; the in-tunnel resolver shim (--tunnel-dns 172.16.30.1); MC-115's omp proxy settings",
+   "omps_prompt_file": "data/diagnostic_legal_agent_omp_prompt/dsh_system_prompt_qwen.txt",
+   "omps_prompt_sha256": "d6bd65aa82408826439600dabebac6df2cc89635d5f97c25809870a218f80402",
+   "pins": {
+    "dsh_system_sha256": "d6bd65aa82408826439600dabebac6df2cc89635d5f97c25809870a218f80402",
+    "ompf_system_sha256": "3d04a8857168d98333d2b6917594d1727ad30319f9db6d1a443e10c290c5ee90",
+    "omps_system_sha256": "b868301fac931575b14eb1cd119ed86096469e77078d883e5b09eeaaa5c7d4eb"
+   },
+   "budget_tokens": 110000000,
+   "direct": {
+    "api_protocol": "openai-chat-completions",
+    "stream": false,
+    "system_prompt": "Answer the user's question.",
+    "temperature": 1.0,
+    "max_completion_tokens": 4096,
+    "timeout_seconds": 300,
+    "sdk_retries": 0,
+    "expected_response_model": "Qwen3.5-9B-65K",
+    "note": "MC-115's direct route was IEC's Responses API; on 2026-11-25 it answered HTTP 500 to all 16 smoke requests (two tries) while chat completions served the agents. The owner chose ('Thử lại, lỗi nữa thì đổi route') chat completions on the same endpoint, with the campaign's system prompt, temperature, cap and gateway header."
+   }
+  },
+  "mimo": {
+   "model_id": "mimo-v2.6-flash",
+   "profile_id": "mimo-v2-6-flash-reading-agent",
+   "route_card": "MC-116",
+   "base_protocol": "data/diagnostic_legal_agent_mimo/protocol.json",
+   "base_protocol_sha256": "8eaf86f5ac35bf342be139678b76769b31e42b866b837a735dba8be73e895dfb",
+   "route": "OpenCode Go mimo-v2.6-flash, MC-116's headers and one x-opencode-session per try; MC-116's omp proxy settings and provider-error rules",
+   "omps_prompt_file": "data/diagnostic_legal_agent_omp_prompt/dsh_system_prompt_mimo.txt",
+   "omps_prompt_sha256": "54d89951230a8b4a14f8b9b231a480ddfca31cf1929169074b141bc165d62d6c",
+   "pins": {
+    "dsh_system_sha256": "54d89951230a8b4a14f8b9b231a480ddfca31cf1929169074b141bc165d62d6c",
+    "ompf_system_sha256": "616bebaf0a0bb1562ec72683c4665b62f58f4bc4ba092d855d489da006a36174",
+    "omps_system_sha256": "32a4340550396808b3407169253b37ac0ad0c2d660257a1ea008fda45ad23937"
+   },
+   "budget_tokens": 85000000,
+   "direct": {
+    "api_protocol": "openai-chat-completions",
+    "route": "MC-116's direct request (run_legal_agent_mimo.make_direct_request): its system prompt, temperature 1.0, cap 16,000 and one session per attempt"
+   }
+  }
+ },
+ "scoring": {
+  "prediction": "vi-reading-v3: the line after the last final-answer label, * and backticks deleted",
+  "registered": "gold-token recall R (thesis (3.11), run_legal_agent_v2.token_recall)",
+  "continuity": "vi-reading-v3 token-F1",
+  "beside": "EM-v3",
+  "item_score": "mean over the item's two draws in each arm",
+  "terminal_statuses_score": 0
+ },
+ "operational": {
+  "max_in_flight": 4,
+  "stop_after_timeouts": 4,
+  "stall": "a proxied stream that ends with no chunk naming a model is recorded as network (stream_stalled), not model_drift; an attempt that ends without an answer after one is technical and re-run by --resume",
+  "blocked_rows": "a row written without a request carries its run key, shard, lane, model id, protocol id, profile id and card id",
+  "workdir": "the registered MC-112 and MC-113 runners mount the folder at their module constant WORKDIR; this card sets that constant (and omp's --cwd) to /work/bai-viet in its own process, without editing them",
+  "launch": "one systemd-run --user unit per model; Qwen's with the VPN open for its whole run"
+ },
+ "smoke": {
+  "questions": "data/diagnostic_reading_agent/smoke_questions_v1.json",
+  "questions_sha256": "7301237f7d4e26e94b0a4886dd214cdc626aee5fb96839ce8724a16ef7888395",
+  "reports": {
+   "mimo": [
+    {
+     "path": "all_res/diagnostic_reading_agent/smoke/mimo/20261125T151700Z/smoke_report.json",
+     "sha256": "b07626748bf7ac829a4c7cbfa2f01608a3d23ff85ef90139e030b89310ca1b75"
+    }
+   ],
+   "qwen": [
+    {
+     "path": "all_res/diagnostic_reading_agent/smoke/qwen/20261125T151712Z/smoke_report.json",
+     "sha256": "f4e476d5cbafeadee84058892689ca5b91cdf19b0aa98e8704a6909b65103d6c"
+    },
+    {
+     "path": "all_res/diagnostic_reading_agent/smoke/qwen/20261125T152648Z/smoke_report.json",
+     "sha256": "4839248ed0137505bcaca9ca4ffa4e272420299c9b7a91ccbbefdb86cf9aacc3"
+    },
+    {
+     "path": "all_res/diagnostic_reading_agent/smoke/qwen/20261125T152732Z/smoke_report.json",
+     "sha256": "669076035691be37506707b92ab3f6ba9e7e4b107aa01d932d37e37a7bb62c0b"
+    }
+   ]
+  },
+  "budget_basis": "mean reported tokens per smoke attempt, per arm (later reports replacing earlier ones for the same question and arm), x 800 attempts per arm, summed over the five arms, x 1.5, rounded up. Qwen: DSHF 7,325, OMPF 11,470, OMPS 68,850, C 74, O 357 -> 70,460,200 x 1.5 = 105,690,300 -> 110,000,000. MiMo: DSHF 13,474, OMPF 23,975, OMPS 28,857, C 273, O 435 -> 53,611,400 x 1.5 = 80,417,100 -> 85,000,000. Four smoke questions per arm are a small sample (one Qwen OMPS attempt used 248,524 tokens); MC-117's budget-amendment hook stays",
+  "note": "4 questions outside Reading-400 whose passages no Reading-400 item uses, once per arm and model (40 attempts), with the owner's go; it sets the system-prompt pins in /work/bai-viet and the budgets. Run 2026-11-25 with the owner's go ('okay'): MiMo 20/20 complete; Qwen 12/12 agent attempts complete, and its C and O got HTTP 500 from IEC's Responses API twice (8 + 8), so on the owner's choice they moved to chat completions (models.qwen.direct) and completed 8/8. Every first system message equals the legal cards' pins; omp paged corpus files"
+ },
+ "judge": {
+  "rubric": "docs/research/reading-judge-2026-11-25/plan.md",
+  "rubric_sha256": "ac99f17e042e93307d6bff0c1c60ef38370d4d791d019e078c0f9ece5c762e0c",
+  "sample": "data/diagnostic_reading_agent/judge_sample_v1.json",
+  "sample_sha256": "fd6090a33366af66df4ba09eaeb91b4e295c7d114ef2c20875eb6cdf65c93e4a",
+  "cells": [
+   "qwen:DSHF",
+   "qwen:OMPF",
+   "qwen:OMPS",
+   "mimo:DSHF",
+   "mimo:OMPF",
+   "mimo:OMPS"
+  ],
+  "draw": 1,
+  "judges": "four fresh Claude Opus 5.5 instances on blind shards (passage, question, gold, the six answers in a seeded random order), each shard repeating 15 items of the next",
+  "flag_rule_points": 5
+ },
+ "analysis": {
+  "plan": "diagnostic-reading-agent",
+  "report": "all_res/diagnostic_reading_agent/analysis/report.json",
+  "tests": {
+   "H1": "qwen OMPF - DSHF",
+   "H2": "mimo OMPF - DSHF",
+   "H3": "iota = H2 - H1 per item",
+   "H4": "P3 = (OMPS - OMPF)_mimo - (OMPS - OMPF)_qwen per item"
+  },
+  "families": {
+   "primary": "token_recall",
+   "continuity": "token_f1"
+  },
+  "holm": "over H1-H4 within each family",
+  "statistics": {
+   "difference": "mean per-item difference in points",
+   "bootstrap": {
+    "resamples": 2000,
+    "seed": 7,
+    "level": 0.95
+   },
+   "sign_flip": {
+    "resamples": 20000,
+    "seed": 7,
+    "sides": 2
+   },
+   "margin": 0
+  },
+  "retrievability": "data/diagnostic_reading_agent/retrievability_v1.json",
+  "retrievability_sha256": "9df2365a6fee6b32b28446ecd7888eedb88caf673cd6e5d92fcc13bf1ec4b7f8",
+  "flagged_golds": [
+   "vi-multimodel-v1-vi-squad-200:316",
+   "vi-multimodel-v1-vi-squad-200:2370",
+   "vi-multimodel-v1-vi-squad-200:2435",
+   "vi-multimodel-v1-vi-drop-200:1723",
+   "vi-multimodel-v1-vi-drop-200:2216",
+   "vi-multimodel-v1-vi-drop-200:2741",
+   "vi-multimodel-v1-vi-drop-200:7048"
+  ]
+ }
+}

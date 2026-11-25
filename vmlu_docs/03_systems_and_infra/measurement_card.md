@@ -3032,3 +3032,17 @@ Use separate MC-85 artifacts and preserve older MiMo OMP/default-thinking condit
 | `workers / scheduler` | One run per model, each a `systemd-run --user` unit; engine of 12 lanes (4 shards x 3 lanes), at most 4 attempts in flight per run, breaker after 4 consecutive technical failures, as MC-91 to MC-116 |
 | `details` | `docs/measurement_cards/MC-117-diagnostic-legal-agent-omp-prompt.md` |
 | `outputs` | `all_res/diagnostic_legal_agent_omp_prompt/run/{qwen3-5-9b-65k-omps,mimo-v2-6-flash-omps}/`; no upload |
+
+## MC-118 — DSHF, OMPF, OMPS and direct C/O for Qwen3.5-9B (IEC) and MiMo-V2.6-Flash (OpenCode Go) / the 400 Reading-400 items, passages found in a long-file reading corpus, two draws: do the legal-agent findings hold on general reading?
+
+| Field | Condition |
+| --- | --- |
+| `card_id` | `MC-118` |
+| `status` | Preregistered 2026-11-25 (+07), before benchmark-item requests of this card. A smoke test on four questions outside Reading-400 ran before registration: MiMo 20/20 complete; Qwen 12/12 agent attempts complete, and its C/O moved to chat completions after IEC's Responses API answered HTTP 500 (16/16), then 8/8 complete |
+| `scope` | Reading-400 (viSQuAD 200, Vi-DROP 200; reviewed golds). Five arms × two draws per model: DSHF, OMPF, OMPS (omp with dsh's system prompt, as MC-117), C (closed-book, no tools), O (the item's passage given). 4,000 attempts per model, 8,000 in all (manifest `32c70e10…`). The agent gets MC-96's closed-book prompt after a reading DSHF instruction and must find the passage. Registered score gold-token recall R, token-F1 beside; H1 Qwen OMPF−DSHF, H2 MiMo OMPF−DSHF, H3 the interaction, H4 P3, Holm over four per family; a blind Opus 5.5 judge on 600 draw-1 answers |
+| `harness / tools` | MC-112's dsh 0.2.2-rc.1 and MC-113's omp 18.0.0, sandboxes, relay and proxies unedited; each model's registered profile/configuration (MC-115 Qwen, MC-116 MiMo). Tools glob, grep, read. Corpus `reading_corpus_v1` (`cc9b461c…`: 2,284 passages, 46 files, one sentence per line) read-only at `/work/bai-viet`, set in-process. First system messages pinned, equal to the legal cards': Qwen `d6bd65aa…` / `3d04a885…` / `b868301f…`, MiMo `54d89951…` / `616bebaf…` / `32a43405…` (DSHF / OMPF / OMPS) |
+| `model / route` | Qwen: IEC `Qwen3.5-9B-65K` through the openvpn3 `member-shared-tcp` tunnel, chat completions for agents and for C/O (not MC-115's Responses route), not thinking. MiMo: OpenCode Go `mimo-v2.6-flash`, one `x-opencode-session` per try, MC-116's direct request for C/O, thinking at the provider's default. Response models pinned |
+| `sampling / limits` | Temperature 1.0; caps 4,096 (Qwen) and 16,000 (MiMo); context 65,024; 30 requests and 3 hours per agent attempt. Stalls are technical; halted rows keep their identity. Budget guards 110,000,000 (Qwen) and 85,000,000 (MiMo) reported tokens, amendable upward only |
+| `workers / scheduler` | One run per model, each a `systemd-run --user` unit; 12 lanes (4 shards × 3 lanes), at most 4 attempts in flight, breaker after 4 consecutive technical failures |
+| `details` | `docs/measurement_cards/MC-118-diagnostic-reading-agent.md` |
+| `outputs` | `all_res/diagnostic_reading_agent/run/{qwen3-5-9b-65k-reading-agent,mimo-v2-6-flash-reading-agent}/`; no upload |

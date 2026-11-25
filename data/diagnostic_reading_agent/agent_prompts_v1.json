@@ -1,0 +1,14 @@
+{
+ "version": "diagnostic-reading-agent-prompts-v1",
+ "purpose": "MC-118's prompts. The DSHF instruction is MC-112's DSHF sentence structure with legal texts replaced by articles (owner-approved 2026-11-25); the separator and MC-96's closed-book prompt are read from their own files by SHA-256 and reused byte for byte. An agent task (DSHF, OMPF, OMPS) is the instruction, the separator, then the closed-book prompt on the item's question; C sends the closed-book prompt alone; O sends the item's frozen reading prompt with its own passage.",
+ "DSHF": "Thư mục làm việc hiện tại chứa các bài viết tiếng Việt, mỗi file `.txt` gồm nhiều đoạn văn. Trước khi trả lời, bạn phải dùng công cụ grep để tìm và công cụ read để đọc đoạn văn dùng để trả lời câu hỏi dưới đây. Chỉ trả lời sau khi đã đọc đoạn văn đó.",
+ "separator": {
+  "file": "data/diagnostic_legal_agent/agent_prompts_v1.json",
+  "sha256": "3f760fd1d7aa2ac4326b0301be35c41cea655830ce00ed52ad102a0d09e79508"
+ },
+ "closed_book": {
+  "file": "data/diagnostic_k2/protocol.json",
+  "key": "prompts.closed_book",
+  "sha256": "a8c5d481739dace26b88f7b5c36086315f5c07f471944f2da4bde7b63fb8ccdc"
+ }
+}

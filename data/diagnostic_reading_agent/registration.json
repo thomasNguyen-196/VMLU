@@ -1,0 +1,66 @@
+{
+ "card_ids": {
+  "reading-agent": "MC-118"
+ },
+ "card_files": {
+  "reading-agent": "docs/measurement_cards/MC-118-diagnostic-reading-agent.md"
+ },
+ "frozen": {
+  "corpus_folder_sha256": "cc9b461c0401413d464ce23fd3d0c3bb597e11eb879ecb6eaa9914a2730bbeb4",
+  "corpus_index_sha256": "67de96e1561611cedb56951a56ab3fb1f89c6efc05e751877da3033078eacb1d",
+  "manifest_sha256": "32c70e10801747b0bfc1a66e6cb173b29964f77297936bd1b9ae9fb1a39165d9",
+  "mimo_base_protocol_sha256": "8eaf86f5ac35bf342be139678b76769b31e42b866b837a735dba8be73e895dfb",
+  "mimo_omps_prompt_sha256": "54d89951230a8b4a14f8b9b231a480ddfca31cf1929169074b141bc165d62d6c",
+  "prompts_sha256": "3f0a2c202e6558efeb76bfdc0fd6b631dc35ecc6be4b479dc32f1f936b33c7bd",
+  "qwen_base_protocol_sha256": "9df2bd5f102ff75338a3bc5b4dd884c585e4a66187d2fd89ccce9684e90adbcd",
+  "qwen_omps_prompt_sha256": "d6bd65aa82408826439600dabebac6df2cc89635d5f97c25809870a218f80402",
+  "reading400_gold_sha256": "b0fb3ce7439a00192cf3934933e5fcd88aec5664b5eeb2544a216d803e6a4fc8",
+  "reading400_manifest_sha256": "ba44c583b1f5ca83b4903bde3e36affcab9cec57676158c436c09507d9cd0abc",
+  "reading_agent_protocol_sha256": "984abc0642041f5e2b22f00efaed34bd767f90141cb3e3eec02d64b023978d29",
+  "source_drop_sha256": "b3e46758c9099a710141df2dddd5851b2f333123a5b2a835bdb2c23a7a658f42",
+  "source_squad_sha256": "bf92bb3da75caa246c236bb071d745be6f60f5ae01e2855f74d7c1ffaf8aa5d9"
+ },
+ "manifest_file_sha256": "abaf2f9778fcd69599b78193cd59ae5b4da494174441c995367b6a411a048bd9",
+ "data_files_sha256": {
+  "data/diagnostic_reading_agent/protocol.json": "984abc0642041f5e2b22f00efaed34bd767f90141cb3e3eec02d64b023978d29",
+  "data/diagnostic_reading_agent/agent_prompts_v1.json": "3f0a2c202e6558efeb76bfdc0fd6b631dc35ecc6be4b479dc32f1f936b33c7bd",
+  "data/diagnostic_reading_agent/corpus_index_v1.json": "67de96e1561611cedb56951a56ab3fb1f89c6efc05e751877da3033078eacb1d",
+  "data/diagnostic_reading_agent/retrievability_v1.json": "9df2365a6fee6b32b28446ecd7888eedb88caf673cd6e5d92fcc13bf1ec4b7f8",
+  "data/diagnostic_reading_agent/smoke_questions_v1.json": "7301237f7d4e26e94b0a4886dd214cdc626aee5fb96839ce8724a16ef7888395",
+  "data/diagnostic_reading_agent/judge_sample_v1.json": "fd6090a33366af66df4ba09eaeb91b4e295c7d114ef2c20875eb6cdf65c93e4a",
+  "docs/research/reading-judge-2026-11-25/plan.md": "ac99f17e042e93307d6bff0c1c60ef38370d4d791d019e078c0f9ece5c762e0c",
+  "data/diagnostic_legal_agent_omp_prompt/dsh_system_prompt_qwen.txt": "d6bd65aa82408826439600dabebac6df2cc89635d5f97c25809870a218f80402",
+  "data/diagnostic_legal_agent_omp_prompt/dsh_system_prompt_mimo.txt": "54d89951230a8b4a14f8b9b231a480ddfca31cf1929169074b141bc165d62d6c"
+ },
+ "smoke_reports_sha256": {
+  "qwen/20261125T151712Z": "f4e476d5cbafeadee84058892689ca5b91cdf19b0aa98e8704a6909b65103d6c",
+  "qwen/20261125T152648Z": "4839248ed0137505bcaca9ca4ffa4e272420299c9b7a91ccbbefdb86cf9aacc3",
+  "qwen/20261125T152732Z": "669076035691be37506707b92ab3f6ba9e7e4b107aa01d932d37e37a7bb62c0b",
+  "mimo/20261125T151700Z": "b07626748bf7ac829a4c7cbfa2f01608a3d23ff85ef90139e030b89310ca1b75"
+ },
+ "code": {
+  "code_benchmark/run_reading_agent.py": "434d499b7968d3d2a68adbf5ae1cc3992bb613626fb95e935b531f74ecba60bc",
+  "code_benchmark/diagnostic_reading_agent.py": "bd169d3493ec684659916b768e04bf9db8ae67fc0bcc827cc527d787b468a294",
+  "code_benchmark/analyze_reading_agent.py": "b11db4869f7b22fda5745ccd7830364c103211bb3b9e46891b3b9687cd8c08cb",
+  "code_benchmark/judge_reading400.py": "e5ef3917262cb76d50f6960568ca63e78baa1a725d1b2fee952601a798633458",
+  "code_benchmark/harness_flow.py": "f2e8c2196b18e9319db76786ad2bb262ada1ab7d5dc13d56a069d893999937ce",
+  "code_benchmark/analyze_legal_agent_omp_prompt.py": "b9bc77ab5589671f244e4e656f0f23fd73c300ffba462a3429b761210afd0a53",
+  "code_benchmark/diagnostic_prospective.py": "42c76a7a4e40a606c3c089fc3f73a017d549b1b9fbc0606391b835d2690d5885",
+  "code_benchmark/vi_reading_v3.py": "1fe91cb9181370cfbebb7e5c89380b6527de398da8ab1fb7e3b59cbd85028bd4",
+  "code_benchmark/run_legal_agent_v2.py": "b6b4bc52a0337d0594962305d92a89266a8775b4bf22a9ccc86813c873b72912"
+ },
+ "analysis": {
+  "plan_id": "diagnostic-reading-agent",
+  "report_keys": [
+   "plan_id",
+   "card_id",
+   "manifest_sha256",
+   "scores_sha256",
+   "item_score",
+   "holm",
+   "families",
+   "beside_not_tested"
+  ]
+ },
+ "amendments": []
+}

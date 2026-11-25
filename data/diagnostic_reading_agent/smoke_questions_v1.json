@@ -1,0 +1,33 @@
+{
+ "version": "reading-agent-smoke-v1",
+ "questions": [
+  {
+   "id": "smoke-squad-1410",
+   "source": "squad",
+   "item_id": "1410",
+   "question": "Nhà máy nào đã chế tạo khẩu OTs-14 Groza?",
+   "passage_id": "97a10aeac822f72b27c19d5e52627705a1aa893a5e7cc74dff8f0c84e88f2dd2"
+  },
+  {
+   "id": "smoke-squad-2824",
+   "source": "squad",
+   "item_id": "2824",
+   "question": "Diện tích Bắc Mỹ Bắc trải qua mảng kiến tạo Bắc Mỹ không chỉ bao gồm Bắc Mỹ mà còn những vùng nào khác nữa?",
+   "passage_id": "95660d8fb929a7243a8dc6cdb2e641691c74573280f6d63793f343a17e4c5fa9"
+  },
+  {
+   "id": "smoke-drop-5420",
+   "source": "drop",
+   "item_id": "5420",
+   "question": "Phần nào của bộ phim đã được lồng tiếng thay vì chỉ thuyết minh?",
+   "passage_id": "40c9adb570d456562d92f23159bf70ab19f17fac4be15311900a7def32e75ad1"
+  },
+  {
+   "id": "smoke-drop-4243",
+   "source": "drop",
+   "item_id": "4243",
+   "question": "Tổng số tập của phần một và phần hai so với tổng số tập của phần ba chênh lệch bao nhiêu tập?",
+   "passage_id": "7346f2f38fd3cc9d3eddcbc8d40a2065283db6e94e7d0c0d734b5f50bedf1176"
+  }
+ ]
+}
