@@ -62,5 +62,17 @@
    "beside_not_tested"
   ]
  },
- "amendments": []
+ "amendments": [
+  {
+   "id": "MC-118 amendment 1",
+   "rule": "budget_tokens",
+   "date": "2026-11-26",
+   "budget_tokens": {
+    "qwen": 110000000,
+    "mimo": 140000000
+   },
+   "basis": "At 00:34 +07 on 2026-11-26 (1.93 h into launch 1), over every attempt so far, mean reported tokens per attempt were: MiMo DSHF 15.3k, OMPF 48.1k, OMPS 50.0k, C 0.5k, O 0.5k (n 188-203 per arm), against the smoke test's 13.5k, 24.0k, 28.9k, 0.3k, 0.4k. Projected total: 91.6M, above the 85M guard. MiMo would pause at about 93% of its attempts. New guard by the registered rule (projection x 1.5, rounded up): 137.4M -> 140M. Qwen projects 46.7M and keeps 110M. The guard only decides when a run stops: no inference setting, item, prompt or limit changes, and no attempt is re-run because of it. Scores were not looked at.",
+   "authorized": "owner, 2026-11-26 about 00:40 +07: 'Amendment nâng trần 140M (Recommended)'"
+  }
+ ]
 }
