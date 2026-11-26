@@ -93,6 +93,15 @@
    "basis": "Launch 2 (05:23 +07) refused the checkpoint with 'checkpoint condition drift': the engine requires every row's model_id to equal the run's, and the blocked direct row had none. MC-117's identity fix covered the agent arms only. No inference setting, item, prompt or limit changes.",
    "runner_sha256": "e878203a715c82d232669429c7a6439f4c2833e46b1c3049d2b0ca553c0a2f37",
    "authorized": "owner, 2026-11-26 about 11:25 +07: 'Sửa lỗi + trần 350M, chạy tiếp (Recommended)'"
+  },
+  {
+   "id": "MC-118 amendment 4",
+   "rule": "pin_rule",
+   "date": "2026-11-26",
+   "change": "run_reading_agent.py: the system-prompt pin check reads the two host lines of omp's <workstation> block ('- OS: ' and '- Kernel: ') as the registered host's (linux 7.0.0-43-generic, #43-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:25:25 UTC 2026). Every other byte must still equal the pin. The registered pins hash unchanged under this reading, and dsh's prompt has no such lines. omp still sends the host's real lines, so MiMo's omp attempts from launch 5 on show 7.0.0-44 there.",
+   "basis": "The host installed kernel 7.0.0-44 and rebooted at 11:23:36 +07 on 2026-11-26, killing launch 3 at 2,564 complete. Launch 4 (11:32) was refused by the omp proxy on every OMPS retry: 'system prompt sha256 f9dfeea9… is not the registered one'. A diff against the pinned prompt shows only the OS and Kernel lines changed. All 4,000 Qwen attempts and MiMo's first 2,565 ran on 7.0.0-43.",
+   "runner_sha256": "ecf672d13bc5cee0a3b7e7917338210599a0b07b2bcf5e7426a06b9eff100388",
+   "authorized": "owner, 2026-11-26 about 11:40 +07: 'ghi phiên bản kernel làm gì, cứ chạy tiếp trên kernel mới thôi. Việc kernel của máy ta không cho vào'"
   }
  ]
 }

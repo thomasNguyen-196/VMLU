@@ -101,6 +101,18 @@ class TestRunner(unittest.TestCase):
         finally:
             rr.set_workdir(before)
 
+    def test_the_pin_ignores_only_the_kernel_lines(self) -> None:
+        old = "x\n<workstation>\n- OS: linux 7.0.0-43-generic\n- Kernel: #43-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 " \
+              "13:25:25 UTC 2026\n- CPU: c\n</workstation>\ny"
+        new = old.replace("7.0.0-43", "7.0.0-44").replace("#43-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:25:25",
+                                                             "#44-Ubuntu SMP PREEMPT_DYNAMIC Fri Nov  6 02:38:04")
+        pin = v1.sha256_bytes(old.encode())
+        self.assertEqual(rr.kernel_blind_system_sha256([{"role": "system", "content": new}]), pin)
+        self.assertEqual(rr.kernel_blind_system_sha256([{"role": "system", "content": old}]), pin)
+        self.assertNotEqual(rr.kernel_blind_system_sha256([{"role": "system", "content": new.replace("CPU: c", "CPU: d")}]),
+                            pin)
+        self.assertIsNone(rr.kernel_blind_system_sha256([{"role": "user", "content": old}]))
+
     def test_omps_is_ompf_plus_the_system_prompt(self) -> None:
         protocol = ra.load_protocol()
         for model in ra.MODELS:

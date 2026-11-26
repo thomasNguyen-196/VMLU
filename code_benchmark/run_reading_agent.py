@@ -104,6 +104,35 @@ def set_workdir(path: str = ra.WORKDIR) -> None:
     la.WORKDIR = rla.WORKDIR = rlo.WORKDIR = path
 
 
+# Amendment 4 (owner, 2026-11-26): the host's kernel is not part of the condition. omp writes the host's OS release
+# and kernel build into its <workstation> block, so a kernel update changes omp's system prompt by those two lines.
+# The pin check reads them as the registered host's lines; every other byte must still match the pin.
+KERNEL_LINES = {"- OS: ": "- OS: linux 7.0.0-43-generic",
+                "- Kernel: ": "- Kernel: #43-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:25:25 UTC 2026"}
+
+
+def kernel_blind_text(text: str) -> str:
+    lines = text.split("\n")
+    for index, line in enumerate(lines):
+        for prefix, registered in KERNEL_LINES.items():
+            if line.startswith(prefix):
+                lines[index] = registered
+    return "\n".join(lines)
+
+
+def kernel_blind_system_sha256(messages: list[dict[str, Any]]) -> str | None:
+    """MC-113's `system_sha256` with the OS and Kernel lines read as the registered host's."""
+    first = messages[0] if messages else {}
+    if first.get("role") != "system":
+        return None
+    return v1.sha256_bytes(kernel_blind_text(rlo._text(first.get("content"))).encode("utf-8"))  # noqa: SLF001
+
+
+def set_kernel_blind_pins() -> None:
+    """MC-113's proxy check calls its module's `system_sha256`; this process reads it kernel-blind (amendment 4)."""
+    rlo.system_sha256 = kernel_blind_system_sha256
+
+
 def with_cwd(argv: list[str], workdir: str) -> list[str]:
     if argv.count("--cwd") != 1:
         raise _fail("omp's argument list must set --cwd exactly once")
@@ -768,6 +797,7 @@ def main(argv: list[str] | None = None) -> int:
     protocol = ra.load_protocol()
     spec = ra.model_spec(protocol, model)
     set_workdir(protocol["workdir"])
+    set_kernel_blind_pins()
     protocols = harness_protocols(protocol, model)
     harnesses, problems = check_harnesses(protocols)
     docs, folder_problems = check_folder(protocol, rebuild=not args.no_rebuild and not args.selftest)
