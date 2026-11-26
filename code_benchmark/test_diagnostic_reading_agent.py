@@ -148,6 +148,25 @@ class TestRunner(unittest.TestCase):
                          ("request_error", "budget_cap", 3, 1, "C"))
         for key in ("run_key", "profile_id", "protocol_id", "measurement_card_id", "phase"):
             self.assertTrue(row[key])
+
+    def test_a_blocked_direct_row_carries_the_model_id(self) -> None:
+        context = rr.AttemptContext(model="mimo", harnesses={}, protocols={}, docs=Path("."), output=Path("."),
+                                    proxies={}, session_header=None, profile_id="p", card_id="MC-118",
+                                    model_id="mimo-v2.6-flash")
+        item = v1.EvalItem("vi-multimodel-v1-vi-drop-200", "drop", "7", "C-r1", "reading", "count", "q", "p", "x", "g")
+        row = rr.blocked_row(item, context, "C", 0, 0, "budget_cap")
+        self.assertEqual((row["model_id"], row["protocol_id"]), ("mimo-v2.6-flash", ra.PROTOCOL_ID))
+
+    def test_budget_amendments_apply_in_order_and_only_raise(self) -> None:
+        spec = {"budget_tokens": 85}
+        keys = {"id": "a", "rule": "budget_tokens", "date": "d", "basis": "b", "authorized": "o"}
+        registration = {"amendments": [{**keys, "budget_tokens": {"mimo": 140}}, {"note": "other"},
+                                       {**keys, "budget_tokens": {"mimo": 350}}]}
+        self.assertEqual(rr.budget_tokens(spec, registration, "mimo"), 350)
+        self.assertEqual(rr.budget_tokens(spec, {"amendments": []}, "mimo"), 85)
+        with self.assertRaises(SystemExit):
+            rr.budget_tokens(spec, {"amendments": [{**keys, "budget_tokens": {"mimo": 140}},
+                                                   {**keys, "budget_tokens": {"mimo": 100}}]}, "mimo")
         self.assertIsInstance(threading.Event(), threading.Event)
 
 

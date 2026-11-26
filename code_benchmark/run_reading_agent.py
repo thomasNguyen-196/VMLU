@@ -228,6 +228,7 @@ class AttemptContext:
     profile_id: str
     card_id: str
     client: Any = None                 # the OpenAI client of the direct arms
+    model_id: str = ""                 # the engine's model id, carried by every row (amendment 3)
 
 
 def spec_key(arm: str) -> str:
@@ -264,7 +265,10 @@ def identity_row(item: v1.EvalItem, context: AttemptContext, arm: str, shard: in
            "measurement_card_id": context.card_id, "shard": shard, "lane": lane,
            "prompt_sha256": v1.sha256_bytes(item.prompt.encode("utf-8")), "raw_prompt": item.prompt,
            "raw_response": ""}
-    if harness != "direct":
+    if harness == "direct":
+        # amendment 3: a direct row written without a request carries the model id the engine checks on resume
+        row.update({"model_id": context.model_id, "transport": "direct-api"})
+    else:
         spec, proxy = context.protocols[spec_key(arm)]["harness"], context.proxies[spec_key(arm)]
         row.update({"model_id": proxy.model, "transport": "dsh-headless" if harness == "dsh" else "omp-json",
                     "api_protocol": spec["api_protocol"], "temperature_sent": proxy.temperature,
@@ -441,10 +445,22 @@ def load_registration(path: Path = ra.REGISTRATION_PATH) -> dict[str, Any]:
 
 
 def budget_tokens(spec: dict[str, Any], registration: dict[str, Any], model: str) -> int:
-    """MC-117's amendment hook: the protocol's budget, or a registered `budget_tokens` amendment that only raises it."""
+    """MC-117's amendment hook, for a sequence of amendments (MC-118 amendment 2): the protocol's budget, or the last
+    registered `budget_tokens` amendment. Each must have exactly MC-117's keys and an integer budget for the model no
+    lower than the protocol's or the previous amendment's."""
     if not isinstance(spec.get("budget_tokens"), int):
         raise _fail(f"no {model} budget_tokens is set")
-    return rlp.budget_tokens(spec, registration, model)
+    budget = int(spec["budget_tokens"])
+    for amendment in [a for a in registration.get("amendments") or []
+                      if isinstance(a, dict) and a.get("rule") == "budget_tokens"]:
+        value = (amendment.get("budget_tokens") or {}).get(model) if isinstance(amendment.get("budget_tokens"), dict) \
+            else None
+        if (set(amendment) != rlp.BUDGET_AMENDMENT_KEYS or not isinstance(value, int) or isinstance(value, bool)
+                or value < budget):
+            raise _fail(f"budget_tokens amendment {amendment.get('id')!r} must have exactly the keys "
+                        f"{sorted(rlp.BUDGET_AMENDMENT_KEYS)} and an integer budget for {model} no lower than {budget}")
+        budget = value
+    return budget
 
 
 def smoke_problems(protocol: dict[str, Any], model: str, root: Path = ROOT) -> list[str]:
@@ -829,7 +845,8 @@ def main(argv: list[str] | None = None) -> int:
     with OpenAI(base_url=route.endpoint, api_key=route.key, **direct_client_settings(model, route)) as client:
         context = AttemptContext(model=model, harnesses=harnesses, protocols=protocols, docs=docs, output=output,
                                  proxies=route.proxies, session_header=route.session_header,
-                                 profile_id=spec["profile_id"], card_id=card_id, client=client)
+                                 profile_id=spec["profile_id"], card_id=card_id, client=client,
+                                 model_id=spec["model_id"])
         # the engine hands `context` to the request function as its client, as in MC-114's to MC-117's runners
         pr.base.execute(output, manifest, rebuilt, items, condition, context,  # pyright: ignore[reportArgumentType]
                         resume, score_callback=score_callback(card_id, model), runner_path=Path(__file__))
