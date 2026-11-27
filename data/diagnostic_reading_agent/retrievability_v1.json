@@ -1,0 +1,1610 @@
+{
+ "method": "BM25 (k1 1.5, b 0.75) over the corpus passages with vi-reading tokens; the question as query",
+ "items": {
+  "vi-multimodel-v1-vi-squad-200:0": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:5": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:24": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:25": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:38": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:58": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:68": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:74": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:83": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:90": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:92": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:104": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:109": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:118": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:133": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:145": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:151": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:162": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:173": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:206": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:221": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:227": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:316": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:322": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:332": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:339": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:367": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:374": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:394": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:396": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:406": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:436": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:458": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:474": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:493": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:520": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:541": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:581": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:636": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:655": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:665": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:682": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:683": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:720": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:734": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:755": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:758": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:773": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-squad-200:774": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:779": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:790": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:799": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:803": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:832": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:868": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:884": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:898": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:916": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:939": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:950": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:952": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-squad-200:963": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:972": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:975": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:982": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1025": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1028": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1032": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1040": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1072": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1107": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1114": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1140": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1191": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1192": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1234": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1265": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1306": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-squad-200:1307": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1308": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-squad-200:1319": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1351": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1356": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1397": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1400": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1415": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1416": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1434": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1446": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1470": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1489": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1494": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1502": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1521": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1548": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1549": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1563": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1570": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1619": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1632": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1642": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1648": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1686": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1691": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1697": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1718": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1723": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1735": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-squad-200:1747": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1750": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1767": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1774": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1777": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1797": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1803": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1829": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1830": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1855": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1861": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1865": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1877": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1881": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1884": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1902": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1973": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1982": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:1996": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2017": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2031": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2041": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2061": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2071": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2090": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2134": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2174": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2196": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2250": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2251": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2276": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2288": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2347": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2370": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2371": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2372": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2399": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2422": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2435": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2437": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2461": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2480": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2501": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2539": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2579": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2595": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2600": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2607": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2611": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2629": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2635": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2641": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2666": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2698": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2708": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2738": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2741": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2742": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2792": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2799": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2805": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2816": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2817": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2841": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2850": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2856": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-squad-200:2866": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2886": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2902": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2921": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2941": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2950": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2968": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:2971": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3004": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3031": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3035": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3037": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3038": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3041": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3048": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3083": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3110": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3116": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3144": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3166": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3223": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3249": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3250": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3268": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3292": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-squad-200:3300": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:30": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:60": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:138": {
+   "rank": 10,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:174": {
+   "rank": 182,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:193": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:200": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:253": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:273": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:301": {
+   "rank": 22,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:316": {
+   "rank": 55,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:357": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:385": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:420": {
+   "rank": 26,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:444": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:514": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:583": {
+   "rank": 4,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:713": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:726": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:939": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:980": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:989": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:1039": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1105": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1137": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1288": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1435": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1467": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1495": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1512": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1573": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:1598": {
+   "rank": 2048,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:1646": {
+   "rank": 4,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:1652": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1689": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1699": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1706": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1723": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1753": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:1865": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:1870": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:1962": {
+   "rank": 4,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:1986": {
+   "rank": 19,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:2052": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2166": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2183": {
+   "rank": 10,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:2216": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2270": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2276": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2295": {
+   "rank": 26,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:2331": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:2395": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2430": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2462": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2522": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2531": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2662": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2701": {
+   "rank": 101,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:2741": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:2837": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:2989": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3008": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3051": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3069": {
+   "rank": 123,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:3101": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3166": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:3174": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3224": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3298": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3355": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3394": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:3411": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3415": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3493": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:3520": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:3815": {
+   "rank": 8,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:3916": {
+   "rank": 239,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:3964": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:4022": {
+   "rank": 33,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:4026": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4091": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4112": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4199": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4229": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4262": {
+   "rank": 135,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:4365": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:4402": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:4408": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4498": {
+   "rank": 8,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:4531": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4566": {
+   "rank": 5,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:4574": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4598": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:4622": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4697": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4698": {
+   "rank": 26,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:4724": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:4797": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:4857": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5039": {
+   "rank": 22,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:5057": {
+   "rank": 23,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:5135": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5164": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5179": {
+   "rank": 9,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:5218": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5298": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5336": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:5404": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5493": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5511": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5556": {
+   "rank": 17,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:5699": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5748": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5761": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:5868": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:5954": {
+   "rank": 4,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:5979": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6002": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6073": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6077": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6105": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6124": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6133": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6207": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6283": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6314": {
+   "rank": 23,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:6383": {
+   "rank": 17,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:6454": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6505": {
+   "rank": 17,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:6525": {
+   "rank": 37,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:6527": {
+   "rank": 10,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:6579": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:6593": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6607": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6643": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6755": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:6827": {
+   "rank": 55,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:6890": {
+   "rank": 51,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:6977": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7017": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7048": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7054": {
+   "rank": 15,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:7055": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7110": {
+   "rank": 7,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:7170": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7429": {
+   "rank": 6,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:7459": {
+   "rank": 11,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:7511": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:7531": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7539": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7552": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7581": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7624": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7684": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7927": {
+   "rank": 3,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:7950": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:7970": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8021": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8024": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8068": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8087": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8105": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8213": {
+   "rank": 61,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:8224": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8250": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8257": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8268": {
+   "rank": 24,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:8335": {
+   "rank": 11,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:8351": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8405": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8451": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8492": {
+   "rank": 12,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:8704": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8716": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:8750": {
+   "rank": 7,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:8758": {
+   "rank": 6,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:8786": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:8889": {
+   "rank": 8,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:8891": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:8895": {
+   "rank": 5,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:8915": {
+   "rank": 1828,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:9044": {
+   "rank": 5,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:9046": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9053": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9060": {
+   "rank": 13,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:9061": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9062": {
+   "rank": 88,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:9134": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9209": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9213": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9295": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9318": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:9380": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9489": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9689": {
+   "rank": 459,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:9750": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:9893": {
+   "rank": 8,
+   "stratum": "beyond"
+  },
+  "vi-multimodel-v1-vi-drop-200:9902": {
+   "rank": 2,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:9928": {
+   "rank": 1,
+   "stratum": "top1"
+  },
+  "vi-multimodel-v1-vi-drop-200:10001": {
+   "rank": 5,
+   "stratum": "top5"
+  },
+  "vi-multimodel-v1-vi-drop-200:10085": {
+   "rank": 1,
+   "stratum": "top1"
+  }
+ },
+ "counts": {
+  "beyond": 44,
+  "top1": 318,
+  "top5": 38
+ }
+}
