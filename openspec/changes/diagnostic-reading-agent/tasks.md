@@ -110,4 +110,9 @@ Arms: DSHF (dsh 0.2.2-rc.1), OMPF (omp 18.0.0), OMPS (OMPF + `--system-prompt` w
 - [x] 5.2 Build the 600-answer judge sample. Judge it blind with four Opus 5.5 instances under the 2026-11-25 rubric, join the labels, and record the judge report.
 
   (Judge report `dd8219cb…`; κ 0.98 between judges. Flags: R's bias on OMPS − OMPF for both models, which affects H4 and P1/P2. Judge estimates: H1 +3, H2 +1, H3 −2, H4 −10.)
-- [ ] 5.3 With the owner's go, update the thesis draft (Chapter 5) and Notion.
+- [x] 5.3 With the owner's go, update the thesis draft (Chapter 5) and Notion.
+
+  (2026-11-27, owner: "commit, rồi cập nhật Chương 5 và Notion".
+  - Run record committed as `c77a41d`.
+  - Chapter 5 built as `kltn_draft/chuong_5_agent_harness.md`, untracked by design: old sections 3.7.8 and 4.8 gathered, tables renumbered 5.1–5.16, new section 5.8 on MC-118 and 5.9 on discussion. Sections 3.7.8 and 4.8 now hold pointers to it; section 4.9, Chapter 1's structure and the table of contents were updated.
+  - Notion core page: new §22 on MC-118, appendix renumbered §23. Plan page: Chapter 5 milestone row updated.)
